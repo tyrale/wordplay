@@ -4,7 +4,7 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 ## Phase 0 – Repo & Tooling
 
-- [ ] 0.1 **Init Monorepo** (Expo managed workflow w/ TS)
+- [✅] 0.1 **Init Monorepo** (Expo managed workflow w/ TS)
   - Working `expo start` on iOS & Android sims
   - husky + lint-staged setup
   - App boots to blank screen on both emulators
