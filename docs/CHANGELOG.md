@@ -16,4 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set up Jest testing environment
 - Added Supabase environment configuration template
 - Set up GitHub Actions CI workflow with Jest and ESLint
-- Configured EAS for development builds 
+- Configured EAS for development builds
+- Initialized Supabase project with database schema
+- Added Row Level Security policies for data protection
+- Set up user authentication triggers and functions 

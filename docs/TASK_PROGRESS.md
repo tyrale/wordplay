@@ -14,7 +14,7 @@ This document tracks the progress of tasks from the development plan. Each task 
   - EAS builds dev .apk / .ipa
   - CI passes on PR; artifacts downloadable
 
-- [ ] 0.3 **Supabase Project Bootstrap** (SQL schema & RLS)
+- [✅] 0.3 **Supabase Project Bootstrap** (SQL schema & RLS)
   - `supabase/` migrations
   - local .env.sample
   - `supabase db diff` shows no pending migrations
