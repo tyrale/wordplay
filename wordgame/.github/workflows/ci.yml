@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: wordgame/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd wordgame
+        npm ci
+
+    - name: Run ESLint
+      run: |
+        cd wordgame
+        npm run lint
+
+    - name: Run Jest tests
+      run: |
+        cd wordgame
+        npm test
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: wordgame/coverage/
+        if-no-files-found: warn 

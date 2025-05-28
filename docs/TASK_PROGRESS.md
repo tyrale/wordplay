@@ -9,7 +9,7 @@ This document tracks the progress of tasks from the development plan. Each task 
   - husky + lint-staged setup
   - App boots to blank screen on both emulators
 
-- [ ] 0.2 **Basic CI/CD** via GitHub Actions + EAS
+- [✅] 0.2 **Basic CI/CD** via GitHub Actions + EAS
   - CI runs jest + eslint
   - EAS builds dev .apk / .ipa
   - CI passes on PR; artifacts downloadable

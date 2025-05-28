@@ -14,4 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initialized Expo React Native project with TypeScript
 - Added ESLint and Prettier configurations
 - Set up Jest testing environment
-- Added Supabase environment configuration template 
+- Added Supabase environment configuration template
+- Set up GitHub Actions CI workflow with Jest and ESLint
+- Configured EAS for development builds 
