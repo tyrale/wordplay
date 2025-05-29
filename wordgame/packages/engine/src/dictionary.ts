@@ -1,4 +1,8 @@
 import Filter from 'bad-words';
+// @ts-ignore
+import enableWordsRaw from '../assets/enable-word-list-3plus.json';
+
+const enableWords: string[] = enableWordsRaw as string[];
 
 // Initialize the bad words filter
 const filter = new Filter();
@@ -8,7 +12,7 @@ const filter = new Filter();
  * 
  * Word Lists:
  * - Common Words: ENABLE word list (Enhanced North American Benchmark Lexicon)
- *   Source: https://www.wordgamedictionary.com/enable/
+ *   Source: https://norvig.com/ngrams/enable1.txt
  * 
  * - Slang Words: Modern informal terms and expressions
  *   Sources:
@@ -22,25 +26,17 @@ const filter = new Filter();
  */
 
 // Common English words (ENABLE word list)
-const commonWords = new Set([
-  'HELLO', 'HELL', 'WORLD', 'GAME', 'PLAY', 'WORD', 'SCORE', 'TURN', 'LETTER',
-  'KEY', 'LOCK', 'GRID', 'MOVE', 'VALID', 'POINTS', 'WIN', 'LOSE',
-  'DRAW', 'MATCH', 'PLAYER', 'OPPONENT', 'ROUND', 'TIME', 'CLOCK',
-  'START', 'END', 'PAUSE', 'RESUME', 'QUIT', 'EXIT', 'MENU', 'SETTINGS'
-]);
+const commonWords = new Set<string>(enableWords);
 
 // Slang and informal words (to be expanded)
-const slangWords = new Set([
+const slangWords = new Set<string>([
   // Gaming Terms
   'BRUH', 'LOL', 'OMG', 'WOW', 'YAY', 'NAH', 'YEP', 'NOPE',
   'COOL', 'AWESOME', 'EPIC', 'LIT', 'FIRE', 'SICK', 'DOPE',
-  
   // Social Media Terms
   'SUS', 'CAP', 'BASED', 'RATIO', 'SHEESH', 'BUSSIN',
-  
   // General Slang
   'YEET', 'SIMP', 'VIBE', 'FLEX', 'CLOUT', 'THICC',
-  
   // Gaming Community
   'GG', 'EZ', 'AFK', 'RAGE', 'TILT', 'SALT'
 ]);

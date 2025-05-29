@@ -54,7 +54,7 @@ This document tracks the progress of tasks from the development plan. Each task 
   - Zustand slice managing words, key/locked letters
   - Jest: reducer passes add/remove/move scenarios
 
-- [ ] 1.5 **Integrate Full Dictionary Word List**
+- [✅] 1.5 **Integrate Full Dictionary Word List**
   - Download and preprocess ENABLE or similar comprehensive word list
   - Load word list into engine at build/runtime
   - Add admin/community process for slang and custom words
