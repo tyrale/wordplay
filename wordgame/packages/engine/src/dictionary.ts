@@ -1,8 +1,12 @@
 import Filter from 'bad-words';
 // @ts-ignore
 import enableWordsRaw from '../assets/enable-word-list-3plus.json';
+// @ts-ignore
+import slangWordsRaw from '../assets/slang-cleaned-list.json';
 
 const enableWords: string[] = enableWordsRaw as string[];
+const slangWordsList: { term: string; definition: string }[] = slangWordsRaw as { term: string; definition: string }[];
+const slangWords = new Set<string>(slangWordsList.map(entry => entry.term));
 
 // Initialize the bad words filter
 const filter = new Filter();
@@ -29,17 +33,7 @@ const filter = new Filter();
 const commonWords = new Set<string>(enableWords);
 
 // Slang and informal words (to be expanded)
-const slangWords = new Set<string>([
-  // Gaming Terms
-  'BRUH', 'LOL', 'OMG', 'WOW', 'YAY', 'NAH', 'YEP', 'NOPE',
-  'COOL', 'AWESOME', 'EPIC', 'LIT', 'FIRE', 'SICK', 'DOPE',
-  // Social Media Terms
-  'SUS', 'CAP', 'BASED', 'RATIO', 'SHEESH', 'BUSSIN',
-  // General Slang
-  'YEET', 'SIMP', 'VIBE', 'FLEX', 'CLOUT', 'THICC',
-  // Gaming Community
-  'GG', 'EZ', 'AFK', 'RAGE', 'TILT', 'SALT'
-]);
+// const slangWords = new Set<string>([ ... ]);
 
 /**
  * Validates if a word is acceptable for the game

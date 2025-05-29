@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tests confirm the bot finds the best possible move, using add, remove, rearrange, and key letter actions.
 - Task 1.4: Local GameState Reducer completed. Implemented a Zustand slice for managing the current word, key letters, and locked letters, with actions for add, remove, move, and reset. Added comprehensive Jest tests for all state transitions.
 - Task 1.5: Integrated the full ENABLE word list (3+ letters) into the engine. Dictionary validation now uses a comprehensive static word list loaded at build time. Updated all tests to use real dictionary data.
+- Integrated a comprehensive cleaned slang dictionary (with definitions) from slang-working-list.txt. The engine now loads slang terms from a JSON file, ready for future use of definitions.
 
 ### Changed
 - Updated word validation to support modern slang
