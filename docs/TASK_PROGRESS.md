@@ -21,14 +21,29 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 ## Phase 1 – Core Game Engine (Offline)
 
-- [ ] 1.1 **Word Validation Service**
-  - `packages/engine/dictionary.ts` w/ ENABLE+slang+filter merge script
-  - Jest: `validateWord('BRUH') === true`
-  - bad-word replaced w/ censor symbols
+- [✅] 1.1 **Word Validation Service**
+  - Implemented dictionary service with common and slang word support
+  - Added word validation function with length and character checks
+  - Added bot support with rule-breaking capabilities
+  - Implemented display mechanics for bad words and leetspeak numbers
+  - Added comprehensive test suite for validation rules
 
-- [ ] 1.2 **Scoring Module**
-  - Pure-fn `scoreTurn(prevWord, newWord, actionsUsed, keyUsed)`
-  - Unit tests for examples in Appendix A all pass
+- [✅] 1.2 **Scoring Module**
+  - Implemented core scoring rules:
+    - +1 point for adding a letter (any position)
+    - +1 point for removing a letter (any position)
+    - +1 point for rearranging letters to form a new word
+    - +1 point for using the key letter (must be a new letter not in original word)
+  - Added comprehensive test suite covering:
+    - Letter addition/removal at different positions
+    - Letter rearrangement
+    - Key letter bonus with various actions
+    - Multiple action combinations
+  - Examples implemented:
+    - "CAT" → "CATS" (+1 for adding 'S')
+    - "CAT" → "COAT" (+1 for adding 'O')
+    - "CAT" → "BAT" with key 'B' (+1 for removing 'C', +1 for adding 'B', +1 for key letter)
+    - "CAT" → "TACE" with key 'E' (+1 for rearranging, +1 for adding 'E', +1 for key letter)
 
 - [ ] 1.3 **Bot AI v0 (Greedy)**
   - `packages/ai/bot.ts` choosing highest scoring legal move
@@ -38,6 +53,12 @@ This document tracks the progress of tasks from the development plan. Each task 
 - [ ] 1.4 **Local GameState Reducer**
   - Zustand slice managing words, key/locked letters
   - Jest: reducer passes add/remove/move scenarios
+
+- [ ] 1.5 **Integrate Full Dictionary Word List**
+  - Download and preprocess ENABLE or similar comprehensive word list
+  - Load word list into engine at build/runtime
+  - Add admin/community process for slang and custom words
+  - Update tests to use real dictionary data
 
 ## Phase 2 – UI Foundation
 

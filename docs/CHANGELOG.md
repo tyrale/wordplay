@@ -19,4 +19,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configured EAS for development builds
 - Initialized Supabase project with database schema
 - Added Row Level Security policies for data protection
-- Set up user authentication triggers and functions 
+- Set up user authentication triggers and functions
+- Created word validation service with dictionary support
+- Added word length validation based on previous word
+- Implemented bot support with rule-breaking capabilities
+- Added display mechanics for bad words and 1337 numbers
+- Created comprehensive test suite for word validation
+- Scoring module with core rules:
+  - Letter addition/removal scoring
+  - Letter rearrangement scoring
+  - Key letter bonus system
+  - Comprehensive test suite with examples
+- Examples of scoring:
+  - "CAT" → "CATS" (+1 for adding 'S')
+  - "CAT" → "COAT" (+1 for adding 'O')
+  - "CAT" → "BAT" with key 'B' (+1 for removing 'C', +1 for adding 'B', +1 for key letter)
+  - "CAT" → "TACE" with key 'E' (+1 for rearranging, +1 for adding 'E', +1 for key letter)
+
+### Changed
+- Updated word validation to support modern slang
+- Improved test coverage for word validation
+- Clarified scoring rules and examples
+
+### Fixed
+- Corrected key letter validation to ensure new letters only
+- Fixed scoring calculation for multiple actions
+- Updated test cases to reflect correct scoring rules
+
+## [0.1.0] - 2024-03-20
+
+### Added
+- Initial project setup
+- Basic project structure
+- Development environment configuration
+- Core dependencies installation
+- Basic documentation structure 
