@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Simulates 100 turns without crashing.
   - Maintains <50ms average latency.
   - Tests confirm the bot finds the best possible move, using add, remove, rearrange, and key letter actions.
+- Task 1.4: Local GameState Reducer completed. Implemented a Zustand slice for managing the current word, key letters, and locked letters, with actions for add, remove, move, and reset. Added comprehensive Jest tests for all state transitions.
 
 ### Changed
 - Updated word validation to support modern slang

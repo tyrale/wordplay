@@ -50,7 +50,7 @@ This document tracks the progress of tasks from the development plan. Each task 
   - Simulate 100 turns w/out crash
   - average latency <50 ms
 
-- [ ] 1.4 **Local GameState Reducer**
+- [✅] 1.4 **Local GameState Reducer**
   - Zustand slice managing words, key/locked letters
   - Jest: reducer passes add/remove/move scenarios
 
