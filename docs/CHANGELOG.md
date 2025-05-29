@@ -35,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - "CAT" → "COAT" (+1 for adding 'O')
   - "CAT" → "BAT" with key 'B' (+1 for removing 'C', +1 for adding 'B', +1 for key letter)
   - "CAT" → "TACE" with key 'E' (+1 for rearranging, +1 for adding 'E', +1 for key letter)
+- Bot AI v0 (Greedy) completed:
+  - Bot now chooses the highest scoring legal move.
+  - Simulates 100 turns without crashing.
+  - Maintains <50ms average latency.
+  - Tests confirm the bot finds the best possible move, using add, remove, rearrange, and key letter actions.
 
 ### Changed
 - Updated word validation to support modern slang

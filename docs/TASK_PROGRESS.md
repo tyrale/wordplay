@@ -45,7 +45,7 @@ This document tracks the progress of tasks from the development plan. Each task 
     - "CAT" → "BAT" with key 'B' (+1 for removing 'C', +1 for adding 'B', +1 for key letter)
     - "CAT" → "TACE" with key 'E' (+1 for rearranging, +1 for adding 'E', +1 for key letter)
 
-- [ ] 1.3 **Bot AI v0 (Greedy)**
+- [✅] 1.3 **Bot AI v0 (Greedy)**
   - `packages/ai/bot.ts` choosing highest scoring legal move
   - Simulate 100 turns w/out crash
   - average latency <50 ms
