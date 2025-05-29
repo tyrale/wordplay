@@ -1,0 +1,97 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Word-Game Rules (Cursor)
+
+### Core Directives
+1. **Do not truncate files.** Read entire file, apply minimal-diff change, then verify full content.
+2. **Follow chronological tasks** in `/docs/TASK_PROGRESS.md`; one task per commit.
+3. **Include the keyword `ShipHip`** in every commit title for continuity.
+4. **Run all unit & E2E checkpoints** locally before committing.
+5. **Update both `TASK_PROGRESS.md` and `CHANGELOG.md`** in the same commit.
+6. **Halt and request clarification** when requirements are ambiguous.
+7. **After approval, automatically open** `/docs/TASK_PROGRESS.md` for next task review.
+
+### Project Context (quick load)
+- **Codebase:** Expo React-Native (TypeScript) + Supabase backend.
+- **Game:** Turn-based word duel with key/locked letters.
+- **Architecture Keyword:** *ShipHip* (used for commit titles).
+
+### Implementation Strategy  *(machine-parseable)*
+```json
+{"v":1,"ctx":"ShipHip","obj":["rev_strat","upd_doc","trk_prog","explain_concepts","prevent_drift"],"rules":[
+  {"r1":"Begin by reading /docs/dev-plan.md"},
+  {"r2":"Mark ✅ tasks in /docs/TASK_PROGRESS.md when commit is pushed"},
+  {"r3":"Add new tasks if bugs/tech-debt discovered"},
+  {"r4":"After each milestone, update phase progress in the dev plan"},
+  {"r5":"Explain complex code in plain language inside commit body"},
+  {"r6":"Keep /docs/CHANGELOG.md in sync with code"},
+  {"r7":"Run linters & tests; fail commit if any fail"},
+  {"r8":"Touch only files relevant to that task"},
+  {"r9":"If uncertain, open clarification issue before coding"},
+  {"r10":"After task approval, open TASK_PROGRESS.md for next task review"},
+  {"r11":"The AI must never ask the user to perform technical, migration, or codebase maintenance tasks. The AI is responsible for proposing and executing all such changes unless the user explicitly requests otherwise."},
+  {"r12":"Before creating a new file or module, always search the codebase for existing files with similar or related names/functions. If a relevant file exists, update or extend it instead of creating a duplicate. Only create a new file if there is a clear architectural reason, and document that reason in the commit."}
+],"actions":[
+  "id_complete_tasks",
+  "update_progress",
+  "sync_docs",
+  "explain_code",
+  "prevent_drift",
+  "track_dependencies",
+  "ensure_completeness",
+  "review_next_task"
+],"kpi":[
+  "task_completion_rate",
+  "build_pass_rate",
+  "documentation_quality",
+  "code_simplicity",
+  "bug_reduction"
+],"mode":"strict_sequential"}
+```
+
+### Development Guidelines
+
+1. **Accessibility** – PR/commit messages must be beginner-friendly.
+2. **Organization** – Keep modules modular; avoid cross-layer leaks.
+3. **Maintenance** – Favor simple, typed functions with tests.
+4. **Documentation** – Update relevant MD files with every logic change.
+5. **Completeness** – Verify full file writes; no partial JSON/TS output.
+
+### File-Operation Protocol
+
+1. Read entire file.
+2. Apply minimal diff.
+3. Re-render file for verification.
+4. Commit only after successful diff review.
+
+# Project Rules - Commit Workflow
+
+## Pre-Commit Checklist
+- [ ] All tests passing locally
+- [ ] Linting checks passed
+- [ ] Documentation updated
+- [ ] Commit message includes 'ShipHip' prefix
+- [ ] Changes match current task in TASK_PROGRESS.md
+
+## Commit Process
+1. Verify current task in TASK_PROGRESS.md
+2. Run test suite
+3. Update documentation
+4. Create commit with 'ShipHip' prefix
+5. Mark task as complete only after successful commit
+
+## Documentation Updates
+- Documentation changes must be part of the same commit as code changes
+- Never mark tasks complete before commit is made
+- Always include git state in commit messages
+
+# Additional Rule
+
+- **Autonomy**: The AI must never ask the user to perform technical, migration, or codebase maintenance tasks. The AI is responsible for proposing and executing all such changes unless the user explicitly requests otherwise.
+
+- **No Redundant Files**: Before creating a new file or module, always search the codebase for existing files with similar or related names/functions. If a relevant file exists, update or extend it instead of creating a duplicate. Only create a new file if there is a clear architectural reason, and document that reason in the commit.
+
+### End of File – edit only by human.
