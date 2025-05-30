@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   test:
@@ -18,22 +18,16 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        cache-dependency-path: wordgame/package-lock.json
+        cache-dependency-path: package-lock.json
 
     - name: Install dependencies
-      run: |
-        cd wordgame
-        npm ci
+      run: npm ci
 
     - name: Run ESLint
-      run: |
-        cd wordgame
-        npm run lint
+      run: npm run lint
 
     - name: Run Jest tests
-      run: |
-        cd wordgame
-        npm test
+      run: npm test
 
     - name: Upload test results
       if: always()
@@ -46,7 +40,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     
     steps:
     - uses: actions/checkout@v3
@@ -56,7 +50,7 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        cache-dependency-path: wordgame/package-lock.json
+        cache-dependency-path: package-lock.json
 
     - name: Setup Expo and EAS
       uses: expo/expo-github-action@v8
@@ -66,9 +60,7 @@ jobs:
         token: ${{ secrets.EXPO_TOKEN }}
 
     - name: Install dependencies
-      run: |
-        cd wordgame
-        npm ci
+      run: npm ci
 
     - name: Setup EAS cache
       uses: actions/cache@v3

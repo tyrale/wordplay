@@ -36,4 +36,12 @@ jobs:
         npx eas whoami
         echo "✅ EAS authentication successful!"
       env:
+        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        
+    - name: Verify EAS Configuration
+      run: |
+        cd wordgame
+        npx eas config
+        echo "✅ EAS configuration verified!"
+      env:
         EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }} 
