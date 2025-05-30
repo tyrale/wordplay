@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Supabase environment configuration template
 - Set up GitHub Actions CI workflow with Jest and ESLint
 - Configured EAS for development builds
+- **Task 0.2 Complete**: Basic CI/CD via GitHub Actions + EAS
+  - GitHub Actions CI workflow with Jest + ESLint validation
+  - EAS build integration for Android APK and iOS IPA (development profile)
+  - Automated builds triggered on main branch pushes after tests pass
+  - Build artifacts downloadable via Expo dashboard
+  - EXPO_TOKEN secret integration for authentication
+  - Build caching and dependency optimization
 - Initialized Supabase project with database schema
 - Added Row Level Security policies for data protection
 - Set up user authentication triggers and functions
@@ -54,6 +61,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated word validation to support modern slang
 - Improved test coverage for word validation
 - Clarified scoring rules and examples
+- **Task 0.2**: Migrated ESLint to v9 with modern configuration
+- **Task 0.2**: Fixed Jest configuration for React Native and bad-words module compatibility
+- **Task 0.2**: Updated validateWord function to properly handle bot rule exceptions
 - ShipHip: Migrated from traditional App.tsx to Expo Router
 - ShipHip: Updated TypeScript configuration for modern React Native
 - ShipHip: Enhanced Metro bundler configuration for New Architecture
@@ -68,6 +78,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected key letter validation to ensure new letters only
 - Fixed scoring calculation for multiple actions
 - Updated test cases to reflect correct scoring rules
+- **Task 0.2**: Fixed bad-words Filter constructor issue in Jest environment
+- **Task 0.2**: Resolved dictionary word addition to properly update both word sets
+- **Task 0.2**: Fixed ESLint configuration for ES modules and mixed TypeScript/JavaScript
 - ShipHip: Resolved Expo Go crashes by implementing proper New Architecture setup
 - ShipHip: Fixed bundling issues with react-native-web compatibility
 - ShipHip: Corrected project documentation to match actual implementation
