@@ -7,4 +7,6 @@
 // Example: export { AlphabetGrid } from './components/AlphabetGrid'; 
 
 export { AlphabetGrid } from './components/AlphabetGrid';
-export { LetterCell } from './components/LetterCell'; 
+export { LetterCell } from './components/LetterCell';
+export { WordTrail } from './components/WordTrail';
+export { ActionBar } from './components/ActionBar'; 
