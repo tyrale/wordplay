@@ -105,6 +105,76 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 * **Score Target:** 100 pts default.
 * **Turn Timeout:** 48 h.
 
+## 🎨 Appendix B – Visual Design Reference (v0.1)
+
+> **Goal:** Provide concrete UI/UX guidelines so Cursor (and human developers) can implement screens that match the legacy iOS look‑and‑feel without pixel‑perfect mocks.
+
+### 1  Layout Anatomy (Phone Portrait)
+
+```
+┌─────────────────────────────┐  ↑  top‑safe‑area (status bar)
+│           (spacer)          │
+│  ╭──── Word Trail (HStack)─╮│  ← previous words, small caps
+│  │ PLAY • LAPS • SLIP • … ││
+│  ╰─────────────────────────╯│
+│                             │  ↓ 16 px gap
+│        SHIP<span key>H</span>        │  ← Current Word, 40‑48 pt,
+│                             │     letter‑spacing 1 px
+│   [ − ] [ ＋ ] [ ✓ ] [2 + 1] │  ← Action bar (icon buttons 36 px)
+│                             │  ↓ 24 px gap
+│  5 × 6 Letter Grid (A‑Z)    │
+│                             │  ↑ each cell 48 × 48, 4 px gap
+│   ←   ↺   ?   ≡             │  ← Footer icon bar (28 px line‑icons)
+└─────────────────────────────┘
+```
+
+### 2  Colour Palette  (`oklch` → hex fallback)
+
+| Token        | oklch                     | HEX       | Usage                 |
+| ------------ | ------------------------- | --------- | --------------------- |
+| `--c-bg`     | `oklch(1 0 0)`            | `#FFFFFF` | App background        |
+| `--c-text`   | `oklch(0.14 0.005 285.8)` | `#252D4A` | Primary text          |
+| `--c-accent` | `oklch(0.21 0.006 285.9)` | `#0063FF` | Key letters, buttons  |
+| `--c-muted`  | `oklch(0.35 0.01 285.9)`  | `#7C8AAC` | Secondary text/icons  |
+| `--c-lock`   | `oklch(0.50 0.04 35)`     | `#C38A04` | Locked‑letter padlock |
+
+`c-accent` operates at 90 % opacity for hover/press states.
+
+### 3  Typography
+
+| Element      | Font            | Weight | Size                     |
+| ------------ | --------------- | ------ | ------------------------ |
+| Current Word | Inter           | 700    | 40 pt (fits \~6 letters) |
+| Word Trail   | Inter Condensed | 600    | 16 pt                    |
+| Buttons      | Inter           | 500    | 14 pt                    |
+
+### 4  Icons
+
+| Name    | Meaning       | Suggested (Lucide) Icon |
+| ------- | ------------- | ----------------------- |
+| Back    | Leave game    | `arrow-left`            |
+| Undo    | Revert move   | `rotate-ccw`            |
+| Help    | Rules modal   | `help-circle`           |
+| Menu    | Settings      | `menu`                  |
+| Remove  | Minus         | `minus-square`          |
+| Add     | Plus          | `plus-square`           |
+| Submit  | Confirm       | `check-circle`          |
+| Padlock | Locked letter | `lock` (12 px, accent)  |
+
+All icons 1.5× stroke width, `c-muted` fill; turn `c-accent` when active.
+
+### 5  Component Behaviour Notes
+
+1. **Letter Grid Cell States**
+   *Normal* → dark‑teal text on white hover `c-muted` border.
+   *Selected* → white letter on `c-accent` background.
+   *Key Letter* → `c-accent` border + light‑blue fill (20 % α).
+   *Locked* → `c-lock` badge top‑right.
+2. **Responsive** – On tablets, grid grows to 64 px cells; word size 48 pt.  Web desktop centers board at 560 px.
+3. **Animation** – Reanimate: fade‑in selected letters; spring swap on move.
+4. **Haptics** – Light impact on letter tap; medium on word submit.
+
+
 *Sample Test Case*
 
 ```ts

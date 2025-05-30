@@ -1,0 +1,26 @@
+{
+  "name": "wordplay",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "wordgame",
+    "wordgame/packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run start --workspace=wordgame",
+    "start": "npm run start --workspace=wordgame",
+    "test": "npm run test --workspace=wordgame",
+    "test:all": "npm test --workspaces",
+    "lint": "npm run lint --workspace=wordgame",
+    "lint:all": "npm run lint --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "ts-jest": "^29.3.4",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "storybook": "^9.0.0",
+    "zustand": "^5.0.5"
+  }
+}
