@@ -1,4 +1,4 @@
-// Simple setup for Jest testing
+// Jest setup for React 19 and Expo SDK 53 with New Architecture
 
 // Mock console.warn to reduce noise in tests
 global.console = {
@@ -9,7 +9,41 @@ global.console = {
 // Mock zustand
 jest.mock('zustand');
 
-// Mock React Native Reanimated
+// Mock React Native Gesture Handler for New Architecture
+jest.mock('react-native-gesture-handler', () => {
+  const View = require('react-native').View;
+  
+  return {
+    GestureDetector: ({ children }) => children,
+    Gesture: {
+      Pan: () => ({
+        onStart: () => ({}),
+        onUpdate: () => ({}),
+        onEnd: () => ({}),
+      }),
+      Tap: () => ({
+        onEnd: () => ({}),
+      }),
+    },
+    GestureHandlerRootView: View,
+    State: {},
+    PanGestureHandler: View,
+    TapGestureHandler: View,
+    LongPressGestureHandler: View,
+    PinchGestureHandler: View,
+    RotationGestureHandler: View,
+    FlingGestureHandler: View,
+    ForceTouchGestureHandler: View,
+    NativeViewGestureHandler: View,
+    RawButton: View,
+    BaseButton: View,
+    RectButton: View,
+    BorderlessButton: View,
+    TouchableOpacity: require('react-native').TouchableOpacity,
+  };
+});
+
+// Mock React Native Reanimated v3 for New Architecture
 jest.mock('react-native-reanimated', () => {
   const View = require('react-native').View;
   return {
@@ -24,28 +58,13 @@ jest.mock('react-native-reanimated', () => {
     withTiming: (value) => value,
     runOnJS: (fn) => fn,
     interpolateColor: () => '#000000',
+    Extrapolate: {
+      CLAMP: 'clamp',
+      EXTEND: 'extend', 
+      IDENTITY: 'identity',
+    },
   };
 });
 
-// Only mock React Native gesture handler if it exists
-try {
-  require.resolve('react-native-gesture-handler');
-  jest.mock('react-native-gesture-handler', () => {
-    const View = require('react-native').View;
-    return {
-      PanGestureHandler: View,
-      TapGestureHandler: View,
-      State: {},
-      Directions: {},
-    };
-  });
-} catch (e) {
-  // react-native-gesture-handler not installed, skip mock
-}
-
-// Setup React Native Web environment
-try {
-  require('react-native-web/dist/exports/StyleSheet/processColor');
-} catch (e) {
-  // react-native-web StyleSheet not available, skip
-} 
+// Setup for React 19 testing environment
+global.IS_REACT_ACT_ENVIRONMENT = true; 
