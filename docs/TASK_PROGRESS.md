@@ -22,10 +22,14 @@ This document tracks the progress of tasks from the development plan. Each task 
   - ✅ **VERIFIED**: Build profiles validated for development (APK) and production (app-bundle)
   - ✅ **TECHNICAL FIXES**: Fixed bad-words Filter mock, ESLint v9 migration, Jest configuration, missing expo-dev-client dependency, EAS configuration, bundle identifiers
 
-- [❌] 0.3 **Supabase Project Bootstrap** (SQL schema & RLS)
-  - `supabase/` migrations
-  - local .env.example
-  - `supabase db diff` shows no pending migrations
+- [🚧] 0.3 **Supabase Project Bootstrap** (SQL schema & RLS) - **PARTIALLY COMPLETE**
+  - ✅ **VERIFIED**: Supabase client dependencies installed (@supabase/supabase-js, async-storage, url-polyfill)
+  - ✅ **VERIFIED**: Supabase client configuration created (lib/supabase.ts) with React Native setup
+  - ✅ **VERIFIED**: SQL schema exists (129 lines) with users, games, game_players, turns tables and RLS policies
+  - ✅ **VERIFIED**: Environment variables configuration (.env.example) with Supabase settings
+  - ✅ **VERIFIED**: All 39 tests passing after Supabase integration
+  - 📝 **REQUIRES DOCKER**: Local database testing and `supabase db diff` verification
+  - 📝 **REQUIRES DOCKER**: Full end-to-end database functionality testing
 
 ## Phase 1 – Core Game Engine (Offline)
 
