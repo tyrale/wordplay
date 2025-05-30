@@ -9,37 +9,47 @@ global.console = {
 // Mock zustand
 jest.mock('zustand');
 
-// Mock React Native Gesture Handler for New Architecture
+// Mock react-native
+jest.mock('react-native', () => ({
+  Platform: { OS: 'web' },
+  Dimensions: {
+    get: jest.fn().mockReturnValue({ width: 375, height: 667 }),
+  },
+  Text: 'Text',
+  View: 'View',
+  ScrollView: 'ScrollView',
+  TouchableOpacity: 'TouchableOpacity',
+  StyleSheet: {
+    create: jest.fn().mockReturnValue({}),
+  },
+  Alert: {
+    alert: jest.fn(),
+  },
+}));
+
+// Mock React Native Gesture Handler
 jest.mock('react-native-gesture-handler', () => {
-  const View = require('react-native').View;
-  
+  const View = jest.requireActual('react-native').View;
   return {
-    GestureDetector: ({ children }) => children,
-    Gesture: {
-      Pan: () => ({
-        onStart: () => ({}),
-        onUpdate: () => ({}),
-        onEnd: () => ({}),
-      }),
-      Tap: () => ({
-        onEnd: () => ({}),
-      }),
+    Swipe: {
+      DIRECTION_LEFT: 1,
+      DIRECTION_RIGHT: 2,
+      DIRECTION_UP: 4,
+      DIRECTION_DOWN: 8,
     },
-    GestureHandlerRootView: View,
-    State: {},
+    State: {
+      BEGAN: 'BEGAN',
+      FAILED: 'FAILED',
+      CANCELLED: 'CANCELLED',
+      END: 'END',
+    },
     PanGestureHandler: View,
+    PinchGestureHandler: View,
     TapGestureHandler: View,
     LongPressGestureHandler: View,
-    PinchGestureHandler: View,
-    RotationGestureHandler: View,
-    FlingGestureHandler: View,
-    ForceTouchGestureHandler: View,
     NativeViewGestureHandler: View,
-    RawButton: View,
-    BaseButton: View,
-    RectButton: View,
-    BorderlessButton: View,
-    TouchableOpacity: require('react-native').TouchableOpacity,
+    createNativeWrapper: jest.fn(),
+    GestureHandlerRootView: View,
   };
 });
 
@@ -66,5 +76,24 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
+// Mock bad-words with proper named export
+jest.mock('bad-words', () => {
+  // Create a mock Filter class
+  class MockFilter {
+    constructor() {}
+    isProfane(text) { return false; }
+    clean(text) { return text; }
+    addWords(words) {}
+    removeWords(words) {}
+  }
+  
+  return {
+    Filter: MockFilter,
+    default: MockFilter,
+  };
+});
+
 // Setup for React 19 testing environment
-global.IS_REACT_ACT_ENVIRONMENT = true; 
+global.IS_REACT_ACT_ENVIRONMENT = true;
+
+module.exports = {}; 

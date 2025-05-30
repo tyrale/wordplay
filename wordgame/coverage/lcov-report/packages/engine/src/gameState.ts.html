@@ -3,15 +3,15 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for wordgame/packages/ui/src/components/WordTrail.tsx</title>
+    <title>Code coverage report for packages/engine/src/gameState.ts</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="../../../../../prettify.css" />
-    <link rel="stylesheet" href="../../../../../base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="../../../../../favicon.png" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type='text/css'>
         .coverage-summary .sorter {
-            background-image: url(../../../../../sort-arrow-sprite.png);
+            background-image: url(../../../sort-arrow-sprite.png);
         }
     </style>
 </head>
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../../../../index.html">All files</a> / <a href="index.html">wordgame/packages/ui/src/components</a> WordTrail.tsx</h1>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">packages/engine/src</a> gameState.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Statements</span>
-                <span class='fraction'>0/6</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>22/22</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
-                <span class="quiet">Functions</span>
+                <span class="quiet">Branches</span>
                 <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>17/17</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -96,33 +96,8 @@
 <a name='L31'></a><a href='#L31'>31</a>
 <a name='L32'></a><a href='#L32'>32</a>
 <a name='L33'></a><a href='#L33'>33</a>
-<a name='L34'></a><a href='#L34'>34</a>
-<a name='L35'></a><a href='#L35'>35</a>
-<a name='L36'></a><a href='#L36'>36</a>
-<a name='L37'></a><a href='#L37'>37</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L34'></a><a href='#L34'>34</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -135,59 +110,75 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React from 'react';
-<span class="cstat-no" title="statement not covered" >import { View, Text, StyleSheet } from 'react-native';</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// If you have not already, run: npm install zustand
+import { createStore } from 'zustand/vanilla';
 &nbsp;
-/**
- * WordTrail displays a vertical stack of previous words in all-caps, bold, centered.
- * @param words - array of previous words (most recent last)
- */
-export interface WordTrailProps {
-  words: string[];
+// Types for state
+export interface GameState {
+  word: string;
+  keyLetters: string[];
+  lockedLetters: string[];
+  setWord: (word: string) =&gt; void;
+  addKeyLetter: (letter: string) =&gt; void;
+  removeKeyLetter: (letter: string) =&gt; void;
+  addLockedLetter: (letter: string) =&gt; void;
+  removeLockedLetter: (letter: string) =&gt; void;
+  moveLetter: (from: number, to: number) =&gt; void;
+  reset: (initialWord: string, keyLetters?: string[], lockedLetters?: string[]) =&gt; void;
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >WordTrail: React.FC&lt;WordTrailProps&gt; = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>{</span> words }) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  return (</span>
-    &lt;View style={styles.container}&gt;
-      {words.map(<span class="fstat-no" title="function not covered" >(w</span>ord, i) =&gt; (
-<span class="cstat-no" title="statement not covered" >        &lt;Text key={i} s</span>tyle={styles.word}&gt;
-          {word.toUpperCase()}
-        &lt;/Text&gt;
-      ))}
-    &lt;/View&gt;
-  );
-};
-&nbsp;
-const styles = <span class="cstat-no" title="statement not covered" >StyleSheet.create({</span>
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  word: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#19405B', // dark blue from design
-    letterSpacing: 1,
-    marginVertical: 2,
-  },
-}); </pre></td></tr></table></pre>
+export const useGameState = createStore&lt;GameState&gt;((set: (fn: (state: GameState) =&gt; Partial&lt;GameState&gt; | GameState) =&gt; void, get: () =&gt; GameState) =&gt; ({
+  word: '',
+  keyLetters: [],
+  lockedLetters: [],
+  setWord: (word: string) =&gt; set(() =&gt; ({ word })),
+  addKeyLetter: (letter: string) =&gt; set((state) =&gt; ({ keyLetters: [...state.keyLetters, letter] })),
+  removeKeyLetter: (letter: string) =&gt; set((state) =&gt; ({ keyLetters: state.keyLetters.filter((l: string) =&gt; l !== letter) })),
+  addLockedLetter: (letter: string) =&gt; set((state) =&gt; ({ lockedLetters: [...state.lockedLetters, letter] })),
+  removeLockedLetter: (letter: string) =&gt; set((state) =&gt; ({ lockedLetters: state.lockedLetters.filter((l: string) =&gt; l !== letter) })),
+  moveLetter: (from: number, to: number) =&gt; set((state) =&gt; {
+    const arr = state.word.split('');
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    return { word: arr.join('') };
+  }),
+  reset: (initialWord: string, keyLetters: string[] = <span class="branch-0 cbranch-no" title="branch not covered" >[],</span> lockedLetters: string[] = <span class="branch-0 cbranch-no" title="branch not covered" >[])</span> =&gt; set(() =&gt; ({ word: initialWord, keyLetters, lockedLetters })),
+})); </pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-05-30T19:50:01.503Z
+                at 2025-05-30T20:16:25.331Z
             </div>
-        <script src="../../../../../prettify.js"></script>
+        <script src="../../../prettify.js"></script>
         <script>
             window.onload = function () {
                 prettyPrint();
             };
         </script>
-        <script src="../../../../../sorter.js"></script>
-        <script src="../../../../../block-navigation.js"></script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
     </body>
 </html>
     

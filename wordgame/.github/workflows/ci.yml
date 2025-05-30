@@ -41,4 +41,59 @@ jobs:
       with:
         name: test-results
         path: wordgame/coverage/
-        if-no-files-found: warn 
+        if-no-files-found: warn
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: wordgame/package-lock.json
+
+    - name: Setup Expo and EAS
+      uses: expo/expo-github-action@v8
+      with:
+        expo-version: latest
+        eas-version: latest
+        token: ${{ secrets.EXPO_TOKEN }}
+
+    - name: Install dependencies
+      run: |
+        cd wordgame
+        npm ci
+
+    - name: Setup EAS cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.eas
+        key: ${{ runner.os }}-eas-${{ hashFiles('**/eas.json') }}
+        restore-keys: |
+          ${{ runner.os }}-eas-
+
+    - name: Build Android APK (development)
+      run: |
+        cd wordgame
+        eas build --platform android --profile development --non-interactive --no-wait
+      env:
+        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+    - name: Build iOS IPA (development) 
+      run: |
+        cd wordgame
+        eas build --platform ios --profile development --non-interactive --no-wait
+      env:
+        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+    - name: Wait for builds and download artifacts
+      run: |
+        cd wordgame
+        echo "Builds initiated. Check https://expo.dev for build status and artifacts."
+        echo "Note: Artifacts will be available on Expo dashboard once builds complete." 

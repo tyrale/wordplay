@@ -105,7 +105,7 @@ function getValidMoves(candidates: {word: string, actions: TurnAction[]}[], curr
   }
   const validMoves: BotMove[] = [];
   for (const {word, actions} of unique.values()) {
-    if (validateWord(word, currentWord, true)) { // true = bot
+    if (validateWord(word, currentWord, { allowBot: true })) { // allowBot: true for bot
       const score = scoreTurn(currentWord, word, actions, keyLetter);
       validMoves.push({ word, actions, score });
     }
