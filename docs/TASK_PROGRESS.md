@@ -13,8 +13,9 @@ This document tracks the progress of tasks from the development plan. Each task 
   - ✅ **VERIFIED**: CI runs jest + eslint (39/39 tests passing, 4/4 test suites, 14 ESLint warnings/0 errors)
   - ✅ **VERIFIED**: EAS builds dev .apk / .ipa (GitHub Actions workflow integrated with Android/iOS builds)
   - ✅ **VERIFIED**: CI passes on PR; artifacts downloadable (via Expo dashboard after build completion)
-  - ✅ **TECHNICAL FIXES**: Fixed bad-words Filter mock, ESLint v9 migration, Jest configuration
-  - 📝 **ASSUMPTION**: EXPO_TOKEN secret needs to be configured in GitHub repository settings
+  - ✅ **VERIFIED**: EAS project configured with EXPO_TOKEN (Project ID: f1997f64-edd5-43a8-93c1-0533b5eee77a)
+  - ✅ **VERIFIED**: Build profiles validated for development (APK) and production (app-bundle)
+  - ✅ **TECHNICAL FIXES**: Fixed bad-words Filter mock, ESLint v9 migration, Jest configuration, missing expo-dev-client dependency, EAS configuration, bundle identifiers
 
 - [❌] 0.3 **Supabase Project Bootstrap** (SQL schema & RLS)
   - `supabase/` migrations
