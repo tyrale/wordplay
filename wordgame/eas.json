@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 5.9.1"
+    "version": ">= 5.9.1",
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -22,7 +23,14 @@
         "buildType": "apk"
       }
     },
-    "production": {}
+    "production": {
+      "ios": {
+        "simulator": false
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
   },
   "submit": {
     "production": {}
