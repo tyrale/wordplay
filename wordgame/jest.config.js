@@ -32,6 +32,8 @@ const config = {
     '!jest.config.js',
     // Exclude UI components from coverage until tests are fixed
     '!**/packages/ui/src/components/**',
+    // Exclude Storybook configuration files
+    '!**/.storybook/**',
   ],
   moduleNameMapper: {
     '^react-native$': 'react-native-web',
