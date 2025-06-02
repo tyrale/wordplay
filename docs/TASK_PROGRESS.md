@@ -4,105 +4,91 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 ## Phase 0 – Repo & Tooling
 
-- [✅] 0.1 **Init Monorepo** (Expo managed workflow w/ TS)
-  - ✅ **VERIFIED**: Expo Router file-based routing implemented (`app/_layout.tsx`, `app/index.tsx`, `app/game.tsx`)
-  - ✅ **VERIFIED**: Modern interface implemented (animated word demo, platform detection, progress cards)
-  - ✅ **VERIFIED**: TypeScript compilation working across all packages
-  - ✅ **VERIFIED**: Web platform builds successfully (`npx expo export --platform web` → 2.58 MB bundle)
-  - ✅ **VERIFIED**: Metro bundler working with monorepo configuration  
-  - ✅ **VERIFIED**: Cross-platform support configured (iOS, Android, Web platforms)
-  - ✅ **TECHNICAL FIXES**: Fixed missing metro dependencies, expo-linking, and dependency version conflicts
+- [✅] 0.1 **Init Monorepo** (Expo managed workflow w/ TS) - **COMPLETE BUT NOT VERIFIED**
+  - 📝 **UNVERIFIED**: Expo Router file-based routing implementation
+  - 📝 **UNVERIFIED**: Modern interface implementation 
+  - 📝 **UNVERIFIED**: TypeScript compilation across packages
+  - 📝 **UNVERIFIED**: Web platform build capability
+  - 📝 **UNVERIFIED**: Metro bundler monorepo configuration
+  - 📝 **UNVERIFIED**: Cross-platform support (iOS, Android, Web)
   - 📝 **REQUIRES SETUP**: iOS/Android simulator testing requires Xcode/Android SDK installation
 
-- [✅] 0.2 **Basic CI/CD** via GitHub Actions + EAS
-  - ✅ **VERIFIED**: CI runs jest + eslint (39/39 tests passing, 4/4 test suites, 14 ESLint warnings/0 errors)
-  - ✅ **VERIFIED**: EAS builds dev .apk / .ipa (GitHub Actions workflow integrated with Android/iOS builds)
-  - ✅ **VERIFIED**: CI passes on PR; artifacts downloadable (via Expo dashboard after build completion)
-  - ✅ **VERIFIED**: EAS project configured with EXPO_TOKEN (Project ID: f1997f64-edd5-43a8-93c1-0533b5eee77a)
-  - ✅ **VERIFIED**: Build profiles validated for development (APK) and production (app-bundle)
-  - ✅ **TECHNICAL FIXES**: Fixed bad-words Filter mock, ESLint v9 migration, Jest configuration, missing expo-dev-client dependency, EAS configuration, bundle identifiers
+- [✅] 0.2 **Basic CI/CD** via GitHub Actions + EAS - **COMPLETE BUT NOT VERIFIED**
+  - 📝 **UNVERIFIED**: CI runs jest + eslint
+  - 📝 **UNVERIFIED**: EAS builds dev .apk / .ipa
+  - 📝 **UNVERIFIED**: CI passes on PR; artifacts downloadable
+  - 📝 **UNVERIFIED**: EAS project configuration
+  - 📝 **UNVERIFIED**: Build profiles for development and production
 
-- [✅] 0.3 **Supabase Project Bootstrap** (SQL schema & RLS) - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: Supabase client dependencies installed (@supabase/supabase-js, async-storage, url-polyfill)
-  - ✅ **VERIFIED**: Supabase client configuration created (lib/supabase.ts) with React Native setup
-  - ✅ **VERIFIED**: SQL schema exists (130 lines) with users, games, game_players, turns tables and RLS policies
-  - ✅ **VERIFIED**: Environment variables configuration (.env.example) with Supabase settings
-  - ✅ **VERIFIED**: All 39 tests passing after Supabase integration
-  - ✅ **VERIFIED**: Docker Desktop working properly (version 28.1.1)
-  - ✅ **VERIFIED**: Local Supabase environment running successfully (all services operational)
-  - ✅ **VERIFIED**: Database migration applied successfully (4 tables created: users, games, game_players, turns)
-  - ✅ **VERIFIED**: `supabase db diff` shows no schema differences (migration matches database)
-  - ✅ **VERIFIED**: RLS policies active and properly configured for all tables
-  - 📊 **ENDPOINTS CONFIRMED**: API (54321), Database (54322), Studio (54323), Email (54324)
+- [✅] 0.3 **Supabase Project Bootstrap** (SQL schema & RLS) - **COMPLETE BUT NOT VERIFIED**
+  - 📝 **UNVERIFIED**: Supabase client dependencies and configuration
+  - 📝 **UNVERIFIED**: SQL schema with users, games, game_players, turns tables
+  - 📝 **UNVERIFIED**: Environment variables configuration
+  - 📝 **UNVERIFIED**: Local Supabase environment
+  - 📝 **UNVERIFIED**: Database migration and RLS policies
 
 ## Phase 1 – Core Game Engine (Offline)
 
-- [✅] 1.1 **Word Validation Service** - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: Dictionary service with ENABLE (172,724 words) and slang (6,414 words) support
-  - ✅ **VERIFIED**: Word validation function with length checks (minimum 3 letters enforced)
-  - ✅ **VERIFIED**: Character validation (alphabetic only, rejects numbers/symbols for humans)
-  - ✅ **VERIFIED**: Length change validation (max ±1 letter difference between turns)
-  - ✅ **VERIFIED**: Dictionary lookup integration (rejects unknown words)
-  - ✅ **VERIFIED**: Bot rule-breaking capabilities (bots can bypass all validation rules)
-  - ✅ **VERIFIED**: Case insensitivity (hello/Hello/HELLO all accepted)
-  - ✅ **VERIFIED**: Profanity filtering with appropriate word checking
-  - ✅ **VERIFIED**: Leetspeak number detection and display formatting (H3LL0 → H[3]LL[0])
-  - ✅ **VERIFIED**: Performance optimized (300 validations in <1ms)
-  - ✅ **VERIFIED**: Integration with scoring system and bot AI
-  - 📊 **METRICS**: 7/7 comprehensive verification tests passing, 53.01% code coverage
+- [✅] 1.1 **Word Validation Service** - **COMPLETE BUT NOT VERIFIED**
+  - 📝 **UNVERIFIED**: Dictionary service with ENABLE and slang support
+  - 📝 **UNVERIFIED**: Word validation function with length checks
+  - 📝 **UNVERIFIED**: Character validation (alphabetic only)
+  - 📝 **UNVERIFIED**: Length change validation (max ±1 letter difference)
+  - 📝 **UNVERIFIED**: Dictionary lookup integration
+  - 📝 **UNVERIFIED**: Bot rule-breaking capabilities
+  - 📝 **UNVERIFIED**: Case insensitivity
+  - 📝 **UNVERIFIED**: Profanity filtering
+  - 📝 **UNVERIFIED**: Leetspeak number detection
+  - 📝 **UNVERIFIED**: Performance optimization
+  - 📝 **UNVERIFIED**: Integration with scoring system and bot AI
 
-- [✅] 1.2 **Scoring Module** - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: Core scoring rules implemented (+1 point for add/remove/rearrange/key letter)
-  - ✅ **VERIFIED**: Letter addition scoring at any position (end/middle/start) working
-  - ✅ **VERIFIED**: Letter removal scoring from any position (end/middle/start) working  
-  - ✅ **VERIFIED**: Letter rearrangement scoring (single and multiple rearrangements)
-  - ✅ **VERIFIED**: Key letter bonus system (+1 for using new key letter)
-  - ✅ **VERIFIED**: Complex action combinations (multiple actions + key letter)
-  - ✅ **VERIFIED**: All claimed examples working: CAT→CATS(1pt), CAT→COAT(1pt), CAT→BAT+key B(3pts), CAT→TACE+key E(3pts)
-  - ✅ **VERIFIED**: Performance optimized (1000 calculations in 1ms)
-  - ✅ **VERIFIED**: Edge cases handled (empty actions, unused key letters)
-  - ✅ **VERIFIED**: Integration with TurnAction interface and type safety
-  - 📊 **METRICS**: 15/15 comprehensive verification tests passing, 100% scoring module code coverage
+- [✅] 1.2 **Scoring Module** - **COMPLETE BUT NOT VERIFIED**
+  - 📝 **UNVERIFIED**: Core scoring rules (+1 point for add/remove/rearrange/key letter)
+  - 📝 **UNVERIFIED**: Letter addition scoring at any position
+  - 📝 **UNVERIFIED**: Letter removal scoring from any position
+  - 📝 **UNVERIFIED**: Letter rearrangement scoring
+  - 📝 **UNVERIFIED**: Key letter bonus system
+  - 📝 **UNVERIFIED**: Complex action combinations
+  - 📝 **UNVERIFIED**: Performance optimization
+  - 📝 **UNVERIFIED**: Edge cases handling
+  - 📝 **UNVERIFIED**: Integration with TurnAction interface
 
-- [✅] 1.3 **Bot AI v0 (Greedy)** - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: Greedy strategy implemented (chooses highest scoring legal moves)
-  - ✅ **VERIFIED**: Move generation for add/remove/rearrange operations (96/6/18 moves respectively)
-  - ✅ **VERIFIED**: Key letter prioritization and bonus scoring integration
-  - ✅ **VERIFIED**: 100-turn simulation completed without crashes (final word: "WTA")
-  - ✅ **VERIFIED**: Performance exceptional - average latency 0.17ms (297x better than 50ms target)
-  - ✅ **VERIFIED**: Bot privileges system working (can make moves humans cannot)
-  - ✅ **VERIFIED**: Integration with scoring module and word validation system
-  - ✅ **VERIFIED**: Edge case handling (short words, long words, difficult scenarios)
-  - ✅ **VERIFIED**: Fallback handling for impossible scenarios without crashes
-  - ✅ **VERIFIED**: Complex multi-action moves (remove + add + rearrange + key bonus = 4 points)
-  - ✅ **VERIFIED**: Score optimization consistently achieving maximum possible scores
-  - 📊 **METRICS**: 11/11 comprehensive verification tests passing, 92.75% AI code coverage
+- [✅] 1.3 **Bot AI v0 (Greedy)** - **COMPLETE BUT NOT VERIFIED**
+  - 📝 **UNVERIFIED**: Greedy strategy implementation
+  - 📝 **UNVERIFIED**: Move generation for add/remove/rearrange operations
+  - 📝 **UNVERIFIED**: Key letter prioritization and bonus scoring
+  - 📝 **UNVERIFIED**: Multi-turn simulation capability
+  - 📝 **UNVERIFIED**: Performance requirements
+  - 📝 **UNVERIFIED**: Bot privileges system
+  - 📝 **UNVERIFIED**: Integration with scoring and validation systems
+  - 📝 **UNVERIFIED**: Edge case handling
+  - 📝 **UNVERIFIED**: Fallback handling for impossible scenarios
+  - 📝 **UNVERIFIED**: Complex multi-action moves
+  - 📝 **UNVERIFIED**: Score optimization
 
-- [✅] 1.4 **Local GameState Reducer** - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: Zustand slice implemented for complete game state management
-  - ✅ **VERIFIED**: Word state management (setWord with string handling)
-  - ✅ **VERIFIED**: Key letters array management (add/remove operations)
-  - ✅ **VERIFIED**: Locked letters array management (add/remove operations)
-  - ✅ **VERIFIED**: Letter movement system (complex rearrangements: SHIP→HSIP→IHSP→HISP→HIPS)
-  - ✅ **VERIFIED**: Reset functionality with new values and default empty arrays
-  - ✅ **VERIFIED**: Edge cases handled (single letters, two letters, same position moves)
-  - ✅ **VERIFIED**: State persistence across multiple operations
-  - ✅ **VERIFIED**: Performance exceptional - 100 operations in 0.89ms (56x better than 50ms target)
-  - ✅ **VERIFIED**: Game integration scenarios (new game, rearrange, key/lock, update, clear)
-  - ✅ **VERIFIED**: Multi-player support (player transitions, independent letter management)
-  - 📊 **METRICS**: 13/13 comprehensive verification tests passing, 100% gameState code coverage
+- [✅] 1.4 **Local GameState Reducer** - **COMPLETE BUT NOT VERIFIED** 
+  - 📝 **UNVERIFIED**: Zustand slice implementation
+  - 📝 **UNVERIFIED**: Word state management
+  - 📝 **UNVERIFIED**: Key letters array management
+  - 📝 **UNVERIFIED**: Locked letters array management
+  - 📝 **UNVERIFIED**: Letter movement system
+  - 📝 **UNVERIFIED**: Reset functionality
+  - 📝 **UNVERIFIED**: Edge cases handling
+  - 📝 **UNVERIFIED**: State persistence across operations
+  - 📝 **UNVERIFIED**: Performance requirements
+  - 📝 **UNVERIFIED**: Game integration scenarios
+  - 📝 **UNVERIFIED**: Multi-player support
 
-- [✅] 1.5 **Integrate Full Dictionary Word List** - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: ENABLE word list integrated (172,724+ words from Enhanced North American Benchmark Lexicon)
-  - ✅ **VERIFIED**: Slang dictionary integrated (6,429+ modern terms with definitions)
-  - ✅ **VERIFIED**: Real dictionary data used in all validation and game functions
-  - ✅ **VERIFIED**: Build process optimized (2.9MB raw → 971KB bundled with compression)
-  - ✅ **VERIFIED**: Performance benchmarks passed (3,000 lookups <100ms)
-  - ✅ **VERIFIED**: Comprehensive test suite (22/22 tests passing)
-  - ✅ **VERIFIED**: Full functionality: validation, anagrams, random words, length filtering
-  - ✅ **VERIFIED**: Admin/community word addition system implemented
-  - ✅ **VERIFIED**: Edge case handling and fallback systems working
-  - 📊 **METRICS**: 83.13% code coverage, all performance tests passing
+- [✅] 1.5 **Integrate Full Dictionary Word List** - **COMPLETE BUT NOT VERIFIED**
+  - 📝 **UNVERIFIED**: ENABLE word list integration (172,724+ words)
+  - 📝 **UNVERIFIED**: Slang dictionary integration (6,429+ terms)
+  - 📝 **UNVERIFIED**: Real dictionary data usage in validation and game functions
+  - 📝 **UNVERIFIED**: Build process optimization
+  - 📝 **UNVERIFIED**: Performance benchmarks
+  - 📝 **UNVERIFIED**: Comprehensive test suite
+  - 📝 **UNVERIFIED**: Full functionality: validation, anagrams, random words, length filtering
+  - 📝 **UNVERIFIED**: Admin/community word addition system
+  - 📝 **UNVERIFIED**: Edge case handling and fallback systems
 
 ## Phase 2 – UI Foundation
 
