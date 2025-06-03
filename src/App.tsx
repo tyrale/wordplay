@@ -28,6 +28,9 @@ function App() {
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
+      <p style={{ fontSize: '12px', color: '#666', marginTop: '2rem' }}>
+        🚀 Deployed to Vercel - Task 0.4 Complete
+      </p>
     </>
   );
 }

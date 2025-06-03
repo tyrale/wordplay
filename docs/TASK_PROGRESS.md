@@ -29,10 +29,10 @@ This document tracks the progress of tasks from the development plan. Each task 
   - [x] `supabase db diff` shows no schema differences ✅ **VERIFIED** ("No schema changes found")
   - [x] RLS policies implementation and testing ✅ **VERIFIED** (11 RLS policies across 4 tables, all tables have RLS enabled, Supabase client tests passing)
 
-- [ ] 0.4 **Web Hosting Setup** (Vercel deployment) - INDIVIDUAL VERIFICATION REQUIRED
-  - [ ] Automatic deployment from main branch
-  - [ ] Live web app accessible at public URL
-  - [ ] Environment variables configured for production
+- [x] 0.4 **Web Hosting Setup** (Vercel deployment) ✅ **ALL REQUIREMENTS VERIFIED**
+  - [x] Automatic deployment from main branch ✅ **VERIFIED** (Vercel connected to GitHub, deployment triggered on push)
+  - [x] Live web app accessible at public URL ✅ **VERIFIED** (https://wordplay-blond.vercel.app/ - Status: Ready)
+  - [x] Environment variables configured for production ✅ **VERIFIED** (NODE_ENV=production set in Vercel dashboard)
 
 ## Phase 1 – Core Game Engine (Cross-Platform)
 
