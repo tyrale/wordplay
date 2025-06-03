@@ -12,6 +12,10 @@
  * - Fair play (follows same validation rules as human players)
  * - Performance optimized for <50ms average latency
  * - Integration with scoring module and word validation
+ * 
+ * Note: This bot plays fairly for balanced gameplay. The validation system
+ * supports rule-breaking bots (isBot: true) for advanced difficulty modes,
+ * but this v0 Greedy bot uses standard validation (isBot: false).
  */
 
 import { getScoreForMove } from './scoring';
@@ -169,10 +173,13 @@ export function generateSubstituteMoves(currentWord: string): MoveCandidate[] {
 
 /**
  * Filters candidates to only include valid dictionary words that human players could use
+ * 
+ * Note: This v0 Greedy bot intentionally plays by human rules for fair gameplay.
+ * Future bots could use isBot: true for rule-breaking behavior if desired.
  */
 export function filterValidCandidates(candidates: MoveCandidate[]): MoveCandidate[] {
   return candidates.filter(candidate => {
-    // Bot plays by the same rules as human players - no special privileges
+    // This bot plays by the same rules as human players for balanced gameplay
     const validation = validateWord(candidate.word, { isBot: false });
     return validation.isValid && isValidDictionaryWord(candidate.word);
   });
