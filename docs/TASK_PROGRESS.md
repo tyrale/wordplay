@@ -4,13 +4,13 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 ## Phase 0 – Web Foundation & Tooling
 
-- [x] 0.1 **Init Web Project** (React + TypeScript + Vite) ✅ **VERIFIED**
+- [x] 0.1 **Init Web Project** (React + TypeScript + Vite) ✅ **ALL REQUIREMENTS VERIFIED**
 
-  - Working `npm run dev` on all major browsers
-  - ESLint + Prettier setup
-  - TypeScript compilation working
-  - Web platform builds successfully
-  - Modern development setup with hot reload
+  - [x] Working `npm run dev` on all major browsers ✅ **VERIFIED** (Server runs HTTP 200, opened in Chrome/Firefox/Safari)
+  - [x] ESLint + Prettier setup ✅ **VERIFIED** (ESLint: 0 errors, Prettier: all files formatted)
+  - [x] TypeScript compilation working ✅ **VERIFIED** (npx tsc --noEmit passes)
+  - [x] Web platform builds successfully ✅ **VERIFIED** (npm run build: 188KB bundle, 384ms)
+  - [x] Modern development setup with hot reload ✅ **VERIFIED** (HMR active with timestamp updates)
 
 - [ ] 0.2 **Basic CI/CD** via GitHub Actions
 
