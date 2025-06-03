@@ -106,3 +106,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Integration**: Full compatibility with word validation, scoring, and bot AI modules
   - **Testing**: 49/49 tests passing with comprehensive coverage of all functionality
   - **Verification Commands**: `npm test gamestate.test.ts && npm run lint && npm run build`
+
+- **Task 1.5**: Terminal Game Interface for Testing and Validation ✅ **VERIFIED**
+  - Interactive command-line game interface integrating all engine components
+  - Human vs Bot gameplay with real-time feedback and turn-based flow
+  - Comprehensive terminal UI with colors, help system, and command interface
+  - Game state display (current word, player scores, key letters, turn progression)
+  - Move input validation with detailed error messages and scoring breakdown
+  - Complete game statistics and move history tracking
+  - Performance optimized terminal experience with bot AI integration
+  - **Game Commands**: word input, key letter management, help system, detailed state display
+  - **Visual Design**: Welcome screen, colored output, formatted game state, winner celebration
+  - **Bot Integration**: Real-time bot moves with performance timing and decision feedback
+  - **Testing**: 17/17 tests passing with mocked readline interface for CI compatibility
+  - **Usage**: `./play-game.sh` or `node packages/engine/play-terminal.js` for terminal gameplay
+  - **Verification Commands**: `npm test terminal-game.test.ts && npm run lint && npm run build`
