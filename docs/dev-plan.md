@@ -1,6 +1,6 @@
 # Word‑Game Rebuild – **Cursor‑Ready Development Plan** (v2.0)
 
-> **Purpose**  Serve as a *single source of truth* for Cursor's automated development workflow. The document embeds **context**, a **chronological task breakdown**, and explicit **checkpoints** so you (the human reviewer) can validate progress after every step.  Cursor should treat each task as an atomic pull‑request that must pass the listed checklist before moving forward.
+> **Purpose** Serve as a _single source of truth_ for Cursor's automated development workflow. The document embeds **context**, a **chronological task breakdown**, and explicit **checkpoints** so you (the human reviewer) can validate progress after every step. Cursor should treat each task as an atomic pull‑request that must pass the listed checklist before moving forward.
 
 ---
 
@@ -10,21 +10,21 @@
 2. **Target Platforms** – **Web first** (desktop browsers, mobile browsers), **Native apps second** (Android, iOS after web proven).
 3. **MVP Scope** – Web-based offline vs Bot + 1‑v‑1 async multiplayer with key/locked letters, basic scoring, and color named themes to unlock.
 4. **Tech Stack** – **React + TypeScript + Vite** (web), **Shared game engine** (pure TypeScript), **Supabase backend**, **Future: React Native** (native apps after web success)
-5. **Architecture Keyword** – *"ShipHipV2"*  ← Cursor should include this word in every PR title to guarantee thread continuity.
+5. **Architecture Keyword** – _"ShipHipV2"_ ← Cursor should include this word in every PR title to guarantee thread continuity.
 
-*When Cursor is unsure about a requirement it ****must**** halt and request clarification rather than assuming.*
+_When Cursor is unsure about a requirement it \***\*must\*\*** halt and request clarification rather than assuming._
 
 ---
 
 ## 🛠️ Development Workflow Guidelines
 
-| # | Rule for Cursor                                                                         | Rationale                     |
-| - | --------------------------------------------------------------------------------------- | ----------------------------- |
-| 1 | Follow tasks **in listed order**; do **not** skip.                                      | Prevent dependency breaks.    |
-| 2 | After completing a task, run its **Checkpoint** tests (unit/E2E).                       | Ensures quality gate.         |
-| 3 | Open a PR titled `ShipHipV2: <Task Name>` containing only the files touched by that task. | Traceability + context token. |
-| 4 | Await human approval **before** starting the next task.                                 | Allows manual validation.     |
-| 5 | Update `/docs/CHANGELOG.md` with a one‑line entry per task.                             | Audit trail.                  |
+| #   | Rule for Cursor                                                                           | Rationale                     |
+| --- | ----------------------------------------------------------------------------------------- | ----------------------------- |
+| 1   | Follow tasks **in listed order**; do **not** skip.                                        | Prevent dependency breaks.    |
+| 2   | After completing a task, run its **Checkpoint** tests (unit/E2E).                         | Ensures quality gate.         |
+| 3   | Open a PR titled `ShipHipV2: <Task Name>` containing only the files touched by that task. | Traceability + context token. |
+| 4   | Await human approval **before** starting the next task.                                   | Allows manual validation.     |
+| 5   | Update `/docs/CHANGELOG.md` with a one‑line entry per task.                               | Audit trail.                  |
 
 Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking each task `✅` when merged.
 
@@ -34,21 +34,21 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 
 ### Phase 0 – Web Foundation & Tooling
 
-|  ID  | Task                                              | Deliverable                                                     | Checkpoint (human validates…)                   |
-| ---- | ------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------- |
-|  0.1 | **Init Web Project** (React + TypeScript + Vite)   | Working `npm run dev` on all major browsers; ESLint + Prettier setup | App boots to blank screen in Chrome, Firefox, Safari.    |
-|  0.2 | **Basic CI/CD** via GitHub Actions          | CI runs jest + eslint; builds production bundle               | CI passes on PR; production build deployable.        |
-|  0.3 | **Supabase Project Bootstrap** (SQL schema & RLS) | `supabase/` migrations, local .env.sample                       | `supabase db diff` shows no pending migrations. |
-|  0.4 | **Web Hosting Setup** (Vercel deployment) | Automatic deployment from main branch | Live web app accessible at public URL. |
+| ID  | Task                                              | Deliverable                                                          | Checkpoint (human validates…)                         |
+| --- | ------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------- |
+| 0.1 | **Init Web Project** (React + TypeScript + Vite)  | Working `npm run dev` on all major browsers; ESLint + Prettier setup | App boots to blank screen in Chrome, Firefox, Safari. |
+| 0.2 | **Basic CI/CD** via GitHub Actions                | CI runs jest + eslint; builds production bundle                      | CI passes on PR; production build deployable.         |
+| 0.3 | **Supabase Project Bootstrap** (SQL schema & RLS) | `supabase/` migrations, local .env.sample                            | `supabase db diff` shows no pending migrations.       |
+| 0.4 | **Web Hosting Setup** (Vercel deployment)         | Automatic deployment from main branch                                | Live web app accessible at public URL.                |
 
 ### Phase 1 – Core Game Engine (Cross-Platform)
 
-|  ID  | Task                        | Deliverable                                                         | Checkpoint                                                                  |
-| ---- | --------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-|  1.1 | **Word Validation Service** | `packages/engine/dictionary.ts` w/ ENABLE+slang+filter merge script | Jest: `validateWord('BRUH') === true`; bad‑word replaced w/ censor symbols. |
-|  1.2 | **Scoring Module**          | Pure‑fn `scoreTurn(prevWord, newWord, actionsUsed, keyUsed)`        | Unit tests for examples in Appendix A all pass.                             |
-|  1.3 | **Bot AI v0 (Greedy)**      | `packages/ai/bot.ts` choosing highest scoring legal move            | Simulate 100 turns w/out crash; average latency <50 ms.                     |
-|  1.4 | **Local GameState Manager** | State management for words, key/locked letters                    | Jest: state manager passes add/remove/move scenarios.                             |
+| ID  | Task                        | Deliverable                                                         | Checkpoint                                                                  |
+| --- | --------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1.1 | **Word Validation Service** | `packages/engine/dictionary.ts` w/ ENABLE+slang+filter merge script | Jest: `validateWord('BRUH') === true`; bad‑word replaced w/ censor symbols. |
+| 1.2 | **Scoring Module**          | Pure‑fn `scoreTurn(prevWord, newWord, actionsUsed, keyUsed)`        | Unit tests for examples in Appendix A all pass.                             |
+| 1.3 | **Bot AI v0 (Greedy)**      | `packages/ai/bot.ts` choosing highest scoring legal move            | Simulate 100 turns w/out crash; average latency <50 ms.                     |
+| 1.4 | **Local GameState Manager** | State management for words, key/locked letters                      | Jest: state manager passes add/remove/move scenarios.                       |
 
 ### Phase 2 – Web UI Foundation
 
@@ -80,7 +80,7 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 
 | 6.1 | **PWA Features** | Service worker, offline play, install prompt | Game works offline; can be "installed" on mobile. |
 | 6.2 | **Web Performance Optimization** | Bundle size < 1MB, loading < 3s | Lighthouse score > 90 on all metrics. |
-| 6.3 | **Analytics Integration** | PostHog events: session\_start, turn\_commit, unlock | Dashboard shows live web events. |
+| 6.3 | **Analytics Integration** | PostHog events: session_start, turn_commit, unlock | Dashboard shows live web events. |
 | 6.4 | **Production Launch** | Custom domain, monitoring, error tracking | Web game live at production URL. |
 
 ### Phase 7 – Monetization & Live‑Ops (Web)
@@ -100,30 +100,31 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 
 ## 🧩 Mechanism to Keep Cursor On Track
 
-* Cursor *must* reference `docs/TASK_PROGRESS.md` at the start of every run.  If a task is incomplete, resume; if completed, proceed to the next.
-* Cursor should read **only** the relevant spec sections to minimize token usage.
-* If external clarification is required, open an issue titled `ShipHipV2: Clarification Needed – <topic>`.
-* Cursor should tag commits with Conventional Commits (`feat:`, `fix:`, `chore:`) for semantic‑release auto‑versioning.
+- Cursor _must_ reference `docs/TASK_PROGRESS.md` at the start of every run. If a task is incomplete, resume; if completed, proceed to the next.
+- Cursor should read **only** the relevant spec sections to minimize token usage.
+- If external clarification is required, open an issue titled `ShipHipV2: Clarification Needed – <topic>`.
+- Cursor should tag commits with Conventional Commits (`feat:`, `fix:`, `chore:`) for semantic‑release auto‑versioning.
 
 ---
 
 ## 📂 Appendix A – Quick‑Ref Rules (for tests)
 
-* **Actions per turn:** ≤1 Add, ≤1 Remove, ≤1 Move (swap counts as Add+Remove but no move).
-* **Key Letter Bonus:** +1 pt if key letter present.
-* **Locked Letter:** prev key letter; cannot be removed in next turn only.
-* **Score Target:** 100 pts default.
-* **Turn Timeout:** 48 h.
+- **Actions per turn:** ≤1 Add, ≤1 Remove, ≤1 Move (swap counts as Add+Remove but no move).
+- **Key Letter Bonus:** +1 pt if key letter present.
+- **Locked Letter:** prev key letter; cannot be removed in next turn only.
+- **Score Target:** 100 pts default.
+- **Turn Timeout:** 48 h.
 
 ## 🎨 Appendix B – Visual Design Reference (v0.1)
 
 > **Goal:** Provide concrete UI/UX guidelines so Cursor (and human developers) can implement screens that match the legacy iOS look‑and‑feel without pixel‑perfect mocks. **Now optimized for web-first with responsive design.**
 
-### 1  Layout Anatomy (Responsive Design)
+### 1 Layout Anatomy (Responsive Design)
 
 **Desktop (1024px+)**
+
 ```
-┌─────────────────────────────────────────┐  
+┌─────────────────────────────────────────┐
 │  ╭──── Word Trail (HStack)─────────────╮│  ← previous words, small caps
 │  │ PLAY • LAPS • SLIP • SLIPS • ...   ││
 │  ╰─────────────────────────────────────╯│
@@ -139,15 +140,16 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 ```
 
 **Mobile (320px-768px)**
+
 ```
-┌─────────────────────────────┐  
-│  ╭─ Word Trail (wrap)──────╮│  
+┌─────────────────────────────┐
+│  ╭─ Word Trail (wrap)──────╮│
 │  │ PLAY • LAPS • SLIP •   ││
 │  │ SLIPS • ...            ││
 │  ╰───────────────────────╯│
 │                             │  ↓ 16 px gap
 │        SHIP<span>H</span>   │  ← Current Word, 36 pt
-│                             │  
+│                             │
 │  [ − ] [ ＋ ] [ ✓ ] [2+1]   │  ← Compact buttons, 32 px
 │                             │  ↓ 20 px gap
 │   5 × 6 Letter Grid         │  ← 40 × 40 px cells, 3 px gap
@@ -156,7 +158,7 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 └─────────────────────────────┘
 ```
 
-### 2  Colour Palette  (`oklch` → hex fallback)
+### 2 Colour Palette (`oklch` → hex fallback)
 
 | Token        | oklch                     | HEX       | Usage                 |
 | ------------ | ------------------------- | --------- | --------------------- |
@@ -168,7 +170,7 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 
 `c-accent` operates at 90 % opacity for hover/press states.
 
-### 3  Typography (Responsive)
+### 3 Typography (Responsive)
 
 | Element      | Font            | Weight | Desktop Size | Mobile Size |
 | ------------ | --------------- | ------ | ------------ | ----------- |
@@ -176,7 +178,7 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 | Word Trail   | Inter Condensed | 600    | 18 pt        | 14 pt       |
 | Buttons      | Inter           | 500    | 16 pt        | 14 pt       |
 
-### 4  Icons (Web Optimized)
+### 4 Icons (Web Optimized)
 
 | Name    | Meaning       | Web Icon (Lucide) | Hover State |
 | ------- | ------------- | ----------------- | ----------- |
@@ -191,21 +193,21 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 
 All icons with CSS hover animations, 1.5× stroke width.
 
-### 5  Component Behaviour Notes (Web-Specific)
+### 5 Component Behaviour Notes (Web-Specific)
 
 1. **Letter Grid Cell States**
-   *Normal* → `cursor: pointer`, hover shows border
-   *Selected* → white letter on `c-accent`, `cursor: grab`
-   *Key Letter* → `c-accent` border + glow effect
-   *Locked* → `cursor: not-allowed` + `c-lock` badge
+   _Normal_ → `cursor: pointer`, hover shows border
+   _Selected_ → white letter on `c-accent`, `cursor: grab`
+   _Key Letter_ → `c-accent` border + glow effect
+   _Locked_ → `cursor: not-allowed` + `c-lock` badge
 2. **Responsive** – Grid scales from 40px (mobile) to 56px (desktop)
 3. **Web Animations** – CSS transitions, hover effects, focus states
 4. **Accessibility** – Keyboard navigation, screen reader support, WCAG AA
 
-*Sample Test Case*
+_Sample Test Case_
 
 ```ts
-expect(scoreTurn('SHIP', 'HIPS', {move:true}, true)).toBe(2);
+expect(scoreTurn('SHIP', 'HIPS', { move: true }, true)).toBe(2);
 ```
 
 _For the automated rule set Cursor follows, see **.cursor/rules/wordgame-gpt-rules.mdc**._

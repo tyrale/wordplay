@@ -1,41 +1,54 @@
-# Wordplay
+# React + TypeScript + Vite
 
-A turn-based word-building duel game where players compete by creating words with special key and locked letters, featuring both offline bot play and online multiplayer modes.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Web Development Setup
+Currently, two official plugins are available:
 
-This project is built with:
-- **React 19** with TypeScript
-- **Vite** for fast development and building
-- **ESLint** for code linting
-- **Prettier** for code formatting
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-### Development Commands
+## Expanding the ESLint configuration
 
-```bash
-# Install dependencies
-npm install
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Run linting
-npm run lint
-
-# Format code
-npm run format
-
-# Check formatting
-npm run format:check
+```js
+export default tseslint.config({
+  extends: [
+    // Remove ...tseslint.configs.recommended and replace with this
+    ...tseslint.configs.recommendedTypeChecked,
+    // Alternatively, use this for stricter rules
+    ...tseslint.configs.strictTypeChecked,
+    // Optionally, add this for stylistic rules
+    ...tseslint.configs.stylisticTypeChecked,
+  ],
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+});
 ```
 
-### Development Server
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-The development server runs on `http://localhost:5173` with hot reload enabled.
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x';
+import reactDom from 'eslint-plugin-react-dom';
 
-## Project Documentation
-
-See [Development Plan](docs/dev-plan.md) for detailed project roadmap and implementation details.
+export default tseslint.config({
+  plugins: {
+    // Add the react-x and react-dom plugins
+    'react-x': reactX,
+    'react-dom': reactDom,
+  },
+  rules: {
+    // other rules...
+    // Enable its recommended typescript rules
+    ...reactX.configs['recommended-typescript'].rules,
+    ...reactDom.configs.recommended.rules,
+  },
+});
+```

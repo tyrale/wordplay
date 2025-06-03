@@ -4,7 +4,8 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 ## Phase 0 – Web Foundation & Tooling
 
-- [ ] 0.1 **Init Web Project** (React + TypeScript + Vite)
+- [x] 0.1 **Init Web Project** (React + TypeScript + Vite) ✅
+
   - Working `npm run dev` on all major browsers
   - ESLint + Prettier setup
   - TypeScript compilation working
@@ -12,12 +13,14 @@ This document tracks the progress of tasks from the development plan. Each task 
   - Modern development setup with hot reload
 
 - [ ] 0.2 **Basic CI/CD** via GitHub Actions
+
   - CI runs jest + eslint
   - Builds production bundle
   - CI passes on PR; production build deployable
   - Automated testing and build verification
 
 - [ ] 0.3 **Supabase Project Bootstrap** (SQL schema & RLS)
+
   - Supabase client dependencies installation
   - SQL schema creation with users, games, game_players, turns tables and RLS policies
   - Environment variables configuration (.env.example) with Supabase settings
@@ -34,6 +37,7 @@ This document tracks the progress of tasks from the development plan. Each task 
 ## Phase 1 – Core Game Engine (Cross-Platform)
 
 - [ ] 1.1 **Word Validation Service**
+
   - Dictionary service with ENABLE word list and slang support
   - Word validation function with length checks (minimum 3 letters)
   - Character validation (alphabetic only, rejects numbers/symbols for humans)
@@ -46,6 +50,7 @@ This document tracks the progress of tasks from the development plan. Each task 
   - Jest unit tests for all validation scenarios
 
 - [ ] 1.2 **Scoring Module**
+
   - Core scoring rules implementation (+1 point for add/remove/rearrange/key letter)
   - Letter addition/removal/rearrangement scoring at any position
   - Key letter bonus system (+1 for using new key letter)
@@ -56,6 +61,7 @@ This document tracks the progress of tasks from the development plan. Each task 
   - Pure TypeScript module with comprehensive unit tests
 
 - [ ] 1.3 **Bot AI v0 (Greedy)**
+
   - Greedy strategy implementation (chooses highest scoring legal moves)
   - Move generation for add/remove/rearrange operations
   - Key letter prioritization and bonus scoring integration
@@ -65,7 +71,7 @@ This document tracks the progress of tasks from the development plan. Each task 
   - Integration with scoring module and word validation system
   - Pure TypeScript module with comprehensive testing
 
-- [ ] 1.4 **Local GameState Manager**  
+- [ ] 1.4 **Local GameState Manager**
   - Complete game state management implementation
   - Word state management (setWord with string handling)
   - Key letters array management (add/remove operations)
@@ -78,18 +84,21 @@ This document tracks the progress of tasks from the development plan. Each task 
 ## Phase 2 – Web UI Foundation
 
 - [ ] 2.1 **React Component Library**
+
   - Reusable game components with TypeScript
   - Component design system for consistent UI
   - Storybook setup for component development
   - Proper TypeScript interfaces and props
 
 - [ ] 2.2 **Alphabet Grid & Word Display**
+
   - Interactive letter grid with click/drag functionality
   - Word trail component showing game history
   - Visual feedback for letter states (normal/key/locked)
   - Responsive design for different screen sizes
 
 - [ ] 2.3 **Single‑Player Web Game**
+
   - Complete offline game vs bot in browser
   - Game engine integration (validation, scoring, bot AI)
   - Full 10-turn game flow with score tracking
@@ -104,18 +113,21 @@ This document tracks the progress of tasks from the development plan. Each task 
 ## Phase 3 – Online Multiplayer (Web)
 
 - [ ] 3.1 **Auth Flow (Supabase EmailLink)**
+
   - `/auth` pages for signup/login
   - Session persistence in browser
   - User profile management
   - Signup/login works in browser
 
 - [ ] 3.2 **Game CRUD API**
+
   - `supabase` RPC + hooks: create/join, list games
   - API tests return 200
   - RLS prevents cross‑access
   - Game matching and lobby system
 
 - [ ] 3.3 **Realtime Turn Sync**
+
   - Subscriptions push opponent moves
   - 48‑h timer job for turn timeouts
   - Two browser tabs stay in sync under 1 s
@@ -130,12 +142,14 @@ This document tracks the progress of tasks from the development plan. Each task 
 ## Phase 4 – Themes & Unlocks (Web)
 
 - [ ] 4.1 **Unlock Framework**
+
   - Server table + client hook
   - Feature flag per unlock
   - Unit: unlock fires when word == "BROWN"
   - Achievement system integration
 
 - [ ] 4.2 **Theme Provider + Brown Theme**
+
   - Context to swap colors
   - Toggle in settings menu
   - Selecting theme re‑paints grid instantly
@@ -149,11 +163,13 @@ This document tracks the progress of tasks from the development plan. Each task 
 ## Phase 5 – Web Polish & Accessibility
 
 - [ ] 5.1 **Colour‑blind Palettes**
+
   - Two alt palettes w/ settings toggle
   - WCAG contrast compliance
   - Accessibility testing tools integration
 
 - [ ] 5.2 **Web Audio & Haptics**
+
   - Click sounds for game actions
   - Vibration API for mobile browsers
   - Audio settings and preferences
@@ -166,19 +182,22 @@ This document tracks the progress of tasks from the development plan. Each task 
 ## Phase 6 – Web Release Prep
 
 - [ ] 6.1 **PWA Features**
+
   - Service worker for offline play
   - App install prompt for mobile
   - Offline game functionality
   - Progressive web app manifest
 
 - [ ] 6.2 **Web Performance Optimization**
+
   - Bundle size < 1MB
   - Loading time < 3s
   - Lighthouse score > 90 on all metrics
   - Code splitting and lazy loading
 
 - [ ] 6.3 **Analytics Integration**
-  - PostHog events: session\_start, turn\_commit, unlock
+
+  - PostHog events: session_start, turn_commit, unlock
   - Dashboard shows live web events
   - User behavior tracking
   - Performance monitoring
@@ -192,12 +211,14 @@ This document tracks the progress of tasks from the development plan. Each task 
 ## Phase 7 – Monetization & Live‑Ops (Web)
 
 - [ ] 7.1 **Web Payment Integration**
+
   - Stripe/PayPal for theme purchases
   - Sandbox purchase testing
   - Payment flow integration
   - Purchase restoration system
 
 - [ ] 7.2 **Global Leaderboard**
+
   - Supabase function ranking by ELO
   - Top‑100 endpoint returns ≤ 200 ms
   - Leaderboard UI integration
@@ -212,18 +233,21 @@ This document tracks the progress of tasks from the development plan. Each task 
 ## Phase 8 – Native Mobile Expansion (After Web Success)
 
 - [ ] 8.1 **React Native Setup**
+
   - Expo/RN app using shared game engine
   - Native app boots with web game logic
   - Cross-platform code sharing
   - Development environment setup
 
 - [ ] 8.2 **Native UI Adaptation**
+
   - Platform-specific components and navigation
   - Native feel while using same game engine
   - iOS and Android design guidelines
   - Native performance optimization
 
 - [ ] 8.3 **App Store Optimization**
+
   - Icons, screenshots, store listings
   - Apps pass review on Google Play and App Store
   - Marketing materials and descriptions
