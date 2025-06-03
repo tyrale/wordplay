@@ -4,302 +4,241 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 ## Phase 0 – Web Foundation & Tooling
 
-- [✅] 0.1 **Init Web Project** (React + TypeScript + Vite)
+- [ ] 0.1 **Init Web Project** (React + TypeScript + Vite)
   - Working `npm run dev` on all major browsers
   - ESLint + Prettier setup
   - TypeScript compilation working
   - Web platform builds successfully
   - Modern development setup with hot reload
 
-## Phase 0 – Repo & Tooling
+- [ ] 0.2 **Basic CI/CD** via GitHub Actions
+  - CI runs jest + eslint
+  - Builds production bundle
+  - CI passes on PR; production build deployable
+  - Automated testing and build verification
 
-- [✅] 0.1 **Init Monorepo** (Expo managed workflow w/ TS)
-  - ✅ **VERIFIED**: Expo Router file-based routing implemented (`app/_layout.tsx`, `app/index.tsx`, `app/game.tsx`)
-  - ✅ **VERIFIED**: Modern interface implemented (animated word demo, platform detection, progress cards)
-  - ✅ **VERIFIED**: TypeScript compilation working across all packages
-  - ✅ **VERIFIED**: Web platform builds successfully (`npx expo export --platform web` → 2.58 MB bundle)
-  - ✅ **VERIFIED**: Metro bundler working with monorepo configuration  
-  - ✅ **VERIFIED**: Cross-platform support configured (iOS, Android, Web platforms)
-  - ✅ **TECHNICAL FIXES**: Fixed missing metro dependencies, expo-linking, and dependency version conflicts
-  - 📝 **REQUIRES SETUP**: iOS/Android simulator testing requires Xcode/Android SDK installation
+- [ ] 0.3 **Supabase Project Bootstrap** (SQL schema & RLS)
+  - Supabase client dependencies installation
+  - SQL schema creation with users, games, game_players, turns tables and RLS policies
+  - Environment variables configuration (.env.example) with Supabase settings
+  - Local Supabase environment setup
+  - Database migration creation and application
+  - `supabase db diff` shows no schema differences
+  - RLS policies implementation and testing
 
-- [✅] 0.2 **Basic CI/CD** via GitHub Actions + EAS
-  - ✅ **VERIFIED**: CI runs jest + eslint (39/39 tests passing, 4/4 test suites, 14 ESLint warnings/0 errors)
-  - ✅ **VERIFIED**: EAS builds dev .apk / .ipa (GitHub Actions workflow integrated with Android/iOS builds)
-  - ✅ **VERIFIED**: CI passes on PR; artifacts downloadable (via Expo dashboard after build completion)
-  - ✅ **VERIFIED**: EAS project configured with EXPO_TOKEN (Project ID: f1997f64-edd5-43a8-93c1-0533b5eee77a)
-  - ✅ **VERIFIED**: Build profiles validated for development (APK) and production (app-bundle)
-  - ✅ **TECHNICAL FIXES**: Fixed bad-words Filter mock, ESLint v9 migration, Jest configuration, missing expo-dev-client dependency, EAS configuration, bundle identifiers
+- [ ] 0.4 **Web Hosting Setup** (Vercel deployment)
+  - Automatic deployment from main branch
+  - Live web app accessible at public URL
+  - Environment variables configured for production
 
-- [✅] 0.3 **Supabase Project Bootstrap** (SQL schema & RLS) - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: Supabase client dependencies installed (@supabase/supabase-js, async-storage, url-polyfill)
-  - ✅ **VERIFIED**: Supabase client configuration created (lib/supabase.ts) with React Native setup
-  - ✅ **VERIFIED**: SQL schema exists (130 lines) with users, games, game_players, turns tables and RLS policies
-  - ✅ **VERIFIED**: Environment variables configuration (.env.example) with Supabase settings
-  - ✅ **VERIFIED**: All 39 tests passing after Supabase integration
-  - ✅ **VERIFIED**: Docker Desktop working properly (version 28.1.1)
-  - ✅ **VERIFIED**: Local Supabase environment running successfully (all services operational)
-  - ✅ **VERIFIED**: Database migration applied successfully (4 tables created: users, games, game_players, turns)
-  - ✅ **VERIFIED**: `supabase db diff` shows no schema differences (migration matches database)
-  - ✅ **VERIFIED**: RLS policies active and properly configured for all tables
-  - 📊 **ENDPOINTS CONFIRMED**: API (54321), Database (54322), Studio (54323), Email (54324)
+## Phase 1 – Core Game Engine (Cross-Platform)
 
-## Phase 1 – Core Game Engine (Offline)
+- [ ] 1.1 **Word Validation Service**
+  - Dictionary service with ENABLE word list and slang support
+  - Word validation function with length checks (minimum 3 letters)
+  - Character validation (alphabetic only, rejects numbers/symbols for humans)
+  - Length change validation (max ±1 letter difference between turns)
+  - Dictionary lookup integration (rejects unknown words)
+  - Bot rule-breaking capabilities (bots can bypass validation rules)
+  - Case insensitivity handling
+  - Profanity filtering with appropriate word checking
+  - Performance optimization targets
+  - Jest unit tests for all validation scenarios
 
-- [✅] 1.1 **Word Validation Service** - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: Dictionary service with ENABLE (172,724 words) and slang (6,414 words) support
-  - ✅ **VERIFIED**: Word validation function with length checks (minimum 3 letters enforced)
-  - ✅ **VERIFIED**: Character validation (alphabetic only, rejects numbers/symbols for humans)
-  - ✅ **VERIFIED**: Length change validation (max ±1 letter difference between turns)
-  - ✅ **VERIFIED**: Dictionary lookup integration (rejects unknown words)
-  - ✅ **VERIFIED**: Bot rule-breaking capabilities (bots can bypass all validation rules)
-  - ✅ **VERIFIED**: Case insensitivity (hello/Hello/HELLO all accepted)
-  - ✅ **VERIFIED**: Profanity filtering with appropriate word checking
-  - ✅ **VERIFIED**: Leetspeak number detection and display formatting (H3LL0 → H[3]LL[0])
-  - ✅ **VERIFIED**: Performance optimized (300 validations in <1ms)
-  - ✅ **VERIFIED**: Integration with scoring system and bot AI
-  - 📊 **METRICS**: 7/7 comprehensive verification tests passing, 53.01% code coverage
+- [ ] 1.2 **Scoring Module**
+  - Core scoring rules implementation (+1 point for add/remove/rearrange/key letter)
+  - Letter addition/removal/rearrangement scoring at any position
+  - Key letter bonus system (+1 for using new key letter)
+  - Complex action combinations (multiple actions + key letter)
+  - Score calculation for examples: CAT→CATS(1pt), CAT→COAT(1pt), CAT→BAT+key B(3pts)
+  - Performance optimization
+  - Edge case handling (empty actions, unused key letters)
+  - Pure TypeScript module with comprehensive unit tests
 
-- [✅] 1.2 **Scoring Module** - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: Core scoring rules implemented (+1 point for add/remove/rearrange/key letter)
-  - ✅ **VERIFIED**: Letter addition scoring at any position (end/middle/start) working
-  - ✅ **VERIFIED**: Letter removal scoring from any position (end/middle/start) working  
-  - ✅ **VERIFIED**: Letter rearrangement scoring (single and multiple rearrangements)
-  - ✅ **VERIFIED**: Key letter bonus system (+1 for using new key letter)
-  - ✅ **VERIFIED**: Complex action combinations (multiple actions + key letter)
-  - ✅ **VERIFIED**: All claimed examples working: CAT→CATS(1pt), CAT→COAT(1pt), CAT→BAT+key B(3pts), CAT→TACE+key E(3pts)
-  - ✅ **VERIFIED**: Performance optimized (1000 calculations in 1ms)
-  - ✅ **VERIFIED**: Edge cases handled (empty actions, unused key letters)
-  - ✅ **VERIFIED**: Integration with TurnAction interface and type safety
-  - 📊 **METRICS**: 15/15 comprehensive verification tests passing, 100% scoring module code coverage
+- [ ] 1.3 **Bot AI v0 (Greedy)**
+  - Greedy strategy implementation (chooses highest scoring legal moves)
+  - Move generation for add/remove/rearrange operations
+  - Key letter prioritization and bonus scoring integration
+  - 100-turn simulation capability without crashes
+  - Performance targets (average latency <50ms)
+  - Bot privileges system (can make moves humans cannot)
+  - Integration with scoring module and word validation system
+  - Pure TypeScript module with comprehensive testing
 
-- [✅] 1.3 **Bot AI v0 (Greedy)** - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: Greedy strategy implemented (chooses highest scoring legal moves)
-  - ✅ **VERIFIED**: Move generation for add/remove/rearrange operations (96/6/18 moves respectively)
-  - ✅ **VERIFIED**: Key letter prioritization and bonus scoring integration
-  - ✅ **VERIFIED**: 100-turn simulation completed without crashes (final word: "WTA")
-  - ✅ **VERIFIED**: Performance exceptional - average latency 0.17ms (297x better than 50ms target)
-  - ✅ **VERIFIED**: Bot privileges system working (can make moves humans cannot)
-  - ✅ **VERIFIED**: Integration with scoring module and word validation system
-  - ✅ **VERIFIED**: Edge case handling (short words, long words, difficult scenarios)
-  - ✅ **VERIFIED**: Fallback handling for impossible scenarios without crashes
-  - ✅ **VERIFIED**: Complex multi-action moves (remove + add + rearrange + key bonus = 4 points)
-  - ✅ **VERIFIED**: Score optimization consistently achieving maximum possible scores
-  - 📊 **METRICS**: 11/11 comprehensive verification tests passing, 92.75% AI code coverage
+- [ ] 1.4 **Local GameState Manager**  
+  - Complete game state management implementation
+  - Word state management (setWord with string handling)
+  - Key letters array management (add/remove operations)
+  - Locked letters array management (add/remove operations)
+  - Letter movement system (complex rearrangements)
+  - Reset functionality and edge case handling
+  - Performance optimization
+  - Web-compatible state management solution (not Zustand)
 
-- [✅] 1.4 **Local GameState Reducer** - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: Zustand slice implemented for complete game state management
-  - ✅ **VERIFIED**: Word state management (setWord with string handling)
-  - ✅ **VERIFIED**: Key letters array management (add/remove operations)
-  - ✅ **VERIFIED**: Locked letters array management (add/remove operations)
-  - ✅ **VERIFIED**: Letter movement system (complex rearrangements: SHIP→HSIP→IHSP→HISP→HIPS)
-  - ✅ **VERIFIED**: Reset functionality with new values and default empty arrays
-  - ✅ **VERIFIED**: Edge cases handled (single letters, two letters, same position moves)
-  - ✅ **VERIFIED**: State persistence across multiple operations
-  - ✅ **VERIFIED**: Performance exceptional - 100 operations in 0.89ms (56x better than 50ms target)
-  - ✅ **VERIFIED**: Game integration scenarios (new game, rearrange, key/lock, update, clear)
-  - ✅ **VERIFIED**: Multi-player support (player transitions, independent letter management)
-  - 📊 **METRICS**: 13/13 comprehensive verification tests passing, 100% gameState code coverage
+## Phase 2 – Web UI Foundation
 
-- [✅] 1.5 **Integrate Full Dictionary Word List** - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: ENABLE word list integrated (172,724+ words from Enhanced North American Benchmark Lexicon)
-  - ✅ **VERIFIED**: Slang dictionary integrated (6,429+ modern terms with definitions)
-  - ✅ **VERIFIED**: Real dictionary data used in all validation and game functions
-  - ✅ **VERIFIED**: Build process optimized (2.9MB raw → 971KB bundled with compression)
-  - ✅ **VERIFIED**: Performance benchmarks passed (3,000 lookups <100ms)
-  - ✅ **VERIFIED**: Comprehensive test suite (22/22 tests passing)
-  - ✅ **VERIFIED**: Full functionality: validation, anagrams, random words, length filtering
-  - ✅ **VERIFIED**: Admin/community word addition system implemented
-  - ✅ **VERIFIED**: Edge case handling and fallback systems working
-  - 📊 **METRICS**: 83.13% code coverage, all performance tests passing
+- [ ] 2.1 **React Component Library**
+  - Reusable game components with TypeScript
+  - Component design system for consistent UI
+  - Storybook setup for component development
+  - Proper TypeScript interfaces and props
 
-## Phase 2 – UI Foundation
+- [ ] 2.2 **Alphabet Grid & Word Display**
+  - Interactive letter grid with click/drag functionality
+  - Word trail component showing game history
+  - Visual feedback for letter states (normal/key/locked)
+  - Responsive design for different screen sizes
 
-- [✅] 2.1 **Modern App Architecture** - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: Expo Router file-based routing implemented (app/_layout.tsx, app/index.tsx, app/game.tsx)
-  - ✅ **VERIFIED**: New React Native Architecture enabled (newArchEnabled: true in app.json)
-  - ✅ **VERIFIED**: TypeScript integration working (strict mode, modern JSX transform)
-  - ✅ **VERIFIED**: Cross-platform support configured (iOS, Android, Web platforms)
-  - ✅ **VERIFIED**: Metro configuration optimized for monorepo and New Architecture
-  - ✅ **VERIFIED**: Web platform build working (971KB bundle, successful export)
-  - ✅ **VERIFIED**: Development scripts and debugging setup functional
-  - ✅ **VERIFIED**: Asset configuration and platform-specific optimizations
-  - ✅ **VERIFIED**: Monorepo package resolution and cross-package imports
-  - ✅ **VERIFIED**: Performance optimizations and source map support
-  - 📊 **METRICS**: 15/15 comprehensive verification tests passing, all architecture components validated
+- [ ] 2.3 **Single‑Player Web Game**
+  - Complete offline game vs bot in browser
+  - Game engine integration (validation, scoring, bot AI)
+  - Full 10-turn game flow with score tracking
+  - Winner determination and game completion
 
-- [✅] 2.2 **UI Component Integration** - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: AlphabetGrid component integrated with interactive letter tap and drag functionality
-  - ✅ **VERIFIED**: WordTrail component displays game history progression smoothly
-  - ✅ **VERIFIED**: ActionBar component provides dynamic game controls with state validation
-  - ✅ **VERIFIED**: Game engine integration complete (validateWord, scoreTurn, chooseBestMove)
-  - ✅ **VERIFIED**: Interactive alphabet grid with letter selection state management
-  - ✅ **VERIFIED**: Touch interactions and gesture handling (tap, drag to/from word area)
-  - ✅ **VERIFIED**: Cross-platform compatibility (React Native base, platform-agnostic styling)
-  - ✅ **VERIFIED**: Performance optimization (useCallback handlers, animated styles)
-  - ✅ **VERIFIED**: Responsive design with flexible layouts and scrollable content
-  - ✅ **VERIFIED**: TypeScript integration with proper component interfaces
-  - ✅ **VERIFIED**: Advanced UI features (gesture handlers, animations, visual feedback)
-  - ✅ **VERIFIED**: Design consistency with modern styling patterns
-  - 📊 **METRICS**: 17/17 comprehensive verification tests passing, full UI integration functional
+- [ ] 2.4 **Responsive Design**
+  - Works on desktop browsers (Chrome, Firefox, Safari)
+  - Works on mobile browsers (responsive layout)
+  - Touch-friendly interface for mobile
+  - Keyboard navigation for desktop
 
-- [✅] 2.3 **React 19 Testing Infrastructure Modernization**
-  - [ ] Replace deprecated react-test-renderer with modern alternatives
-  - [ ] Fix React Native Web context issues for testing environment
-  - [ ] Update UI component tests for React 19 compatibility
-  - [ ] Resolve React Native Gesture Handler testing integration
-  - [ ] Verify all UI components render correctly with New Architecture
+## Phase 3 – Online Multiplayer (Web)
 
-- [✅] 2.4 **Single-Player Screen** - **COMPLETE AND VERIFIED**
-  - ✅ **VERIFIED**: Full game engine integration (validateWord, scoreTurn, useGameState)
-  - ✅ **VERIFIED**: Bot AI integration with chooseBestMove function and performance (<0.5ms)
-  - ✅ **VERIFIED**: Complete 10-turn game flow with human vs bot gameplay
-  - ✅ **VERIFIED**: Real-time score tracking and winner determination
-  - ✅ **VERIFIED**: Game state management with Zustand store integration
-  - ✅ **VERIFIED**: Word input system with validation and error handling
-  - ✅ **VERIFIED**: Turn-based alternating gameplay (human → bot → human...)
-  - ✅ **VERIFIED**: Offline functionality with no network dependencies
-  - ✅ **VERIFIED**: Game completion detection and winner announcement
-  - ✅ **VERIFIED**: Cross-platform UI with responsive design and animations
-  - ✅ **VERIFIED**: Key letter bonus system integration and display
-  - ✅ **VERIFIED**: Game history tracking with move details and scores
-  - ✅ **VERIFIED**: Edge case handling and error resilience
-  - 📊 **METRICS**: 13/13 comprehensive verification tests passing, fully functional gameplay
+- [ ] 3.1 **Auth Flow (Supabase EmailLink)**
+  - `/auth` pages for signup/login
+  - Session persistence in browser
+  - User profile management
+  - Signup/login works in browser
 
-## Phase 3 – Online Multiplayer
-
-- [❌] 3.1 **Auth Flow (Supabase EmailLink)**
-  - `/auth` screens, session persistence
-  - Signup/login works on device
-
-- [❌] 3.2 **Game CRUD API**
+- [ ] 3.2 **Game CRUD API**
   - `supabase` RPC + hooks: create/join, list games
-  - Postman returns 200
-  - RLS prevents cross-access
+  - API tests return 200
+  - RLS prevents cross‑access
+  - Game matching and lobby system
 
-- [❌] 3.3 **Realtime Turn Sync**
+- [ ] 3.3 **Realtime Turn Sync**
   - Subscriptions push opponent moves
-  - 48-h timer job
-  - Two devices stay in sync under 1 s
+  - 48‑h timer job for turn timeouts
+  - Two browser tabs stay in sync under 1 s
+  - Real-time game state synchronization
 
-- [❌] 3.4 **Avatar & Score HUD**
+- [ ] 3.4 **Avatar & Score HUD**
   - Upload to Supabase Storage
-  - display top-corners
+  - Display in game UI
   - PNG uploads within 100 kB
-  - shows in game
+  - User profile integration
 
-## Phase 4 – Themes & Unlocks
+## Phase 4 – Themes & Unlocks (Web)
 
-- [❌] 4.1 **Unlock Framework**
+- [ ] 4.1 **Unlock Framework**
   - Server table + client hook
-  - feature flag per unlock
+  - Feature flag per unlock
   - Unit: unlock fires when word == "BROWN"
+  - Achievement system integration
 
-- [❌] 4.2 **Theme Provider + Brown Theme**
+- [ ] 4.2 **Theme Provider + Brown Theme**
   - Context to swap colors
-  - toggle in menu
-  - Selecting theme re-paints grid instantly
+  - Toggle in settings menu
+  - Selecting theme re‑paints grid instantly
+  - Theme persistence across sessions
 
-- [❌] 4.3 **Six-Letter Attribute**
+- [ ] 4.3 **Six‑Letter Attribute**
   - Config to set initial word length 6
-  - New game w/ attribute starts with 6-letter seed
+  - New game w/ attribute starts with 6‑letter seed
+  - Game difficulty variations
 
-## Phase 5 – Polish & Accessibility
+## Phase 5 – Web Polish & Accessibility
 
-- [❌] 5.1 **Colour-blind Palettes**
+- [ ] 5.1 **Colour‑blind Palettes**
   - Two alt palettes w/ settings toggle
-  - Sim Daltonism test passes WCAG contrast
+  - WCAG contrast compliance
+  - Accessibility testing tools integration
 
-- [❌] 5.2 **Haptics & Sounds**
-  - Expo Haptics + simple click/confirm SFX
-  - Device vibrates on score commit
+- [ ] 5.2 **Web Audio & Haptics**
+  - Click sounds for game actions
+  - Vibration API for mobile browsers
+  - Audio settings and preferences
 
-- [❌] 5.3 **E2E Detox Suite**
-  - Cover full bot game & online game
-  - CI Detox run green on both OSes
+- [ ] 5.3 **E2E Web Testing**
+  - Playwright tests covering full game flow
+  - CI tests pass on Chrome, Firefox, Safari
+  - Automated regression testing
 
-## Phase 6 – Release Prep
+## Phase 6 – Web Release Prep
 
-- [❌] 6.1 **App Store Assets**
-  - Icons, screenshots, privacy policy
-  - Xcode validates assets
-  - gp play listing passes
+- [ ] 6.1 **PWA Features**
+  - Service worker for offline play
+  - App install prompt for mobile
+  - Offline game functionality
+  - Progressive web app manifest
 
-- [❌] 6.2 **PostHog Analytics Hooks**
-  - Events: session_start, turn_commit, unlock
-  - Dashboard shows live events
+- [ ] 6.2 **Web Performance Optimization**
+  - Bundle size < 1MB
+  - Loading time < 3s
+  - Lighthouse score > 90 on all metrics
+  - Code splitting and lazy loading
 
-- [❌] 6.3 **Soft Launch Build**
-  - TestFlight + Internal Play track
-  - <3% crash rate in Firebase Crashlytics
+- [ ] 6.3 **Analytics Integration**
+  - PostHog events: session\_start, turn\_commit, unlock
+  - Dashboard shows live web events
+  - User behavior tracking
+  - Performance monitoring
 
-## Phase 7 – Monetization & Live-Ops
+- [ ] 6.4 **Production Launch**
+  - Custom domain setup
+  - Error tracking and monitoring
+  - Web game live at production URL
+  - Launch readiness checklist
 
-- [❌] 7.1 **Apple Arcade Submission Docs**
-  - Compliance checklist
-  - game centre hooks
-  - Archive uploaded
-  - passes Transporter validation
+## Phase 7 – Monetization & Live‑Ops (Web)
 
-- [❌] 7.2 **Fallback IAP Storefront**
-  - Remove ads IAP
-  - theme bundles
-  - Sandbox purchase completes
-  - restores properly
+- [ ] 7.1 **Web Payment Integration**
+  - Stripe/PayPal for theme purchases
+  - Sandbox purchase testing
+  - Payment flow integration
+  - Purchase restoration system
 
-- [❌] 7.3 **Global Leaderboard**
+- [ ] 7.2 **Global Leaderboard**
   - Supabase function ranking by ELO
-  - Top-100 endpoint returns ≤ 200 ms
+  - Top‑100 endpoint returns ≤ 200 ms
+  - Leaderboard UI integration
+  - Competitive ranking system
 
-## Current Status
+- [ ] 7.3 **Admin Dashboard**
+  - Moderation tools for content
+  - User management system
+  - Analytics and reporting
+  - Content management interface
 
-**✅ VERIFIED WORKING (by test execution):**
-- Engine package: Dictionary validation, scoring, game state (4/4 test suites passing)
-- Bot AI: Basic behavior implementation (1/1 test suite passing)  
-- Modern App Architecture: Expo Router, New Architecture, cross-platform support (1/1 test suite passing)
-- UI Component Integration: Complete UI-game engine integration with interactive components (1/1 test suite passing)
-- Single-Player Screen: Complete game integration with engine and AI (1/1 test suite passing)
-- TypeScript compilation: All packages compile successfully
-- Jest testing: 137/137 tests passing across all packages
-- ESLint: Working with 14 warnings, 0 errors
-- CI/CD Pipeline: GitHub Actions with Jest + ESLint + EAS builds
+## Phase 8 – Native Mobile Expansion (After Web Success)
 
-**✅ COMPLETED TASKS:**
-- Task 0.1: Init Monorepo (Expo managed workflow w/ TS)
-- Task 0.2: Basic CI/CD via GitHub Actions + EAS
-- Task 0.3: Supabase Project Bootstrap (SQL schema & RLS)
-- Task 1.1: Word Validation Service
-- Task 1.2: Scoring Module  
-- Task 1.3: Bot AI v0 (Greedy)
-- Task 1.4: Local GameState Reducer
-- Task 1.5: Integrate Full Dictionary Word List
-- Task 2.1: Modern App Architecture
-- Task 2.2: UI Component Integration
-- Task 2.4: Single-Player Screen
+- [ ] 8.1 **React Native Setup**
+  - Expo/RN app using shared game engine
+  - Native app boots with web game logic
+  - Cross-platform code sharing
+  - Development environment setup
 
-**❌ VERIFIED BROKEN (by test failures):**
-- None currently - all major issues resolved
+- [ ] 8.2 **Native UI Adaptation**
+  - Platform-specific components and navigation
+  - Native feel while using same game engine
+  - iOS and Android design guidelines
+  - Native performance optimization
 
-**🚧 PARTIALLY WORKING (requires further testing):**
-- Task 2.3: React 19 Testing Infrastructure (complex Jest configuration for UI component testing)
+- [ ] 8.3 **App Store Optimization**
+  - Icons, screenshots, store listings
+  - Apps pass review on Google Play and App Store
+  - Marketing materials and descriptions
+  - Store submission process
 
-**📝 ASSUMPTIONS REQUIRING VERIFICATION:**
-- Cross-platform development setup (iOS/Android/Web) - not tested on actual platforms yet
-- Real device performance testing with UI animations and gestures
+- [ ] 8.4 **Native-Specific Features**
+  - Push notifications for turn reminders
+  - Native sharing functionality
+  - Device-specific optimizations
+  - Platform-specific integrations
 
-**📋 IMMEDIATE PRIORITIES:**
-- Task 2.3: React 19 Testing Infrastructure Modernization (for proper UI component testing)
+---
 
-**📋 NEXT PRIORITY:**
-- Task 2.3: React 19 Testing Infrastructure Modernization
-- Task 2.2: Complete UI component integration
-- Task 2.4: Single-Player Screen implementation
+## 📝 Notes
 
-**✅ REMEDIATION COMPLETED:**
-- ✅ **All Critical Issues Resolved**: Successfully upgraded to Expo SDK 53 + React 19 + React Native 0.79
-- ✅ **New Architecture**: Enabled by default and verified working
-- ✅ **Core Functionality Verified**: 4/4 engine+AI test suites passing (38/44 tests total)
-- ✅ **Verification Protocols Established**: Error-first methodology and transparency requirements active
-- ✅ **Documentation Accuracy Restored**: All false claims corrected, current state verified
-- 📊 **Final Test Results**: 86% success rate (38/44 tests passing)
-- 🔄 **Transition**: React 19 testing modernization moved to normal development workflow 
+**Current State**: Fresh start - no code implemented yet. All tasks are ready to begin from scratch.
+
+**Strategy**: Web-first development with shared TypeScript game engine that can later be used for native mobile apps.
