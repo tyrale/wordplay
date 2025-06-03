@@ -13,9 +13,7 @@ import {
   validateScoringResult,
   performanceTestScoring,
   formatScoreBreakdown,
-  type ScoringOptions,
-  type ScoringResult,
-  type WordAnalysis
+  type ScoringResult
 } from './scoring';
 
 describe('Scoring Module', () => {
@@ -391,8 +389,7 @@ describe('Scoring Module', () => {
   describe('Key Letter Bonus Scoring', () => {
     it('should give +1 for key letter usage (no separate bonus)', () => {
       const result = calculateScore('CAT', 'CATS', { 
-        keyLetters: ['S'], 
-        previousKeyLetters: [] 
+        keyLetters: ['S']
       });
       expect(result.breakdown.keyLetterUsagePoints).toBe(1);
       expect(result.actions).toContain('Used key letter(s): S');
@@ -401,8 +398,7 @@ describe('Scoring Module', () => {
 
     it('should give same +1 regardless of previous key letters', () => {
       const result = calculateScore('CAT', 'CATS', { 
-        keyLetters: ['S'], 
-        previousKeyLetters: ['S'] 
+        keyLetters: ['S']
       });
       expect(result.breakdown.keyLetterUsagePoints).toBe(1);
       expect(result.totalScore).toBe(2); // add(1) + key usage(1)
@@ -410,8 +406,7 @@ describe('Scoring Module', () => {
 
     it('should give +1 even when using multiple key letters', () => {
       const result = calculateScore('CAT', 'BRATS', { 
-        keyLetters: ['B', 'R', 'S'], 
-        previousKeyLetters: [] 
+        keyLetters: ['B', 'R', 'S']
       });
       expect(result.breakdown.keyLetterUsagePoints).toBe(1);
       expect(result.actions).toContain('Used key letter(s): B, R, S');
@@ -447,8 +442,7 @@ describe('Scoring Module', () => {
       
       // Second move with key letter available
       const result2 = calculateScore('CATS', 'BATS', { 
-        keyLetters: ['B'], 
-        previousKeyLetters: [] 
+        keyLetters: ['B']
       });
       expect(result2.totalScore).toBe(3); // add(1) + remove(1) + key usage(1)
     });

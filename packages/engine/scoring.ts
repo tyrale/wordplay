@@ -21,7 +21,6 @@
 // Types for scoring operations
 export interface ScoringOptions {
   keyLetters?: string[];
-  previousKeyLetters?: string[];
 }
 
 export interface ScoringResult {
@@ -119,7 +118,7 @@ export function calculateScore(
   currentWord: string, 
   options: ScoringOptions = {}
 ): ScoringResult {
-  const { keyLetters = [], previousKeyLetters = [] } = options;
+  const { keyLetters = [] } = options;
 
   // Handle edge cases
   if (!previousWord || !currentWord) {
