@@ -122,7 +122,7 @@ export class TerminalGame {
    * Handle human turn
    */
   private async handleHumanTurn(): Promise<void> {
-    const input = await this.promptUser(`${colors.bright}Your turn! Enter a word (or 'help', 'quit', 'key [letter]', 'lock [letter]'): ${colors.reset}`);
+    const input = await this.promptUser(`${colors.bright}Your turn! Enter a word (or 'help', 'quit', 'state'): ${colors.reset}`);
     
     const command = input.trim().toUpperCase();
     
@@ -134,28 +134,6 @@ export class TerminalGame {
     
     if (command === 'HELP') {
       this.showHelp();
-      return;
-    }
-    
-    if (command.startsWith('KEY ')) {
-      const letter = command.split(' ')[1];
-      if (letter && letter.length === 1) {
-        this.gameManager.addKeyLetter(letter);
-        console.log(`${colors.green}Added ${letter} as a key letter${colors.reset}`);
-      } else {
-        console.log(`${colors.red}Invalid key letter. Use: key [single letter]${colors.reset}`);
-      }
-      return;
-    }
-    
-    if (command.startsWith('LOCK ')) {
-      const letter = command.split(' ')[1];
-      if (letter && letter.length === 1) {
-        this.gameManager.addLockedLetter(letter);
-        console.log(`${colors.green}Added ${letter} as a locked letter${colors.reset}`);
-      } else {
-        console.log(`${colors.red}Invalid locked letter. Use: lock [single letter]${colors.reset}`);
-      }
       return;
     }
     
@@ -202,10 +180,16 @@ export class TerminalGame {
     
     // Key and locked letters
     if (state.keyLetters.length > 0) {
-      console.log(`${colors.yellow}Key Letters: ${state.keyLetters.join(', ')}${colors.reset}`);
+      console.log(`${colors.yellow}Key Letters (bonus +1 each): ${state.keyLetters.join(', ')}${colors.reset}`);
     }
     if (state.lockedLetters.length > 0) {
       console.log(`${colors.magenta}Locked Letters: ${state.lockedLetters.join(', ')}${colors.reset}`);
+    }
+    
+    // Show recently used words
+    if (state.usedWords.length > 1) {
+      const recentWords = state.usedWords.slice(-5).join(' → ');
+      console.log(`${colors.blue}Recent words: ${recentWords}${colors.reset}`);
     }
     
     // Player scores
@@ -232,6 +216,16 @@ export class TerminalGame {
     console.log(`Total Moves: ${state.totalMoves}`);
     console.log(`Game Duration: ${Math.round(stats.duration / 1000)}s`);
     console.log(`Average Score: ${stats.averageScore.toFixed(1)}`);
+    
+    if (state.usedWords.length > 0) {
+      console.log('\n' + colors.bright + 'ALL USED WORDS:' + colors.reset);
+      console.log(`${colors.blue}${state.usedWords.join(' → ')}${colors.reset}`);
+    }
+    
+    if (state.keyLetters.length > 0) {
+      console.log('\n' + colors.bright + 'CURRENT KEY LETTERS:' + colors.reset);
+      console.log(`${colors.yellow}${state.keyLetters.join(', ')} (each worth +1 bonus point)${colors.reset}`);
+    }
     
     if (state.turnHistory.length > 0) {
       console.log('\n' + colors.bright + 'RECENT MOVES:' + colors.reset);
@@ -345,13 +339,12 @@ export class TerminalGame {
     console.log(colors.bright + 'HOW TO PLAY:' + colors.reset);
     console.log('• Transform the current word by adding, removing, or rearranging letters');
     console.log('• Each transformation scores points: +1 for add/remove/rearrange');
-    console.log('• Use key letters for bonus points: +1 when you use them');
+    console.log('• Key letters are automatically generated and give bonus points (+1 when used)');
     console.log('• Must be valid dictionary words with max ±1 letter change per turn');
+    console.log('• No word can be played twice in the same game');
     console.log('');
     console.log(colors.bright + 'COMMANDS:' + colors.reset);
     console.log('• [word]        - Make a move with the word');
-    console.log('• key [letter]  - Add a key letter for bonus scoring');
-    console.log('• lock [letter] - Add a locked letter (future feature)');
     console.log('• state         - Show detailed game state');
     console.log('• help          - Show this help');
     console.log('• quit          - Exit the game');

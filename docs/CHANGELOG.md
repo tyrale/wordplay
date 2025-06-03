@@ -107,7 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Testing**: 49/49 tests passing with comprehensive coverage of all functionality
   - **Verification Commands**: `npm test gamestate.test.ts && npm run lint && npm run build`
 
-- **Task 1.5**: Terminal Game Interface for Testing and Validation ✅ **VERIFIED + WORKING**
+- **Task 1.5**: Terminal Game Interface for Testing and Validation ✅ **VERIFIED + WORKING + IMPROVED**
   - Interactive command-line game interface integrating all engine components
   - Human vs Bot gameplay with real-time feedback and turn-based flow
   - Comprehensive terminal UI with colors, help system, and command interface
@@ -115,9 +115,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Move input validation with detailed error messages and scoring breakdown
   - Complete game statistics and move history tracking
   - Performance optimized terminal experience with bot AI integration
-  - **Game Commands**: word input, key letter management, help system, detailed state display
+  - **Game Commands**: word input, help system, detailed state display (removed manual key letter commands)
   - **Visual Design**: Welcome screen, colored output, formatted game state, winner celebration
   - **Bot Integration**: Real-time bot moves with performance timing and decision feedback
+  - **NEW: Word Repetition Prevention**: No word can be played twice in the same game (strategic constraint)
+  - **NEW: Automatic Key Letter Generation**: Random key letters generated each turn (max 3 active)
+  - **IMPROVED: Game Logic**: Enhanced move validation with used word tracking and automatic key letter management
+  - **IMPROVED: Strategic Gameplay**: Players must plan around limited word pool and automatic key letter bonuses
   - **Testing**: 17/17 tests passing with mocked readline interface for CI compatibility
   - **READY TO PLAY**: Use `npm run play` to start the interactive terminal game
   - **Long-term Solution**: Added tsx dependency and npm script for TypeScript execution with ES modules

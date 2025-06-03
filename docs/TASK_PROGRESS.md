@@ -82,14 +82,18 @@ This document tracks the progress of tasks from the development plan. Each task 
   - [x] Performance optimization ✅ **VERIFIED** (Performance test shows <1ms per operation, 1000 operations efficiently handled)
   - [x] Web-compatible state management solution (not Zustand) ✅ **VERIFIED** (Pure TypeScript with event system for UI integration)
 
-- [x] 1.5 **Terminal Game Interface** ✅ **ALL REQUIREMENTS VERIFIED + WORKING**
-  - Interactive command-line game interface for testing ✅ **VERIFIED** (Full terminal UI with colors, help, and command system)
-  - Human vs Bot gameplay with real-time feedback ✅ **VERIFIED** (Turn-based gameplay with bot AI integration)
-  - Clear display of game state (word, scores, turn info) ✅ **VERIFIED** (Formatted display with current word, player scores, key letters)
-  - Move input validation and error handling ✅ **VERIFIED** (Invalid moves rejected with helpful error messages)
+- [x] 1.5 **Terminal Game Interface** ✅ **ALL REQUIREMENTS VERIFIED + WORKING + IMPROVED**
+  - Interactive command-line game interface integrating all engine components ✅ **VERIFIED** (Full terminal UI with colors, help, and command system)
+  - Human vs Bot gameplay with real-time feedback and turn-based flow ✅ **VERIFIED** (Turn-based gameplay with bot AI integration)
+  - Clear display of game state (current word, player scores, key letters, turn progression) ✅ **VERIFIED** (Formatted display with current word, player scores, key letters)
+  - Move input validation with detailed error messages and scoring breakdown ✅ **VERIFIED** (Invalid moves rejected with helpful error messages)
   - Game progression tracking and final results ✅ **VERIFIED** (Move history, statistics, winner determination)
   - Performance testing and logic validation ✅ **VERIFIED** (17/17 tests passing, performance optimized)
   - Terminal-based user experience design ✅ **VERIFIED** (Welcome screen, help system, colored output, game statistics)
+  - **NEW: Word repetition prevention** ✅ **VERIFIED** (No word can be played twice in the same game)
+  - **NEW: Automatic key letter generation** ✅ **VERIFIED** (Random key letters generated automatically each turn, max 3 active)
+  - **IMPROVED: Game logic validation** ✅ **VERIFIED** (Enhanced move validation with used word tracking)
+  - **IMPROVED: Strategic gameplay** ✅ **VERIFIED** (Players must plan around limited word pool and automatic key letter bonuses)
   - **PLAYABLE NOW**: Run `npm run play` to start the interactive terminal game
 
 ## Phase 2 – Web UI Foundation

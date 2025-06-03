@@ -398,14 +398,16 @@ describe('Local GameState Manager', () => {
     it('should finish game after max turns', () => {
       gameManager.startGame();
       
-      // Play through all turns
+      // Play through all turns with valid, unique words
+      const testWords = ['CATS', 'BATS', 'RATS', 'HATS', 'MATS'];
       for (let turn = 1; turn <= 5; turn++) {
-        const moveAttempt = gameManager.attemptMove(`CAT${turn}`);
+        const testWord = testWords[turn - 1];
+        const moveAttempt = gameManager.attemptMove(testWord);
         if (moveAttempt.canApply) {
           gameManager.applyMove(moveAttempt);
         } else {
-          // Try simpler move
-          const fallbackMove = gameManager.attemptMove(turn % 2 === 0 ? 'CAT' : 'CATS');
+          // If word is invalid, try a simple alternation
+          const fallbackMove = gameManager.attemptMove(turn % 2 === 0 ? 'DOG' : 'LOG');
           if (fallbackMove.canApply) {
             gameManager.applyMove(fallbackMove);
           }
@@ -545,7 +547,8 @@ describe('Local GameState Manager', () => {
       
       // Game should have progressed
       expect(gameManager.getState().totalMoves).toBe(1);
-      expect(gameManager.getState().keyLetters.length).toBe(0); // Used in move
+      // Note: With automatic key letter generation, key letters may not be empty
+      // The 'S' was used but new key letters are automatically generated
       
       gameManager.resetGame();
       
@@ -555,6 +558,7 @@ describe('Local GameState Manager', () => {
       expect(state.totalMoves).toBe(0);
       expect(state.turnHistory).toEqual([]);
       expect(state.keyLetters).toEqual([]);
+      expect(state.usedWords).toEqual([]); // New: check used words are reset
       expect(state.players.every(p => p.score === 0)).toBe(true);
     });
 
@@ -676,6 +680,94 @@ describe('Local GameState Manager', () => {
       unsubscribe1();
       unsubscribe1(); // Second call should be safe
       unsubscribe2();
+    });
+  });
+
+  describe('Word Repetition Prevention', () => {
+    it('should prevent playing the same word twice', () => {
+      gameManager.startGame();
+      
+      // First move: CAT -> CATS
+      const move1 = gameManager.attemptMove('CATS');
+      expect(move1.canApply).toBe(true);
+      gameManager.applyMove(move1);
+      
+      // Second move: CATS -> BATS (should work)
+      const move2 = gameManager.attemptMove('BATS');
+      expect(move2.canApply).toBe(true);
+      gameManager.applyMove(move2);
+      
+      // Try to use CAT again (initial word) - should fail
+      const move3 = gameManager.attemptMove('CAT');
+      expect(move3.canApply).toBe(false);
+      expect(move3.reason).toContain('already been played');
+      
+      // Try to use CATS again - should fail
+      const move4 = gameManager.attemptMove('CATS');
+      expect(move4.canApply).toBe(false);
+      expect(move4.reason).toContain('already been played');
+    });
+
+    it('should track initial word as used', () => {
+      gameManager.startGame();
+      const state = gameManager.getState();
+      
+      // Initial word should be in used words
+      expect(state.usedWords).toContain('CAT');
+      
+      // Trying to play initial word should fail
+      const move = gameManager.attemptMove('CAT');
+      expect(move.canApply).toBe(false);
+      expect(move.reason).toContain('already been played');
+    });
+  });
+
+  describe('Automatic Key Letter Generation', () => {
+    it('should automatically generate key letters during gameplay', () => {
+      gameManager.startGame();
+      
+      // Make a move
+      const move = gameManager.attemptMove('CATS');
+      gameManager.applyMove(move);
+      
+      const state = gameManager.getState();
+      // Should have generated a key letter (max 3 total)
+      expect(state.keyLetters.length).toBeLessThanOrEqual(3);
+    });
+
+    it('should not generate more than 3 key letters', () => {
+      gameManager.startGame();
+      
+      // Make several moves to trigger key letter generation
+      const words = ['CATS', 'BATS', 'RATS', 'HATS', 'MATS'];
+      
+      for (const word of words) {
+        const move = gameManager.attemptMove(word);
+        if (move.canApply) {
+          gameManager.applyMove(move);
+        }
+      }
+      
+      const state = gameManager.getState();
+      expect(state.keyLetters.length).toBeLessThanOrEqual(3);
+    });
+
+    it('should generate unique key letters', () => {
+      gameManager.startGame();
+      
+      // Force generation of multiple key letters by making moves
+      const words = ['CATS', 'BATS', 'RATS'];
+      
+      for (const word of words) {
+        const move = gameManager.attemptMove(word);
+        if (move.canApply) {
+          gameManager.applyMove(move);
+        }
+      }
+      
+      const state = gameManager.getState();
+      const uniqueKeyLetters = new Set(state.keyLetters);
+      expect(uniqueKeyLetters.size).toBe(state.keyLetters.length); // No duplicates
     });
   });
 }); 

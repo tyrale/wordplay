@@ -45,11 +45,38 @@ export interface TurnHistory {
   timestamp: number;
 }
 
+export interface PublicGameState {
+  // Core state
+  currentWord: string;
+  keyLetters: string[];
+  lockedLetters: string[];
+  usedWords: string[]; // Exposed as array for easier consumption
+  
+  // Game flow
+  players: PlayerState[];
+  currentTurn: number;
+  maxTurns: number;
+  gameStatus: 'waiting' | 'playing' | 'finished';
+  winner: PlayerState | null;
+  
+  // History and scoring
+  turnHistory: TurnHistory[];
+  totalMoves: number;
+  
+  // Configuration
+  config: GameConfig;
+  
+  // Timestamps
+  gameStartTime: number;
+  lastMoveTime: number;
+}
+
 export interface GameState {
   // Core state
   currentWord: string;
   keyLetters: string[];
   lockedLetters: string[];
+  usedWords: Set<string>; // Track all words used in this game
   
   // Game flow
   players: PlayerState[];
@@ -150,15 +177,19 @@ export class LocalGameStateManager {
       totalMoves: 0,
       config: defaultConfig,
       gameStartTime: now,
-      lastMoveTime: now
+      lastMoveTime: now,
+      usedWords: new Set()
     };
   }
 
   /**
    * Get the current game state (read-only copy)
    */
-  public getState(): Readonly<GameState> {
-    return { ...this.state };
+  public getState(): Readonly<PublicGameState> {
+    return { 
+      ...this.state,
+      usedWords: Array.from(this.state.usedWords) // Convert Set to Array for easier consumption
+    };
   }
 
   /**
@@ -186,6 +217,9 @@ export class LocalGameStateManager {
     this.state.gameStatus = 'playing';
     this.state.gameStartTime = Date.now();
     this.state.lastMoveTime = Date.now();
+    
+    // Track the initial word as used
+    this.state.usedWords.add(this.state.currentWord);
 
     this.notifyListeners({
       type: 'game_finished',
@@ -220,6 +254,18 @@ export class LocalGameStateManager {
         scoringResult: null,
         canApply: false,
         reason: 'No current player found'
+      };
+    }
+
+    // Check for word repetition - no word can be played twice in the same game
+    if (this.state.usedWords.has(normalizedWord)) {
+      return {
+        newWord: normalizedWord,
+        isValid: false,
+        validationResult: { isValid: false, reason: 'Word has already been played in this game', word: normalizedWord },
+        scoringResult: null,
+        canApply: false,
+        reason: 'Word has already been played in this game'
       };
     }
 
@@ -274,6 +320,9 @@ export class LocalGameStateManager {
     this.state.currentWord = moveAttempt.newWord;
     this.state.lastMoveTime = Date.now();
     this.state.totalMoves++;
+    
+    // Track this word as used
+    this.state.usedWords.add(moveAttempt.newWord);
 
     // Update player score
     currentPlayer.score += moveAttempt.scoringResult.totalScore;
@@ -291,15 +340,22 @@ export class LocalGameStateManager {
 
     this.state.turnHistory.push(turnRecord);
 
-    // Update key letters based on scoring result
-    if (this.state.config.enableKeyLetters && moveAttempt.scoringResult.keyLettersUsed.length > 0) {
-      // Remove used key letters and potentially add new ones
-      moveAttempt.scoringResult.keyLettersUsed.forEach(usedLetter => {
-        const index = this.state.keyLetters.indexOf(usedLetter);
-        if (index > -1) {
-          this.state.keyLetters.splice(index, 1);
-        }
-      });
+    // Automatic key letter generation - randomly add a new key letter each turn
+    if (this.state.config.enableKeyLetters) {
+      // Remove used key letters first
+      if (moveAttempt.scoringResult.keyLettersUsed.length > 0) {
+        moveAttempt.scoringResult.keyLettersUsed.forEach(usedLetter => {
+          const index = this.state.keyLetters.indexOf(usedLetter);
+          if (index > -1) {
+            this.state.keyLetters.splice(index, 1);
+          }
+        });
+      }
+      
+      // Generate a new random key letter (if we have fewer than 3 key letters)
+      if (this.state.keyLetters.length < 3) {
+        this.generateRandomKeyLetter();
+      }
     }
 
     // Notify listeners of word change
@@ -609,6 +665,32 @@ export class LocalGameStateManager {
     const averageTime = totalTime / operations;
     
     return { averageTime, totalTime };
+  }
+
+  /**
+   * Generate a random key letter that doesn't already exist
+   */
+  private generateRandomKeyLetter(): void {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const availableLetters = alphabet.split('').filter(letter => 
+      !this.state.keyLetters.includes(letter)
+    );
+    
+    if (availableLetters.length > 0) {
+      const randomIndex = Math.floor(Math.random() * availableLetters.length);
+      const newKeyLetter = availableLetters[randomIndex];
+      this.state.keyLetters.push(newKeyLetter);
+      
+      this.notifyListeners({
+        type: 'letters_updated',
+        data: { 
+          action: 'key_letter_added',
+          letter: newKeyLetter,
+          keyLetters: [...this.state.keyLetters]
+        },
+        timestamp: Date.now()
+      });
+    }
   }
 }
 
