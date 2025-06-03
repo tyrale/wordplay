@@ -223,8 +223,7 @@ export class LocalGameStateManager {
     
     // Generate initial key letters so players can see them from the start
     if (this.state.config.enableKeyLetters) {
-      this.generateRandomKeyLetter();
-      this.generateRandomKeyLetter();
+      this.generateRandomKeyLetter(); // Only 1 key letter at start
     }
 
     this.notifyListeners({

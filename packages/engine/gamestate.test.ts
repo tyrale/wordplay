@@ -729,7 +729,7 @@ describe('Local GameState Manager', () => {
       gameManager.startGame();
       
       const state = gameManager.getState();
-      expect(state.keyLetters.length).toBe(2); // Should have 2 initial key letters
+      expect(state.keyLetters.length).toBe(1); // Should have 1 initial key letter
       expect(state.keyLetters.every(letter => /^[A-Z]$/.test(letter))).toBe(true); // Valid letters
     });
 
