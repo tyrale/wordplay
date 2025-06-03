@@ -220,6 +220,12 @@ export class LocalGameStateManager {
     
     // Track the initial word as used
     this.state.usedWords.add(this.state.currentWord);
+    
+    // Generate initial key letters so players can see them from the start
+    if (this.state.config.enableKeyLetters) {
+      this.generateRandomKeyLetter();
+      this.generateRandomKeyLetter();
+    }
 
     this.notifyListeners({
       type: 'game_finished',

@@ -723,6 +723,16 @@ describe('Local GameState Manager', () => {
   });
 
   describe('Automatic Key Letter Generation', () => {
+    it('should generate initial key letters when game starts', () => {
+      expect(gameManager.getState().keyLetters.length).toBe(0); // Before start
+      
+      gameManager.startGame();
+      
+      const state = gameManager.getState();
+      expect(state.keyLetters.length).toBe(2); // Should have 2 initial key letters
+      expect(state.keyLetters.every(letter => /^[A-Z]$/.test(letter))).toBe(true); // Valid letters
+    });
+
     it('should automatically generate key letters during gameplay', () => {
       gameManager.startGame();
       

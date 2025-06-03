@@ -329,7 +329,8 @@ export class TerminalGame {
     console.log('╚══════════════════════════════════════════════════════════╝');
     console.log(colors.reset);
     console.log(`${colors.green}Welcome to WordPlay! Transform words by adding, removing, or rearranging letters.${colors.reset}`);
-    console.log(`${colors.green}Score points for each transformation and try to beat the bot!${colors.reset}\n`);
+    console.log(`${colors.green}Score points for each transformation and try to beat the bot!${colors.reset}`);
+    console.log(`${colors.yellow}Key letters will appear automatically to give you bonus points!${colors.reset}\n`);
   }
 
   /**
