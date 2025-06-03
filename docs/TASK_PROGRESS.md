@@ -2,6 +2,15 @@
 
 This document tracks the progress of tasks from the development plan. Each task is marked with a checkbox that will be checked (✅) when the task is completed and merged.
 
+## Phase 0 – Web Foundation & Tooling
+
+- [✅] 0.1 **Init Web Project** (React + TypeScript + Vite)
+  - Working `npm run dev` on all major browsers
+  - ESLint + Prettier setup
+  - TypeScript compilation working
+  - Web platform builds successfully
+  - Modern development setup with hot reload
+
 ## Phase 0 – Repo & Tooling
 
 - [✅] 0.1 **Init Monorepo** (Expo managed workflow w/ TS)
