@@ -19,15 +19,15 @@ This document tracks the progress of tasks from the development plan. Each task 
   - [x] CI passes on PR; production build deployable ✅ **VERIFIED** (GitHub Actions: Success status, 30s duration, 62.1KB artifacts)
   - [x] Automated testing and build verification ✅ **VERIFIED** (Complete pipeline: lint + format + TypeScript + tests + build)
 
-- [ ] 0.3 **Supabase Project Bootstrap** (SQL schema & RLS)
+- [x] 0.3 **Supabase Project Bootstrap** (SQL schema & RLS) ✅ **ALL REQUIREMENTS VERIFIED**
 
-  - Supabase client dependencies installation
-  - SQL schema creation with users, games, game_players, turns tables and RLS policies
-  - Environment variables configuration (.env.example) with Supabase settings
-  - Local Supabase environment setup
-  - Database migration creation and application
-  - `supabase db diff` shows no schema differences
-  - RLS policies implementation and testing
+  - [x] Supabase client dependencies installation ✅ **VERIFIED** (@supabase/supabase-js@2.49.9, supabase@2.24.3)
+  - [x] SQL schema creation with users, games, game_players, turns tables and RLS policies ✅ **VERIFIED** (4 tables created with complete schema)
+  - [x] Environment variables configuration (.env.example) with Supabase settings ✅ **VERIFIED** (.env.example template and .env.local configured)
+  - [x] Local Supabase environment setup ✅ **VERIFIED** (Local services running on ports 54321-54324)
+  - [x] Database migration creation and application ✅ **VERIFIED** (Migration 20250603193744_init_game_schema.sql applied successfully)
+  - [x] `supabase db diff` shows no schema differences ✅ **VERIFIED** ("No schema changes found")
+  - [x] RLS policies implementation and testing ✅ **VERIFIED** (11 RLS policies across 4 tables, all tables have RLS enabled, Supabase client tests passing)
 
 - [ ] 0.4 **Web Hosting Setup** (Vercel deployment)
   - Automatic deployment from main branch
