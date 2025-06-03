@@ -4,7 +4,7 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 ## Phase 0 – Web Foundation & Tooling
 
-- [x] 0.1 **Init Web Project** (React + TypeScript + Vite) ✅
+- [x] 0.1 **Init Web Project** (React + TypeScript + Vite) ✅ **VERIFIED**
 
   - Working `npm run dev` on all major browsers
   - ESLint + Prettier setup
