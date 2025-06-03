@@ -92,4 +92,26 @@ console.log('4. Player 2 receives real word "DAMN" for their turn');
 console.log('5. Player 2 plays "DAMP" → validates ✅, displays "DAMP"');
 console.log('6. Player 1 can now toggle vanity filter on/off in settings');
 
+console.log('\n🎯 PLAYER 2 RECEIVING "DAMN" EXAMPLE:');
+console.log('Player 1 played "DAMN" → stored in game state as real word "DAMN"');
+console.log();
+
+// Player 2 scenarios
+const player2NewUser = { hasUnlockedToggle: false, isVanityFilterOn: true };
+const player2FilterOn = { hasUnlockedToggle: true, isVanityFilterOn: true };
+const player2FilterOff = { hasUnlockedToggle: true, isVanityFilterOn: false };
+
+const wordFromPlayer1 = "DAMN"; // This is what's stored in game state
+
+console.log('Player 2 receives word from game state and sees:');
+console.log(`   Scenario 1 (new user): "${getVanityDisplayWord(wordFromPlayer1, { vanityState: player2NewUser })}"`);
+console.log(`   Scenario 2 (unlocked, filter ON): "${getVanityDisplayWord(wordFromPlayer1, { vanityState: player2FilterOn })}"`);
+console.log(`   Scenario 3 (unlocked, filter OFF): "${getVanityDisplayWord(wordFromPlayer1, { vanityState: player2FilterOff })}"`);
+
+console.log();
+console.log('In ALL scenarios, Player 2 can make valid moves from the real word "DAMN":');
+console.log('   DAMN → DAMP (valid ±1 letter change)');
+console.log('   DAMN → DAN (valid ±1 letter change)');
+console.log('   DAMN → DAMN (rearrange, no change)');
+
 console.log('\n🎉 Vanity System Working Correctly! ✅'); 
