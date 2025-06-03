@@ -107,7 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Testing**: 49/49 tests passing with comprehensive coverage of all functionality
   - **Verification Commands**: `npm test gamestate.test.ts && npm run lint && npm run build`
 
-- **Task 1.5**: Terminal Game Interface for Testing and Validation ✅ **VERIFIED**
+- **Task 1.5**: Terminal Game Interface for Testing and Validation ✅ **VERIFIED + WORKING**
   - Interactive command-line game interface integrating all engine components
   - Human vs Bot gameplay with real-time feedback and turn-based flow
   - Comprehensive terminal UI with colors, help system, and command interface
@@ -119,5 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Visual Design**: Welcome screen, colored output, formatted game state, winner celebration
   - **Bot Integration**: Real-time bot moves with performance timing and decision feedback
   - **Testing**: 17/17 tests passing with mocked readline interface for CI compatibility
-  - **Usage**: `./play-game.sh` or `node packages/engine/play-terminal.js` for terminal gameplay
-  - **Verification Commands**: `npm test terminal-game.test.ts && npm run lint && npm run build`
+  - **READY TO PLAY**: Use `npm run play` to start the interactive terminal game
+  - **Long-term Solution**: Added tsx dependency and npm script for TypeScript execution with ES modules
+  - **Fixed ES Module Issues**: Updated dictionary.ts and terminal-game.ts for proper ES module support
+  - **Verification Commands**: `npm test terminal-game.test.ts && npm run lint && npm run build && npm run play`

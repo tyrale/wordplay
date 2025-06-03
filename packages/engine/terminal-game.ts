@@ -55,12 +55,8 @@ export class TerminalGame {
       output: process.stdout
     });
 
-    // Subscribe to game events for real-time updates
-    this.gameManager.subscribe((update) => {
-      if (update.type === 'game_finished') {
-        this.handleGameEnd();
-      }
-    });
+    // Note: We handle game ending in the main game loop instead of subscription
+    // to avoid timing issues with readline interface
   }
 
   /**
@@ -395,7 +391,7 @@ export async function quickGame(): Promise<void> {
 }
 
 // If this file is run directly, start a game
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   console.log('Starting WordPlay Terminal Game...');
   startTerminalGame().catch(console.error);
 } 

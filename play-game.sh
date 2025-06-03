@@ -2,7 +2,7 @@
 
 # WordPlay Terminal Game Runner
 # 
-# Simple script to compile and run the terminal game for testing
+# Simple script to run the terminal game for testing
 
 echo "🎮 Starting WordPlay Terminal Game..."
 echo ""
@@ -10,35 +10,17 @@ echo ""
 # Change to engine directory
 cd packages/engine
 
-# Compile TypeScript with all dependencies
-echo "📦 Compiling TypeScript..."
-npx tsc terminal-game.ts \
-  --target es2020 \
-  --module commonjs \
-  --moduleResolution node \
-  --esModuleInterop \
-  --allowSyntheticDefaultImports \
-  --strict \
-  --skipLibCheck \
-  --outDir compiled \
-  2>/dev/null
-
-if [ $? -ne 0 ]; then
-  echo "❌ TypeScript compilation failed"
-  exit 1
+# Check if ts-node is available
+if ! command -v npx ts-node &> /dev/null; then
+  echo "📦 Installing ts-node for TypeScript execution..."
+  npm install --no-save ts-node
 fi
 
-echo "✅ Compilation complete!"
+echo "🚀 Launching game with TypeScript..."
 echo ""
 
-# Run the compiled game
-echo "🚀 Launching game..."
-echo ""
-
-node compiled/terminal-game.js
-
-# Cleanup
-rm -rf compiled
+# Run TypeScript directly with ts-node
+npx ts-node --esm terminal-game.ts
 
 echo ""
 echo "👋 Thanks for playing WordPlay!" 
