@@ -24,12 +24,30 @@ jest.mock('react-native', () => ({
   },
   Alert: {
     alert: jest.fn(),
+    prompt: jest.fn(),
   },
 }));
 
-// Mock React Native Gesture Handler
+// Mock React Native Gesture Handler with comprehensive components
 jest.mock('react-native-gesture-handler', () => {
-  const View = jest.requireActual('react-native').View;
+  const View = 'View';
+  const mockGesture = {
+    Tap: jest.fn(() => ({
+      onStart: jest.fn().mockReturnThis(),
+      onEnd: jest.fn().mockReturnThis(),
+    })),
+    LongPress: jest.fn(() => ({
+      minDuration: jest.fn().mockReturnThis(),
+      onStart: jest.fn().mockReturnThis(),
+    })),
+    Pan: jest.fn(() => ({
+      onStart: jest.fn().mockReturnThis(),
+      onEnd: jest.fn().mockReturnThis(),
+    })),
+    Simultaneous: jest.fn(() => ({})),
+    Race: jest.fn(() => ({})),
+  };
+  
   return {
     Swipe: {
       DIRECTION_LEFT: 1,
@@ -43,6 +61,8 @@ jest.mock('react-native-gesture-handler', () => {
       CANCELLED: 'CANCELLED',
       END: 'END',
     },
+    Gesture: mockGesture,
+    GestureDetector: ({ children }) => children,
     PanGestureHandler: View,
     PinchGestureHandler: View,
     TapGestureHandler: View,
@@ -55,18 +75,25 @@ jest.mock('react-native-gesture-handler', () => {
 
 // Mock React Native Reanimated v3 for New Architecture
 jest.mock('react-native-reanimated', () => {
-  const View = require('react-native').View;
+  const View = 'View';
+  const Text = 'Text';
+  const ScrollView = 'ScrollView';
+  
   return {
     default: {
       View: View,
-      Text: require('react-native').Text,
-      ScrollView: require('react-native').ScrollView,
+      Text: Text,
+      ScrollView: ScrollView,
     },
+    View: View,
+    Text: Text,
+    ScrollView: ScrollView,
     useSharedValue: () => ({ value: 0 }),
     useAnimatedStyle: () => ({}),
     withSpring: (value) => value,
     withTiming: (value) => value,
     runOnJS: (fn) => fn,
+    interpolate: (value, inputRange, outputRange) => outputRange[0],
     interpolateColor: () => '#000000',
     Extrapolate: {
       CLAMP: 'clamp',

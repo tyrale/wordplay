@@ -1,29 +1,36 @@
 {
-  "name": "wordplay",
+  "name": "wordplay-fresh",
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "wordgame",
-    "wordgame/packages/*"
+    "packages/*"
   ],
   "scripts": {
-    "dev": "npm run start --workspace=wordgame",
-    "start": "npm run start --workspace=wordgame",
-    "test": "npm run test --workspace=wordgame",
-    "test:all": "npm test --workspaces",
-    "lint": "npm run lint --workspace=wordgame",
-    "lint:all": "npm run lint --workspaces --if-present"
-  },
-  "devDependencies": {
-    "@types/jest": "^29.5.14",
-    "ts-jest": "^29.3.4",
-    "typescript": "^5.8.3"
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "test": "npm run test --workspaces --if-present",
+    "test:engine": "npm run test --workspace=@wordgame/engine",
+    "lint": "eslint . --ext .ts,.tsx",
+    "build": "npm run build --workspaces --if-present"
   },
   "dependencies": {
-    "metro": "^0.82.4",
-    "metro-cache": "^0.82.4",
-    "metro-core": "^0.82.4",
-    "storybook": "^9.0.0",
-    "zustand": "^5.0.5"
+    "expo": "^51.0.0",
+    "expo-status-bar": "~1.12.1",
+    "react": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-web": "~0.19.10",
+    "react-dom": "18.2.0",
+    "@expo/metro-runtime": "~3.2.3",
+    "zustand": "^4.4.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@types/react": "~18.2.79",
+    "typescript": "~5.3.3",
+    "@types/jest": "^29.5.14",
+    "ts-jest": "^29.1.2",
+    "jest": "^29.7.0"
   }
 }

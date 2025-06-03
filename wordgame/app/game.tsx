@@ -7,9 +7,14 @@ import { validateWord, getRandomWord, scoreTurn, useGameState } from '../package
 import { chooseBestMove } from '../packages/ai/src/bot-behavior';
 import type { TurnAction, BotMove } from '../packages/ai/src/bot-behavior';
 
+// Import UI components
+import { AlphabetGrid, WordTrail, ActionBar } from '../packages/ui/src';
+import type { ActionBarAction } from '../packages/ui/src/components/ActionBar';
+
 // Game configuration
 const GAME_LENGTH = 10;
 const STARTING_WORDS = ['SHIP', 'PLAY', 'WORD', 'GAME', 'LOVE', 'HOPE'];
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 interface GameTurn {
   turn: number;
@@ -40,9 +45,10 @@ export default function GameScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   
-  // UI state for word input
-  const [inputWord, setInputWord] = useState('');
+  // UI state for word building
   const [currentWord, setCurrentWord] = useState('');
+  const [selectedLetters, setSelectedLetters] = useState<number[]>([]);
+  const [wordAreaLayout, setWordAreaLayout] = useState<{ x: number; y: number; width: number; height: number }>();
   
   // Start new game
   const startNewGame = useCallback(() => {
@@ -50,8 +56,8 @@ export default function GameScreen() {
     const randomKeyLetter = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
     
     setCurrentWord(startingWord);
-    setInputWord(startingWord);
     setKeyLetter(randomKeyLetter);
+    setSelectedLetters(startingWord.split('').map(letter => ALPHABET.indexOf(letter)));
     setGameHistory([]);
     setStats({
       humanScore: 0,
@@ -65,6 +71,39 @@ export default function GameScreen() {
     
     console.log(`🎮 New game started! Word: ${startingWord}, Key Letter: ${randomKeyLetter}`);
   }, []);
+
+  // Handle letter selection from alphabet grid
+  const handleLetterTap = useCallback((letterIndex: number) => {
+    if (currentPlayer !== 'human' || isProcessing || stats.gameComplete) return;
+    
+    const letter = ALPHABET[letterIndex];
+    const isSelected = selectedLetters.includes(letterIndex);
+    
+    if (isSelected) {
+      // Remove letter from word
+      setSelectedLetters(prev => prev.filter(index => index !== letterIndex));
+      setCurrentWord(prev => prev.replace(letter, ''));
+    } else {
+      // Add letter to word
+      setSelectedLetters(prev => [...prev, letterIndex]);
+      setCurrentWord(prev => prev + letter);
+    }
+  }, [currentPlayer, isProcessing, stats.gameComplete, selectedLetters]);
+
+  // Handle drag operations
+  const handleLetterDragToWord = useCallback((letterIndex: number) => {
+    if (currentPlayer !== 'human' || isProcessing || stats.gameComplete) return;
+    if (!selectedLetters.includes(letterIndex)) {
+      handleLetterTap(letterIndex);
+    }
+  }, [currentPlayer, isProcessing, stats.gameComplete, selectedLetters, handleLetterTap]);
+
+  const handleLetterDragFromWordToGrid = useCallback((letterIndex: number) => {
+    if (currentPlayer !== 'human' || isProcessing || stats.gameComplete) return;
+    if (selectedLetters.includes(letterIndex)) {
+      handleLetterTap(letterIndex);
+    }
+  }, [currentPlayer, isProcessing, stats.gameComplete, selectedLetters, handleLetterTap]);
 
   // Calculate actions between two words (simplified)
   const calculateActions = (fromWord: string, toWord: string): TurnAction[] => {
@@ -88,21 +127,26 @@ export default function GameScreen() {
 
   // Submit human turn
   const submitHumanTurn = useCallback(() => {
-    if (!inputWord.trim() || inputWord === currentWord) {
-      Alert.alert('Invalid Move', 'Please enter a different word.');
+    if (!currentWord.trim() || selectedLetters.length === 0) {
+      Alert.alert('Invalid Move', 'Please select letters to form a word.');
       return;
     }
+
+    const originalWord = gameHistory.length > 0 ? gameHistory[gameHistory.length - 1].word : 
+                        (gameHistory.length === 0 && gameStarted ? 
+                          STARTING_WORDS.find(w => w === currentWord.split('').slice(0, w.length).join('')) || 'SHIP' 
+                          : 'SHIP');
 
     // Validate the word
-    const isValid = validateWord(inputWord.toUpperCase(), currentWord, { allowBot: false });
-    if (!isValid) {
-      Alert.alert('Invalid Word', 'This word is not valid or not allowed.');
+    const isValid = validateWord(currentWord.toUpperCase(), originalWord, { allowBot: false });
+    if (!isValid.valid) {
+      Alert.alert('Invalid Word', isValid.reason || 'This word is not valid or not allowed.');
       return;
     }
 
-    const newWord = inputWord.toUpperCase();
-    const actions = calculateActions(currentWord, newWord);
-    const score = scoreTurn(currentWord, newWord, actions, keyLetter);
+    const newWord = currentWord.toUpperCase();
+    const actions = calculateActions(originalWord, newWord);
+    const score = scoreTurn(originalWord, newWord, actions, keyLetter);
     
     const turn: GameTurn = {
       turn: stats.turnsPlayed + 1,
@@ -118,11 +162,10 @@ export default function GameScreen() {
       humanScore: prev.humanScore + score,
       turnsPlayed: prev.turnsPlayed + 1
     }));
-    setCurrentWord(newWord);
     setCurrentPlayer('bot');
     
-    console.log(`👤 Human turn: ${currentWord} → ${newWord} (${score} points)`);
-  }, [inputWord, currentWord, keyLetter, stats.turnsPlayed]);
+    console.log(`👤 Human turn: ${originalWord} → ${newWord} (${score} points)`);
+  }, [currentWord, selectedLetters, gameHistory, keyLetter, stats.turnsPlayed, gameStarted]);
 
   // Execute bot turn
   const executeBotTurn = useCallback(() => {
@@ -131,7 +174,8 @@ export default function GameScreen() {
     // Small delay to show processing
     setTimeout(() => {
       try {
-        const botMove: BotMove = chooseBestMove(currentWord, keyLetter);
+        const previousWord = gameHistory.length > 0 ? gameHistory[gameHistory.length - 1].word : currentWord;
+        const botMove: BotMove = chooseBestMove(previousWord, keyLetter);
         
         const turn: GameTurn = {
           turn: stats.turnsPlayed + 1,
@@ -149,11 +193,11 @@ export default function GameScreen() {
           gameComplete: prev.turnsPlayed + 1 >= GAME_LENGTH
         }));
         setCurrentWord(botMove.word);
-        setInputWord(botMove.word);
+        setSelectedLetters(botMove.word.split('').map(letter => ALPHABET.indexOf(letter)));
         setCurrentPlayer('human');
         setIsProcessing(false);
         
-        console.log(`🤖 Bot turn: ${currentWord} → ${botMove.word} (${botMove.score} points)`);
+        console.log(`🤖 Bot turn: ${previousWord} → ${botMove.word} (${botMove.score} points)`);
       } catch (error) {
         console.error('Bot turn error:', error);
         setIsProcessing(false);
@@ -161,7 +205,7 @@ export default function GameScreen() {
         startNewGame();
       }
     }, 500);
-  }, [currentWord, keyLetter, stats.turnsPlayed, startNewGame]);
+  }, [currentWord, keyLetter, stats.turnsPlayed, gameHistory, startNewGame]);
 
   // Auto-execute bot turns
   useEffect(() => {
@@ -189,6 +233,23 @@ export default function GameScreen() {
     }
   }, [stats.gameComplete, stats.humanScore, stats.botScore, startNewGame]);
 
+  // Action bar configuration
+  const getActionBarActions = (): ActionBarAction[] => {
+    if (!gameStarted || currentPlayer !== 'human' || stats.gameComplete) {
+      return [];
+    }
+
+    const canSubmit = currentWord.length >= 3 && selectedLetters.length > 0;
+    
+    return [
+      {
+        type: 'submit',
+        onPress: submitHumanTurn,
+        disabled: !canSubmit
+      }
+    ];
+  };
+
   const renderGameStatus = () => {
     if (!gameStarted) {
       return (
@@ -214,41 +275,7 @@ export default function GameScreen() {
           {currentPlayer === 'human' ? '👤 Your turn' : '🤖 Bot is thinking...'}
         </Text>
         <Text style={styles.keyLetterText}>Key Letter: {keyLetter}</Text>
-      </View>
-    );
-  };
-
-  const renderWordInput = () => {
-    if (!gameStarted || currentPlayer !== 'human' || stats.gameComplete) {
-      return null;
-    }
-
-    return (
-      <View style={styles.inputSection}>
-        <Text style={styles.inputLabel}>Current Word: {currentWord}</Text>
-        <View style={styles.inputContainer}>
-          <TouchableOpacity 
-            style={styles.inputBox}
-            onPress={() => {
-              Alert.prompt(
-                'Enter New Word',
-                `Transform "${currentWord}" into a new word:`,
-                (text) => setInputWord(text || ''),
-                'plain-text',
-                inputWord
-              );
-            }}
-          >
-            <Text style={styles.inputText}>{inputWord || 'Tap to enter word...'}</Text>
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity 
-          style={[styles.submitButton, { opacity: inputWord === currentWord ? 0.5 : 1 }]}
-          onPress={submitHumanTurn}
-          disabled={inputWord === currentWord}
-        >
-          <Text style={styles.submitButtonText}>Submit Word</Text>
-        </TouchableOpacity>
+        <Text style={styles.currentWordText}>Current Word: {currentWord || 'Select letters...'}</Text>
       </View>
     );
   };
@@ -269,32 +296,42 @@ export default function GameScreen() {
     </View>
   );
 
-  const renderGameHistory = () => {
-    if (gameHistory.length === 0) return null;
+  const renderMainGameArea = () => {
+    if (!gameStarted) return null;
 
+    const keyLetterIndex = ALPHABET.indexOf(keyLetter);
+    const wordHistory = gameHistory.map(turn => turn.word);
+    
     return (
-      <View style={styles.historySection}>
-        <Text style={styles.historyTitle}>Game History</Text>
-        <ScrollView style={styles.historyScroll} showsVerticalScrollIndicator={false}>
-          {gameHistory.map((turn, index) => (
-            <View key={index} style={styles.historyItem}>
-              <View style={styles.historyHeader}>
-                <Text style={styles.historyTurn}>Turn {turn.turn}</Text>
-                <Text style={styles.historyPlayer}>
-                  {turn.player === 'human' ? '👤' : '🤖'}
-                </Text>
-                <Text style={styles.historyScore}>+{turn.score}pts</Text>
-              </View>
-              <Text style={styles.historyWord}>{turn.word}</Text>
-              <Text style={styles.historyActions}>
-                {turn.actions.length > 0 
-                  ? turn.actions.map(a => a.type).join(', ')
-                  : 'No change'
-                }
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
+      <View style={styles.gameArea}>
+        {/* Word Trail */}
+        <View 
+          style={styles.wordTrailContainer}
+          onLayout={(event) => {
+            const { x, y, width, height } = event.nativeEvent.layout;
+            setWordAreaLayout({ x, y, width, height });
+          }}
+        >
+          <WordTrail words={wordHistory} />
+        </View>
+
+        {/* Alphabet Grid */}
+        <View style={styles.alphabetContainer}>
+          <AlphabetGrid
+            letters={ALPHABET}
+            selectedIndices={selectedLetters}
+            keyIndex={keyLetterIndex >= 0 ? keyLetterIndex : undefined}
+            onLetterTap={handleLetterTap}
+            onLetterDragToWord={handleLetterDragToWord}
+            onLetterDragFromWordToGrid={handleLetterDragFromWordToGrid}
+            wordAreaLayout={wordAreaLayout}
+          />
+        </View>
+
+        {/* Action Bar */}
+        <View style={styles.actionBarContainer}>
+          <ActionBar actions={getActionBarActions()} />
+        </View>
       </View>
     );
   };
@@ -315,8 +352,7 @@ export default function GameScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {renderGameStatus()}
         {renderScoreboard()}
-        {renderWordInput()}
-        {renderGameHistory()}
+        {renderMainGameArea()}
       </ScrollView>
 
       {isProcessing && (
@@ -396,6 +432,13 @@ const styles = StyleSheet.create({
     color: '#e74c3c',
     marginTop: 5,
   },
+  currentWordText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#3498db',
+    marginTop: 10,
+    textAlign: 'center',
+  },
   startButton: {
     backgroundColor: '#3498db',
     paddingHorizontal: 30,
@@ -444,7 +487,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#7f8c8d',
   },
-  inputSection: {
+  gameArea: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 20,
@@ -455,92 +498,17 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: 15,
-  },
-  inputContainer: {
-    marginBottom: 15,
-  },
-  inputBox: {
-    borderWidth: 2,
-    borderColor: '#ecf0f1',
-    borderRadius: 8,
-    padding: 15,
-    backgroundColor: '#f8f9fa',
-  },
-  inputText: {
-    fontSize: 18,
-    color: '#2c3e50',
-    textAlign: 'center',
-  },
-  submitButton: {
-    backgroundColor: '#27ae60',
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  submitButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  historySection: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
+  wordTrailContainer: {
     marginBottom: 20,
-    maxHeight: 300,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  historyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: 15,
-  },
-  historyScroll: {
-    flex: 1,
-  },
-  historyItem: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#ecf0f1',
-    paddingVertical: 10,
-  },
-  historyHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    minHeight: 50,
     alignItems: 'center',
-    marginBottom: 5,
   },
-  historyTurn: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#7f8c8d',
+  alphabetContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  historyPlayer: {
-    fontSize: 16,
-  },
-  historyScore: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#27ae60',
-  },
-  historyWord: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#3498db',
-    marginBottom: 2,
-  },
-  historyActions: {
-    fontSize: 12,
-    color: '#7f8c8d',
+  actionBarContainer: {
+    alignItems: 'center',
   },
   processingOverlay: {
     position: 'absolute',
