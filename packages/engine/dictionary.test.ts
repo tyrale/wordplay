@@ -14,7 +14,11 @@ import {
   censorProfanity,
   getDictionarySize,
   performanceTest,
-  type ValidationOptions
+  getVanityDisplayWord,
+  shouldUnlockVanityToggle,
+  isCurrentWordProfane,
+  type ValidationOptions,
+  type VanityState
 } from './dictionary';
 
 describe('Word Validation Service', () => {
@@ -163,31 +167,91 @@ describe('Word Validation Service', () => {
     });
   });
 
-  describe('Profanity Filtering', () => {
+  describe('Profanity Detection (No Longer Blocks Validation)', () => {
     it('should identify profane words', () => {
       expect(containsProfanity('DAMN')).toBe(true);
       expect(containsProfanity('HELLO')).toBe(false);
     });
 
-    it('should censor profane words as per checkpoint requirement', () => {
+    it('should allow profane words in validation (NEW BEHAVIOR)', () => {
+      const result = validateWord('DAMN');
+      expect(result.isValid).toBe(true); // Profane words are now valid!
+      expect(result.word).toBe('DAMN');
+    });
+
+    it('should still provide legacy censoring function', () => {
       const censored = censorProfanity('DAMN');
-      expect(censored).toBe('D**N'); // Should replace with censor symbols
+      expect(censored).toBe('D**N'); // Legacy function still works
+    });
+  });
+
+  describe('Vanity Display System', () => {
+    const defaultVanityState: VanityState = {
+      hasUnlockedToggle: false,
+      isVanityFilterOn: true
+    };
+
+    const unlockedVanityState: VanityState = {
+      hasUnlockedToggle: true,
+      isVanityFilterOn: true
+    };
+
+    const unlockedFilterOffState: VanityState = {
+      hasUnlockedToggle: true,
+      isVanityFilterOn: false
+    };
+
+    it('should show normal words unchanged', () => {
+      const displayWord = getVanityDisplayWord('HELLO', { vanityState: defaultVanityState });
+      expect(displayWord).toBe('HELLO');
+    });
+
+    it('should show symbols for profane words when filter is on and not unlocked', () => {
+      const displayWord = getVanityDisplayWord('DAMN', { vanityState: defaultVanityState });
+      expect(displayWord).toBe('%#^&'); // 4 symbols for 4-letter word
+    });
+
+    it('should show symbols for profane words when filter is on and unlocked', () => {
+      const displayWord = getVanityDisplayWord('DAMN', { vanityState: unlockedVanityState });
+      expect(displayWord).toBe('%#^&');
+    });
+
+    it('should show real word for profane words when filter is off and unlocked', () => {
+      const displayWord = getVanityDisplayWord('DAMN', { vanityState: unlockedFilterOffState });
+      expect(displayWord).toBe('DAMN');
+    });
+
+    it('should use variety of symbols for different word lengths', () => {
+      const shortWord = getVanityDisplayWord('ASS', { vanityState: defaultVanityState });
+      const longWord = getVanityDisplayWord('ASSHOLE', { vanityState: defaultVanityState });
       
-      const normal = censorProfanity('HELLO');
-      expect(normal).toBe('HELLO'); // Should not censor normal words
+      expect(shortWord).toBe('%#^'); // 3 symbols
+      expect(longWord).toBe('%#^&*@!'); // 7 symbols
     });
 
-    it('should reject profanity when not allowed', () => {
-      const result = validateWord('DAMN', { allowProfanity: false });
-      expect(result.isValid).toBe(false);
-      expect(result.reason).toBe('Profanity not allowed');
-      expect(result.censored).toBe('D**N');
+    it('should detect when unlocking should occur', () => {
+      expect(shouldUnlockVanityToggle('DAMN')).toBe(true);
+      expect(shouldUnlockVanityToggle('HELLO')).toBe(false);
     });
 
-    it('should allow profanity when explicitly allowed', () => {
-      const result = validateWord('DAMN', { allowProfanity: true });
-      expect(result.isValid).toBe(true);
-      expect(result.censored).toBe('D**N');
+    it('should detect profane words for real-time display', () => {
+      expect(isCurrentWordProfane('DAMN')).toBe(true);
+      expect(isCurrentWordProfane('HELLO')).toBe(false);
+    });
+
+    it('should handle case insensitivity in vanity display', () => {
+      const displayWord = getVanityDisplayWord('damn', { vanityState: defaultVanityState });
+      expect(displayWord).toBe('%#^&');
+    });
+
+    it('should handle edge cases in vanity display', () => {
+      // Empty string
+      const empty = getVanityDisplayWord('', { vanityState: defaultVanityState });
+      expect(empty).toBe('');
+
+      // Single character profane (if it existed)
+      const single = getVanityDisplayWord('A', { vanityState: defaultVanityState });
+      expect(single).toBe('A'); // Not profane
     });
   });
 
@@ -262,11 +326,11 @@ describe('Word Validation Service', () => {
 
   describe('Edge Cases and Error Handling', () => {
     it('should handle null and undefined gracefully', () => {
-      // @ts-expect-error - Testing runtime behavior
+      // @ts-expect-error - Testing runtime behavior with null
       const result1 = validateWord(null);
       expect(result1.isValid).toBe(false);
 
-      // @ts-expect-error - Testing runtime behavior  
+      // @ts-expect-error - Testing runtime behavior with undefined
       const result2 = validateWord(undefined);
       expect(result2.isValid).toBe(false);
     });
@@ -300,7 +364,7 @@ describe('Word Validation Service', () => {
       const options: ValidationOptions = {
         isBot: false,
         allowSlang: true,
-        allowProfanity: false,
+        allowProfanity: false, // This option is now unused but kept for compatibility
         checkLength: true,
         previousWord: 'HELLO'
       };

@@ -57,7 +57,7 @@ class WordDictionary {
       ];
       slangWords.forEach(word => this.slangWords.add(word.toUpperCase()));
 
-      // Basic profanity list (will be censored with symbols)
+      // Basic profanity list (used for vanity display only)
       const profanityWords = [
         'DAMN', 'HELL', 'CRAP', 'PISS', 'SHIT', 'FUCK', 'BITCH', 'ASSHOLE',
         'BASTARD', 'WHORE', 'SLUT', 'FART', 'POOP', 'BUTT', 'ASS'
@@ -110,7 +110,6 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
   const {
     isBot = false,
     allowSlang = true,
-    allowProfanity = false,
     checkLength = true,
     previousWord
   } = options;
@@ -173,24 +172,8 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
     }
   }
 
-  // Profanity check
-  if (dictionary.isProfanity(normalizedWord)) {
-    if (!allowProfanity) {
-      return {
-        isValid: false,
-        reason: 'Profanity not allowed',
-        word: normalizedWord,
-        censored: dictionary.censorWord(normalizedWord)
-      };
-    } else {
-      // Allow but return censored version
-      return {
-        isValid: true,
-        word: normalizedWord,
-        censored: dictionary.censorWord(normalizedWord)
-      };
-    }
-  }
+  // NOTE: Profanity is NO LONGER validated here - profane words are valid for play
+  // Profanity detection is only used for vanity display purposes
 
   // Dictionary lookup
   const inEnable = dictionary.isInEnable(normalizedWord);
@@ -242,13 +225,6 @@ export function containsProfanity(word: string): boolean {
 }
 
 /**
- * Returns a censored version of profane words
- */
-export function censorProfanity(word: string): string {
-  return dictionary.censorWord(word);
-}
-
-/**
  * Gets the total number of words in the dictionary
  */
 export function getDictionarySize(): number {
@@ -276,4 +252,93 @@ export function performanceTest(iterations = 1000): { averageTime: number; total
     averageTime,
     totalTime
   };
+}
+
+// =============================================================================
+// VANITY DISPLAY SYSTEM
+// =============================================================================
+
+export interface VanityState {
+  hasUnlockedToggle: boolean;
+  isVanityFilterOn: boolean;
+}
+
+export interface VanityDisplayOptions {
+  vanityState: VanityState;
+  isEditing?: boolean;
+}
+
+/**
+ * Transforms a word for display based on vanity filter settings
+ * 
+ * Rules:
+ * 1. If word is not profane → always show real word
+ * 2. If word is profane AND user hasn't unlocked toggle → show symbols
+ * 3. If word is profane AND user has unlocked toggle AND filter is on → show symbols  
+ * 4. If word is profane AND user has unlocked toggle AND filter is off → show real word
+ * 5. During editing, behavior depends on current word composition
+ */
+export function getVanityDisplayWord(
+  word: string, 
+  options: VanityDisplayOptions
+): string {
+  const normalizedWord = word.trim().toUpperCase();
+  const { vanityState } = options;
+  
+  // If word is not profane, always show real word
+  if (!dictionary.isProfanity(normalizedWord)) {
+    return normalizedWord;
+  }
+  
+  // Word is profane - check vanity filter settings
+  const shouldShowSymbols = !vanityState.hasUnlockedToggle || vanityState.isVanityFilterOn;
+  
+  if (shouldShowSymbols) {
+    return transformToSymbols(normalizedWord);
+  } else {
+    return normalizedWord;
+  }
+}
+
+/**
+ * Transforms a profane word into symbols
+ * Uses a variety of symbols to make it look like censoring
+ */
+function transformToSymbols(word: string): string {
+  const symbols = ['%', '#', '^', '&', '*', '@', '!', '$'];
+  let result = '';
+  
+  for (let i = 0; i < word.length; i++) {
+    // Use different symbols in a pattern for variety
+    result += symbols[i % symbols.length];
+  }
+  
+  return result;
+}
+
+/**
+ * Checks if submitting this word should unlock the vanity toggle feature
+ */
+export function shouldUnlockVanityToggle(word: string): boolean {
+  return dictionary.isProfanity(word.trim().toUpperCase());
+}
+
+/**
+ * Helper function for game state management
+ * Checks if the current word composition is profane (for real-time display)
+ */
+export function isCurrentWordProfane(word: string): boolean {
+  return dictionary.isProfanity(word.trim().toUpperCase());
+}
+
+// =============================================================================
+// BACKWARD COMPATIBILITY & LEGACY FUNCTIONS
+// =============================================================================
+
+/**
+ * @deprecated Use getVanityDisplayWord instead
+ * Returns a censored version of profane words (legacy function)
+ */
+export function censorProfanity(word: string): string {
+  return dictionary.censorWord(word);
 } 
