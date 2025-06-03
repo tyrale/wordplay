@@ -238,31 +238,43 @@ export class TerminalGame {
   }
 
   /**
-   * Show scoring breakdown
+   * Show scoring breakdown using action icons format
    */
   private showScoringBreakdown(scoring: { breakdown: Record<string, number>; keyLettersUsed: string[] }): void {
     const breakdown = scoring.breakdown;
-    const details = [];
+    const actions = [];
     
+    // Build action icons based on what actions were taken
     if (breakdown.letterAdditionPoints > 0) {
-      details.push(`+${breakdown.letterAdditionPoints} (letter addition)`);
+      actions.push('+');
     }
     if (breakdown.letterRemovalPoints > 0) {
-      details.push(`+${breakdown.letterRemovalPoints} (letter removal)`);
+      actions.push('-');
     }
     if (breakdown.rearrangementPoints > 0) {
-      details.push(`+${breakdown.rearrangementPoints} (rearrangement)`);
-    }
-    if (breakdown.keyLetterUsagePoints > 0) {
-      details.push(`+${breakdown.keyLetterUsagePoints} (key letters)`);
+      actions.push('~'); // Using ~ for rearrangement/move
     }
     
-    if (details.length > 0) {
-      console.log(`${colors.blue}Scoring: ${details.join(', ')}${colors.reset}`);
-    }
+    // Calculate base score (non-key-letter points)
+    const baseScore = (breakdown.letterAdditionPoints || 0) + 
+                     (breakdown.letterRemovalPoints || 0) + 
+                     (breakdown.rearrangementPoints || 0);
     
-    if (scoring.keyLettersUsed.length > 0) {
-      console.log(`${colors.yellow}Key letters used: ${scoring.keyLettersUsed.join(', ')}${colors.reset}`);
+    // Build the scoring display line
+    if (actions.length > 0) {
+      let scoreLine = actions.join(' | ') + ` ${baseScore}`;
+      
+      // Add key letter bonus if any
+      if (breakdown.keyLetterUsagePoints > 0) {
+        scoreLine += ` +${breakdown.keyLetterUsagePoints}`;
+      }
+      
+      console.log(`${colors.blue}Scoring: ${scoreLine}${colors.reset}`);
+      
+      // Show which key letters were used
+      if (scoring.keyLettersUsed.length > 0) {
+        console.log(`${colors.yellow}Key letters used: ${scoring.keyLettersUsed.join(', ')}${colors.reset}`);
+      }
     }
   }
 
@@ -343,6 +355,10 @@ export class TerminalGame {
     console.log('• Key letters are automatically generated and give bonus points (+1 when used)');
     console.log('• Must be valid dictionary words with max ±1 letter change per turn');
     console.log('• No word can be played twice in the same game');
+    console.log('');
+    console.log(colors.bright + 'SCORING DISPLAY:' + colors.reset);
+    console.log('• + = letter addition, - = letter removal, ~ = rearrangement');
+    console.log('• Example: "+ | ~ 2 +1" means add + rearrange (2 pts) + key letter bonus (1 pt)');
     console.log('');
     console.log(colors.bright + 'COMMANDS:' + colors.reset);
     console.log('• [word]        - Make a move with the word');
