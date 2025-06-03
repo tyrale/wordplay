@@ -82,7 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Key letter prioritization and bonus scoring integration
   - 100-turn simulation capability without crashes or performance degradation
   - Performance targets met (average latency <50ms per move)
-  - Bot privileges system (can bypass validation rules for advanced gameplay)
+  - Fair play system (follows same validation rules as human players for balanced gameplay)
   - Full integration with scoring module and word validation system
   - **Move Generation**: 700+ candidates per word analyzed and filtered to valid dictionary words
   - **AI Features**: Confidence scoring, move reasoning, decision explanation system

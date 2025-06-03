@@ -9,7 +9,7 @@
  * - Greedy strategy (chooses highest scoring moves)
  * - Move generation for add/remove/rearrange operations
  * - Key letter prioritization and bonus scoring
- * - Bot privileges (can bypass validation rules)
+ * - Fair play (follows same validation rules as human players)
  * - Performance optimized for <50ms average latency
  * - Integration with scoring module and word validation
  */
@@ -168,12 +168,12 @@ export function generateSubstituteMoves(currentWord: string): MoveCandidate[] {
 }
 
 /**
- * Filters candidates to only include valid dictionary words
+ * Filters candidates to only include valid dictionary words that human players could use
  */
 export function filterValidCandidates(candidates: MoveCandidate[]): MoveCandidate[] {
   return candidates.filter(candidate => {
-    // Bots can bypass validation, but still prefer real words when possible
-    const validation = validateWord(candidate.word, { isBot: true });
+    // Bot plays by the same rules as human players - no special privileges
+    const validation = validateWord(candidate.word, { isBot: false });
     return validation.isValid && isValidDictionaryWord(candidate.word);
   });
 }

@@ -67,7 +67,7 @@ This document tracks the progress of tasks from the development plan. Each task 
   - [x] Key letter prioritization and bonus scoring integration ✅ **VERIFIED** (Key letters increase confidence and scoring, integrated with scoring module)
   - [x] 100-turn simulation capability without crashes ✅ **VERIFIED** (simulateBotGame completes 100 turns, tested extensively)
   - [x] Performance targets (average latency <50ms) ✅ **VERIFIED** (Average latency <50ms tested across multiple scenarios)
-  - [x] Bot privileges system (can make moves humans cannot) ✅ **VERIFIED** (Uses isBot: true for validation bypass)
+  - [x] Fair play system (follows same validation rules as human players) ✅ **VERIFIED** (Uses isBot: false for validation, all moves valid for humans)
   - [x] Integration with scoring module and word validation system ✅ **VERIFIED** (Full integration with getScoreForMove and validateWord)
   - [x] Pure TypeScript module with comprehensive testing ✅ **VERIFIED** (33/33 tests passing, comprehensive coverage)
 

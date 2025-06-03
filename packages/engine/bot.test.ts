@@ -19,6 +19,7 @@ import {
   explainBotMove,
   type MoveCandidate
 } from './bot';
+import { validateWord } from './dictionary';
 
 describe('Bot AI Module', () => {
 
@@ -293,7 +294,7 @@ describe('Bot AI Module', () => {
     });
   });
 
-  describe('Bot Privileges and Integration', () => {
+  describe('Bot Fair Play and Integration', () => {
     it('should integrate with scoring module correctly', () => {
       const result = generateBotMove('CAT', { keyLetters: ['S'] });
       
@@ -303,20 +304,24 @@ describe('Bot AI Module', () => {
       }
     });
 
-    it('should work with dictionary validation', () => {
+    it('should follow same validation rules as human players', () => {
       const result = generateBotMove('CAT');
       
       if (result.move) {
-        // Bot moves should be real dictionary words when possible
+        // Bot moves should be real dictionary words that humans can also play
         expect(result.move.word.length).toBeGreaterThan(0);
         expect(/^[A-Z]+$/.test(result.move.word)).toBe(true);
+        
+        // Should pass the same validation that human players face
+        const validation = validateWord(result.move.word, { isBot: false });
+        expect(validation.isValid).toBe(true);
       }
       
       // Should generate many candidates before filtering
       expect(result.totalCandidatesGenerated).toBeGreaterThan(result.candidates.length);
     });
 
-    it('should handle complex word transformations', () => {
+    it('should handle complex word transformations fairly', () => {
       const complexWords = ['LISTEN', 'SILENT', 'MASTER', 'STREAM'];
       
       for (const word of complexWords) {
@@ -325,6 +330,10 @@ describe('Bot AI Module', () => {
         
         if (result.move) {
           expect(result.move.word).not.toBe(word); // Should make a different word
+          
+          // All bot moves should be valid for human players too
+          const validation = validateWord(result.move.word, { isBot: false });
+          expect(validation.isValid).toBe(true);
         }
       }
     });
