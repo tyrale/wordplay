@@ -119,7 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Visual Design**: Welcome screen, colored output, formatted game state, winner celebration
   - **Bot Integration**: Real-time bot moves with performance timing and decision feedback
   - **NEW: Word Repetition Prevention**: No word can be played twice in the same game (strategic constraint)
-  - **NEW: Automatic Key Letter Generation**: Random key letters generated each turn (max 3 active)
+  - **NEW: Automatic Key Letter Generation**: Exactly 1 key letter per turn with no repetition throughout game for strategic variety
   - **NEW: Random Starting Words**: Each game starts with a random 4-letter word from dictionary for variety
   - **NEW: Turn-based Color Themes**: Alternating blue/green color schemes for each turn with multiple shades for enhanced readability
   - **IMPROVED: Game Logic**: Enhanced move validation with used word tracking and automatic key letter management

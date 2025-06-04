@@ -91,11 +91,11 @@ This document tracks the progress of tasks from the development plan. Each task 
   - Performance testing and logic validation ✅ **VERIFIED** (17/17 tests passing, performance optimized)
   - Terminal-based user experience design ✅ **VERIFIED** (Welcome screen, help system, colored output, game statistics)
   - **NEW: Word repetition prevention** ✅ **VERIFIED** (No word can be played twice in the same game)
-  - **NEW: Automatic key letter generation** ✅ **VERIFIED** (Random key letters generated automatically each turn, max 3 active)
+  - **NEW: Automatic key letter generation** ✅ **VERIFIED** (Exactly 1 key letter per turn, no repetition throughout game)
   - **NEW: Random starting words** ✅ **VERIFIED** (Each game starts with a random 4-letter word from dictionary for variety)
   - **NEW: Turn-based color themes** ✅ **VERIFIED** (Alternating blue/green themes for each turn with multiple shades for readability)
   - **IMPROVED: Game logic validation** ✅ **VERIFIED** (Enhanced move validation with used word tracking)
-  - **IMPROVED: Strategic gameplay** ✅ **VERIFIED** (Players must plan around limited word pool and automatic key letter bonuses)
+  - **IMPROVED: Strategic gameplay** ✅ **VERIFIED** (Players must plan around limited word pool and unique key letter bonuses)
   - **IMPROVED: Visual design** ✅ **VERIFIED** (Turn-based color themes enhance visual cohesion and turn distinction)
   - **PLAYABLE NOW**: Run `npm run play` to start the interactive terminal game
 
