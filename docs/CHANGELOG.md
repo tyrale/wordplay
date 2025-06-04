@@ -119,11 +119,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Visual Design**: Welcome screen, colored output, formatted game state, winner celebration
   - **Bot Integration**: Real-time bot moves with performance timing and decision feedback
   - **NEW: Word Repetition Prevention**: No word can be played twice in the same game (strategic constraint)
-  - **NEW: Automatic Key Letter Generation**: Exactly 1 key letter per turn with no repetition throughout game for strategic variety
+  - **NEW: Automatic Key Letter Generation**: Exactly 1 key letter per turn with no repetition throughout game, excludes letters already in current word
   - **NEW: Random Starting Words**: Each game starts with a random 4-letter word from dictionary for variety
   - **NEW: Turn-based Color Themes**: Alternating blue/green color schemes for each turn with multiple shades for enhanced readability
-  - **IMPROVED: Game Logic**: Enhanced move validation with used word tracking and automatic key letter management
+  - **NEW: Pass Function**: Players can pass turns when no valid moves available, bot automatically passes when stuck
+  - **IMPROVED: Move Validation**: Strict enforcement of game rules - only one add/remove action per turn (fixes DOSS→BOSSY exploit)
+  - **IMPROVED: Game Logic**: Enhanced move validation with used word tracking, action limits, and strategic constraints
   - **IMPROVED: Visual Design**: Turn-based color themes provide better visual cohesion and turn distinction for improved UX
+  - **IMPROVED: Bot AI**: Intelligent pass behavior when no valid moves available instead of crashing
   - **Testing**: 17/17 tests passing with mocked readline interface for CI compatibility
   - **READY TO PLAY**: Use `npm run play` to start the interactive terminal game
   - **Long-term Solution**: Added tsx dependency and npm script for TypeScript execution with ES modules

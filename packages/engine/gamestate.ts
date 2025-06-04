@@ -15,7 +15,7 @@
  */
 
 import { validateWord, type ValidationResult } from './dictionary';
-import { calculateScore, getScoreForMove, type ScoringResult } from './scoring';
+import { calculateScore, getScoreForMove, isValidMove, type ScoringResult } from './scoring';
 import { generateBotMove, type BotMove, type BotResult } from './bot';
 import { getRandomWordByLength } from './dictionary';
 
@@ -51,6 +51,7 @@ export interface PublicGameState {
   currentWord: string;
   keyLetters: string[];
   lockedLetters: string[];
+  lockedKeyLetters: string[]; // NEW: Key letters that are locked for the current player's turn
   usedWords: string[]; // Exposed as array for easier consumption
   
   // Game flow
@@ -77,6 +78,7 @@ export interface GameState {
   currentWord: string;
   keyLetters: string[];
   lockedLetters: string[];
+  lockedKeyLetters: string[]; // NEW: Key letters that are locked for the current player's turn
   usedWords: Set<string>; // Track all words used in this game
   usedKeyLetters: Set<string>; // Track all key letters used in this game to prevent repetition
   
@@ -188,7 +190,8 @@ export class LocalGameStateManager {
       gameStartTime: now,
       lastMoveTime: now,
       usedWords: new Set(),
-      usedKeyLetters: new Set()
+      usedKeyLetters: new Set(),
+      lockedKeyLetters: []
     };
   }
 
@@ -302,6 +305,40 @@ export class LocalGameStateManager {
       };
     }
 
+    // Validate move actions (only one of each action type allowed per turn)
+    if (!isValidMove(this.state.currentWord, normalizedWord)) {
+      return {
+        newWord: normalizedWord,
+        isValid: false,
+        validationResult: { isValid: false, reason: 'Invalid move: can only add/remove one letter per turn', word: normalizedWord },
+        scoringResult: null,
+        canApply: false,
+        reason: 'Invalid move: can only add/remove one letter per turn'
+      };
+    }
+
+    // LOCKED KEY LETTER VALIDATION
+    // Check if any locked key letters would be removed by this move
+    if (this.state.lockedKeyLetters.length > 0) {
+      for (const lockedLetter of this.state.lockedKeyLetters) {
+        // If the locked letter is in the current word but not in the new word, it's being removed
+        if (this.state.currentWord.includes(lockedLetter) && !normalizedWord.includes(lockedLetter)) {
+          return {
+            newWord: normalizedWord,
+            isValid: false,
+            validationResult: { 
+              isValid: false, 
+              reason: `Cannot remove locked key letter '${lockedLetter}' - it was used by the previous player`, 
+              word: normalizedWord 
+            },
+            scoringResult: null,
+            canApply: false,
+            reason: `Cannot remove locked key letter '${lockedLetter}' - it was used by the previous player`
+          };
+        }
+      }
+    }
+
     // Calculate scoring
     const scoringResult = calculateScore(this.state.currentWord, normalizedWord, {
       keyLetters: this.state.keyLetters
@@ -355,6 +392,21 @@ export class LocalGameStateManager {
 
     this.state.turnHistory.push(turnRecord);
 
+    // KEY LETTER LOCKING FEATURE
+    // Clear any existing locked key letters from previous turn
+    this.state.lockedKeyLetters = [];
+    
+    // If this player used key letters, lock them for the next player
+    if (moveAttempt.scoringResult.keyLettersUsed.length > 0) {
+      // Find which key letters were used and are now in the new word
+      const usedKeyLetters = moveAttempt.scoringResult.keyLettersUsed.filter(letter => 
+        moveAttempt.newWord.toUpperCase().includes(letter.toUpperCase())
+      );
+      
+      // These letters will be locked for the next player's turn
+      this.state.lockedKeyLetters = usedKeyLetters.map(letter => letter.toUpperCase());
+    }
+
     // Automatic key letter generation - maintain exactly 1 key letter per turn
     if (this.state.config.enableKeyLetters) {
       // Track the current key letter as used (since it was active for this turn)
@@ -407,8 +459,15 @@ export class LocalGameStateManager {
       });
 
       if (!botResult.move) {
-        console.warn('Bot could not generate a valid move');
-        return null;
+        console.warn('Bot could not generate a valid move, passing turn');
+        // Automatically pass when bot can't find a valid move
+        this.passTurn();
+        return {
+          word: this.state.currentWord,
+          score: 0,
+          confidence: 0,
+          reasoning: ['PASS - No valid moves available']
+        };
       }
 
       // Attempt and apply the bot's move
@@ -421,11 +480,26 @@ export class LocalGameStateManager {
         }
       }
 
-      return null;
+      // If bot move failed to apply, pass instead
+      console.warn('Bot move failed to apply, passing turn');
+      this.passTurn();
+      return {
+        word: this.state.currentWord,
+        score: 0,
+        confidence: 0,
+        reasoning: ['PASS - Move validation failed']
+      };
 
     } catch (error) {
       console.error('Bot move generation failed:', error);
-      return null;
+      // Pass on error
+      this.passTurn();
+      return {
+        word: this.state.currentWord,
+        score: 0,
+        confidence: 0,
+        reasoning: ['PASS - Error in move generation']
+      };
     }
   }
 
@@ -678,11 +752,16 @@ export class LocalGameStateManager {
 
   /**
    * Generate a random key letter that hasn't been used before in this game
+   * and is not already present in the current word
    */
   private generateRandomKeyLetter(): void {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const currentWordLetters = new Set(this.state.currentWord.split(''));
+    
     const availableLetters = alphabet.split('').filter(letter => 
-      !this.state.usedKeyLetters.has(letter) && !this.state.keyLetters.includes(letter)
+      !this.state.usedKeyLetters.has(letter) && 
+      !this.state.keyLetters.includes(letter) &&
+      !currentWordLetters.has(letter) // NEW: Don't use letters already in the current word
     );
     
     if (availableLetters.length > 0) {
@@ -701,6 +780,79 @@ export class LocalGameStateManager {
         timestamp: Date.now()
       });
     }
+  }
+
+  /**
+   * Allow the current player to pass their turn
+   */
+  public passTurn(): boolean {
+    if (this.state.gameStatus !== 'playing') {
+      return false;
+    }
+
+    const currentPlayer = this.getCurrentPlayer();
+    if (!currentPlayer) {
+      return false;
+    }
+
+    // Clear locked key letters when passing (locks are removed)
+    this.state.lockedKeyLetters = [];
+
+    // Add to turn history to track the pass
+    const turnRecord: TurnHistory = {
+      turnNumber: this.state.currentTurn,
+      playerId: currentPlayer.id,
+      previousWord: this.state.currentWord,
+      newWord: this.state.currentWord, // Word stays the same
+      score: 0, // No points for passing
+      scoringBreakdown: {
+        totalScore: 0,
+        breakdown: {
+          addLetterPoints: 0,
+          removeLetterPoints: 0,
+          rearrangePoints: 0,
+          keyLetterUsagePoints: 0,
+        },
+        actions: ['PASS'],
+        keyLettersUsed: []
+      },
+      timestamp: Date.now()
+    };
+
+    this.state.turnHistory.push(turnRecord);
+
+    // Generate new key letters even on pass (maintains 1 per turn rule)
+    if (this.state.config.enableKeyLetters) {
+      // Track the current key letter as used (since it was active for this turn)
+      this.state.keyLetters.forEach(letter => {
+        this.state.usedKeyLetters.add(letter);
+      });
+      
+      // Clear current key letters and generate exactly 1 new key letter
+      this.state.keyLetters = [];
+      this.generateRandomKeyLetter();
+    }
+
+    // Notify listeners of the pass
+    this.notifyListeners({
+      type: 'turn_completed',
+      data: { 
+        type: 'pass',
+        playerId: currentPlayer.id,
+        playerName: currentPlayer.name
+      },
+      timestamp: Date.now()
+    });
+
+    // Switch to next player
+    this.switchToNextPlayer();
+
+    // Check if game is finished
+    if (this.state.currentTurn > this.state.maxTurns) {
+      this.finishGame();
+    }
+
+    return true;
   }
 }
 

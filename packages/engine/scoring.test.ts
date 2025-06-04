@@ -13,6 +13,7 @@ import {
   validateScoringResult,
   performanceTestScoring,
   formatScoreBreakdown,
+  isValidMove,
   type ScoringResult
 } from './scoring';
 
@@ -445,6 +446,50 @@ describe('Scoring Module', () => {
         keyLetters: ['B']
       });
       expect(result2.totalScore).toBe(3); // add(1) + remove(1) + key usage(1)
+    });
+  });
+
+  describe('Move Validation Rules', () => {
+    it('should allow valid single letter additions', () => {
+      expect(isValidMove('CAT', 'CATS')).toBe(true);
+      expect(isValidMove('CAT', 'COAT')).toBe(true);
+    });
+
+    it('should allow valid single letter removals', () => {
+      expect(isValidMove('CATS', 'CAT')).toBe(true);
+      expect(isValidMove('COAT', 'COT')).toBe(true);
+    });
+
+    it('should allow valid rearrangements', () => {
+      expect(isValidMove('CAT', 'TAC')).toBe(true);
+      expect(isValidMove('CATS', 'TACS')).toBe(true);
+    });
+
+    it('should allow valid substitutions (one add + one remove)', () => {
+      expect(isValidMove('CAT', 'BAT')).toBe(true);
+      expect(isValidMove('CATS', 'BATS')).toBe(true);
+    });
+
+    it('should reject multiple letter additions', () => {
+      expect(isValidMove('CAT', 'CASTLE')).toBe(false); // +TLE (3 additions)
+      expect(isValidMove('DOG', 'DOGGY')).toBe(false); // +GY (2 additions)
+    });
+
+    it('should reject multiple letter removals', () => {
+      expect(isValidMove('CASTLE', 'CAT')).toBe(false); // Remove SLE (3 removals)
+      expect(isValidMove('DOGGY', 'DOG')).toBe(false); // Remove GY (2 removals)
+    });
+
+    it('should reject the specific DOSS→BOSSY case', () => {
+      // This was incorrectly allowed before the fix
+      // DOSS→BOSSY requires: Remove D, Add B, Add Y (2 additions = invalid)
+      expect(isValidMove('DOSS', 'BOSSY')).toBe(false);
+    });
+
+    it('should allow complex but valid moves', () => {
+      // One substitution + rearrange is allowed
+      expect(isValidMove('CATS', 'TABS')).toBe(true); // Remove C, Add T, rearrange
+      expect(isValidMove('DOG', 'GOD')).toBe(true); // Just rearrange
     });
   });
 }); 

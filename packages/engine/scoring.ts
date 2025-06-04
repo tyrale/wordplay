@@ -330,4 +330,30 @@ export function formatScoreBreakdown(result: ScoringResult): string {
   }
   
   return parts.length > 0 ? parts.join(', ') : 'No score';
+}
+
+/**
+ * Validates that a word change follows the game rules:
+ * - Can only add ONE letter per turn
+ * - Can only remove ONE letter per turn  
+ * - Can rearrange letters (no limit)
+ * - Each action type can only be used once per turn
+ */
+export function isValidMove(previousWord: string, currentWord: string): boolean {
+  const analysis = analyzeWordChange(previousWord, currentWord);
+  
+  // Rule: Can only add ONE letter maximum per turn
+  if (analysis.addedLetters.length > 1) {
+    return false;
+  }
+  
+  // Rule: Can only remove ONE letter maximum per turn
+  if (analysis.removedLetters.length > 1) {
+    return false;
+  }
+  
+  // Rearrangement is always allowed (no limits)
+  // Combination of one add + one remove + rearrange is allowed
+  
+  return true;
 } 

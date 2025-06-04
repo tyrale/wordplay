@@ -328,10 +328,10 @@ describe('Word Validation Service', () => {
 
   describe('Edge Cases and Error Handling', () => {
     it('should handle null and undefined gracefully', () => {
-      const result1 = validateWord(null as any);
+      const result1 = validateWord(null as unknown as string);
       expect(result1.isValid).toBe(false);
 
-      const result2 = validateWord(undefined as any);
+      const result2 = validateWord(undefined as unknown as string);
       expect(result2.isValid).toBe(false);
     });
 

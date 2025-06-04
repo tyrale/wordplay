@@ -87,14 +87,6 @@ export class TerminalGame {
   }
 
   /**
-   * Get themed colors for error messages (always red but with turn accent)
-   */
-  private getErrorColor(turnNumber: number): string {
-    const theme = this.getTurnTheme(turnNumber);
-    return colors.red; // Keep errors red but could add theme.accent for context
-  }
-
-  /**
    * Start the terminal game
    */
   public async start(): Promise<void> {
@@ -121,7 +113,6 @@ export class TerminalGame {
       
       const currentPlayer = this.gameManager.getCurrentPlayer();
       if (!currentPlayer) {
-        const theme = this.getTurnTheme(state.currentTurn);
         console.log(`${colors.red}Error: No current player found${colors.reset}`);
         break;
       }
@@ -148,13 +139,18 @@ export class TerminalGame {
     const duration = Date.now() - startTime;
     
     if (botMove) {
-      console.log(`${theme.bright}Bot played: ${theme.header}${botMove.word}${colors.reset} ${theme.primary}(+${botMove.score} points, ${duration}ms)${colors.reset}`);
-      
-      // Show bot scoring breakdown from the latest turn history
-      const updatedState = this.gameManager.getState();
-      const latestTurn = updatedState.turnHistory[updatedState.turnHistory.length - 1];
-      if (latestTurn && latestTurn.scoringBreakdown) {
-        this.showScoringBreakdown(latestTurn.scoringBreakdown);
+      if (botMove.reasoning.includes('PASS')) {
+        console.log(`${theme.bright}Bot passed its turn${colors.reset} ${theme.primary}(${duration}ms)${colors.reset}`);
+        console.log(`${theme.light}Reason: ${botMove.reasoning[0]}${colors.reset}`);
+      } else {
+        console.log(`${theme.bright}Bot played: ${theme.header}${botMove.word}${colors.reset} ${theme.primary}(+${botMove.score} points, ${duration}ms)${colors.reset}`);
+        
+        // Show bot scoring breakdown from the latest turn history
+        const updatedState = this.gameManager.getState();
+        const latestTurn = updatedState.turnHistory[updatedState.turnHistory.length - 1];
+        if (latestTurn && latestTurn.scoringBreakdown) {
+          this.showScoringBreakdown(latestTurn.scoringBreakdown);
+        }
       }
     } else {
       console.log(`${colors.red}Bot couldn't find a valid move${colors.reset}`);
@@ -171,7 +167,7 @@ export class TerminalGame {
     const state = this.gameManager.getState();
     const theme = this.getTurnTheme(state.currentTurn);
     
-    const input = await this.promptUser(`${theme.header}Your turn! Enter a word (or 'help', 'quit', 'state'): ${colors.reset}`);
+    const input = await this.promptUser(`${theme.header}Your turn! Enter a word (or 'help', 'quit', 'state', 'pass'): ${colors.reset}`);
     
     const command = input.trim().toUpperCase();
     
@@ -188,6 +184,16 @@ export class TerminalGame {
     
     if (command === 'STATE') {
       this.displayDetailedState();
+      return;
+    }
+    
+    if (command === 'PASS') {
+      const success = this.gameManager.passTurn();
+      if (success) {
+        console.log(`${theme.bright}You passed your turn${colors.reset}`);
+      } else {
+        console.log(`${colors.red}Unable to pass turn${colors.reset}`);
+      }
       return;
     }
     
@@ -236,6 +242,11 @@ export class TerminalGame {
       console.log(`${theme.primary}Locked Letters: ${state.lockedLetters.join(', ')}${colors.reset}`);
     }
     
+    // NEW: Display locked key letters with dark theme colors
+    if (state.lockedKeyLetters.length > 0) {
+      console.log(`${theme.dark}Locked Key Letters (cannot remove): ${state.lockedKeyLetters.join(', ')}${colors.reset}`);
+    }
+    
     // Show recently used words
     if (state.usedWords.length > 1) {
       const recentWords = state.usedWords.slice(-5).join(' → ');
@@ -276,6 +287,12 @@ export class TerminalGame {
     if (state.keyLetters.length > 0) {
       console.log('\n' + theme.header + 'CURRENT KEY LETTERS:' + colors.reset);
       console.log(`${theme.accent}${state.keyLetters.join(', ')} (each worth +1 bonus point)${colors.reset}`);
+    }
+    
+    // NEW: Show locked key letters in detailed state
+    if (state.lockedKeyLetters.length > 0) {
+      console.log('\n' + theme.header + 'LOCKED KEY LETTERS:' + colors.reset);
+      console.log(`${theme.dark}${state.lockedKeyLetters.join(', ')} (cannot be removed this turn)${colors.reset}`);
     }
     
     if (state.turnHistory.length > 0) {
@@ -407,6 +424,7 @@ export class TerminalGame {
     console.log('• Transform the current word by adding, removing, or rearranging letters');
     console.log('• Each transformation scores points: +1 for add/remove/rearrange');
     console.log('• Key letters are automatically generated and give bonus points (+1 when used)');
+    console.log('• Key letters used successfully become LOCKED for the next player (cannot remove)');
     console.log('• Must be valid dictionary words with max ±1 letter change per turn');
     console.log('• No word can be played twice in the same game');
     console.log('');
@@ -417,7 +435,8 @@ export class TerminalGame {
     console.log(colors.bright + 'COMMANDS:' + colors.reset);
     console.log('• [word]        - Make a move with the word');
     console.log('• state         - Show detailed game state');
-    console.log('• help          - Show this help');
+    console.log('• pass          - Skip your turn (clears locked letters)');
+    console.log('• help          - Show this help message');
     console.log('• quit          - Exit the game');
     console.log('');
   }

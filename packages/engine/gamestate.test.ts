@@ -804,4 +804,231 @@ describe('Local GameState Manager', () => {
       expect(allKeyLetters.size).toBeGreaterThan(3);
     });
   });
+});
+
+// NEW: Tests for Locked Key Letter Feature
+describe('Locked Key Letter Feature', () => {
+  let gameManager: LocalGameStateManager;
+
+  beforeEach(() => {
+    gameManager = new LocalGameStateManager({
+      maxTurns: 10,
+      initialWord: 'TASK',
+      allowBotPlayer: true,
+      enableKeyLetters: true,
+      enableLockedLetters: true
+    });
+    gameManager.startGame();
+  });
+
+  describe('Key Letter Locking Mechanism', () => {
+    it('should lock key letters when successfully used by player', () => {
+      // Add key letter 'A' for testing
+      gameManager.addKeyLetter('A');
+      
+      // Player 1 uses key letter A by playing 'TASKS' (adds S, uses A key letter)
+      const moveAttempt = gameManager.attemptMove('TASKS');
+      expect(moveAttempt.isValid).toBe(true);
+      expect(moveAttempt.scoringResult?.keyLettersUsed).toContain('A');
+      
+      const success = gameManager.applyMove(moveAttempt);
+      expect(success).toBe(true);
+      
+      // Check that A is now locked for the next player (Player 2)
+      const state = gameManager.getState();
+      expect(state.lockedKeyLetters).toContain('A');
+      expect(state.currentWord).toBe('TASKS');
+      expect(state.currentTurn).toBe(2); // Now Player 2's turn
+    });
+
+    it('should prevent removal of locked key letters', () => {
+      // Set up scenario: Player 1 uses key letter A
+      gameManager.addKeyLetter('A');
+      const moveAttempt1 = gameManager.attemptMove('TASKS');
+      gameManager.applyMove(moveAttempt1);
+      
+      // Now Player 2 (bot) cannot remove the A from TASKS
+      const currentPlayer = gameManager.getCurrentPlayer();
+      expect(currentPlayer?.id).toBe('bot');
+      
+      const state = gameManager.getState();
+      expect(state.lockedKeyLetters).toContain('A');
+      expect(state.currentWord).toBe('TASKS');
+      
+      // Try to move to 'TSKS' (removing A) - should be rejected
+      const invalidMove = gameManager.attemptMove('TSKS');
+      expect(invalidMove.isValid).toBe(false);
+      expect(invalidMove.canApply).toBe(false);
+      expect(invalidMove.reason).toContain("Cannot remove locked key letter 'A'");
+    });
+
+    it('should allow locked letters to be kept or used in new positions', () => {
+      // Set up scenario: Player 1 uses key letter A
+      gameManager.addKeyLetter('A');
+      const moveAttempt1 = gameManager.attemptMove('TASKS');
+      gameManager.applyMove(moveAttempt1);
+      
+      // Player 2 can rearrange including the locked A letter
+      const validMove = gameManager.attemptMove('STALK');
+      expect(validMove.isValid).toBe(true);
+      expect(validMove.canApply).toBe(true);
+      
+      // A is still present in the new word, so it's allowed
+      expect('STALK'.includes('A')).toBe(true);
+    });
+
+    it('should clear locked letters after turn completion', () => {
+      // Set up scenario: Player 1 uses key letter A
+      gameManager.addKeyLetter('A');
+      const moveAttempt1 = gameManager.attemptMove('TASKS');
+      gameManager.applyMove(moveAttempt1);
+      
+      // Player 2 makes a valid move that keeps the A
+      const moveAttempt2 = gameManager.attemptMove('STALK');
+      gameManager.applyMove(moveAttempt2);
+      
+      // Now it's Player 1's turn again, and A should no longer be locked
+      const state = gameManager.getState();
+      expect(state.currentTurn).toBe(3);
+      expect(state.lockedKeyLetters).toEqual([]); // Should be cleared
+    });
+
+    it('should clear locked letters when player passes', () => {
+      // Set up scenario: Player 1 uses key letter A
+      gameManager.addKeyLetter('A');
+      const moveAttempt1 = gameManager.attemptMove('TASKS');
+      gameManager.applyMove(moveAttempt1);
+      
+      // Verify A is locked for Player 2
+      const stateBefore = gameManager.getState();
+      expect(stateBefore.lockedKeyLetters).toContain('A');
+      
+      // Player 2 passes their turn
+      const passSuccess = gameManager.passTurn();
+      expect(passSuccess).toBe(true);
+      
+      // Locked letters should be cleared after pass
+      const stateAfter = gameManager.getState();
+      expect(stateAfter.lockedKeyLetters).toEqual([]);
+    });
+
+    it('should handle multiple key letters being locked', () => {
+      // Create a scenario with multiple key letters
+      gameManager.addKeyLetter('A');
+      gameManager.addKeyLetter('S');
+      
+      // Player uses both key letters
+      const moveAttempt = gameManager.attemptMove('CASKS');
+      expect(moveAttempt.isValid).toBe(false); // Should fail because we're adding too many letters
+      
+      // Try a valid move that uses one key letter
+      const validMove = gameManager.attemptMove('TASKS');
+      expect(validMove.isValid).toBe(true);
+      gameManager.applyMove(validMove);
+      
+      // Check that used key letters are locked
+      const state = gameManager.getState();
+      expect(state.lockedKeyLetters.length).toBeGreaterThan(0);
+    });
+
+    it('should not lock key letters that are not in the final word', () => {
+      // Set up key letter that won't be used
+      gameManager.addKeyLetter('Z');
+      
+      // Make a move that doesn't use Z
+      const moveAttempt = gameManager.attemptMove('TASKS');
+      gameManager.applyMove(moveAttempt);
+      
+      // Z should not be locked since it wasn't used
+      const state = gameManager.getState();
+      expect(state.lockedKeyLetters).not.toContain('Z');
+    });
+  });
+
+  describe('Integration with Existing Features', () => {
+    it('should work correctly with word repetition prevention', () => {
+      // Player 1 plays TASKS
+      gameManager.addKeyLetter('A');
+      const moveAttempt1 = gameManager.attemptMove('TASKS');
+      gameManager.applyMove(moveAttempt1);
+      
+      // Player 2 tries to play TASKS again - should be rejected for repetition, not locking
+      const duplicateMove = gameManager.attemptMove('TASKS');
+      expect(duplicateMove.isValid).toBe(false);
+      expect(duplicateMove.reason).toContain('already been played');
+    });
+
+    it('should work with bot AI integration', async () => {
+      // Set up locked letter scenario
+      gameManager.addKeyLetter('A');
+      const moveAttempt1 = gameManager.attemptMove('TASKS');
+      gameManager.applyMove(moveAttempt1);
+      
+      // Bot should respect locked letters
+      const currentPlayer = gameManager.getCurrentPlayer();
+      expect(currentPlayer?.isBot).toBe(true);
+      
+      // Bot should not be able to remove locked letters
+      const state = gameManager.getState();
+      expect(state.lockedKeyLetters).toContain('A');
+      
+      // Note: Full bot integration test would require mocking the bot to attempt invalid moves
+      // For now, we test that the state is correctly set up for the bot
+    });
+
+    it('should maintain game performance with locked letters', () => {
+      const iterations = 100;
+      const startTime = performance.now();
+      
+      for (let i = 0; i < iterations; i++) {
+        const testManager = new LocalGameStateManager({
+          initialWord: 'TEST',
+          enableKeyLetters: true,
+          enableLockedLetters: true
+        });
+        testManager.startGame();
+        
+        // Add key letter and make move
+        testManager.addKeyLetter('A');
+        const moveAttempt = testManager.attemptMove('TESTS');
+        if (moveAttempt.canApply) {
+          testManager.applyMove(moveAttempt);
+        }
+        
+        // Check locked letters state
+        const lockedLetters = testManager.getState().lockedKeyLetters;
+        expect(Array.isArray(lockedLetters)).toBe(true);
+      }
+      
+      const endTime = performance.now();
+      const averageTime = (endTime - startTime) / iterations;
+      
+      // Should be fast enough (less than 5ms per operation)
+      expect(averageTime).toBeLessThan(5);
+    });
+  });
+});
+
+// Additional factory function tests
+describe('GameState Factory Functions', () => {
+  it('should create game manager with factory function', () => {
+    const manager = createGameStateManager({
+      maxTurns: 3,
+      initialWord: 'HELLO'
+    });
+    
+    const state = manager.getState();
+    expect(state.maxTurns).toBe(3);
+    expect(state.currentWord).toBe('HELLO');
+  });
+
+  it('should score moves quickly with helper', () => {
+    const score = quickScoreMove('CAT', 'CATS', ['S']);
+    expect(score).toBeGreaterThan(0);
+  });
+
+  it('should validate moves quickly with helper', () => {
+    expect(quickValidateMove('CATS', false, 'CAT')).toBe(true);
+    expect(quickValidateMove('ZZZZ', false, 'CAT')).toBe(false);
+  });
 }); 
