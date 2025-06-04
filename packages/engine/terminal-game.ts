@@ -16,7 +16,7 @@
 import { createGameStateManager, type LocalGameStateManager, type GameConfig } from './gamestate';
 import * as readline from 'readline';
 
-// Terminal colors for better UX
+// Terminal colors for better UX with turn-based theming
 const colors = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
@@ -26,7 +26,27 @@ const colors = {
   blue: '\x1b[34m',
   magenta: '\x1b[35m',
   cyan: '\x1b[36m',
-  white: '\x1b[37m'
+  white: '\x1b[37m',
+  
+  // Blue theme colors (for odd turns: 1, 3, 5, etc.)
+  blueTheme: {
+    primary: '\x1b[34m',      // Standard blue
+    bright: '\x1b[94m',       // Bright blue
+    light: '\x1b[36m',        // Cyan (light blue)
+    dark: '\x1b[44m\x1b[37m', // Blue background with white text
+    accent: '\x1b[96m',       // Bright cyan
+    header: '\x1b[1m\x1b[34m' // Bold blue
+  },
+  
+  // Green theme colors (for even turns: 2, 4, 6, etc.)
+  greenTheme: {
+    primary: '\x1b[32m',      // Standard green
+    bright: '\x1b[92m',       // Bright green
+    light: '\x1b[32m',        // Green
+    dark: '\x1b[42m\x1b[30m', // Green background with black text
+    accent: '\x1b[93m',       // Bright yellow (complements green)
+    header: '\x1b[1m\x1b[32m' // Bold green
+  }
 };
 
 interface TerminalGameOptions {
@@ -60,6 +80,21 @@ export class TerminalGame {
   }
 
   /**
+   * Get the current turn's color theme based on turn number
+   */
+  private getTurnTheme(turnNumber: number) {
+    return turnNumber % 2 === 1 ? colors.blueTheme : colors.greenTheme;
+  }
+
+  /**
+   * Get themed colors for error messages (always red but with turn accent)
+   */
+  private getErrorColor(turnNumber: number): string {
+    const theme = this.getTurnTheme(turnNumber);
+    return colors.red; // Keep errors red but could add theme.accent for context
+  }
+
+  /**
    * Start the terminal game
    */
   public async start(): Promise<void> {
@@ -86,6 +121,7 @@ export class TerminalGame {
       
       const currentPlayer = this.gameManager.getCurrentPlayer();
       if (!currentPlayer) {
+        const theme = this.getTurnTheme(state.currentTurn);
         console.log(`${colors.red}Error: No current player found${colors.reset}`);
         break;
       }
@@ -102,18 +138,21 @@ export class TerminalGame {
    * Handle bot turn
    */
   private async handleBotTurn(): Promise<void> {
-    console.log(`${colors.cyan}🤖 Bot is thinking...${colors.reset}`);
+    const state = this.gameManager.getState();
+    const theme = this.getTurnTheme(state.currentTurn);
+    
+    console.log(`${theme.accent}🤖 Bot is thinking...${colors.reset}`);
     
     const startTime = Date.now();
     const botMove = await this.gameManager.makeBotMove();
     const duration = Date.now() - startTime;
     
     if (botMove) {
-      console.log(`${colors.green}Bot played: ${colors.bright}${botMove.word}${colors.reset} ${colors.green}(+${botMove.score} points, ${duration}ms)${colors.reset}`);
+      console.log(`${theme.bright}Bot played: ${theme.header}${botMove.word}${colors.reset} ${theme.primary}(+${botMove.score} points, ${duration}ms)${colors.reset}`);
       
       // Show bot scoring breakdown from the latest turn history
-      const state = this.gameManager.getState();
-      const latestTurn = state.turnHistory[state.turnHistory.length - 1];
+      const updatedState = this.gameManager.getState();
+      const latestTurn = updatedState.turnHistory[updatedState.turnHistory.length - 1];
       if (latestTurn && latestTurn.scoringBreakdown) {
         this.showScoringBreakdown(latestTurn.scoringBreakdown);
       }
@@ -129,7 +168,10 @@ export class TerminalGame {
    * Handle human turn
    */
   private async handleHumanTurn(): Promise<void> {
-    const input = await this.promptUser(`${colors.bright}Your turn! Enter a word (or 'help', 'quit', 'state'): ${colors.reset}`);
+    const state = this.gameManager.getState();
+    const theme = this.getTurnTheme(state.currentTurn);
+    
+    const input = await this.promptUser(`${theme.header}Your turn! Enter a word (or 'help', 'quit', 'state'): ${colors.reset}`);
     
     const command = input.trim().toUpperCase();
     
@@ -160,7 +202,7 @@ export class TerminalGame {
     if (moveAttempt.canApply) {
       const success = this.gameManager.applyMove(moveAttempt);
       if (success) {
-        console.log(`${colors.green}Valid move! ${colors.bright}${moveAttempt.newWord}${colors.reset} ${colors.green}(+${moveAttempt.scoringResult?.totalScore} points)${colors.reset}`);
+        console.log(`${theme.bright}Valid move! ${theme.header}${moveAttempt.newWord}${colors.reset} ${theme.primary}(+${moveAttempt.scoringResult?.totalScore} points)${colors.reset}`);
         if (moveAttempt.scoringResult) {
           this.showScoringBreakdown(moveAttempt.scoringResult);
         }
@@ -177,34 +219,35 @@ export class TerminalGame {
    */
   private displayGameState(): void {
     const state = this.gameManager.getState();
+    const theme = this.getTurnTheme(state.currentTurn);
     
     console.log('\n' + '='.repeat(60));
-    console.log(`${colors.bright}WORDPLAY - Turn ${state.currentTurn}/${state.maxTurns}${colors.reset}`);
+    console.log(`${theme.header}WORDPLAY - Turn ${state.currentTurn}/${state.maxTurns}${colors.reset}`);
     console.log('='.repeat(60));
     
     // Current word
-    console.log(`${colors.bright}Current Word: ${colors.cyan}${state.currentWord}${colors.reset}`);
+    console.log(`${theme.primary}Current Word: ${theme.header}${state.currentWord}${colors.reset}`);
     
     // Key and locked letters
     if (state.keyLetters.length > 0) {
-      console.log(`${colors.yellow}Key Letters (bonus +1 each): ${state.keyLetters.join(', ')}${colors.reset}`);
+      console.log(`${theme.accent}Key Letters (bonus +1 each): ${state.keyLetters.join(', ')}${colors.reset}`);
     }
     if (state.lockedLetters.length > 0) {
-      console.log(`${colors.magenta}Locked Letters: ${state.lockedLetters.join(', ')}${colors.reset}`);
+      console.log(`${theme.primary}Locked Letters: ${state.lockedLetters.join(', ')}${colors.reset}`);
     }
     
     // Show recently used words
     if (state.usedWords.length > 1) {
       const recentWords = state.usedWords.slice(-5).join(' → ');
-      console.log(`${colors.blue}Recent words: ${recentWords}${colors.reset}`);
+      console.log(`${theme.light}Recent words: ${recentWords}${colors.reset}`);
     }
     
     // Player scores
-    console.log('\n' + colors.bright + 'SCORES:' + colors.reset);
+    console.log('\n' + theme.header + 'SCORES:' + colors.reset);
     state.players.forEach(player => {
       const indicator = player.isCurrentPlayer ? '→' : ' ';
-      const playerColor = player.isBot ? colors.cyan : colors.green;
-      const currentMarker = player.isCurrentPlayer ? colors.yellow + ' (CURRENT)' + colors.reset : '';
+      const playerColor = player.isBot ? theme.light : theme.bright;
+      const currentMarker = player.isCurrentPlayer ? theme.accent + ' (CURRENT)' + colors.reset : '';
       console.log(`${indicator} ${playerColor}${player.name}: ${player.score} points${currentMarker}${colors.reset}`);
     });
     
@@ -217,29 +260,31 @@ export class TerminalGame {
   private displayDetailedState(): void {
     const state = this.gameManager.getState();
     const stats = this.gameManager.getGameStats();
+    const theme = this.getTurnTheme(state.currentTurn);
     
-    console.log('\n' + colors.bright + 'DETAILED GAME STATE:' + colors.reset);
-    console.log(`Game Status: ${state.gameStatus}`);
-    console.log(`Total Moves: ${state.totalMoves}`);
-    console.log(`Game Duration: ${Math.round(stats.duration / 1000)}s`);
-    console.log(`Average Score: ${stats.averageScore.toFixed(1)}`);
+    console.log('\n' + theme.header + 'DETAILED GAME STATE:' + colors.reset);
+    console.log(`${theme.primary}Game Status: ${state.gameStatus}${colors.reset}`);
+    console.log(`${theme.primary}Total Moves: ${state.totalMoves}${colors.reset}`);
+    console.log(`${theme.primary}Game Duration: ${Math.round(stats.duration / 1000)}s${colors.reset}`);
+    console.log(`${theme.primary}Average Score: ${stats.averageScore.toFixed(1)}${colors.reset}`);
     
     if (state.usedWords.length > 0) {
-      console.log('\n' + colors.bright + 'ALL USED WORDS:' + colors.reset);
-      console.log(`${colors.blue}${state.usedWords.join(' → ')}${colors.reset}`);
+      console.log('\n' + theme.header + 'ALL USED WORDS:' + colors.reset);
+      console.log(`${theme.light}${state.usedWords.join(' → ')}${colors.reset}`);
     }
     
     if (state.keyLetters.length > 0) {
-      console.log('\n' + colors.bright + 'CURRENT KEY LETTERS:' + colors.reset);
-      console.log(`${colors.yellow}${state.keyLetters.join(', ')} (each worth +1 bonus point)${colors.reset}`);
+      console.log('\n' + theme.header + 'CURRENT KEY LETTERS:' + colors.reset);
+      console.log(`${theme.accent}${state.keyLetters.join(', ')} (each worth +1 bonus point)${colors.reset}`);
     }
     
     if (state.turnHistory.length > 0) {
-      console.log('\n' + colors.bright + 'RECENT MOVES:' + colors.reset);
+      console.log('\n' + theme.header + 'RECENT MOVES:' + colors.reset);
       const recentMoves = state.turnHistory.slice(-5);
       recentMoves.forEach(turn => {
         const playerName = state.players.find(p => p.id === turn.playerId)?.name || 'Unknown';
-        console.log(`Turn ${turn.turnNumber}: ${playerName} played ${turn.previousWord} → ${turn.newWord} (+${turn.score})`);
+        const turnTheme = this.getTurnTheme(turn.turnNumber);
+        console.log(`${turnTheme.primary}Turn ${turn.turnNumber}: ${playerName} played ${turn.previousWord} → ${turn.newWord} (+${turn.score})${colors.reset}`);
       });
     }
   }
@@ -248,6 +293,8 @@ export class TerminalGame {
    * Show scoring breakdown using action icons format
    */
   private showScoringBreakdown(scoring: { breakdown: Record<string, number>; keyLettersUsed: string[] }): void {
+    const state = this.gameManager.getState();
+    const theme = this.getTurnTheme(state.currentTurn);
     const breakdown = scoring.breakdown;
     const actions = [];
     
@@ -276,11 +323,11 @@ export class TerminalGame {
         scoreLine += ` +${breakdown.keyLetterUsagePoints}`;
       }
       
-      console.log(`${colors.blue}Scoring: ${scoreLine}${colors.reset}`);
+      console.log(`${theme.light}Scoring: ${scoreLine}${colors.reset}`);
       
       // Show which key letters were used
       if (scoring.keyLettersUsed.length > 0) {
-        console.log(`${colors.yellow}Key letters used: ${scoring.keyLettersUsed.join(', ')}${colors.reset}`);
+        console.log(`${theme.accent}Key letters used: ${scoring.keyLettersUsed.join(', ')}${colors.reset}`);
       }
     }
   }
@@ -326,8 +373,8 @@ export class TerminalGame {
       console.log('\n' + colors.bright + 'MOVE HISTORY:' + colors.reset);
       state.turnHistory.forEach(turn => {
         const player = state.players.find(p => p.id === turn.playerId);
-        const playerColor = player?.isBot ? colors.cyan : colors.green;
-        console.log(`Turn ${turn.turnNumber}: ${playerColor}${player?.name}${colors.reset} ${turn.previousWord} → ${turn.newWord} (+${turn.score})`);
+        const turnTheme = this.getTurnTheme(turn.turnNumber);
+        console.log(`${turnTheme.primary}Turn ${turn.turnNumber}: ${player?.name}${colors.reset} ${turn.previousWord} → ${turn.newWord} (+${turn.score})`);
       });
     }
     
