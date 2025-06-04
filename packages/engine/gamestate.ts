@@ -78,6 +78,7 @@ export interface GameState {
   keyLetters: string[];
   lockedLetters: string[];
   usedWords: Set<string>; // Track all words used in this game
+  usedKeyLetters: Set<string>; // Track all key letters used in this game to prevent repetition
   
   // Game flow
   players: PlayerState[];
@@ -186,7 +187,8 @@ export class LocalGameStateManager {
       config: defaultConfig,
       gameStartTime: now,
       lastMoveTime: now,
-      usedWords: new Set()
+      usedWords: new Set(),
+      usedKeyLetters: new Set()
     };
   }
 
@@ -353,22 +355,16 @@ export class LocalGameStateManager {
 
     this.state.turnHistory.push(turnRecord);
 
-    // Automatic key letter generation - randomly add a new key letter each turn
+    // Automatic key letter generation - maintain exactly 1 key letter per turn
     if (this.state.config.enableKeyLetters) {
-      // Remove used key letters first
-      if (moveAttempt.scoringResult.keyLettersUsed.length > 0) {
-        moveAttempt.scoringResult.keyLettersUsed.forEach(usedLetter => {
-          const index = this.state.keyLetters.indexOf(usedLetter);
-          if (index > -1) {
-            this.state.keyLetters.splice(index, 1);
-          }
-        });
-      }
+      // Track the current key letter as used (since it was active for this turn)
+      this.state.keyLetters.forEach(letter => {
+        this.state.usedKeyLetters.add(letter);
+      });
       
-      // Generate a new random key letter (if we have fewer than 3 key letters)
-      if (this.state.keyLetters.length < 3) {
-        this.generateRandomKeyLetter();
-      }
+      // Clear current key letters and generate exactly 1 new key letter
+      this.state.keyLetters = [];
+      this.generateRandomKeyLetter();
     }
 
     // Notify listeners of word change
@@ -681,18 +677,19 @@ export class LocalGameStateManager {
   }
 
   /**
-   * Generate a random key letter that doesn't already exist
+   * Generate a random key letter that hasn't been used before in this game
    */
   private generateRandomKeyLetter(): void {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const availableLetters = alphabet.split('').filter(letter => 
-      !this.state.keyLetters.includes(letter)
+      !this.state.usedKeyLetters.has(letter) && !this.state.keyLetters.includes(letter)
     );
     
     if (availableLetters.length > 0) {
       const randomIndex = Math.floor(Math.random() * availableLetters.length);
       const newKeyLetter = availableLetters[randomIndex];
       this.state.keyLetters.push(newKeyLetter);
+      // Note: We'll track this letter as used when the next move is made
       
       this.notifyListeners({
         type: 'letters_updated',
