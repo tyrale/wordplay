@@ -120,6 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Bot Integration**: Real-time bot moves with performance timing and decision feedback
   - **NEW: Word Repetition Prevention**: No word can be played twice in the same game (strategic constraint)
   - **NEW: Automatic Key Letter Generation**: Random key letters generated each turn (max 3 active)
+  - **NEW: Random Starting Words**: Each game starts with a random 4-letter word from dictionary for variety
   - **IMPROVED: Game Logic**: Enhanced move validation with used word tracking and automatic key letter management
   - **IMPROVED: Strategic Gameplay**: Players must plan around limited word pool and automatic key letter bonuses
   - **Testing**: 17/17 tests passing with mocked readline interface for CI compatibility

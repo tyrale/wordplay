@@ -92,6 +92,7 @@ This document tracks the progress of tasks from the development plan. Each task 
   - Terminal-based user experience design ✅ **VERIFIED** (Welcome screen, help system, colored output, game statistics)
   - **NEW: Word repetition prevention** ✅ **VERIFIED** (No word can be played twice in the same game)
   - **NEW: Automatic key letter generation** ✅ **VERIFIED** (Random key letters generated automatically each turn, max 3 active)
+  - **NEW: Random starting words** ✅ **VERIFIED** (Each game starts with a random 4-letter word from dictionary for variety)
   - **IMPROVED: Game logic validation** ✅ **VERIFIED** (Enhanced move validation with used word tracking)
   - **IMPROVED: Strategic gameplay** ✅ **VERIFIED** (Players must plan around limited word pool and automatic key letter bonuses)
   - **PLAYABLE NOW**: Run `npm run play` to start the interactive terminal game

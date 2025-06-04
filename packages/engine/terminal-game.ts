@@ -43,7 +43,7 @@ export class TerminalGame {
   constructor(options: TerminalGameOptions = {}) {
     const gameConfig: GameConfig = {
       maxTurns: options.maxTurns || 10,
-      initialWord: options.initialWord || 'CAT',
+      initialWord: options.initialWord,
       allowBotPlayer: true,
       enableKeyLetters: options.enableKeyLetters ?? true,
       enableLockedLetters: options.enableLockedLetters ?? true
@@ -349,7 +349,7 @@ export class TerminalGame {
     console.log(colors.reset);
     console.log(`${colors.green}Welcome to WordPlay! Transform words by adding, removing, or rearranging letters.${colors.reset}`);
     console.log(`${colors.green}Score points for each transformation and try to beat the bot!${colors.reset}`);
-    console.log(`${colors.yellow}Key letters will appear automatically to give you bonus points!${colors.reset}\n`);
+    console.log(`${colors.yellow}Each game starts with a random 4-letter word and generates key letters automatically!${colors.reset}\n`);
   }
 
   /**
@@ -401,7 +401,6 @@ export async function startTerminalGame(options?: TerminalGameOptions): Promise<
 export async function quickGame(): Promise<void> {
   await startTerminalGame({
     maxTurns: 5,
-    initialWord: 'CAT',
     enableKeyLetters: true,
     enableLockedLetters: false
   });

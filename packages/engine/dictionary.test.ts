@@ -17,6 +17,8 @@ import {
   getVanityDisplayWord,
   shouldUnlockVanityToggle,
   isCurrentWordProfane,
+  getRandomWordByLength,
+  getRandomWordsByLength,
   type ValidationOptions,
   type VanityState
 } from './dictionary';
@@ -326,12 +328,10 @@ describe('Word Validation Service', () => {
 
   describe('Edge Cases and Error Handling', () => {
     it('should handle null and undefined gracefully', () => {
-      // @ts-expect-error - Testing runtime behavior with null
-      const result1 = validateWord(null);
+      const result1 = validateWord(null as any);
       expect(result1.isValid).toBe(false);
 
-      // @ts-expect-error - Testing runtime behavior with undefined
-      const result2 = validateWord(undefined);
+      const result2 = validateWord(undefined as any);
       expect(result2.isValid).toBe(false);
     });
 
@@ -377,6 +377,52 @@ describe('Word Validation Service', () => {
     it('should use default options when none provided', () => {
       const result = validateWord('HELLO');
       expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('Random Word Generation', () => {
+    it('should generate random words of specified length', () => {
+      const fourLetterWord = getRandomWordByLength(4);
+      expect(fourLetterWord).toBeTruthy();
+      expect(fourLetterWord!.length).toBe(4);
+      expect(isValidDictionaryWord(fourLetterWord!)).toBe(true);
+      
+      const threeLetterWord = getRandomWordByLength(3);
+      expect(threeLetterWord).toBeTruthy();
+      expect(threeLetterWord!.length).toBe(3);
+      expect(isValidDictionaryWord(threeLetterWord!)).toBe(true);
+    });
+
+    it('should return null for impossible word lengths', () => {
+      const impossibleWord = getRandomWordByLength(100);
+      expect(impossibleWord).toBeNull();
+    });
+
+    it('should generate multiple random words', () => {
+      const words = getRandomWordsByLength(4, 5);
+      expect(words).toHaveLength(5);
+      
+      words.forEach(word => {
+        expect(word.length).toBe(4);
+        expect(isValidDictionaryWord(word)).toBe(true);
+      });
+    });
+
+    it('should generate different words on multiple calls', () => {
+      const words = new Set();
+      // Generate 20 random 4-letter words - should get some variety
+      for (let i = 0; i < 20; i++) {
+        const word = getRandomWordByLength(4);
+        if (word) words.add(word);
+      }
+      
+      // Should have some variety (at least 5 different words out of 20)
+      expect(words.size).toBeGreaterThanOrEqual(5);
+    });
+
+    it('should return empty array for impossible lengths in batch generation', () => {
+      const words = getRandomWordsByLength(100, 3);
+      expect(words).toHaveLength(0);
     });
   });
 }); 

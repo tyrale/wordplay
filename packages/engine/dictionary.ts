@@ -103,6 +103,39 @@ class WordDictionary {
   public getWordCount(): number {
     return this.enableWords.size;
   }
+
+  /**
+   * Get a random word of specified length from the dictionary
+   */
+  public getRandomWordByLength(length: number): string | null {
+    const wordsOfLength = Array.from(this.enableWords).filter(word => word.length === length);
+    
+    if (wordsOfLength.length === 0) {
+      return null;
+    }
+    
+    const randomIndex = Math.floor(Math.random() * wordsOfLength.length);
+    return wordsOfLength[randomIndex];
+  }
+
+  /**
+   * Get multiple random words of specified length
+   */
+  public getRandomWordsByLength(length: number, count: number = 1): string[] {
+    const wordsOfLength = Array.from(this.enableWords).filter(word => word.length === length);
+    
+    if (wordsOfLength.length === 0) {
+      return [];
+    }
+    
+    const result: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const randomIndex = Math.floor(Math.random() * wordsOfLength.length);
+      result.push(wordsOfLength[randomIndex]);
+    }
+    
+    return result;
+  }
 }
 
 // Singleton dictionary instance
@@ -346,4 +379,18 @@ export function isCurrentWordProfane(word: string): boolean {
  */
 export function censorProfanity(word: string): string {
   return dictionary.censorWord(word);
+}
+
+/**
+ * Gets a random word of specified length from the dictionary
+ */
+export function getRandomWordByLength(length: number): string | null {
+  return dictionary.getRandomWordByLength(length);
+}
+
+/**
+ * Gets multiple random words of specified length from the dictionary
+ */
+export function getRandomWordsByLength(length: number, count: number = 1): string[] {
+  return dictionary.getRandomWordsByLength(length, count);
 } 

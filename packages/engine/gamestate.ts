@@ -17,6 +17,7 @@
 import { validateWord, type ValidationResult } from './dictionary';
 import { calculateScore, getScoreForMove, type ScoringResult } from './scoring';
 import { generateBotMove, type BotMove, type BotResult } from './bot';
+import { getRandomWordByLength } from './dictionary';
 
 // Core game state types
 export interface GameConfig {
@@ -131,13 +132,20 @@ export class LocalGameStateManager {
    * Initialize a new game state with default values
    */
   private initializeGameState(config: GameConfig): GameState {
+    // Get random 4-letter word if no initial word provided
+    let initialWord = config.initialWord;
+    if (!initialWord) {
+      const randomWord = getRandomWordByLength(4);
+      initialWord = randomWord || 'WORD'; // fallback to 'WORD' if no 4-letter words found
+    }
+
     const defaultConfig: GameConfig = {
       maxTurns: 10,
-      initialWord: 'CAT',
       allowBotPlayer: true,
       enableKeyLetters: true,
       enableLockedLetters: true,
-      ...config
+      ...config,
+      initialWord: initialWord
     };
 
     const humanPlayer: PlayerState = {

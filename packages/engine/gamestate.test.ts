@@ -637,7 +637,8 @@ describe('Local GameState Manager', () => {
       const state = manager.getState();
       
       expect(state.maxTurns).toBe(10); // Default value
-      expect(state.currentWord).toBe('CAT'); // Default value
+      expect(state.currentWord).toHaveLength(4); // Should be a random 4-letter word
+      expect(state.currentWord).toMatch(/^[A-Z]{4}$/); // Should be 4 uppercase letters
     });
 
     it('should handle invalid move attempts gracefully', () => {
