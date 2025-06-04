@@ -30,4 +30,11 @@ export { GameBoard } from './game/GameBoard';
 export type { GameBoardProps } from './game/GameBoard';
 
 export { WordBuilder } from './game/WordBuilder';
-export type { WordBuilderProps, LetterPosition } from './game/WordBuilder'; 
+export type { WordBuilderProps, LetterPosition } from './game/WordBuilder';
+
+export { InteractiveGame } from './game/InteractiveGame';
+export type { InteractiveGameProps } from './game/InteractiveGame';
+
+// Hooks
+export { useGameState, useGameStats, useWordState } from '../hooks/useGameState';
+export type { UseGameStateOptions, GameStateActions, UseGameStateReturn } from '../hooks/useGameState'; 

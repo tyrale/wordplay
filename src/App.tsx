@@ -1,5 +1,4 @@
-import { ThemeProvider, GameBoard, useTheme } from './components';
-import type { LetterState, ActionState, ScoreBreakdown, LetterHighlight } from './components';
+import { ThemeProvider, InteractiveGame, useTheme } from './components';
 import './App.css';
 
 function ThemeSelector() {
@@ -34,68 +33,24 @@ function ThemeSelector() {
   );
 }
 
-function GameDemo() {
-  // Sample game state matching the design specification examples
-  const wordTrail = ['PLAY', 'LAPS', 'SLIP'];
-  const currentWord = 'HIPS';
-  const wordHighlights: LetterHighlight[] = [
-    { index: 0, type: 'key' }, // H is key letter
-  ];
-  
-  const actions: ActionState = {
-    add: true,
-    remove: false,
-    move: true,
-  };
-  
-  const score: ScoreBreakdown = {
-    base: 2,
-    keyBonus: 1,
-    total: 3,
-  };
-  
-  const letterStates: LetterState[] = [
-    { letter: 'H', state: 'key' },
-    { letter: 'I', state: 'normal' },
-    { letter: 'P', state: 'normal' },
-    { letter: 'S', state: 'normal' },
-  ];
-
-  const handleLetterClick = (letter: string) => {
-    console.log('Letter clicked:', letter);
-  };
-
-  const handleActionClick = (action: string) => {
-    console.log('Action clicked:', action);
-  };
-
-  const handleSubmit = () => {
-    console.log('Submit clicked');
-  };
-
-  return (
-    <>
-      <ThemeSelector />
-      <GameBoard
-        wordTrail={wordTrail}
-        currentWord={currentWord}
-        wordHighlights={wordHighlights}
-        actions={actions}
-        score={score}
-        isValidWord={true}
-        letterStates={letterStates}
-        onLetterClick={handleLetterClick}
-        onActionClick={handleActionClick}
-        onSubmit={handleSubmit}
-      />
-    </>
-  );
-}
-
 function App() {
+  const handleGameEnd = (winner: string | null, finalScores: { human: number; bot: number }) => {
+    console.log('Game ended:', { winner, finalScores });
+  };
+
   return (
     <ThemeProvider>
-      <GameDemo />
+      <ThemeSelector />
+      <InteractiveGame 
+        config={{ 
+          maxTurns: 10,
+          allowBotPlayer: true,
+          enableKeyLetters: true,
+          enableLockedLetters: true
+        }}
+        onGameEnd={handleGameEnd}
+        showDebugInfo={false}
+      />
     </ThemeProvider>
   );
 }
