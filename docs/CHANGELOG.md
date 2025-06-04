@@ -123,12 +123,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **NEW: Random Starting Words**: Each game starts with a random 4-letter word from dictionary for variety
   - **NEW: Turn-based Color Themes**: Alternating blue/green color schemes for each turn with multiple shades for enhanced readability
   - **NEW: Pass Function**: Players can pass turns when no valid moves available, bot automatically passes when stuck
+  - **NEW: Key Letter Locking**: Key letters used successfully become locked for next player, cannot be removed but can be rearranged
+  - **IMPROVED: Visual Display**: Locked letters highlighted directly within current word using inverted colors for immediate visual recognition
+  - **IMPROVED: User Experience**: Simplified input prompt, clearer locked letter indicators with pin emoji, enhanced help text
   - **IMPROVED: Move Validation**: Strict enforcement of game rules - only one add/remove action per turn (fixes DOSS→BOSSY exploit)
-  - **IMPROVED: Game Logic**: Enhanced move validation with used word tracking, action limits, and strategic constraints
+  - **IMPROVED: Game Logic**: Enhanced move validation with used word tracking, action limits, and strategic constraints including locked letter prevention
   - **IMPROVED: Visual Design**: Turn-based color themes provide better visual cohesion and turn distinction for improved UX
   - **IMPROVED: Bot AI**: Intelligent pass behavior when no valid moves available instead of crashing
-  - **Testing**: 17/17 tests passing with mocked readline interface for CI compatibility
-  - **READY TO PLAY**: Use `npm run play` to start the interactive terminal game
+  - **Testing**: 68/68 tests passing with comprehensive coverage of all features including locked letter functionality
+  - **READY TO PLAY**: Use `npm run play` to start the interactive terminal game with all features
   - **Long-term Solution**: Added tsx dependency and npm script for TypeScript execution with ES modules
   - **Fixed ES Module Issues**: Updated dictionary.ts and terminal-game.ts for proper ES module support
-  - **Verification Commands**: `npm test terminal-game.test.ts && npm run lint && npm run build && npm run play`
+  - **Verification Commands**: `npm test && npm run lint && npm run build && npm run play`

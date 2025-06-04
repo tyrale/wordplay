@@ -95,7 +95,7 @@ This document tracks the progress of tasks from the development plan. Each task 
   - **NEW: Random starting words** ✅ **VERIFIED** (Each game starts with a random 4-letter word from dictionary for variety)
   - **NEW: Turn-based color themes** ✅ **VERIFIED** (Alternating blue/green themes for each turn with multiple shades for readability)
   - **NEW: Pass function** ✅ **VERIFIED** (Players can pass turns when no valid moves available, bot auto-passes)
-  - **NEW: Key letter locking** ✅ **VERIFIED** (Key letters used successfully become locked for next player, cannot be removed, displayed with dark colors)
+  - **NEW: Key letter locking** ✅ **VERIFIED** (Key letters used successfully become locked for next player, cannot be removed, highlighted directly in current word with inverted colors)
   - **IMPROVED: Move validation** ✅ **VERIFIED** (Strict enforcement: only one add/remove action per turn, DOSS→BOSSY correctly rejected)
   - **IMPROVED: Game logic validation** ✅ **VERIFIED** (Enhanced move validation with used word tracking and action limits)
   - **IMPROVED: Strategic gameplay** ✅ **VERIFIED** (Players must plan around limited word pool, unique key letter bonuses, and action constraints)

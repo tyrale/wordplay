@@ -393,7 +393,7 @@ export class LocalGameStateManager {
     this.state.turnHistory.push(turnRecord);
 
     // KEY LETTER LOCKING FEATURE
-    // Clear any existing locked key letters from previous turn
+    // Clear any existing locked key letters since this player has now completed their turn with them
     this.state.lockedKeyLetters = [];
     
     // If this player used key letters, lock them for the next player
