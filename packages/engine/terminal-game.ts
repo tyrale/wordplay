@@ -110,6 +110,13 @@ export class TerminalGame {
     
     if (botMove) {
       console.log(`${colors.green}Bot played: ${colors.bright}${botMove.word}${colors.reset} ${colors.green}(+${botMove.score} points, ${duration}ms)${colors.reset}`);
+      
+      // Show bot scoring breakdown from the latest turn history
+      const state = this.gameManager.getState();
+      const latestTurn = state.turnHistory[state.turnHistory.length - 1];
+      if (latestTurn && latestTurn.scoringBreakdown) {
+        this.showScoringBreakdown(latestTurn.scoringBreakdown);
+      }
     } else {
       console.log(`${colors.red}Bot couldn't find a valid move${colors.reset}`);
     }
@@ -245,20 +252,20 @@ export class TerminalGame {
     const actions = [];
     
     // Build action icons based on what actions were taken
-    if (breakdown.letterAdditionPoints > 0) {
+    if (breakdown.addLetterPoints > 0) {
       actions.push('+');
     }
-    if (breakdown.letterRemovalPoints > 0) {
+    if (breakdown.removeLetterPoints > 0) {
       actions.push('-');
     }
-    if (breakdown.rearrangementPoints > 0) {
+    if (breakdown.rearrangePoints > 0) {
       actions.push('~'); // Using ~ for rearrangement/move
     }
     
     // Calculate base score (non-key-letter points)
-    const baseScore = (breakdown.letterAdditionPoints || 0) + 
-                     (breakdown.letterRemovalPoints || 0) + 
-                     (breakdown.rearrangementPoints || 0);
+    const baseScore = (breakdown.addLetterPoints || 0) + 
+                     (breakdown.removeLetterPoints || 0) + 
+                     (breakdown.rearrangePoints || 0);
     
     // Build the scoring display line
     if (actions.length > 0) {
