@@ -1,63 +1,76 @@
 /// <reference types="vitest/globals" />
+import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import App from './App';
 
 describe('App Component', () => {
-  test('renders Vite and React logos', () => {
+  it('renders the game board', () => {
     render(<App />);
-
-    const viteLogo = screen.getByAltText('Vite logo');
-    const reactLogo = screen.getByAltText('React logo');
-
-    expect(viteLogo).toBeInTheDocument();
-    expect(reactLogo).toBeInTheDocument();
+    
+    // Check for key components
+    expect(screen.getByLabelText('Alphabet grid')).toBeInTheDocument();
+    expect(screen.getByLabelText('Current word: HIPS')).toBeInTheDocument();
+    expect(screen.getByLabelText('Previous words played')).toBeInTheDocument();
   });
 
-  test('renders main heading', () => {
+  it('renders the theme selector', () => {
     render(<App />);
-
-    const heading = screen.getByRole('heading', { name: /vite \+ react/i });
-    expect(heading).toBeInTheDocument();
+    
+    // Check for theme selector
+    const themeSelector = screen.getByRole('combobox');
+    expect(themeSelector).toBeInTheDocument();
+    
+    // Check for theme options
+    expect(screen.getByText('Classic Blue')).toBeInTheDocument();
+    expect(screen.getByText('Dark Mode')).toBeInTheDocument();
+    expect(screen.getByText('Forest Green')).toBeInTheDocument();
   });
 
-  test('renders initial count as 0', () => {
+  it('renders action indicators and submit button', () => {
     render(<App />);
-
-    const button = screen.getByRole('button', { name: /count is 0/i });
-    expect(button).toBeInTheDocument();
+    
+    // Check for submit button
+    expect(screen.getByLabelText('Submit word')).toBeInTheDocument();
+    
+    // Check for action indicators
+    expect(screen.getByLabelText('Letter added')).toBeInTheDocument();
+    expect(screen.getByLabelText('Letters moved')).toBeInTheDocument();
   });
 
-  test('increments count when button is clicked', () => {
+  it('renders all letter buttons in the alphabet grid', () => {
     render(<App />);
-
-    const button = screen.getByRole('button', { name: /count is 0/i });
-    fireEvent.click(button);
-
-    expect(
-      screen.getByRole('button', { name: /count is 1/i })
-    ).toBeInTheDocument();
+    
+    // Check for some letter buttons
+    expect(screen.getByLabelText('Letter A')).toBeInTheDocument();
+    expect(screen.getByLabelText('Letter H')).toBeInTheDocument();
+    expect(screen.getByLabelText('Letter Z')).toBeInTheDocument();
+    
+    // Check for action buttons
+    expect(screen.getByLabelText('Return to home screen')).toBeInTheDocument();
+    expect(screen.getByLabelText('Settings menu')).toBeInTheDocument();
   });
 
-  test('increments count multiple times', () => {
+  it('can interact with letter buttons', () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    
     render(<App />);
-
-    const button = screen.getByRole('button', { name: /count is 0/i });
-
-    fireEvent.click(button);
-    fireEvent.click(button);
-    fireEvent.click(button);
-
-    expect(
-      screen.getByRole('button', { name: /count is 3/i })
-    ).toBeInTheDocument();
+    
+    const letterA = screen.getByLabelText('Letter A');
+    fireEvent.click(letterA);
+    
+    expect(consoleSpy).toHaveBeenCalledWith('Letter clicked:', 'A');
+    
+    consoleSpy.mockRestore();
   });
 
-  test('renders learn more text', () => {
+  it('shows the current word with key letter highlighting', () => {
     render(<App />);
-
-    const learnText = screen.getByText(
-      /Click on the Vite and React logos to learn more/i
-    );
-    expect(learnText).toBeInTheDocument();
+    
+    // Check that the word HIPS is displayed
+    const currentWord = screen.getByLabelText('Current word: HIPS');
+    expect(currentWord).toBeInTheDocument();
+    
+    // Check that H is highlighted as a key letter
+    expect(screen.getByLabelText('H key letter')).toBeInTheDocument();
   });
 });

@@ -1,0 +1,16 @@
+.score-display {
+  display: flex;
+  align-items: center;
+}
+
+.score-display__breakdown {
+  /* Typography from theme */
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-md);
+  color: var(--theme-text);
+  
+  /* Layout */
+  padding: 0 var(--spacing-sm, 8px);
+  white-space: nowrap;
+} 

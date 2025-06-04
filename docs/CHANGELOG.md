@@ -135,3 +135,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Long-term Solution**: Added tsx dependency and npm script for TypeScript execution with ES modules
   - **Fixed ES Module Issues**: Updated dictionary.ts and terminal-game.ts for proper ES module support
   - **Verification Commands**: `npm test && npm run lint && npm run build && npm run play`
+
+- **Task 2.1**: React Component Library with Complete Theme System ✅ **VERIFIED**
+  - **Core Components**: 8 reusable game components with full TypeScript support
+    - ThemeProvider: Context provider with localStorage persistence and CSS custom property injection
+    - GridCell: Letter cells with 4 states (normal, key, locked, disabled) and responsive CSS
+    - AlphabetGrid: 6×5 grid layout with special bottom row actions and touch-only interaction
+    - WordTrail: Previous words display with bullet separators and semantic HTML
+    - CurrentWord: Large word display with key/locked letter highlighting and lock icons
+    - ActionIndicators: Display-only symbols for user actions (−, +, ~) with proper ARIA labels
+    - SubmitButton: Interactive button with valid (✓) and invalid (✗) states
+    - ScoreDisplay: Real-time scoring in "+3 +1" format with breakdown display
+    - GameBoard: Main layout container with centered checkmark anchor point
+  - **Theme System**: Complete theme architecture with 3 theme variants (Classic Blue, Dark Mode, Forest Green)
+    - CSS custom properties for full customization (colors + typography)
+    - Theme persistence across sessions with localStorage
+    - Inter Black (900) font weight throughout (only font weight used)
+    - Mobile-first responsive design with touch-friendly interactions
+  - **Storybook Integration**: Component development environment with theme provider
+    - GridCell stories showcasing all component states and interactions
+    - GameBoard stories with Turn 4/5 examples, invalid words, and edge cases
+    - Theme switching support in Storybook environment
+    - Accessibility testing integration with addon-a11y
+  - **Design System Compliance**: Pixel-perfect implementation matching Web UI Design Specification
+    - Text-only buttons with no backgrounds or borders per requirements
+    - Mouse/touch interaction only (no keyboard navigation)
+    - Complete semantic HTML with proper ARIA labels for accessibility
+    - All colors use theme variables for user customization
+  - **Testing**: All 249 tests passing including new component tests and Storybook tests
+  - **Build Verification**: Production build successful (195KB bundle) with no TypeScript errors
+  - **Verification Commands**: `npm test && npm run build && npm run storybook`
+
+### Docs
+- Created comprehensive Web UI Design Specification document (`docs/WEB_UI_DESIGN_SPEC.md`) based on provided screen designs (turn4.png, turn5.png) for pixel-perfect Phase 2.1 implementation
+- **Updated design specification** with key requirements: Inter Black (900) only font weight, complete theme system for user customization, text-only buttons, mouse/touch interaction only (no keyboard support)

@@ -1,0 +1,28 @@
+.action-indicators {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+}
+
+.action-indicators__symbol {
+  /* Typography from theme */
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-md);
+  color: var(--theme-text);
+  
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  
+  /* No background - text only */
+  background: none;
+  border: none;
+  
+  /* Non-interactive styling */
+  pointer-events: none;
+  user-select: none;
+} 

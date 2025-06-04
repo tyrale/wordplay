@@ -1,0 +1,50 @@
+.current-word {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.1em;
+  
+  /* Typography from theme */
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-xl);
+  color: var(--theme-primary);
+  
+  /* Layout */
+  margin: var(--spacing-lg, 24px) 0;
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
+.current-word__letter {
+  position: relative;
+  display: inline-block;
+}
+
+/* Key letter highlighting */
+.current-word__letter--key {
+  color: var(--theme-accent);
+}
+
+/* Locked letter styling */
+.current-word__letter--locked {
+  color: var(--theme-text);
+}
+
+/* Lock icon for locked letters */
+.current-word__lock {
+  position: absolute;
+  bottom: -0.2em;
+  left: -0.1em;
+  font-size: 0.3em;
+  color: var(--theme-locked);
+  pointer-events: none;
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+  .current-word {
+    font-size: calc(var(--theme-font-size-xl) * 0.75);
+    margin: var(--spacing-md, 20px) 0;
+  }
+} 

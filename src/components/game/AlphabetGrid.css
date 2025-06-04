@@ -1,0 +1,26 @@
+.alphabet-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs, 6px);
+  align-items: center;
+  max-width: 100%;
+  padding: 0 var(--spacing-md, 20px);
+}
+
+.alphabet-grid__row {
+  display: flex;
+  gap: var(--spacing-xs, 6px);
+  justify-content: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .alphabet-grid {
+    gap: calc(var(--spacing-xs, 6px) / 2);
+    padding: 0 var(--spacing-sm, 8px);
+  }
+  
+  .alphabet-grid__row {
+    gap: calc(var(--spacing-xs, 6px) / 2);
+  }
+} 

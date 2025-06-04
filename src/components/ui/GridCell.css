@@ -1,0 +1,104 @@
+.grid-cell {
+  /* Base styles */
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  
+  /* Typography from theme */
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-md);
+  
+  /* Layout */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Transitions */
+  transition: all 0.15s ease;
+}
+
+/* Normal state */
+.grid-cell--normal {
+  background-color: var(--theme-surface);
+  color: var(--theme-text);
+}
+
+/* Key letter state */
+.grid-cell--key {
+  background-color: var(--theme-accent);
+  color: var(--theme-accent-text);
+}
+
+/* Locked letter state */
+.grid-cell--locked {
+  background-color: var(--theme-surface);
+  color: var(--theme-text);
+}
+
+/* Disabled state */
+.grid-cell--disabled {
+  background-color: var(--theme-surface);
+  color: var(--theme-disabled);
+  cursor: not-allowed;
+}
+
+/* Interactive feedback (touch/click) */
+.grid-cell--interactive:active {
+  background-color: var(--theme-surface-hover);
+  transform: scale(0.95);
+}
+
+.grid-cell--key.grid-cell--interactive:active {
+  background-color: var(--theme-accent);
+  opacity: 0.8;
+}
+
+/* Action buttons (special bottom row) */
+.grid-cell--action {
+  font-size: var(--theme-font-size-lg);
+}
+
+/* Content positioning */
+.grid-cell__content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Lock icon positioning */
+.grid-cell__lock {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  font-size: 8px;
+  z-index: 2;
+  color: var(--theme-locked);
+}
+
+/* Focus styles for accessibility */
+.grid-cell:focus {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: 2px;
+}
+
+/* Responsive sizing */
+@media (max-width: 768px) {
+  .grid-cell {
+    width: 40px;
+    height: 40px;
+    font-size: var(--theme-font-size-sm);
+  }
+  
+  .grid-cell--action {
+    font-size: var(--theme-font-size-md);
+  }
+  
+  .grid-cell__lock {
+    font-size: 6px;
+    bottom: 1px;
+    left: 1px;
+  }
+} 
