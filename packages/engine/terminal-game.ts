@@ -167,7 +167,7 @@ export class TerminalGame {
     const state = this.gameManager.getState();
     const theme = this.getTurnTheme(state.currentTurn);
     
-    const input = await this.promptUser(`${theme.header}Your turn! Enter a word (or 'help', 'quit', 'state', 'pass'): ${colors.reset}`);
+    const input = await this.promptUser(`${theme.header}Your turn! Enter a word: ${colors.reset}`);
     
     const command = input.trim().toUpperCase();
     
@@ -231,8 +231,9 @@ export class TerminalGame {
     console.log(`${theme.header}WORDPLAY - Turn ${state.currentTurn}/${state.maxTurns}${colors.reset}`);
     console.log('='.repeat(60));
     
-    // Current word
-    console.log(`${theme.primary}Current Word: ${theme.header}${state.currentWord}${colors.reset}`);
+    // Current word with locked letters highlighted
+    const highlightedWord = this.highlightLockedLetters(state.currentWord, state.lockedKeyLetters, theme);
+    console.log(`${theme.primary}Current Word: ${highlightedWord}${colors.reset}`);
     
     // Key and locked letters
     if (state.keyLetters.length > 0) {
@@ -242,9 +243,9 @@ export class TerminalGame {
       console.log(`${theme.primary}Locked Letters: ${state.lockedLetters.join(', ')}${colors.reset}`);
     }
     
-    // NEW: Display locked key letters with dark theme colors
+    // Show locked key letters explanation if any exist
     if (state.lockedKeyLetters.length > 0) {
-      console.log(`${theme.dark}Locked Key Letters (cannot remove): ${state.lockedKeyLetters.join(', ')}${colors.reset}`);
+      console.log(`${theme.light}📌 Locked letters (cannot remove): ${state.lockedKeyLetters.join(', ')}${colors.reset}`);
     }
     
     // Show recently used words
@@ -266,6 +267,28 @@ export class TerminalGame {
   }
 
   /**
+   * Highlight locked key letters within the current word using inverted colors
+   */
+  private highlightLockedLetters(word: string, lockedKeyLetters: string[], theme: typeof colors.blueTheme): string {
+    if (lockedKeyLetters.length === 0) {
+      return `${theme.header}${word}`;
+    }
+    
+    let highlightedWord = '';
+    for (let i = 0; i < word.length; i++) {
+      const letter = word[i];
+      if (lockedKeyLetters.includes(letter.toUpperCase())) {
+        // Use inverted colors for locked letters (dark background with white text)
+        highlightedWord += `${theme.dark}${letter}${colors.reset}${theme.header}`;
+      } else {
+        highlightedWord += letter;
+      }
+    }
+    
+    return `${theme.header}${highlightedWord}`;
+  }
+
+  /**
    * Display detailed game state
    */
   private displayDetailedState(): void {
@@ -279,6 +302,10 @@ export class TerminalGame {
     console.log(`${theme.primary}Game Duration: ${Math.round(stats.duration / 1000)}s${colors.reset}`);
     console.log(`${theme.primary}Average Score: ${stats.averageScore.toFixed(1)}${colors.reset}`);
     
+    // Current word with highlighting
+    const highlightedWord = this.highlightLockedLetters(state.currentWord, state.lockedKeyLetters, theme);
+    console.log(`\n${theme.header}CURRENT WORD: ${highlightedWord}${colors.reset}`);
+    
     if (state.usedWords.length > 0) {
       console.log('\n' + theme.header + 'ALL USED WORDS:' + colors.reset);
       console.log(`${theme.light}${state.usedWords.join(' → ')}${colors.reset}`);
@@ -289,10 +316,10 @@ export class TerminalGame {
       console.log(`${theme.accent}${state.keyLetters.join(', ')} (each worth +1 bonus point)${colors.reset}`);
     }
     
-    // NEW: Show locked key letters in detailed state
+    // Show locked key letters in detailed state
     if (state.lockedKeyLetters.length > 0) {
       console.log('\n' + theme.header + 'LOCKED KEY LETTERS:' + colors.reset);
-      console.log(`${theme.dark}${state.lockedKeyLetters.join(', ')} (cannot be removed this turn)${colors.reset}`);
+      console.log(`${theme.light}📌 ${state.lockedKeyLetters.join(', ')} (highlighted in current word above, cannot be removed this turn)${colors.reset}`);
     }
     
     if (state.turnHistory.length > 0) {
