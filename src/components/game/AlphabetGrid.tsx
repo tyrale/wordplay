@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { GridCell } from '../ui/GridCell';
 import type { GridCellState } from '../ui/GridCell';
 import './AlphabetGrid.css';
@@ -12,7 +12,10 @@ export interface AlphabetGridProps {
   letterStates?: LetterState[];
   onLetterClick?: (letter: string) => void;
   onActionClick?: (action: string) => void;
+  onLetterDragStart?: (letter: string) => void;
+  onLetterDragEnd?: () => void;
   disabled?: boolean;
+  enableDrag?: boolean;
 }
 
 // Default alphabet layout
@@ -31,7 +34,10 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   letterStates = [],
   onLetterClick,
   onActionClick,
-  disabled = false
+  onLetterDragStart,
+  onLetterDragEnd,
+  disabled = false,
+  enableDrag = true
 }) => {
   // Create a map for quick lookup of letter states
   const stateMap = letterStates.reduce((acc, { letter, state }) => {
@@ -39,7 +45,7 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
     return acc;
   }, {} as Record<string, GridCellState>);
 
-  const handleCellClick = (content: string) => {
+  const handleCellClick = useCallback((content: string) => {
     if (disabled) return;
     
     if (ACTION_BUTTONS.includes(content)) {
@@ -47,7 +53,32 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
     } else {
       onLetterClick?.(content);
     }
-  };
+  }, [disabled, onActionClick, onLetterClick]);
+
+  const handleDragStart = useCallback((e: React.DragEvent, content: string) => {
+    if (disabled || ACTION_BUTTONS.includes(content)) {
+      e.preventDefault();
+      return;
+    }
+    
+    e.dataTransfer.setData('text/plain', content);
+    e.dataTransfer.setData('application/x-letter-source', 'alphabet-grid');
+    e.dataTransfer.effectAllowed = 'copy';
+    
+    onLetterDragStart?.(content);
+    
+    // Add visual feedback
+    const target = e.target as HTMLElement;
+    target.style.opacity = '0.7';
+  }, [disabled, onLetterDragStart]);
+
+  const handleDragEnd = useCallback((e: React.DragEvent) => {
+    // Reset visual feedback
+    const target = e.target as HTMLElement;
+    target.style.opacity = '1';
+    
+    onLetterDragEnd?.();
+  }, [onLetterDragEnd]);
 
   const getAriaLabel = (content: string): string => {
     if (ACTION_BUTTONS.includes(content)) {
@@ -62,6 +93,23 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
     return `Letter ${content}`;
   };
 
+  const getDragAriaLabel = (content: string, state: GridCellState): string => {
+    const baseLabel = getAriaLabel(content);
+    if (ACTION_BUTTONS.includes(content)) {
+      return baseLabel;
+    }
+    
+    if (state === 'key') {
+      return `${baseLabel} (key letter, draggable)`;
+    } else if (state === 'locked') {
+      return `${baseLabel} (locked)`;
+    } else if (state === 'disabled') {
+      return `${baseLabel} (disabled)`;
+    }
+    
+    return `${baseLabel} (draggable)`;
+  };
+
   return (
     <div className="alphabet-grid" role="grid" aria-label="Alphabet grid">
       {ALPHABET_GRID.map((row, rowIndex) => (
@@ -69,6 +117,7 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
           {row.map((content) => {
             const isAction = ACTION_BUTTONS.includes(content);
             const state = stateMap[content] || 'normal';
+            const canDrag = enableDrag && !disabled && !isAction && state !== 'disabled';
             
             return (
               <GridCell
@@ -77,8 +126,11 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
                 state={state}
                 type={isAction ? 'action' : 'letter'}
                 onClick={() => handleCellClick(content)}
+                onDragStart={canDrag ? (e) => handleDragStart(e, content) : undefined}
+                onDragEnd={canDrag ? handleDragEnd : undefined}
+                draggable={canDrag}
                 disabled={disabled}
-                aria-label={getAriaLabel(content)}
+                aria-label={getDragAriaLabel(content, state)}
               />
             );
           })}

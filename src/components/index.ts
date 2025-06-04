@@ -12,7 +12,7 @@ export { AlphabetGrid } from './game/AlphabetGrid';
 export type { AlphabetGridProps, LetterState } from './game/AlphabetGrid';
 
 export { WordTrail } from './game/WordTrail';
-export type { WordTrailProps } from './game/WordTrail';
+export type { WordTrailProps, WordMove } from './game/WordTrail';
 
 export { CurrentWord } from './game/CurrentWord';
 export type { CurrentWordProps, LetterHighlight } from './game/CurrentWord';
@@ -27,4 +27,7 @@ export { ScoreDisplay } from './game/ScoreDisplay';
 export type { ScoreDisplayProps, ScoreBreakdown } from './game/ScoreDisplay';
 
 export { GameBoard } from './game/GameBoard';
-export type { GameBoardProps } from './game/GameBoard'; 
+export type { GameBoardProps } from './game/GameBoard';
+
+export { WordBuilder } from './game/WordBuilder';
+export type { WordBuilderProps, LetterPosition } from './game/WordBuilder'; 

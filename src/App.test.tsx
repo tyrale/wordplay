@@ -1,16 +1,16 @@
 /// <reference types="vitest/globals" />
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import App from './App';
 
 describe('App Component', () => {
   it('renders the game board', () => {
     render(<App />);
     
-    // Check for key components
-    expect(screen.getByLabelText('Alphabet grid')).toBeInTheDocument();
+    // Check for key components with updated aria-labels
     expect(screen.getByLabelText('Current word: HIPS')).toBeInTheDocument();
-    expect(screen.getByLabelText('Previous words played')).toBeInTheDocument();
+    expect(screen.getByLabelText('Game word history')).toBeInTheDocument();
+    expect(screen.getByLabelText('Submit word')).toBeInTheDocument();
   });
 
   it('renders the theme selector', () => {
@@ -37,30 +37,16 @@ describe('App Component', () => {
     expect(screen.getByLabelText('Letters moved')).toBeInTheDocument();
   });
 
-  it('renders all letter buttons in the alphabet grid', () => {
+  it('shows the word trail with game history', () => {
     render(<App />);
     
-    // Check for some letter buttons
-    expect(screen.getByLabelText('Letter A')).toBeInTheDocument();
-    expect(screen.getByLabelText('Letter H')).toBeInTheDocument();
-    expect(screen.getByLabelText('Letter Z')).toBeInTheDocument();
+    // Check for word trail with new structure
+    expect(screen.getByLabelText('Game word history')).toBeInTheDocument();
     
-    // Check for action buttons
-    expect(screen.getByLabelText('Return to home screen')).toBeInTheDocument();
-    expect(screen.getByLabelText('Settings menu')).toBeInTheDocument();
-  });
-
-  it('can interact with letter buttons', () => {
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    
-    render(<App />);
-    
-    const letterA = screen.getByLabelText('Letter A');
-    fireEvent.click(letterA);
-    
-    expect(consoleSpy).toHaveBeenCalledWith('Letter clicked:', 'A');
-    
-    consoleSpy.mockRestore();
+    // Check for individual words in the trail
+    expect(screen.getByLabelText('Word: PLAY')).toBeInTheDocument();
+    expect(screen.getByLabelText('Word: LAPS')).toBeInTheDocument();
+    expect(screen.getByLabelText('Word: SLIP')).toBeInTheDocument();
   });
 
   it('shows the current word with key letter highlighting', () => {
@@ -72,5 +58,14 @@ describe('App Component', () => {
     
     // Check that H is highlighted as a key letter
     expect(screen.getByLabelText('H key letter')).toBeInTheDocument();
+  });
+
+  it('renders the game board layout', () => {
+    render(<App />);
+    
+    // Check for main game board sections
+    expect(screen.getByLabelText('Game word history')).toBeInTheDocument();
+    expect(screen.getByLabelText('Current word: HIPS')).toBeInTheDocument();
+    expect(screen.getByLabelText('Score: 3 points')).toBeInTheDocument();
   });
 });

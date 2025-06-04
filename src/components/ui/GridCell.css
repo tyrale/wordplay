@@ -3,9 +3,10 @@
   position: relative;
   width: 56px;
   height: 56px;
-  border: none;
+  border: 2px solid transparent;
   border-radius: 8px;
-  cursor: pointer;
+  cursor: default;
+  user-select: none;
   
   /* Typography from theme */
   font-family: var(--theme-font-family);
@@ -18,7 +19,7 @@
   justify-content: center;
   
   /* Transitions */
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 /* Normal state */
@@ -31,51 +32,69 @@
 .grid-cell--key {
   background-color: var(--theme-accent);
   color: var(--theme-accent-text);
+  border-color: var(--theme-accent);
 }
 
 /* Locked letter state */
 .grid-cell--locked {
-  background-color: var(--theme-surface);
-  color: var(--theme-text);
+  background-color: var(--theme-locked);
+  color: var(--theme-accent-text);
+  border-color: var(--theme-locked);
 }
 
 /* Disabled state */
 .grid-cell--disabled {
-  background-color: var(--theme-surface);
-  color: var(--theme-disabled);
+  opacity: 0.4;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Interactive feedback (touch/click) */
-.grid-cell--interactive:active {
-  background-color: var(--theme-surface-hover);
-  transform: scale(0.95);
+.grid-cell--interactive {
+  cursor: pointer;
 }
 
-.grid-cell--key.grid-cell--interactive:active {
-  background-color: var(--theme-accent);
-  opacity: 0.8;
+.grid-cell--interactive:hover,
+.grid-cell--draggable:hover {
+  background-color: var(--theme-surface-hover);
+  transform: translateY(-1px);
+}
+
+.grid-cell--interactive:active,
+.grid-cell--draggable:active {
+  transform: translateY(0);
 }
 
 /* Action buttons (special bottom row) */
 .grid-cell--action {
+  background-color: var(--theme-surface);
+  color: var(--theme-text-secondary);
   font-size: var(--theme-font-size-lg);
+}
+
+.grid-cell--action.grid-cell--interactive:hover {
+  color: var(--theme-text);
+  background-color: var(--theme-surface-hover);
 }
 
 /* Content positioning */
 .grid-cell__content {
-  position: relative;
-  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 /* Lock icon positioning */
 .grid-cell__lock {
   position: absolute;
   bottom: 2px;
-  left: 2px;
-  font-size: 8px;
-  z-index: 2;
-  color: var(--theme-locked);
+  right: 2px;
+  font-size: 12px;
+  opacity: 0.8;
+  pointer-events: none;
 }
 
 /* Focus styles for accessibility */
@@ -87,8 +106,8 @@
 /* Responsive sizing */
 @media (max-width: 768px) {
   .grid-cell {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     font-size: var(--theme-font-size-sm);
   }
   
@@ -97,8 +116,63 @@
   }
   
   .grid-cell__lock {
-    font-size: 6px;
+    font-size: 10px;
     bottom: 1px;
-    left: 1px;
+    right: 1px;
   }
+}
+
+@media (max-width: 480px) {
+  .grid-cell {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .grid-cell {
+    border-width: 3px;
+  }
+  
+  .grid-cell--key,
+  .grid-cell--locked {
+    border-width: 4px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .grid-cell {
+    transition: none;
+  }
+  
+  .grid-cell--interactive:hover,
+  .grid-cell--draggable:hover {
+    transform: none;
+  }
+}
+
+/* Draggable state */
+.grid-cell--draggable {
+  cursor: grab;
+}
+
+.grid-cell--draggable:active {
+  cursor: grabbing;
+}
+
+/* Letter-specific styles */
+.grid-cell--letter {
+  /* Letter-specific styles */
+}
+
+/* Drag feedback states */
+.grid-cell--draggable[draggable="true"]:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.grid-cell[draggable="true"]:active {
+  opacity: 0.7;
+  transform: scale(0.95);
 } 

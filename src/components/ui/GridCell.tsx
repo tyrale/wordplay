@@ -9,6 +9,9 @@ export interface GridCellProps {
   state?: GridCellState;
   type?: GridCellType;
   onClick?: () => void;
+  onDragStart?: (e: React.DragEvent<HTMLButtonElement>) => void;
+  onDragEnd?: (e: React.DragEvent<HTMLButtonElement>) => void;
+  draggable?: boolean;
   disabled?: boolean;
   'aria-label'?: string;
 }
@@ -18,6 +21,9 @@ export const GridCell: React.FC<GridCellProps> = ({
   state = 'normal',
   type = 'letter',
   onClick,
+  onDragStart,
+  onDragEnd,
+  draggable = false,
   disabled = false,
   'aria-label': ariaLabel,
 }) => {
@@ -27,18 +33,34 @@ export const GridCell: React.FC<GridCellProps> = ({
     }
   };
 
+  const handleDragStart = (e: React.DragEvent<HTMLButtonElement>) => {
+    if (!disabled && onDragStart) {
+      onDragStart(e);
+    }
+  };
+
+  const handleDragEnd = (e: React.DragEvent<HTMLButtonElement>) => {
+    if (!disabled && onDragEnd) {
+      onDragEnd(e);
+    }
+  };
+
   const cellClasses = [
     'grid-cell',
     `grid-cell--${state}`,
     `grid-cell--${type}`,
     disabled && 'grid-cell--disabled',
-    onClick && !disabled && 'grid-cell--interactive'
+    onClick && !disabled && 'grid-cell--interactive',
+    draggable && !disabled && 'grid-cell--draggable'
   ].filter(Boolean).join(' ');
 
   return (
     <button
       className={cellClasses}
       onClick={handleClick}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      draggable={draggable && !disabled}
       disabled={disabled}
       aria-label={ariaLabel || content}
       type="button"
