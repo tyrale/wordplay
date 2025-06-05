@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { GridCell } from '../ui/GridCell';
 import type { GridCellState } from '../ui/GridCell';
 import './AlphabetGrid.css';
@@ -39,8 +39,6 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   disabled = false,
   enableDrag = true
 }) => {
-  const [touchHandled, setTouchHandled] = useState(false);
-
   // Create a map for quick lookup of letter states
   const stateMap = letterStates.reduce((acc, { letter, state }) => {
     acc[letter] = state;
@@ -48,14 +46,14 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   }, {} as Record<string, GridCellState>);
 
   const handleCellClick = useCallback((content: string) => {
-    if (disabled || touchHandled) return;
+    if (disabled) return;
     
     if (ACTION_BUTTONS.includes(content)) {
       onActionClick?.(content);
     } else {
       onLetterClick?.(content);
     }
-  }, [disabled, touchHandled, onActionClick, onLetterClick]);
+  }, [disabled, onActionClick, onLetterClick]);
 
   const handleDragStart = useCallback((e: React.DragEvent, content: string) => {
     if (disabled || ACTION_BUTTONS.includes(content)) {
@@ -87,16 +85,7 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
     onLetterDragEnd?.();
   }, [onLetterDragEnd]);
 
-  // Simplified touch handlers - just prevent double clicks
-  const handleTouchStart = useCallback((_e: React.TouchEvent, content: string) => {
-    if (disabled || ACTION_BUTTONS.includes(content)) return;
-    setTouchHandled(true);
-  }, [disabled]);
 
-  const handleTouchEnd = useCallback(() => {
-    // Reset touch handled flag after a delay to prevent click event
-    setTimeout(() => setTouchHandled(false), 100);
-  }, []);
 
   const getAriaLabel = (content: string): string => {
     if (ACTION_BUTTONS.includes(content)) {
@@ -146,8 +135,7 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
                 onClick={() => handleCellClick(content)}
                 onDragStart={canDrag ? (e) => handleDragStart(e, content) : undefined}
                 onDragEnd={canDrag ? handleDragEnd : undefined}
-                onTouchStart={canDrag ? (e) => handleTouchStart(e, content) : undefined}
-                onTouchEnd={canDrag ? handleTouchEnd : undefined}
+
                 draggable={canDrag}
                 disabled={disabled}
                 aria-label={getDragAriaLabel(content, state)}
