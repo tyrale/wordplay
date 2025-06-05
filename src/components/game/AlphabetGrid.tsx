@@ -39,7 +39,7 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   disabled = false,
   enableDrag = true
 }) => {
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number; letter: string } | null>(null);
+  const [touchHandled, setTouchHandled] = useState(false);
 
   // Create a map for quick lookup of letter states
   const stateMap = letterStates.reduce((acc, { letter, state }) => {
@@ -48,14 +48,14 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   }, {} as Record<string, GridCellState>);
 
   const handleCellClick = useCallback((content: string) => {
-    if (disabled) return;
+    if (disabled || touchHandled) return;
     
     if (ACTION_BUTTONS.includes(content)) {
       onActionClick?.(content);
     } else {
       onLetterClick?.(content);
     }
-  }, [disabled, onActionClick, onLetterClick]);
+  }, [disabled, touchHandled, onActionClick, onLetterClick]);
 
   const handleDragStart = useCallback((e: React.DragEvent, content: string) => {
     if (disabled || ACTION_BUTTONS.includes(content)) {
@@ -82,66 +82,16 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
     onLetterDragEnd?.();
   }, [onLetterDragEnd]);
 
-  // Touch handlers for mobile support
-  const handleTouchStart = useCallback((e: React.TouchEvent, content: string) => {
+  // Simplified touch handlers - just prevent double clicks
+  const handleTouchStart = useCallback((_e: React.TouchEvent, content: string) => {
     if (disabled || ACTION_BUTTONS.includes(content)) return;
-    
-    const touch = e.touches[0];
-    setTouchStart({
-      x: touch.clientX,
-      y: touch.clientY,
-      letter: content
-    });
-    
-    onLetterDragStart?.(content);
-    
-    // Prevent scrolling while dragging
-    e.preventDefault();
-  }, [disabled, onLetterDragStart]);
+    setTouchHandled(true);
+  }, [disabled]);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!touchStart) return;
-    
-    // Prevent scrolling while dragging
-    e.preventDefault();
-    
-    const touch = e.touches[0];
-    const deltaX = Math.abs(touch.clientX - touchStart.x);
-    const deltaY = Math.abs(touch.clientY - touchStart.y);
-    
-    // If user has moved enough, consider it a drag
-    if (deltaX > 10 || deltaY > 10) {
-      // You could add visual feedback here for drag in progress
-    }
-  }, [touchStart]);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!touchStart) return;
-    
-    const touch = e.changedTouches[0];
-    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-    
-    // Check if we're over a word builder or other valid drop target
-    if (elementBelow) {
-      const wordBuilder = elementBelow.closest('.word-builder');
-      if (wordBuilder) {
-        // Simulate adding the letter to the word through click
-        onLetterClick?.(touchStart.letter);
-      } else {
-        // If not over word builder, still handle as regular click
-        const deltaX = Math.abs(touch.clientX - touchStart.x);
-        const deltaY = Math.abs(touch.clientY - touchStart.y);
-        
-        // If movement was minimal, treat as click
-        if (deltaX < 10 && deltaY < 10) {
-          onLetterClick?.(touchStart.letter);
-        }
-      }
-    }
-    
-    setTouchStart(null);
-    onLetterDragEnd?.();
-  }, [touchStart, onLetterClick, onLetterDragEnd]);
+  const handleTouchEnd = useCallback(() => {
+    // Reset touch handled flag after a delay to prevent click event
+    setTimeout(() => setTouchHandled(false), 100);
+  }, []);
 
   const getAriaLabel = (content: string): string => {
     if (ACTION_BUTTONS.includes(content)) {
@@ -192,7 +142,6 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
                 onDragStart={canDrag ? (e) => handleDragStart(e, content) : undefined}
                 onDragEnd={canDrag ? handleDragEnd : undefined}
                 onTouchStart={canDrag ? (e) => handleTouchStart(e, content) : undefined}
-                onTouchMove={canDrag ? handleTouchMove : undefined}
                 onTouchEnd={canDrag ? handleTouchEnd : undefined}
                 draggable={canDrag}
                 disabled={disabled}

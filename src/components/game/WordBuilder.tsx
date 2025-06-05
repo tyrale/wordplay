@@ -126,8 +126,11 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     e.preventDefault();
     if (disabled) return;
     
-    const source = e.dataTransfer.types.includes('application/x-letter-source');
-    if (source) {
+    // Check if this is a letter drag (has both text and source type)
+    const hasText = e.dataTransfer.types.includes('text/plain');
+    const hasSource = e.dataTransfer.types.includes('application/x-letter-source');
+    
+    if (hasText && hasSource) {
       e.dataTransfer.dropEffect = 'copy';
       setIsDragOverContainer(true);
     }
