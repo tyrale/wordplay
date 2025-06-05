@@ -183,15 +183,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, [gameState.turnHistory]);
 
   // Event handlers
-  const handleLetterClick = useCallback((letter: string) => {
-    if (!isPlayerTurn || isProcessingMove) return;
-    
-    // Add letter to pending word
-    if (pendingWord.length < 10) { // Max word length
-      setPendingWord(prev => prev + letter);
-    }
-  }, [isPlayerTurn, isProcessingMove, pendingWord.length]);
-
   const handleActionClick = useCallback((action: string) => {
     if (!isPlayerTurn || isProcessingMove) return;
     
@@ -228,6 +219,16 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       setPendingMoveAttempt(null);
     }
   }, [isPlayerTurn, isProcessingMove, wordState.currentWord, actions]);
+
+  const handleLetterClick = useCallback((letter: string) => {
+    if (!isPlayerTurn || isProcessingMove) return;
+    
+    // Add letter to pending word
+    if (pendingWord.length < 10) { // Max word length
+      const newWord = pendingWord + letter;
+      handleWordChange(newWord);
+    }
+  }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
 
   const handleLetterRemove = useCallback((index: number) => {
     if (!isPlayerTurn || isProcessingMove) return;
