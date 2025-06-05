@@ -2,7 +2,8 @@
  * Browser-Compatible Dictionary Service
  * 
  * This provides the same interface as the Node.js dictionary service
- * but works in browser environments without fs/path dependencies.
+ * but works in browser environments by loading the ENABLE dictionary
+ * from the public assets.
  */
 
 // Types for validation
@@ -27,192 +28,153 @@ class BrowserWordDictionary {
   private slangWords: Set<string> = new Set();
   private profanityWords: Set<string> = new Set();
   private initialized = false;
+  private loading = false;
+  private loadPromise: Promise<void> | null = null;
 
   constructor() {
     this.initializeDictionary();
   }
 
-  private initializeDictionary() {
-    if (this.initialized) return;
+  private async initializeDictionary() {
+    if (this.initialized || this.loading) return this.loadPromise;
+    
+    this.loading = true;
+    this.loadPromise = this.loadDictionaries();
+    return this.loadPromise;
+  }
 
+  private async loadDictionaries() {
     try {
-      // Add a comprehensive set of common words for browser environment
-      const commonWords = [
-        // Basic words
-        'WORD', 'PLAY', 'GAME', 'TURN', 'MOVE', 'LOVE', 'LIFE', 'TIME', 'YEAR', 'WORK',
-        'HAND', 'PART', 'CHILD', 'WORLD', 'PLACE', 'NUMBER', 'POINT', 'HOUSE', 'WATER',
-        'MONEY', 'STORY', 'FACT', 'MONTH', 'LIGHT', 'NIGHT', 'RIGHT', 'STUDY', 'BOOK',
-        'STATE', 'POWER', 'HOUR', 'BUSINESS', 'ISSUE', 'AREA', 'ROOM', 'FORM', 'MUSIC',
-        'FIELD', 'HEALTH', 'VOICE', 'REASON', 'PEOPLE', 'FAMILY', 'STUDENT',
-        'MOMENT', 'RESULT', 'CHANGE', 'MORNING', 'MARKET', 'GROUP', 'PROBLEM', 'SERVICE',
-        'HELP', 'IDEA', 'INFORMATION', 'WAY', 'HEAD', 'MOTHER', 'FATHER', 'TEACHER',
-        'OFFICE', 'PARTY', 'COMPANY', 'SYSTEM', 'PROGRAM', 'QUESTION', 'GOVERNMENT',
-        'CASE', 'START', 'SCHOOL', 'COUNTRY', 'AMERICAN', 'FORCE', 'USE', 'OPEN',
-        'PUBLIC', 'SUPPORT', 'ORDER', 'POLICY', 'BOARD', 'RATE', 'LEVEL', 'COMMUNITY',
-        'DEVELOPMENT', 'NAME', 'TEAM', 'MINUTE', 'CHANCE', 'DETAIL', 'FOCUS',
-        'ROLE', 'EFFORT', 'DECISION', 'GOAL', 'MATTER', 'ACTIVITY', 'CLASS', 'QUALITY',
-        
-        // Three letter words
-        'THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN', 'HER', 'WAS', 'ONE',
-        'OUR', 'HAD', 'OUT', 'DAY', 'GET', 'HAS', 'HIM', 'HIS', 'HOW', 'ITS', 'LET', 'NEW',
-        'NOW', 'OLD', 'SEE', 'TWO', 'WHO', 'BOY', 'DID', 'GOT', 'MAN', 'PUT', 'SAY', 'SHE',
-        'TOO', 'USE', 'WHY', 'ASK', 'BAD', 'BAG', 'BED', 'BIG', 'BOX', 'BUS', 'BUY', 'CAR',
-        'CUP', 'CUT', 'DOG', 'EAR', 'EAT', 'END', 'EYE', 'FAR', 'FEW', 'FUN', 'GUN', 'HIT',
-        'HOT', 'JOB', 'LAW', 'LEG', 'LET', 'LIE', 'LOT', 'LOW', 'MEN', 'MOM', 'OIL', 'PAY',
-        'PEN', 'PET', 'POT', 'RUN', 'SIT', 'SIX', 'SUN', 'TAX', 'TEN', 'TOP', 'TRY', 'WAR',
-        'WAY', 'WIN', 'YES', 'YET', 'ZOO', 'ACE', 'ADD', 'AGE', 'AGO', 'AID', 'AIM', 'AIR',
-        'ART', 'ATE', 'BAR', 'BAT', 'BEE', 'BET', 'BIT', 'BOW', 'BOY', 'BUN', 'BUT', 'BUY',
-        
-        // Four letter words (common gameplay words)
-        'ABLE', 'BACK', 'BALL', 'BASE', 'BEAT', 'BEEN', 'BEST', 'BLUE', 'BODY', 'BOOK',
-        'BOTH', 'CALL', 'CAME', 'CARE', 'CASE', 'CITY', 'COME', 'COST', 'DATA', 'DAYS',
-        'DEAL', 'DONE', 'DOWN', 'EACH', 'EVEN', 'EVER', 'FACE', 'FACT', 'FALL', 'FAST',
-        'FEEL', 'FEET', 'FELT', 'FIND', 'FIRE', 'FIRM', 'FISH', 'FIVE', 'FORM', 'FOUR',
-        'FREE', 'FROM', 'FULL', 'GAME', 'GAVE', 'GIVE', 'GOES', 'GOLD', 'GOOD', 'HAND',
-        'HARD', 'HEAD', 'HEAR', 'HELD', 'HELP', 'HERE', 'HIGH', 'HOLD', 'HOME', 'HOPE',
-        'HOUR', 'IDEA', 'INTO', 'ITEM', 'JUST', 'KEEP', 'KIND', 'KNEW', 'KNOW', 'LAND',
-        'LAST', 'LATE', 'LEAD', 'LEFT', 'LIFE', 'LINE', 'LIVE', 'LONG', 'LOOK', 'LORD',
-        'LOSE', 'LOST', 'LOVE', 'MADE', 'MAKE', 'MANY', 'MARK', 'MASS', 'MEAN', 'MEET',
-        'MIND', 'MISS', 'MORE', 'MOST', 'MOVE', 'MUCH', 'MUST', 'NAME', 'NEAR', 'NEED',
-        'NEXT', 'NICE', 'NOTE', 'ONCE', 'ONLY', 'OPEN', 'OVER', 'PAID', 'PART', 'PASS',
-        'PAST', 'PATH', 'PLAN', 'PLAY', 'POOR', 'PUSH', 'PUTS', 'RACE', 'RATE', 'READ',
-        'REAL', 'ROOM', 'RULE', 'SAID', 'SAME', 'SAVE', 'SEEK', 'SEEM', 'SELF', 'SELL',
-        'SEND', 'SENT', 'SHOW', 'SIDE', 'SIZE', 'SOME', 'SOON', 'SORT', 'STOP', 'SUCH',
-        'SURE', 'TAKE', 'TALK', 'TELL', 'TEST', 'THAN', 'THAT', 'THEM', 'THEN', 'THEY',
-        'THIS', 'TIME', 'TOLD', 'TOOK', 'TREE', 'TRUE', 'TURN', 'TYPE', 'UNIT', 'UPON',
-        'USED', 'VERY', 'WALK', 'WANT', 'WAYS', 'WEEK', 'WELL', 'WENT', 'WERE', 'WHAT',
-        'WHEN', 'WILL', 'WIND', 'WITH', 'WORD', 'WORK', 'YEAR', 'YOUR',
-        
-        // Animal words
-        'CAT', 'DOG', 'COW', 'PIG', 'RAT', 'BAT', 'BEE', 'ANT', 'FLY', 'OWL', 'FOX',
-        'BEAR', 'DEER', 'FISH', 'BIRD', 'DUCK', 'GOAT', 'LAMB', 'LION', 'MICE', 'SEAL',
-        'WOLF', 'FROG', 'CRAB', 'SNAIL', 'TIGER', 'HORSE', 'WHALE', 'SHARK', 'EAGLE',
-        
-        // Simple gameplay words
-        'CAT', 'CATS', 'BAT', 'BATS', 'RAT', 'RATS', 'HAT', 'HATS', 'MAT', 'MATS',
-        'COT', 'COTS', 'DOT', 'DOTS', 'HOT', 'HOTS', 'LOT', 'LOTS', 'NOT', 'NOTS',
-        'POT', 'POTS', 'ROT', 'ROTS', 'SOT', 'SOTS', 'TOT', 'TOTS', 'GOT', 'GOTS',
-        'CUT', 'CUTS', 'BUT', 'BUTS', 'HUT', 'HUTS', 'NUT', 'NUTS', 'GUT', 'GUTS',
-        'JUT', 'JUTS', 'PUT', 'PUTS', 'RUT', 'RUTS', 'TUT', 'TUTS',
-        
-        // Boat words
-        'BOAT', 'BOATS', 'COAT', 'COATS', 'GOAT', 'GOATS', 'MOAT', 'MOATS',
-        'FLOAT', 'BLOAT', 'GLOAT', 'THROAT',
-        
-        // Heat words
-        'HEAT', 'HEATS', 'MEAT', 'MEATS', 'NEAT', 'NEATS', 'PEAT', 'PEATS', 'BEAT', 'BEATS',
-        'SEAT', 'SEATS', 'FEAT', 'FEATS', 'TREAT', 'TREATS', 'GREAT', 'GREATS',
-        'WHEAT', 'SWEAT', 'CHEAT', 'PLEAT',
-        
-        // Hip words
-        'SHIP', 'SHIPS', 'HIP', 'HIPS', 'LIP', 'LIPS', 'TIP', 'TIPS', 'RIP', 'RIPS',
-        'DIP', 'DIPS', 'SIP', 'SIPS', 'ZIP', 'ZIPS', 'FLIP', 'FLIPS', 'SLIP', 'SLIPS',
-        'TRIP', 'TRIPS', 'GRIP', 'GRIPS', 'DRIP', 'DRIPS', 'CHIP', 'CHIPS', 'WHIP', 'WHIPS',
-        'SKIP', 'SKIPS', 'CLIP', 'CLIPS', 'SNIP', 'SNIPS',
-        
-        // Push words
-        'PUSH', 'PUSHY', 'PULL', 'PULLS', 'FULL', 'BULL', 'DULL', 'HULL', 'LULL', 'MULL',
-        'NULL', 'CULL', 'GULL',
-        
-        // Duck words
-        'DUCK', 'DUCKS', 'LUCK', 'LUCKS', 'MUCK', 'MUCKS', 'PUCK', 'PUCKS', 'BUCK', 'BUCKS',
-        'TUCK', 'TUCKS', 'SUCK', 'SUCKS', 'STUCK', 'CHUCK', 'CLUCK', 'PLUCK', 'TRUCK',
-        
-        // Lap words
-        'LAPS', 'LAP', 'CAP', 'CAPS', 'GAP', 'GAPS', 'MAP', 'MAPS', 'NAP', 'NAPS',
-        'RAP', 'RAPS', 'SAP', 'SAPS', 'TAP', 'TAPS', 'ZAP', 'ZAPS', 'CLAP', 'CLAPS',
-        'SNAP', 'SNAPS', 'TRAP', 'TRAPS', 'WRAP', 'WRAPS', 'FLAP', 'FLAPS', 'SLAP', 'SLAPS',
-        'CHAP', 'CHAPS', 'STRAP', 'SCRAP',
-        
-        // Food words
-        'FOOD', 'BREAD', 'MEAT', 'MILK', 'EGG', 'EGGS', 'CAKE', 'PIE', 'RICE', 'SOUP',
-        'FISH', 'BEEF', 'PORK', 'LAMB', 'BEAN', 'CORN', 'APPLE', 'PEAR', 'PLUM',
-        
-        // Common ending words
-        'ABLE', 'IBLE', 'TION', 'SION', 'NESS', 'MENT', 'LING', 'RING', 'SING', 'WING',
-        'KING', 'DING', 'PING', 'TING', 'MING', 'ZING', 'BRING', 'THING', 'SWING',
-        
-        // Action words
-        'RUN', 'RUNS', 'WALK', 'WALKS', 'JUMP', 'JUMPS', 'SWIM', 'SWIMS', 'DANCE', 'DANCES',
-        'SING', 'SINGS', 'TALK', 'TALKS', 'LOOK', 'LOOKS', 'HEAR', 'HEARS', 'FEEL', 'FEELS',
-        'THINK', 'THINKS', 'KNOW', 'KNOWS', 'LEARN', 'LEARNS', 'TEACH', 'TEACHES',
-        
-        // Colors
-        'RED', 'BLUE', 'GREEN', 'BLACK', 'WHITE', 'BROWN', 'PINK', 'GRAY', 'GREY',
-        'ORANGE', 'YELLOW', 'PURPLE', 'VIOLET',
-        
-        // Numbers
-        'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN',
-        'ELEVEN', 'TWELVE', 'TWENTY', 'THIRTY', 'FORTY', 'FIFTY', 'SIXTY', 'SEVENTY',
-        'EIGHTY', 'NINETY', 'HUNDRED', 'THOUSAND',
-        
-        // Body parts
-        'HEAD', 'HAIR', 'FACE', 'EYE', 'EYES', 'NOSE', 'MOUTH', 'TOOTH', 'TEETH', 'EAR',
-        'EARS', 'NECK', 'HAND', 'HANDS', 'ARM', 'ARMS', 'LEG', 'LEGS', 'FOOT', 'FEET',
-        'FINGER', 'THUMB', 'KNEE', 'ELBOW', 'SHOULDER', 'BACK', 'CHEST', 'HEART',
-        
-        // Common adjectives
-        'BIG', 'SMALL', 'TALL', 'SHORT', 'LONG', 'WIDE', 'THIN', 'THICK', 'HEAVY', 'LIGHT',
-        'FAST', 'SLOW', 'HOT', 'COLD', 'WARM', 'COOL', 'WET', 'DRY', 'CLEAN', 'DIRTY',
-        'SOFT', 'HARD', 'SMOOTH', 'ROUGH', 'SHARP', 'DULL', 'BRIGHT', 'DARK', 'LOUD', 'QUIET',
-        
-        // Weather
-        'SUN', 'RAIN', 'SNOW', 'WIND', 'CLOUD', 'CLOUDS', 'STORM', 'STORMS', 'THUNDER',
-        'LIGHTNING', 'FOG', 'MIST', 'ICE', 'FROST', 'HEAT', 'COLD',
-        
-        // Technology words
-        'COMPUTER', 'PHONE', 'EMAIL', 'INTERNET', 'WEBSITE', 'APP', 'CODE', 'DATA',
-        'FILE', 'FILES', 'SCREEN', 'MOUSE', 'KEYBOARD', 'BUTTON', 'CLICK', 'TYPE',
-        
-        // Common verbs
-        'GO', 'GOES', 'WENT', 'COME', 'COMES', 'CAME', 'SEE', 'SEES', 'SAW', 'HEAR',
-        'HEARS', 'HEARD', 'SAY', 'SAYS', 'SAID', 'TELL', 'TELLS', 'TOLD', 'ASK', 'ASKS',
-        'ASKED', 'GIVE', 'GIVES', 'GAVE', 'GET', 'GETS', 'GOT', 'TAKE', 'TAKES', 'TOOK',
-        'MAKE', 'MAKES', 'MADE', 'DO', 'DOES', 'DID', 'HAVE', 'HAS', 'HAD', 'BE', 'IS',
-        'ARE', 'WAS', 'WERE', 'BEEN', 'WILL', 'WOULD', 'CAN', 'COULD', 'MAY', 'MIGHT',
-        'MUST', 'SHOULD', 'SHALL',
-        
-        // Transportation
-        'CAR', 'CARS', 'BUS', 'BUSES', 'TRAIN', 'TRAINS', 'PLANE', 'PLANES', 'BIKE', 'BIKES',
-        'BOAT', 'BOATS', 'SHIP', 'SHIPS', 'TRUCK', 'TRUCKS', 'TAXI', 'TAXIS',
-        
-        // Places
-        'HOME', 'HOUSE', 'HOUSES', 'SCHOOL', 'SCHOOLS', 'WORK', 'OFFICE', 'OFFICES',
-        'STORE', 'STORES', 'SHOP', 'SHOPS', 'PARK', 'PARKS', 'STREET', 'STREETS',
-        'ROAD', 'ROADS', 'CITY', 'CITIES', 'TOWN', 'TOWNS', 'COUNTRY', 'COUNTRIES',
-        
-        // Time words
-        'TIME', 'TIMES', 'DAY', 'DAYS', 'WEEK', 'WEEKS', 'MONTH', 'MONTHS', 'YEAR', 'YEARS',
-        'HOUR', 'HOURS', 'MINUTE', 'MINUTES', 'SECOND', 'SECONDS', 'MORNING', 'AFTERNOON',
-        'EVENING', 'NIGHT', 'NIGHTS', 'TODAY', 'TOMORROW', 'YESTERDAY', 'NOW', 'THEN',
-        'SOON', 'LATE', 'EARLY', 'BEFORE', 'AFTER', 'DURING', 'WHILE'
-      ];
+      // Load ENABLE dictionary from public assets
+      await this.loadEnableDictionary();
       
-      commonWords.forEach(word => this.enableWords.add(word.toUpperCase()));
-
-      // Add common slang words that are acceptable in casual play
-      const slangWords = [
-        'BRUH', 'YEAH', 'NOPE', 'YEET', 'FOMO', 'SELFIE', 'EMOJI', 'BLOG',
-        'VLOG', 'WIFI', 'UBER', 'GOOGLE', 'TWEET', 'UNFRIEND', 'HASHTAG',
-        'PHOTOBOMB', 'MANSPLAIN', 'GHOSTING', 'CATFISH', 'TROLL', 'MEME',
-        'VIRAL', 'CLICKBAIT', 'SPAM', 'PHISHING', 'MALWARE', 'AVATAR',
-        'NOOB', 'PWNED', 'EPIC', 'FAIL', 'WIN', 'OWNED', 'LEET', 'HAXOR'
-      ];
-      slangWords.forEach(word => this.slangWords.add(word.toUpperCase()));
-
-      // Basic profanity list (used for vanity display only)
-      const profanityWords = [
-        'DAMN', 'HELL', 'CRAP', 'PISS', 'SHIT', 'FUCK', 'BITCH', 'ASSHOLE',
-        'BASTARD', 'WHORE', 'SLUT', 'FART', 'POOP', 'BUTT', 'ASS'
-      ];
-      profanityWords.forEach(word => this.profanityWords.add(word.toUpperCase()));
-
+      // Add slang words
+      this.loadSlangWords();
+      
+      // Add profanity words
+      this.loadProfanityWords();
+      
       this.initialized = true;
+      this.loading = false;
+      console.log(`✅ Dictionary loaded: ${this.enableWords.size} words available`);
     } catch (error) {
-      console.error('Failed to initialize browser dictionary:', error);
-      // Graceful fallback - still allow basic validation
+      console.warn('Failed to load full dictionary, falling back to basic word set:', error);
+      this.loadFallbackWords();
       this.initialized = true;
+      this.loading = false;
     }
+  }
+
+  private async loadEnableDictionary() {
+    try {
+      // Try to load from the packages/engine directory (development)
+      let response = await fetch('/packages/engine/enable1.txt');
+      
+      if (!response.ok) {
+        // Try alternative path (production build)
+        response = await fetch('/enable1.txt');
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const text = await response.text();
+      const words = text.trim().split('\n');
+      
+      // Add all words to the ENABLE set
+      words.forEach(word => {
+        const cleanWord = word.trim().toUpperCase();
+        if (cleanWord.length >= 2) { // Only words 2+ characters
+          this.enableWords.add(cleanWord);
+        }
+      });
+      
+      console.log(`✅ ENABLE dictionary loaded: ${words.length} words`);
+    } catch (error) {
+      console.warn('Could not load ENABLE dictionary file:', error);
+      throw error;
+    }
+  }
+
+  private loadSlangWords() {
+    const slangWords = [
+      'BRUH', 'YEAH', 'NOPE', 'YEET', 'FOMO', 'SELFIE', 'EMOJI', 'BLOG',
+      'VLOG', 'WIFI', 'UBER', 'GOOGLE', 'TWEET', 'UNFRIEND', 'HASHTAG',
+      'PHOTOBOMB', 'MANSPLAIN', 'GHOSTING', 'CATFISH', 'TROLL', 'MEME',
+      'VIRAL', 'CLICKBAIT', 'SPAM', 'PHISHING', 'MALWARE', 'AVATAR',
+      'NOOB', 'PWNED', 'EPIC', 'FAIL', 'WIN', 'OWNED', 'LEET', 'HAXOR',
+      'APP', 'APPS', 'TECH', 'CRYPTO', 'BLOCKCHAIN', 'NFT', 'NFTS',
+      'ZOOM', 'FACETIME', 'NETFLIX', 'YOUTUBE', 'TIKTOK', 'INSTAGRAM',
+      'FACEBOOK', 'TWITTER', 'REDDIT', 'DISCORD', 'TWITCH', 'SPOTIFY'
+    ];
+    
+    slangWords.forEach(word => this.slangWords.add(word.toUpperCase()));
+  }
+
+  private loadProfanityWords() {
+    const profanityWords = [
+      'DAMN', 'HELL', 'CRAP', 'PISS', 'SUCK', 'BITCH', 'BASTARD', 'ASSHOLE',
+      'SHIT', 'FUCK', 'PUSSY', 'COCK', 'DICK', 'PENIS', 'VAGINA', 'BOOB',
+      'BOOBS', 'TITS', 'ASS', 'BUTT', 'FART', 'POOP', 'SEXY', 'NUDE'
+    ];
+    
+    profanityWords.forEach(word => this.profanityWords.add(word.toUpperCase()));
+  }
+
+  private loadFallbackWords() {
+    // Minimal fallback word set for when dictionary loading fails
+    const fallbackWords = [
+      // Essential gameplay words
+      'CAT', 'CATS', 'BAT', 'BATS', 'RAT', 'RATS', 'HAT', 'HATS', 'MAT', 'MATS',
+      'BOAT', 'BOATS', 'COAT', 'COATS', 'GOAT', 'GOATS', 'MOAT', 'MOATS',
+      'HEAT', 'HEATS', 'MEAT', 'MEATS', 'NEAT', 'NEATS', 'PEAT', 'PEATS', 'BEAT', 'BEATS',
+      'SHIP', 'SHIPS', 'HIP', 'HIPS', 'LIP', 'LIPS', 'TIP', 'TIPS', 'RIP', 'RIPS',
+      'PUSH', 'PULL', 'FULL', 'BULL', 'DUCK', 'DUCKS', 'LUCK', 'LUCKS',
+      'LAPS', 'LAP', 'SLIP', 'SLIPS', 'PLAY', 'GAME', 'TURN', 'MOVE', 'WORD',
+      
+      // Basic words
+      'THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN', 'HER', 'WAS', 'ONE',
+      'OUR', 'HAD', 'OUT', 'DAY', 'GET', 'HAS', 'HIM', 'HIS', 'HOW', 'ITS', 'LET', 'NEW',
+      'NOW', 'OLD', 'SEE', 'TWO', 'WHO', 'BOY', 'DID', 'GOT', 'MAN', 'PUT', 'SAY', 'SHE',
+      'TOO', 'USE', 'WHY', 'ASK', 'BAD', 'BAG', 'BED', 'BIG', 'BOX', 'BUS', 'BUY', 'CAR',
+      'CUP', 'CUT', 'DOG', 'EAR', 'EAT', 'END', 'EYE', 'FAR', 'FEW', 'FUN', 'GUN', 'HIT',
+      'HOT', 'JOB', 'LAW', 'LEG', 'LET', 'LIE', 'LOT', 'LOW', 'MEN', 'MOM', 'OIL', 'PAY',
+      'PEN', 'PET', 'POT', 'RUN', 'SIT', 'SIX', 'SUN', 'TAX', 'TEN', 'TOP', 'TRY', 'WAR',
+      'WAY', 'WIN', 'YES', 'YET', 'ZOO',
+      
+      // Four letter words
+      'ABLE', 'BACK', 'BALL', 'BASE', 'BEAT', 'BEEN', 'BEST', 'BLUE', 'BODY', 'BOOK',
+      'BOTH', 'CALL', 'CAME', 'CARE', 'CASE', 'CITY', 'COME', 'COST', 'DATA', 'DAYS',
+      'DEAL', 'DONE', 'DOWN', 'EACH', 'EVEN', 'EVER', 'FACE', 'FACT', 'FALL', 'FAST',
+      'FEEL', 'FEET', 'FELT', 'FIND', 'FIRE', 'FIRM', 'FISH', 'FIVE', 'FORM', 'FOUR',
+      'FREE', 'FROM', 'FULL', 'GAME', 'GAVE', 'GIVE', 'GOES', 'GOLD', 'GOOD', 'HAND',
+      'HARD', 'HEAD', 'HEAR', 'HELD', 'HELP', 'HERE', 'HIGH', 'HOLD', 'HOME', 'HOPE',
+      'HOUR', 'IDEA', 'INTO', 'ITEM', 'JUST', 'KEEP', 'KIND', 'KNEW', 'KNOW', 'LAND',
+      'LAST', 'LATE', 'LEAD', 'LEFT', 'LIFE', 'LINE', 'LIVE', 'LONG', 'LOOK', 'LORD',
+      'LOSE', 'LOST', 'LOVE', 'MADE', 'MAKE', 'MANY', 'MARK', 'MASS', 'MEAN', 'MEET',
+      'MIND', 'MISS', 'MORE', 'MOST', 'MOVE', 'MUCH', 'MUST', 'NAME', 'NEAR', 'NEED',
+      'NEXT', 'NICE', 'NOTE', 'ONCE', 'ONLY', 'OPEN', 'OVER', 'PAID', 'PART', 'PASS',
+      'PAST', 'PATH', 'PLAN', 'PLAY', 'POOR', 'PUSH', 'PUTS', 'RACE', 'RATE', 'READ',
+      'REAL', 'ROOM', 'RULE', 'SAID', 'SAME', 'SAVE', 'SEEK', 'SEEM', 'SELF', 'SELL',
+      'SEND', 'SENT', 'SHOW', 'SIDE', 'SIZE', 'SOME', 'SOON', 'SORT', 'STOP', 'SUCH',
+      'SURE', 'TAKE', 'TALK', 'TELL', 'TEST', 'THAN', 'THAT', 'THEM', 'THEN', 'THEY',
+      'THIS', 'TIME', 'TOLD', 'TOOK', 'TREE', 'TRUE', 'TURN', 'TYPE', 'UNIT', 'UPON',
+      'USED', 'VERY', 'WALK', 'WANT', 'WAYS', 'WEEK', 'WELL', 'WENT', 'WERE', 'WHAT',
+      'WHEN', 'WILL', 'WIND', 'WITH', 'WORD', 'WORK', 'YEAR', 'YOUR'
+    ];
+    
+    fallbackWords.forEach(word => this.enableWords.add(word.toUpperCase()));
+    console.log(`⚠️ Using fallback dictionary: ${fallbackWords.length} words`);
+  }
+
+  public async ensureInitialized(): Promise<void> {
+    if (this.initialized) return;
+    if (this.loadPromise) {
+      await this.loadPromise;
+      return;
+    }
+    await this.initializeDictionary();
   }
 
   public isInEnable(word: string): boolean {
@@ -230,86 +192,65 @@ class BrowserWordDictionary {
   public censorWord(word: string): string {
     if (!this.isProfanity(word)) return word;
     
-    const upperWord = word.toUpperCase();
-    const firstChar = upperWord[0];
-    const lastChar = upperWord[upperWord.length - 1];
-    const middle = '*'.repeat(Math.max(0, upperWord.length - 2));
-    
-    return firstChar + middle + lastChar;
+    // Replace letters with symbols while preserving length and shape
+    return word.split('').map((char, index) => {
+      if (index === 0) return char; // Keep first letter
+      return Math.random() > 0.5 ? '*' : '#';
+    }).join('');
   }
 
   public getWordCount(): number {
-    return this.enableWords.size;
+    return this.enableWords.size + this.slangWords.size;
   }
 
-  /**
-   * Get a random word of specified length from the dictionary
-   */
+  public isInitialized(): boolean {
+    return this.initialized;
+  }
+
   public getRandomWordByLength(length: number): string | null {
-    const wordsOfLength = Array.from(this.enableWords).filter(word => word.length === length);
-    
-    if (wordsOfLength.length === 0) {
-      return null;
-    }
-    
-    const randomIndex = Math.floor(Math.random() * wordsOfLength.length);
-    return wordsOfLength[randomIndex];
+    const words = Array.from(this.enableWords).filter(word => word.length === length);
+    if (words.length === 0) return null;
+    return words[Math.floor(Math.random() * words.length)];
   }
 
-  /**
-   * Get multiple random words of specified length
-   */
   public getRandomWordsByLength(length: number, count: number = 1): string[] {
-    const wordsOfLength = Array.from(this.enableWords).filter(word => word.length === length);
-    
-    if (wordsOfLength.length === 0) {
-      return [];
-    }
+    const words = Array.from(this.enableWords).filter(word => word.length === length);
+    if (words.length === 0) return [];
     
     const result: string[] = [];
-    for (let i = 0; i < count; i++) {
-      const randomIndex = Math.floor(Math.random() * wordsOfLength.length);
-      result.push(wordsOfLength[randomIndex]);
+    for (let i = 0; i < count && i < words.length; i++) {
+      const randomIndex = Math.floor(Math.random() * words.length);
+      const word = words[randomIndex];
+      if (!result.includes(word)) {
+        result.push(word);
+      } else {
+        i--; // Try again if duplicate
+      }
     }
-    
     return result;
   }
 }
 
-// Singleton dictionary instance
+// Global dictionary instance
 const dictionary = new BrowserWordDictionary();
 
-/**
- * Validates a word according to game rules (browser version)
- */
-export function validateWord(word: string, options: ValidationOptions = {}): ValidationResult {
+// Main validation function
+export async function validateWord(word: string, options: ValidationOptions = {}): Promise<ValidationResult> {
+  // Ensure dictionary is loaded
+  await dictionary.ensureInitialized();
+  
   const {
     isBot = false,
     allowSlang = true,
+    allowProfanity = true,
     checkLength = true,
-    previousWord
+    previousWord = undefined
   } = options;
 
-  // Handle null/undefined gracefully
-  if (word == null) {
-    return {
-      isValid: false,
-      reason: 'Word cannot be empty',
-      word: ''
-    };
-  }
-
+  // Normalize input
   const normalizedWord = word.trim().toUpperCase();
-
-  // Bots can bypass all validation rules - early return
-  if (isBot) {
-    return {
-      isValid: true,
-      word: normalizedWord
-    };
-  }
-
-  // Early validation: empty or invalid characters
+  
+  // Basic validation
   if (!normalizedWord) {
     return {
       isValid: false,
@@ -318,16 +259,16 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
     };
   }
 
-  // Character validation (alphabetic only for humans)
-  if (!/^[A-Z]+$/.test(normalizedWord)) {
+  // For bots, skip most validation (they can break rules)
+  if (isBot) {
     return {
-      isValid: false,
-      reason: 'Word must contain only alphabetic characters',
+      isValid: true,
+      reason: 'Bot move (validation bypassed)',
       word: normalizedWord
     };
   }
 
-  // Length validation (minimum 3 letters)
+  // Length validation
   if (checkLength && normalizedWord.length < 3) {
     return {
       isValid: false,
@@ -336,30 +277,34 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
     };
   }
 
-  // Length change validation (max ±1 letter difference between turns)
+  // Character validation (humans only)
+  if (!/^[A-Z]+$/.test(normalizedWord)) {
+    return {
+      isValid: false,
+      reason: 'Word must contain only letters',
+      word: normalizedWord
+    };
+  }
+
+  // Length change validation (humans only)
   if (previousWord && checkLength) {
-    const lengthDiff = Math.abs(normalizedWord.length - previousWord.length);
-    if (lengthDiff > 1) {
+    const lengthDifference = Math.abs(normalizedWord.length - previousWord.length);
+    if (lengthDifference > 1) {
       return {
         isValid: false,
-        reason: `Word length can only change by 1 letter (was ${previousWord.length}, now ${normalizedWord.length})`,
+        reason: 'Word length can only change by 1 letter at a time',
         word: normalizedWord
       };
     }
   }
 
-  // Dictionary validation - check if word exists in our dictionaries
-  const isInDictionary = dictionary.isInEnable(normalizedWord);
-  const isSlangWord = allowSlang && dictionary.isSlang(normalizedWord);
-  
-  console.log('Dictionary validation:', { 
-    word: normalizedWord, 
-    isInDictionary, 
-    isSlangWord,
-    result: isInDictionary || isSlangWord ? 'VALID' : 'NOT FOUND'
-  });
-  
-  if (!isInDictionary && !isSlangWord) {
+  // Dictionary lookup
+  const isInEnable = dictionary.isInEnable(normalizedWord);
+  const isSlangWord = dictionary.isSlang(normalizedWord);
+  const isProfane = dictionary.isProfanity(normalizedWord);
+
+  // Check if word exists in any dictionary
+  if (!isInEnable && !isSlangWord) {
     return {
       isValid: false,
       reason: 'Word not found in dictionary',
@@ -367,64 +312,149 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
     };
   }
 
-  // If we get here, the word is valid
+  // Handle slang words
+  if (isSlangWord && !allowSlang) {
+    return {
+      isValid: false,
+      reason: 'Slang words not allowed in this game mode',
+      word: normalizedWord
+    };
+  }
+
+  // Handle profanity (note: profane words are still valid for gameplay)
+  if (isProfane && !allowProfanity) {
+    return {
+      isValid: false,
+      reason: 'Profanity not allowed in this game mode',
+      word: normalizedWord,
+      censored: dictionary.censorWord(normalizedWord)
+    };
+  }
+
+  // Word is valid
   return {
     isValid: true,
     word: normalizedWord,
-    censored: dictionary.censorWord(normalizedWord)
+    censored: isProfane ? dictionary.censorWord(normalizedWord) : undefined
   };
 }
 
-/**
- * Check if a word is in the main dictionary
- */
-export function isValidDictionaryWord(word: string): boolean {
-  return dictionary.isInEnable(word);
+// Synchronous wrapper for backward compatibility (will use cached results)
+export function validateWordSync(word: string, options: ValidationOptions = {}): ValidationResult {
+  if (!dictionary.isInitialized()) {
+    console.warn('Dictionary not yet loaded, validation may be incomplete');
+    // Return basic validation for unloaded dictionary
+    const normalizedWord = word.trim().toUpperCase();
+    if (!normalizedWord) {
+      return { isValid: false, reason: 'Word cannot be empty', word: normalizedWord };
+    }
+    if (normalizedWord.length < 3) {
+      return { isValid: false, reason: 'Word must be at least 3 letters long', word: normalizedWord };
+    }
+    if (!/^[A-Z]+$/.test(normalizedWord)) {
+      return { isValid: false, reason: 'Word must contain only letters', word: normalizedWord };
+    }
+    // Assume valid if dictionary not loaded
+    return { isValid: true, word: normalizedWord };
+  }
+
+  // Dictionary is loaded, perform full validation synchronously
+  const {
+    isBot = false,
+    allowSlang = true,
+    allowProfanity = true,
+    checkLength = true,
+    previousWord = undefined
+  } = options;
+
+  const normalizedWord = word.trim().toUpperCase();
+  
+  if (!normalizedWord) {
+    return { isValid: false, reason: 'Word cannot be empty', word: normalizedWord };
+  }
+
+  if (isBot) {
+    return { isValid: true, reason: 'Bot move (validation bypassed)', word: normalizedWord };
+  }
+
+  if (checkLength && normalizedWord.length < 3) {
+    return { isValid: false, reason: 'Word must be at least 3 letters long', word: normalizedWord };
+  }
+
+  if (!/^[A-Z]+$/.test(normalizedWord)) {
+    return { isValid: false, reason: 'Word must contain only letters', word: normalizedWord };
+  }
+
+  if (previousWord && checkLength) {
+    const lengthDifference = Math.abs(normalizedWord.length - previousWord.length);
+    if (lengthDifference > 1) {
+      return { isValid: false, reason: 'Word length can only change by 1 letter at a time', word: normalizedWord };
+    }
+  }
+
+  const isInEnable = dictionary.isInEnable(normalizedWord);
+  const isSlangWord = dictionary.isSlang(normalizedWord);
+  const isProfane = dictionary.isProfanity(normalizedWord);
+
+  if (!isInEnable && !isSlangWord) {
+    return { isValid: false, reason: 'Word not found in dictionary', word: normalizedWord };
+  }
+
+  if (isSlangWord && !allowSlang) {
+    return { isValid: false, reason: 'Slang words not allowed in this game mode', word: normalizedWord };
+  }
+
+  if (isProfane && !allowProfanity) {
+    return { isValid: false, reason: 'Profanity not allowed in this game mode', word: normalizedWord, censored: dictionary.censorWord(normalizedWord) };
+  }
+
+  return {
+    isValid: true,
+    word: normalizedWord,
+    censored: isProfane ? dictionary.censorWord(normalizedWord) : undefined
+  };
 }
 
-/**
- * Check if a word is considered slang
- */
+// Legacy compatibility functions
+export function isValidDictionaryWord(word: string): boolean {
+  return validateWordSync(word).isValid;
+}
+
 export function isSlangWord(word: string): boolean {
   return dictionary.isSlang(word);
 }
 
-/**
- * Check if a word contains profanity
- */
 export function containsProfanity(word: string): boolean {
   return dictionary.isProfanity(word);
 }
 
-/**
- * Get the total number of words in the dictionary
- */
 export function getDictionarySize(): number {
   return dictionary.getWordCount();
 }
 
-/**
- * Get a random word of specified length from the dictionary
- */
 export function getRandomWordByLength(length: number): string | null {
   return dictionary.getRandomWordByLength(length);
 }
 
-/**
- * Get multiple random words of specified length
- */
 export function getRandomWordsByLength(length: number, count: number = 1): string[] {
   return dictionary.getRandomWordsByLength(length, count);
 }
 
-/**
- * Performance test function
- */
+export async function initializeDictionary(): Promise<void> {
+  return dictionary.ensureInitialized();
+}
+
+export function isDictionaryLoaded(): boolean {
+  return dictionary.isInitialized();
+}
+
 export function performanceTest(iterations = 1000): { averageTime: number; totalTime: number } {
+  const testWords = ['HELLO', 'WORLD', 'GAME', 'PLAY', 'WORD', 'TEST', 'FAST', 'QUICK'];
   const startTime = performance.now();
   
   for (let i = 0; i < iterations; i++) {
-    validateWord('TEST');
+    const word = testWords[i % testWords.length];
+    validateWordSync(word);
   }
   
   const endTime = performance.now();
@@ -436,7 +466,7 @@ export function performanceTest(iterations = 1000): { averageTime: number; total
   };
 }
 
-// Vanity system interfaces and functions
+// Vanity system (for profanity display)
 export interface VanityState {
   hasUnlockedToggle: boolean;
   isVanityFilterOn: boolean;
@@ -453,26 +483,26 @@ export function getVanityDisplayWord(
 ): string {
   const { vanityState, isEditing = false } = options;
   
-  if (!vanityState.hasUnlockedToggle || !vanityState.isVanityFilterOn || isEditing) {
-    return word;
-  }
+  // Always show real word when editing
+  if (isEditing) return word;
   
-  if (dictionary.isProfanity(word)) {
-    return transformToSymbols(word);
+  // Only apply vanity filter if toggle is unlocked and filter is on
+  if (vanityState.hasUnlockedToggle && vanityState.isVanityFilterOn) {
+    if (dictionary.isProfanity(word)) {
+      return transformToSymbols(word);
+    }
   }
   
   return word;
 }
 
 function transformToSymbols(word: string): string {
-  const symbols = ['%', '#', '^', '&', '*'];
-  return word.split('').map(() => 
-    symbols[Math.floor(Math.random() * symbols.length)]
-  ).join('');
+  const symbols = ['%', '#', '^', '&', '*', '@'];
+  return word.split('').map(() => symbols[Math.floor(Math.random() * symbols.length)]).join('');
 }
 
 export function shouldUnlockVanityToggle(word: string): boolean {
-  return word.toUpperCase() === 'DAMN';
+  return dictionary.isProfanity(word);
 }
 
 export function isCurrentWordProfane(word: string): boolean {

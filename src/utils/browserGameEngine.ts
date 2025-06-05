@@ -5,7 +5,7 @@
  * but works in browser environments.
  */
 
-import { validateWord, getRandomWordByLength, type ValidationResult } from './browserDictionary';
+import { validateWordSync, getRandomWordByLength, type ValidationResult } from './browserDictionary';
 
 // Simple interfaces needed for browser compatibility
 export interface GameConfig {
@@ -103,7 +103,7 @@ function generateSimpleBotMove(currentWord: string): BotMove | null {
   ];
 
   for (const word of attempts) {
-    const validation = validateWord(word, { isBot: false });
+    const validation = validateWordSync(word, { isBot: false });
     if (validation.isValid && word !== currentWord) {
       return {
         word: word.toUpperCase(),
@@ -212,7 +212,7 @@ export class LocalGameStateManager {
   public attemptMove(newWord: string): MoveAttempt {
     console.log('attemptMove called:', { newWord, currentWord: this.state.currentWord, gameStatus: this.state.gameStatus });
     
-    const validation = validateWord(newWord, { 
+    const validation = validateWordSync(newWord, { 
       isBot: false,
       previousWord: this.state.currentWord 
     });

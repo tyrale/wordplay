@@ -7,7 +7,7 @@ import { ActionIndicators } from './ActionIndicators';
 import { SubmitButton } from './SubmitButton';
 import { ScoreDisplay } from './ScoreDisplay';
 import { WordBuilder } from './WordBuilder';
-import { getDictionarySize, isValidDictionaryWord } from '../../utils/browserDictionary';
+import { getDictionarySize, isValidDictionaryWord, initializeDictionary, isDictionaryLoaded } from '../../utils/browserDictionary';
 import type { GameConfig, MoveAttempt } from '../../utils/browserGameEngine';
 import type { LetterState, ActionState, ScoreBreakdown, LetterHighlight, WordMove } from '../index';
 import './InteractiveGame.css';
@@ -54,6 +54,22 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const [pendingWord, setPendingWord] = useState('');
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
   const [showGameEnd, setShowGameEnd] = useState(false);
+  // Initialize dictionary on component mount
+  useEffect(() => {
+    const loadDictionary = async () => {
+      if (!isDictionaryLoaded()) {
+        console.log('🔍 Loading dictionary...');
+        try {
+          await initializeDictionary();
+          console.log('✅ Dictionary loaded successfully');
+        } catch (error) {
+          console.warn('⚠️ Dictionary loading failed, using fallback:', error);
+        }
+      }
+    };
+
+    loadDictionary();
+  }, []);
 
   // Initialize pending word with current word
   useEffect(() => {
