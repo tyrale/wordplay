@@ -9,6 +9,32 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+/* Debug button in top left */
+.interactive-game__debug-btn {
+  position: absolute;
+  top: var(--spacing-sm);
+  left: var(--spacing-sm);
+  width: 44px;
+  height: 44px;
+  background-color: var(--theme-surface);
+  border: 2px solid var(--theme-accent);
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.interactive-game__debug-btn:hover {
+  background-color: var(--theme-accent);
+  transform: scale(1.1);
 }
 
 /* Error display */

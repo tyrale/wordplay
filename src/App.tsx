@@ -51,7 +51,6 @@ function App() {
             enableLockedLetters: true
           }}
           onGameEnd={handleGameEnd}
-          showDebugInfo={true}
         />
       </ResponsiveTest>
     </ThemeProvider>

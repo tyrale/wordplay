@@ -23,7 +23,6 @@ export interface ScoreDisplayProps {
 export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({ 
   score, 
   actions,
-  isValid,
   className = '' 
 }) => {
   // Build action icons based on what actions were taken (like terminal game)
@@ -39,16 +38,7 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
     actionIcons.push('~');
   }
 
-  // Default display: show X for invalid word
-  if (!isValid) {
-    return (
-      <div className={`score-display score-display--invalid ${className}`.trim()} role="status" aria-label="Invalid word">
-        <span className="score-display__content">✗</span>
-      </div>
-    );
-  }
-
-  // If no actions taken, don't show anything
+  // If no actions taken, show empty state
   if (actionIcons.length === 0) {
     return (
       <div className={`score-display score-display--empty ${className}`.trim()} role="status" aria-label="No actions">

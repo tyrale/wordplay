@@ -7,7 +7,8 @@ import { CurrentWord } from './CurrentWord';
 import { SubmitButton } from './SubmitButton';
 import { ScoreDisplay } from './ScoreDisplay';
 import { WordBuilder } from './WordBuilder';
-import { getDictionarySize, isValidDictionaryWord, initializeDictionary, isDictionaryLoaded } from '../../utils/browserDictionary';
+import { DebugDialog } from './DebugDialog';
+import { isValidDictionaryWord, initializeDictionary, isDictionaryLoaded } from '../../utils/browserDictionary';
 import type { GameConfig, MoveAttempt } from '../../utils/browserGameEngine';
 import type { LetterState, ScoreBreakdown, LetterHighlight, WordMove } from '../index';
 import type { ActionState } from './ScoreDisplay';
@@ -16,13 +17,11 @@ import './InteractiveGame.css';
 export interface InteractiveGameProps {
   config?: GameConfig;
   onGameEnd?: (winner: string | null, finalScores: { human: number; bot: number }) => void;
-  showDebugInfo?: boolean;
 }
 
 export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   config,
-  onGameEnd,
-  showDebugInfo = false
+  onGameEnd
 }) => {
   // Game state management
   const {
@@ -55,6 +54,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const [pendingWord, setPendingWord] = useState('');
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
   const [showGameEnd, setShowGameEnd] = useState(false);
+  const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
   // Initialize dictionary on component mount
   useEffect(() => {
     const loadDictionary = async () => {
@@ -308,6 +308,16 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   return (
     <div className="interactive-game">
+      {/* Debug button in top left */}
+      <button
+        className="interactive-game__debug-btn"
+        onClick={() => setIsDebugDialogOpen(true)}
+        aria-label="Open debug information"
+        type="button"
+      >
+        🐛
+      </button>
+
       {/* Error display */}
       {lastError && (
         <div className="interactive-game__error" role="alert">
@@ -416,7 +426,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
               onLetterClick={handleLetterClick}
               onActionClick={handleActionClick}
               disabled={!isPlayerTurn || isProcessingMove}
-              enableDrag={false} // Disable drag for this version
+              enableDrag={true} // Enable drag for mobile and desktop
             />
           </div>
 
@@ -436,55 +446,21 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         </div>
       )}
 
-      {/* Debug info */}
-      {showDebugInfo && isGameActive && (
-        <div className="interactive-game__debug">
-          <h4>Debug Info</h4>
-          <div className="interactive-game__debug-section">
-            <h5>Dictionary Status</h5>
-            <p>Total words available: {getDictionarySize()}</p>
-            <p>Current word: {wordState.currentWord}</p>
-            <p>Used words: {wordState.usedWords.join(', ')}</p>
-          </div>
-          <div className="interactive-game__debug-section">
-            <h5>Suggested Words to Try</h5>
-            <p>Based on current word "{wordState.currentWord}", try these valid words:</p>
-            <div className="interactive-game__word-suggestions">
-              {generateWordSuggestions(wordState.currentWord).map(word => (
-                <button
-                  key={word}
-                  onClick={() => handleWordChange(word)}
-                  className="interactive-game__suggestion-btn"
-                  disabled={!isPlayerTurn || isProcessingMove}
-                >
-                  {word}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="interactive-game__debug-section">
-            <h5>Game State</h5>
-            <pre>{JSON.stringify({ 
-              gameStats, 
-              wordState: {
-                currentWord: wordState.currentWord,
-                keyLetters: wordState.keyLetters,
-                lockedLetters: wordState.lockedLetters,
-                usedWords: wordState.usedWords
-              },
-              pendingWord,
-              pendingMoveAttempt: pendingMoveAttempt ? {
-                isValid: pendingMoveAttempt.isValid,
-                canApply: pendingMoveAttempt.canApply,
-                reason: pendingMoveAttempt.reason
-              } : null,
-              isPlayerTurn,
-              isBotTurn,
-              isBotThinking
-            }, null, 2)}</pre>
-          </div>
-        </div>
-      )}
+      {/* Debug Dialog */}
+      <DebugDialog
+        isOpen={isDebugDialogOpen}
+        onClose={() => setIsDebugDialogOpen(false)}
+        gameStats={gameStats}
+        wordState={wordState}
+        pendingWord={pendingWord}
+        pendingMoveAttempt={pendingMoveAttempt}
+        isPlayerTurn={isPlayerTurn}
+        isBotTurn={isBotTurn}
+        isBotThinking={isBotThinking}
+        generateWordSuggestions={generateWordSuggestions}
+        onWordChange={handleWordChange}
+        isProcessingMove={isProcessingMove}
+      />
     </div>
   );
 }; 
