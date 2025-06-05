@@ -67,6 +67,11 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
     e.dataTransfer.setData('application/x-letter-source', 'alphabet-grid');
     e.dataTransfer.effectAllowed = 'copy';
     
+    // Hide the default browser drag image (red circle with X)
+    const emptyImg = new Image();
+    emptyImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
+    e.dataTransfer.setDragImage(emptyImg, 0, 0);
+    
     onLetterDragStart?.(content);
     
     // Add visual feedback
