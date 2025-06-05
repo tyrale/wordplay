@@ -31,6 +31,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   // Suppress unused variable warning - maxLength kept for interface compatibility
   void maxLength;
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [isDragOverContainer, setIsDragOverContainer] = useState(false);
 
   // Convert word to letter positions
   const letterPositions: LetterPosition[] = currentWord.split('').map((letter, index) => {
@@ -120,13 +121,53 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     return highlight?.type !== 'locked' && currentWord.length > minLength;
   };
 
+  // Handle drops from alphabet grid
+  const handleContainerDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (disabled) return;
+    
+    const source = e.dataTransfer.types.includes('application/x-letter-source');
+    if (source) {
+      e.dataTransfer.dropEffect = 'copy';
+      setIsDragOverContainer(true);
+    }
+  }, [disabled]);
+
+  const handleContainerDragLeave = useCallback((e: React.DragEvent) => {
+    // Only hide feedback if leaving the container entirely
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOverContainer(false);
+    }
+  }, []);
+
+  const handleContainerDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (disabled) return;
+
+    const source = e.dataTransfer.getData('application/x-letter-source');
+    const letter = e.dataTransfer.getData('text/plain');
+    
+    setIsDragOverContainer(false);
+    
+    if (source === 'alphabet-grid' && letter && currentWord.length < maxLength) {
+      const newWord = currentWord + letter;
+      onWordChange?.(newWord);
+    }
+  }, [disabled, currentWord, maxLength, onWordChange]);
+
   return (
-    <div 
-      className="word-builder" 
-      role="application" 
-      aria-label="Interactive word builder"
-    >
-      <div className="word-builder__container">
+          <div 
+        className="word-builder" 
+        role="application" 
+        aria-label="Interactive word builder"
+        onDragOver={handleContainerDragOver}
+        onDragLeave={handleContainerDragLeave}
+        onDrop={handleContainerDrop}
+      >
+        <div 
+          className="word-builder__container"
+          data-drag-over={isDragOverContainer}
+        >
         {letterPositions.map((pos, index) => (
           <div
             key={pos.id}

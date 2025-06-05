@@ -11,7 +11,19 @@
   align-items: center;
   min-height: 80px;
   padding: var(--spacing-md);
-  transition: border-color 0.2s ease;
+  border: 2px dashed transparent;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* Drop zone feedback */
+.word-builder:hover .word-builder__container {
+  border-color: var(--theme-text-secondary);
+}
+
+.word-builder__container[data-drag-over="true"] {
+  border-color: var(--theme-accent);
+  background-color: rgba(59, 130, 246, 0.05);
 }
 
 

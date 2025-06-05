@@ -123,11 +123,19 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
     
     // Check if we're over a word builder or other valid drop target
     if (elementBelow) {
-      const wordBuilder = elementBelow.closest('.word-builder__container');
+      const wordBuilder = elementBelow.closest('.word-builder');
       if (wordBuilder) {
-        // Simulate adding the letter to the word
-        // This would need to be connected to the parent component's state
+        // Simulate adding the letter to the word through click
         onLetterClick?.(touchStart.letter);
+      } else {
+        // If not over word builder, still handle as regular click
+        const deltaX = Math.abs(touch.clientX - touchStart.x);
+        const deltaY = Math.abs(touch.clientY - touchStart.y);
+        
+        // If movement was minimal, treat as click
+        if (deltaX < 10 && deltaY < 10) {
+          onLetterClick?.(touchStart.letter);
+        }
       }
     }
     
