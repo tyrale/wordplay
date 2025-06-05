@@ -5,6 +5,13 @@
   align-items: center;
   max-width: 100%;
   padding: 0 var(--spacing-md, 20px);
+  
+  /* Prevent default drag behaviors */
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
 }
 
 .alphabet-grid__row {

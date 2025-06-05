@@ -177,6 +177,10 @@
   -moz-user-drag: element;
   -o-user-drag: element;
   user-drag: element;
+  
+  /* Additional properties to prevent default drag behaviors */
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Letter-specific styles */

@@ -193,6 +193,20 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 **Verification**: All 253 tests passing, build successful (228.51 kB bundle), drag functionality working, scrolling contained, debug accessible via modal.
 
+## 🔧 **CRITICAL VALIDATION FIX APPLIED**: Alphabet Grid Letter Validation
+
+**Issue Identified**: Tapping letters in alphabet grid to add them to word was not triggering validation or updating scoring line
+
+**Root Cause**: handleLetterClick function was setting pendingWord directly instead of calling handleWordChange, bypassing validation logic
+
+**Solution Implemented**:
+- ✅ **Fixed Letter Addition Validation** (handleLetterClick now calls handleWordChange for proper validation)
+- ✅ **Resolved Function Dependency Order** (Moved handleLetterClick after handleWordChange definition)
+- ✅ **Verified Complete Validation Flow** (Both letter addition and removal now properly trigger validation)
+- ✅ **Scoring Line Updates** (Action icons and scores now properly display when adding/removing letters)
+
+**Verification**: All 253 tests passing, build successful (228.49 kB), alphabet grid taps now properly validate words and update scoring display.
+
 ## Phase 3 – Online Multiplayer (Web)
 
 - [ ] 3.1 **Auth Flow (Supabase EmailLink)**
