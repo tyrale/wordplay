@@ -36,36 +36,156 @@ class BrowserWordDictionary {
     if (this.initialized) return;
 
     try {
-      // Add a basic set of common words for browser environment
-      // In a real application, you'd load this from a static asset or API
+      // Add a comprehensive set of common words for browser environment
       const commonWords = [
+        // Basic words
         'WORD', 'PLAY', 'GAME', 'TURN', 'MOVE', 'LOVE', 'LIFE', 'TIME', 'YEAR', 'WORK',
         'HAND', 'PART', 'CHILD', 'WORLD', 'PLACE', 'NUMBER', 'POINT', 'HOUSE', 'WATER',
         'MONEY', 'STORY', 'FACT', 'MONTH', 'LIGHT', 'NIGHT', 'RIGHT', 'STUDY', 'BOOK',
         'STATE', 'POWER', 'HOUR', 'BUSINESS', 'ISSUE', 'AREA', 'ROOM', 'FORM', 'MUSIC',
-        'FIELD', 'MONEY', 'HEALTH', 'VOICE', 'REASON', 'PEOPLE', 'FAMILY', 'STUDENT',
+        'FIELD', 'HEALTH', 'VOICE', 'REASON', 'PEOPLE', 'FAMILY', 'STUDENT',
         'MOMENT', 'RESULT', 'CHANGE', 'MORNING', 'MARKET', 'GROUP', 'PROBLEM', 'SERVICE',
         'HELP', 'IDEA', 'INFORMATION', 'WAY', 'HEAD', 'MOTHER', 'FATHER', 'TEACHER',
         'OFFICE', 'PARTY', 'COMPANY', 'SYSTEM', 'PROGRAM', 'QUESTION', 'GOVERNMENT',
         'CASE', 'START', 'SCHOOL', 'COUNTRY', 'AMERICAN', 'FORCE', 'USE', 'OPEN',
         'PUBLIC', 'SUPPORT', 'ORDER', 'POLICY', 'BOARD', 'RATE', 'LEVEL', 'COMMUNITY',
-        'DEVELOPMENT', 'NAME', 'TEAM', 'MINUTE', 'IDEA', 'CHANCE', 'DETAIL', 'FOCUS',
+        'DEVELOPMENT', 'NAME', 'TEAM', 'MINUTE', 'CHANCE', 'DETAIL', 'FOCUS',
         'ROLE', 'EFFORT', 'DECISION', 'GOAL', 'MATTER', 'ACTIVITY', 'CLASS', 'QUALITY',
-        // Words for gameplay
+        
+        // Three letter words
+        'THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN', 'HER', 'WAS', 'ONE',
+        'OUR', 'HAD', 'OUT', 'DAY', 'GET', 'HAS', 'HIM', 'HIS', 'HOW', 'ITS', 'LET', 'NEW',
+        'NOW', 'OLD', 'SEE', 'TWO', 'WHO', 'BOY', 'DID', 'GOT', 'MAN', 'PUT', 'SAY', 'SHE',
+        'TOO', 'USE', 'WHY', 'ASK', 'BAD', 'BAG', 'BED', 'BIG', 'BOX', 'BUS', 'BUY', 'CAR',
+        'CUP', 'CUT', 'DOG', 'EAR', 'EAT', 'END', 'EYE', 'FAR', 'FEW', 'FUN', 'GUN', 'HIT',
+        'HOT', 'JOB', 'LAW', 'LEG', 'LET', 'LIE', 'LOT', 'LOW', 'MEN', 'MOM', 'OIL', 'PAY',
+        'PEN', 'PET', 'POT', 'RUN', 'SIT', 'SIX', 'SUN', 'TAX', 'TEN', 'TOP', 'TRY', 'WAR',
+        'WAY', 'WIN', 'YES', 'YET', 'ZOO', 'ACE', 'ADD', 'AGE', 'AGO', 'AID', 'AIM', 'AIR',
+        'ART', 'ATE', 'BAR', 'BAT', 'BEE', 'BET', 'BIT', 'BOW', 'BOY', 'BUN', 'BUT', 'BUY',
+        
+        // Four letter words (common gameplay words)
+        'ABLE', 'BACK', 'BALL', 'BASE', 'BEAT', 'BEEN', 'BEST', 'BLUE', 'BODY', 'BOOK',
+        'BOTH', 'CALL', 'CAME', 'CARE', 'CASE', 'CITY', 'COME', 'COST', 'DATA', 'DAYS',
+        'DEAL', 'DONE', 'DOWN', 'EACH', 'EVEN', 'EVER', 'FACE', 'FACT', 'FALL', 'FAST',
+        'FEEL', 'FEET', 'FELT', 'FIND', 'FIRE', 'FIRM', 'FISH', 'FIVE', 'FORM', 'FOUR',
+        'FREE', 'FROM', 'FULL', 'GAME', 'GAVE', 'GIVE', 'GOES', 'GOLD', 'GOOD', 'HAND',
+        'HARD', 'HEAD', 'HEAR', 'HELD', 'HELP', 'HERE', 'HIGH', 'HOLD', 'HOME', 'HOPE',
+        'HOUR', 'IDEA', 'INTO', 'ITEM', 'JUST', 'KEEP', 'KIND', 'KNEW', 'KNOW', 'LAND',
+        'LAST', 'LATE', 'LEAD', 'LEFT', 'LIFE', 'LINE', 'LIVE', 'LONG', 'LOOK', 'LORD',
+        'LOSE', 'LOST', 'LOVE', 'MADE', 'MAKE', 'MANY', 'MARK', 'MASS', 'MEAN', 'MEET',
+        'MIND', 'MISS', 'MORE', 'MOST', 'MOVE', 'MUCH', 'MUST', 'NAME', 'NEAR', 'NEED',
+        'NEXT', 'NICE', 'NOTE', 'ONCE', 'ONLY', 'OPEN', 'OVER', 'PAID', 'PART', 'PASS',
+        'PAST', 'PATH', 'PLAN', 'PLAY', 'POOR', 'PUSH', 'PUTS', 'RACE', 'RATE', 'READ',
+        'REAL', 'ROOM', 'RULE', 'SAID', 'SAME', 'SAVE', 'SEEK', 'SEEM', 'SELF', 'SELL',
+        'SEND', 'SENT', 'SHOW', 'SIDE', 'SIZE', 'SOME', 'SOON', 'SORT', 'STOP', 'SUCH',
+        'SURE', 'TAKE', 'TALK', 'TELL', 'TEST', 'THAN', 'THAT', 'THEM', 'THEN', 'THEY',
+        'THIS', 'TIME', 'TOLD', 'TOOK', 'TREE', 'TRUE', 'TURN', 'TYPE', 'UNIT', 'UPON',
+        'USED', 'VERY', 'WALK', 'WANT', 'WAYS', 'WEEK', 'WELL', 'WENT', 'WERE', 'WHAT',
+        'WHEN', 'WILL', 'WIND', 'WITH', 'WORD', 'WORK', 'YEAR', 'YOUR',
+        
+        // Animal words
+        'CAT', 'DOG', 'COW', 'PIG', 'RAT', 'BAT', 'BEE', 'ANT', 'FLY', 'OWL', 'FOX',
+        'BEAR', 'DEER', 'FISH', 'BIRD', 'DUCK', 'GOAT', 'LAMB', 'LION', 'MICE', 'SEAL',
+        'WOLF', 'FROG', 'CRAB', 'SNAIL', 'TIGER', 'HORSE', 'WHALE', 'SHARK', 'EAGLE',
+        
+        // Simple gameplay words
         'CAT', 'CATS', 'BAT', 'BATS', 'RAT', 'RATS', 'HAT', 'HATS', 'MAT', 'MATS',
         'COT', 'COTS', 'DOT', 'DOTS', 'HOT', 'HOTS', 'LOT', 'LOTS', 'NOT', 'NOTS',
         'POT', 'POTS', 'ROT', 'ROTS', 'SOT', 'SOTS', 'TOT', 'TOTS', 'GOT', 'GOTS',
+        'CUT', 'CUTS', 'BUT', 'BUTS', 'HUT', 'HUTS', 'NUT', 'NUTS', 'GUT', 'GUTS',
+        'JUT', 'JUTS', 'PUT', 'PUTS', 'RUT', 'RUTS', 'TUT', 'TUTS',
+        
+        // Boat words
         'BOAT', 'BOATS', 'COAT', 'COATS', 'GOAT', 'GOATS', 'MOAT', 'MOATS',
+        'FLOAT', 'BLOAT', 'GLOAT', 'THROAT',
+        
+        // Heat words
         'HEAT', 'HEATS', 'MEAT', 'MEATS', 'NEAT', 'NEATS', 'PEAT', 'PEATS', 'BEAT', 'BEATS',
         'SEAT', 'SEATS', 'FEAT', 'FEATS', 'TREAT', 'TREATS', 'GREAT', 'GREATS',
+        'WHEAT', 'SWEAT', 'CHEAT', 'PLEAT',
+        
+        // Hip words
         'SHIP', 'SHIPS', 'HIP', 'HIPS', 'LIP', 'LIPS', 'TIP', 'TIPS', 'RIP', 'RIPS',
         'DIP', 'DIPS', 'SIP', 'SIPS', 'ZIP', 'ZIPS', 'FLIP', 'FLIPS', 'SLIP', 'SLIPS',
         'TRIP', 'TRIPS', 'GRIP', 'GRIPS', 'DRIP', 'DRIPS', 'CHIP', 'CHIPS', 'WHIP', 'WHIPS',
-        'PUSH', 'PUSHY', 'PULL', 'PULLS', 'DUCK', 'DUCKS', 'LUCK', 'LUCKS', 'MUCK', 'MUCKS',
-        'PUCK', 'PUCKS', 'BUCK', 'BUCKS', 'TUCK', 'TUCKS', 'SUCK', 'SUCKS', 'STUCK',
+        'SKIP', 'SKIPS', 'CLIP', 'CLIPS', 'SNIP', 'SNIPS',
+        
+        // Push words
+        'PUSH', 'PUSHY', 'PULL', 'PULLS', 'FULL', 'BULL', 'DULL', 'HULL', 'LULL', 'MULL',
+        'NULL', 'CULL', 'GULL',
+        
+        // Duck words
+        'DUCK', 'DUCKS', 'LUCK', 'LUCKS', 'MUCK', 'MUCKS', 'PUCK', 'PUCKS', 'BUCK', 'BUCKS',
+        'TUCK', 'TUCKS', 'SUCK', 'SUCKS', 'STUCK', 'CHUCK', 'CLUCK', 'PLUCK', 'TRUCK',
+        
+        // Lap words
         'LAPS', 'LAP', 'CAP', 'CAPS', 'GAP', 'GAPS', 'MAP', 'MAPS', 'NAP', 'NAPS',
         'RAP', 'RAPS', 'SAP', 'SAPS', 'TAP', 'TAPS', 'ZAP', 'ZAPS', 'CLAP', 'CLAPS',
-        'SNAP', 'SNAPS', 'TRAP', 'TRAPS', 'WRAP', 'WRAPS', 'FLAP', 'FLAPS', 'SLAP', 'SLAPS'
+        'SNAP', 'SNAPS', 'TRAP', 'TRAPS', 'WRAP', 'WRAPS', 'FLAP', 'FLAPS', 'SLAP', 'SLAPS',
+        'CHAP', 'CHAPS', 'STRAP', 'SCRAP',
+        
+        // Food words
+        'FOOD', 'BREAD', 'MEAT', 'MILK', 'EGG', 'EGGS', 'CAKE', 'PIE', 'RICE', 'SOUP',
+        'FISH', 'BEEF', 'PORK', 'LAMB', 'BEAN', 'CORN', 'APPLE', 'PEAR', 'PLUM',
+        
+        // Common ending words
+        'ABLE', 'IBLE', 'TION', 'SION', 'NESS', 'MENT', 'LING', 'RING', 'SING', 'WING',
+        'KING', 'DING', 'PING', 'TING', 'MING', 'ZING', 'BRING', 'THING', 'SWING',
+        
+        // Action words
+        'RUN', 'RUNS', 'WALK', 'WALKS', 'JUMP', 'JUMPS', 'SWIM', 'SWIMS', 'DANCE', 'DANCES',
+        'SING', 'SINGS', 'TALK', 'TALKS', 'LOOK', 'LOOKS', 'HEAR', 'HEARS', 'FEEL', 'FEELS',
+        'THINK', 'THINKS', 'KNOW', 'KNOWS', 'LEARN', 'LEARNS', 'TEACH', 'TEACHES',
+        
+        // Colors
+        'RED', 'BLUE', 'GREEN', 'BLACK', 'WHITE', 'BROWN', 'PINK', 'GRAY', 'GREY',
+        'ORANGE', 'YELLOW', 'PURPLE', 'VIOLET',
+        
+        // Numbers
+        'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN',
+        'ELEVEN', 'TWELVE', 'TWENTY', 'THIRTY', 'FORTY', 'FIFTY', 'SIXTY', 'SEVENTY',
+        'EIGHTY', 'NINETY', 'HUNDRED', 'THOUSAND',
+        
+        // Body parts
+        'HEAD', 'HAIR', 'FACE', 'EYE', 'EYES', 'NOSE', 'MOUTH', 'TOOTH', 'TEETH', 'EAR',
+        'EARS', 'NECK', 'HAND', 'HANDS', 'ARM', 'ARMS', 'LEG', 'LEGS', 'FOOT', 'FEET',
+        'FINGER', 'THUMB', 'KNEE', 'ELBOW', 'SHOULDER', 'BACK', 'CHEST', 'HEART',
+        
+        // Common adjectives
+        'BIG', 'SMALL', 'TALL', 'SHORT', 'LONG', 'WIDE', 'THIN', 'THICK', 'HEAVY', 'LIGHT',
+        'FAST', 'SLOW', 'HOT', 'COLD', 'WARM', 'COOL', 'WET', 'DRY', 'CLEAN', 'DIRTY',
+        'SOFT', 'HARD', 'SMOOTH', 'ROUGH', 'SHARP', 'DULL', 'BRIGHT', 'DARK', 'LOUD', 'QUIET',
+        
+        // Weather
+        'SUN', 'RAIN', 'SNOW', 'WIND', 'CLOUD', 'CLOUDS', 'STORM', 'STORMS', 'THUNDER',
+        'LIGHTNING', 'FOG', 'MIST', 'ICE', 'FROST', 'HEAT', 'COLD',
+        
+        // Technology words
+        'COMPUTER', 'PHONE', 'EMAIL', 'INTERNET', 'WEBSITE', 'APP', 'CODE', 'DATA',
+        'FILE', 'FILES', 'SCREEN', 'MOUSE', 'KEYBOARD', 'BUTTON', 'CLICK', 'TYPE',
+        
+        // Common verbs
+        'GO', 'GOES', 'WENT', 'COME', 'COMES', 'CAME', 'SEE', 'SEES', 'SAW', 'HEAR',
+        'HEARS', 'HEARD', 'SAY', 'SAYS', 'SAID', 'TELL', 'TELLS', 'TOLD', 'ASK', 'ASKS',
+        'ASKED', 'GIVE', 'GIVES', 'GAVE', 'GET', 'GETS', 'GOT', 'TAKE', 'TAKES', 'TOOK',
+        'MAKE', 'MAKES', 'MADE', 'DO', 'DOES', 'DID', 'HAVE', 'HAS', 'HAD', 'BE', 'IS',
+        'ARE', 'WAS', 'WERE', 'BEEN', 'WILL', 'WOULD', 'CAN', 'COULD', 'MAY', 'MIGHT',
+        'MUST', 'SHOULD', 'SHALL',
+        
+        // Transportation
+        'CAR', 'CARS', 'BUS', 'BUSES', 'TRAIN', 'TRAINS', 'PLANE', 'PLANES', 'BIKE', 'BIKES',
+        'BOAT', 'BOATS', 'SHIP', 'SHIPS', 'TRUCK', 'TRUCKS', 'TAXI', 'TAXIS',
+        
+        // Places
+        'HOME', 'HOUSE', 'HOUSES', 'SCHOOL', 'SCHOOLS', 'WORK', 'OFFICE', 'OFFICES',
+        'STORE', 'STORES', 'SHOP', 'SHOPS', 'PARK', 'PARKS', 'STREET', 'STREETS',
+        'ROAD', 'ROADS', 'CITY', 'CITIES', 'TOWN', 'TOWNS', 'COUNTRY', 'COUNTRIES',
+        
+        // Time words
+        'TIME', 'TIMES', 'DAY', 'DAYS', 'WEEK', 'WEEKS', 'MONTH', 'MONTHS', 'YEAR', 'YEARS',
+        'HOUR', 'HOURS', 'MINUTE', 'MINUTES', 'SECOND', 'SECONDS', 'MORNING', 'AFTERNOON',
+        'EVENING', 'NIGHT', 'NIGHTS', 'TODAY', 'TOMORROW', 'YESTERDAY', 'NOW', 'THEN',
+        'SOON', 'LATE', 'EARLY', 'BEFORE', 'AFTER', 'DURING', 'WHILE'
       ];
       
       commonWords.forEach(word => this.enableWords.add(word.toUpperCase()));
@@ -231,6 +351,13 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
   // Dictionary validation - check if word exists in our dictionaries
   const isInDictionary = dictionary.isInEnable(normalizedWord);
   const isSlangWord = allowSlang && dictionary.isSlang(normalizedWord);
+  
+  console.log('Dictionary validation:', { 
+    word: normalizedWord, 
+    isInDictionary, 
+    isSlangWord,
+    result: isInDictionary || isSlangWord ? 'VALID' : 'NOT FOUND'
+  });
   
   if (!isInDictionary && !isSlangWord) {
     return {

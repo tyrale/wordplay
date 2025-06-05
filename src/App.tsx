@@ -1,4 +1,5 @@
 import { ThemeProvider, InteractiveGame, useTheme } from './components';
+import ResponsiveTest from './components/game/ResponsiveTest';
 import './App.css';
 
 function ThemeSelector() {
@@ -40,17 +41,19 @@ function App() {
 
   return (
     <ThemeProvider>
-      <ThemeSelector />
-      <InteractiveGame 
-        config={{ 
-          maxTurns: 10,
-          allowBotPlayer: true,
-          enableKeyLetters: true,
-          enableLockedLetters: true
-        }}
-        onGameEnd={handleGameEnd}
-        showDebugInfo={false}
-      />
+      <ResponsiveTest>
+        <ThemeSelector />
+        <InteractiveGame 
+          config={{ 
+            maxTurns: 10,
+            allowBotPlayer: true,
+            enableKeyLetters: true,
+            enableLockedLetters: true
+          }}
+          onGameEnd={handleGameEnd}
+          showDebugInfo={true}
+        />
+      </ResponsiveTest>
     </ThemeProvider>
   );
 }

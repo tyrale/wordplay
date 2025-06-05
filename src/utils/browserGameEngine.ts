@@ -200,6 +200,7 @@ export class LocalGameStateManager {
 
   public startGame(): void {
     this.state.gameStatus = 'playing';
+    this.state.usedWords.add(this.state.currentWord.toUpperCase());
     this.generateRandomKeyLetter();
     this.notifyListeners({
       type: 'game_finished',
@@ -209,12 +210,21 @@ export class LocalGameStateManager {
   }
 
   public attemptMove(newWord: string): MoveAttempt {
+    console.log('attemptMove called:', { newWord, currentWord: this.state.currentWord, gameStatus: this.state.gameStatus });
+    
     const validation = validateWord(newWord, { 
       isBot: false,
       previousWord: this.state.currentWord 
     });
 
+    console.log('usedWords check:', { 
+      newWordUpper: newWord.toUpperCase(), 
+      usedWords: Array.from(this.state.usedWords),
+      hasWord: this.state.usedWords.has(newWord.toUpperCase())
+    });
+
     if (this.state.usedWords.has(newWord.toUpperCase())) {
+      console.log('Word already used');
       return {
         newWord,
         isValid: false,
@@ -230,6 +240,7 @@ export class LocalGameStateManager {
     }
 
     if (!validation.isValid) {
+      console.log('Validation failed:', validation);
       return {
         newWord,
         isValid: false,
@@ -251,6 +262,8 @@ export class LocalGameStateManager {
       actions: ['move'],
       keyLettersUsed: this.state.keyLetters.filter((letter: string) => newWord.includes(letter))
     };
+
+    console.log('Move attempt successful:', { newWord, scoringResult });
 
     return {
       newWord,

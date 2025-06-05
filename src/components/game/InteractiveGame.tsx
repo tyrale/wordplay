@@ -7,6 +7,7 @@ import { ActionIndicators } from './ActionIndicators';
 import { SubmitButton } from './SubmitButton';
 import { ScoreDisplay } from './ScoreDisplay';
 import { WordBuilder } from './WordBuilder';
+import { getDictionarySize, isValidDictionaryWord } from '../../utils/browserDictionary';
 import type { GameConfig, MoveAttempt } from '../../utils/browserGameEngine';
 import type { LetterState, ActionState, ScoreBreakdown, LetterHighlight, WordMove } from '../index';
 import './InteractiveGame.css';
@@ -253,6 +254,41 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // Determine if submit is valid
   const isValidSubmit = pendingMoveAttempt?.canApply || false;
 
+  // Helper function to generate word suggestions
+  const generateWordSuggestions = useCallback((currentWord: string): string[] => {
+    const currentWordUpper = currentWord.toUpperCase();
+    
+    // Common variations to try
+    const commonVariations = [
+      // Add S
+      currentWordUpper + 'S',
+      // Add common endings
+      currentWordUpper + 'ED',
+      currentWordUpper + 'ING',
+      currentWordUpper + 'ER',
+      currentWordUpper + 'LY',
+      // Remove last letter if word is long enough
+      ...(currentWordUpper.length > 3 ? [currentWordUpper.slice(0, -1)] : []),
+      // Common word transformations based on current word
+      ...(currentWordUpper === 'CAT' ? ['CATS', 'BAT', 'HAT', 'MAT', 'RAT'] : []),
+      ...(currentWordUpper === 'CATS' ? ['CAT', 'BATS', 'HATS', 'MATS', 'RATS'] : []),
+      ...(currentWordUpper === 'PLAY' ? ['PLAYS', 'PLAN', 'PLAT', 'CLAY', 'SLAY'] : []),
+      ...(currentWordUpper === 'WORD' ? ['WORDS', 'WORK', 'WORN', 'CORD', 'LORD'] : []),
+      // Some always valid backup words
+      'CAT', 'CATS', 'DOG', 'DOGS', 'PLAY', 'PLAYS', 'GAME', 'GAMES', 'WORD', 'WORDS'
+    ];
+    
+    // Filter to only valid dictionary words and not already used
+    const validSuggestions = commonVariations.filter(word => 
+      isValidDictionaryWord(word) && 
+      !wordState.usedWords.includes(word) &&
+      word !== currentWordUpper
+    );
+    
+    // Remove duplicates and return first 8
+    return [...new Set(validSuggestions)].slice(0, 8);
+  }, [wordState.usedWords]);
+
   return (
     <div className="interactive-game">
       {/* Error display */}
@@ -402,15 +438,49 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       {showDebugInfo && isGameActive && (
         <div className="interactive-game__debug">
           <h4>Debug Info</h4>
-          <pre>{JSON.stringify({ 
-            gameStats, 
-            wordState,
-            pendingWord,
-            pendingMoveAttempt: pendingMoveAttempt?.isValid,
-            isPlayerTurn,
-            isBotTurn,
-            isBotThinking
-          }, null, 2)}</pre>
+          <div className="interactive-game__debug-section">
+            <h5>Dictionary Status</h5>
+            <p>Total words available: {getDictionarySize()}</p>
+            <p>Current word: {wordState.currentWord}</p>
+            <p>Used words: {wordState.usedWords.join(', ')}</p>
+          </div>
+          <div className="interactive-game__debug-section">
+            <h5>Suggested Words to Try</h5>
+            <p>Based on current word "{wordState.currentWord}", try these valid words:</p>
+            <div className="interactive-game__word-suggestions">
+              {generateWordSuggestions(wordState.currentWord).map(word => (
+                <button
+                  key={word}
+                  onClick={() => handleWordChange(word)}
+                  className="interactive-game__suggestion-btn"
+                  disabled={!isPlayerTurn || isProcessingMove}
+                >
+                  {word}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="interactive-game__debug-section">
+            <h5>Game State</h5>
+            <pre>{JSON.stringify({ 
+              gameStats, 
+              wordState: {
+                currentWord: wordState.currentWord,
+                keyLetters: wordState.keyLetters,
+                lockedLetters: wordState.lockedLetters,
+                usedWords: wordState.usedWords
+              },
+              pendingWord,
+              pendingMoveAttempt: pendingMoveAttempt ? {
+                isValid: pendingMoveAttempt.isValid,
+                canApply: pendingMoveAttempt.canApply,
+                reason: pendingMoveAttempt.reason
+              } : null,
+              isPlayerTurn,
+              isBotTurn,
+              isBotThinking
+            }, null, 2)}</pre>
+          </div>
         </div>
       )}
     </div>

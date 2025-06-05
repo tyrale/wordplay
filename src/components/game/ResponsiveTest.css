@@ -1,0 +1,234 @@
+/* Responsive Test Debug Component */
+
+.responsive-test__toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(59, 130, 246, 0.9);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  
+  /* Ensure it meets touch target requirements */
+  min-width: 44px;
+  min-height: 44px;
+  
+  /* Accessibility */
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.responsive-test__toggle:hover {
+  background-color: rgba(59, 130, 246, 1);
+  transform: scale(1.05);
+}
+
+.responsive-test__toggle:active {
+  transform: scale(0.95);
+}
+
+.responsive-test__panel {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 320px;
+  max-height: 80vh;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  z-index: 9998;
+  padding: 20px;
+  overflow-y: auto;
+  font-family: var(--theme-font-family, 'Inter', system-ui, sans-serif);
+  font-size: 14px;
+  line-height: 1.4;
+  color: #333;
+}
+
+.responsive-test__panel h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e3a8a;
+  border-bottom: 2px solid #3b82f6;
+  padding-bottom: 8px;
+}
+
+.responsive-test__panel h4 {
+  margin: 16px 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.responsive-test__section {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.responsive-test__section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.responsive-test__section p {
+  margin: 4px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.responsive-test__section strong {
+  font-weight: 600;
+  color: #374151;
+}
+
+.responsive-test__pass {
+  color: #059669;
+  font-weight: 600;
+}
+
+.responsive-test__fail {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.responsive-test__info {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.responsive-test__color-swatch {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  margin: 4px 4px 4px 0;
+  cursor: help;
+}
+
+/* Mobile adaptations for the debug panel */
+@media (max-width: 767px) {
+  .responsive-test__toggle {
+    top: 15px;
+    right: 15px;
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+  
+  .responsive-test__panel {
+    top: 70px;
+    right: 15px;
+    left: 15px;
+    width: auto;
+    max-height: 70vh;
+    padding: 16px;
+    font-size: 13px;
+  }
+  
+  .responsive-test__panel h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  
+  .responsive-test__panel h4 {
+    font-size: 12px;
+    margin: 12px 0 6px 0;
+  }
+  
+  .responsive-test__section {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+  
+  .responsive-test__section p {
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 2px 0;
+  }
+}
+
+/* Landscape mobile optimization */
+@media (max-width: 767px) and (orientation: landscape) {
+  .responsive-test__panel {
+    max-height: 60vh;
+    top: 60px;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .responsive-test__toggle {
+    background-color: black;
+    border: 2px solid white;
+  }
+  
+  .responsive-test__panel {
+    background-color: white;
+    border: 2px solid black;
+    box-shadow: 0 0 0 1px black;
+  }
+  
+  .responsive-test__color-swatch {
+    border: 2px solid black;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .responsive-test__toggle {
+    transition: none;
+  }
+  
+  .responsive-test__toggle:hover {
+    transform: none;
+  }
+  
+  .responsive-test__toggle:active {
+    transform: none;
+  }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .responsive-test__panel {
+    background-color: rgba(31, 41, 55, 0.95);
+    color: #f9fafb;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .responsive-test__panel h3 {
+    color: #60a5fa;
+    border-bottom-color: #3b82f6;
+  }
+  
+  .responsive-test__panel h4 {
+    color: #d1d5db;
+  }
+  
+  .responsive-test__section {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .responsive-test__section strong {
+    color: #f3f4f6;
+  }
+  
+  .responsive-test__info {
+    color: #9ca3af;
+  }
+} 

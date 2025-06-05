@@ -1,42 +1,194 @@
+/* WordPlay App - Responsive Design System */
+
+/* Base styles for the root container */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  /* Mobile-first approach: default to mobile styles */
+  max-width: 100vw;
+  min-height: 100vh;
+  margin: 0;
+  padding: var(--spacing-md, 20px);
+  
+  /* Typography from theme */
+  font-family: var(--theme-font-family, 'Inter', system-ui, sans-serif);
+  font-weight: var(--theme-font-weight, 900);
+  color: var(--theme-text);
+  background-color: var(--theme-background);
+  
+  /* Layout */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  
+  /* Performance optimizations */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Ensure no horizontal scrolling on any device */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Main app container */
+.app {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg, 24px);
+}
+
+/* Touch and interaction improvements */
+button, [role="button"], .grid-cell {
+  /* Ensure minimum touch target size (44px x 44px) */
+  min-height: 44px;
+  min-width: 44px;
+  
+  /* Prevent text selection on buttons */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  
+  /* Improve touch responsiveness */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  
+  /* No focus outline since design is mouse/touch only */
+  outline: none;
+}
+
+/* Responsive breakpoints */
+
+/* Small mobile devices (320px - 479px) */
+@media (max-width: 479px) {
+  #root {
+    padding: var(--spacing-sm, 8px);
+  }
+  
+  .app {
+    gap: var(--spacing-md, 20px);
+  }
+}
+
+/* Medium mobile devices (480px - 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+  #root {
+    padding: var(--spacing-md, 20px);
+  }
+}
+
+/* Tablet devices (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  #root {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--spacing-lg, 24px);
+  }
+}
+
+/* Desktop devices (1024px and up) */
+@media (min-width: 1024px) {
+  #root {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-xl, 32px);
+  }
+  
+  .app {
+    gap: var(--spacing-xl, 32px);
+  }
+}
+
+/* Large desktop devices (1440px and up) */
+@media (min-width: 1440px) {
+  #root {
+    max-width: 1280px;
+  }
+}
+
+/* Accessibility improvements */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  #root {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Dark mode preference support */
+@media (prefers-color-scheme: dark) {
+  /* Theme will handle this via CSS custom properties */
+}
+
+/* Landscape mobile orientation improvements */
+@media (max-width: 767px) and (orientation: landscape) {
+  #root {
+    padding: var(--spacing-sm, 8px) var(--spacing-md, 20px);
+  }
+  
+  .app {
+    gap: var(--spacing-md, 20px);
+  }
+}
+
+/* Print styles (if needed) */
+@media print {
+  #root {
+    background: white;
+    color: black;
+    padding: 20px;
+  }
+  
+  .app {
+    gap: 20px;
+  }
+}
+
+/* Remove any potential iOS Safari zoom on input focus */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  select, input, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Improve scrolling on iOS */
+body {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Legacy browser support */
+.app {
+  /* Fallback for older browsers that don't support CSS Grid/Flexbox */
+  display: block;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Modern browser enhancement */
+@supports (display: flex) {
+  .app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }

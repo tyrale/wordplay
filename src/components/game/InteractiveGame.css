@@ -221,6 +221,61 @@
   color: var(--theme-text);
 }
 
+.interactive-game__debug h5 {
+  margin: var(--spacing-sm) 0 var(--spacing-xs) 0;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-sm);
+  color: var(--theme-accent);
+}
+
+.interactive-game__debug-section {
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--theme-surface);
+}
+
+.interactive-game__debug-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.interactive-game__debug-section p {
+  margin: var(--spacing-xs) 0;
+  font-size: var(--theme-font-size-sm);
+  color: var(--theme-text-secondary);
+}
+
+.interactive-game__word-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.interactive-game__suggestion-btn {
+  background-color: var(--theme-accent);
+  color: var(--theme-accent-text);
+  border: none;
+  border-radius: 4px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.interactive-game__suggestion-btn:hover:not(:disabled) {
+  background-color: var(--theme-surface-hover);
+  transform: translateY(-1px);
+}
+
+.interactive-game__suggestion-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .interactive-game__debug pre {
   background-color: var(--theme-background);
   padding: var(--spacing-sm);
