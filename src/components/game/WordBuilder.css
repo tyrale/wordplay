@@ -11,15 +11,10 @@
   align-items: center;
   min-height: 80px;
   padding: var(--spacing-md);
-  border: 2px dashed var(--theme-surface);
-  border-radius: 12px;
-  background-color: var(--theme-background);
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
-.word-builder__container:hover {
-  border-color: var(--theme-accent);
-}
+
 
 .word-builder__letter {
   position: relative;

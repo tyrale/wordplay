@@ -1,13 +1,11 @@
 import React from 'react';
 import { WordTrail } from './WordTrail';
 import { CurrentWord } from './CurrentWord';
-import { ActionIndicators } from './ActionIndicators';
 import { SubmitButton } from './SubmitButton';
 import { ScoreDisplay } from './ScoreDisplay';
 import { AlphabetGrid } from './AlphabetGrid';
 import type { LetterHighlight } from './CurrentWord';
-import type { ActionState } from './ActionIndicators';
-import type { ScoreBreakdown } from './ScoreDisplay';
+import type { ActionState, ScoreBreakdown } from './ScoreDisplay';
 import type { LetterState } from './AlphabetGrid';
 import './GameBoard.css';
 
@@ -64,8 +62,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       {/* Action Controls - Centered Layout */}
       <div className="game-board__controls">
         <div className="game-board__controls-content">
-          <ScoreDisplay score={score} />
-          <ActionIndicators actions={actions} />
+          <ScoreDisplay 
+            score={score} 
+            actions={actions}
+            isValid={isValidWord}
+          />
           <SubmitButton 
             isValid={isValidWord} 
             onClick={onSubmit} 

@@ -3,13 +3,14 @@ import { useGameState, useGameStats, useWordState } from '../../hooks/useGameSta
 import { AlphabetGrid } from './AlphabetGrid';
 import { WordTrail } from './WordTrail';
 import { CurrentWord } from './CurrentWord';
-import { ActionIndicators } from './ActionIndicators';
+
 import { SubmitButton } from './SubmitButton';
 import { ScoreDisplay } from './ScoreDisplay';
 import { WordBuilder } from './WordBuilder';
 import { getDictionarySize, isValidDictionaryWord, initializeDictionary, isDictionaryLoaded } from '../../utils/browserDictionary';
 import type { GameConfig, MoveAttempt } from '../../utils/browserGameEngine';
-import type { LetterState, ActionState, ScoreBreakdown, LetterHighlight, WordMove } from '../index';
+import type { LetterState, ScoreBreakdown, LetterHighlight, WordMove } from '../index';
+import type { ActionState } from './ScoreDisplay';
 import './InteractiveGame.css';
 
 export interface InteractiveGameProps {
@@ -199,7 +200,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         setPendingWord(wordState.currentWord);
         setPendingMoveAttempt(null);
         break;
-      case '↶': // Undo (reset to current word)
+      case '↻': // Reset word (reset to current word)
         setPendingWord(wordState.currentWord);
         setPendingMoveAttempt(null);
         break;
@@ -331,18 +332,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
             </div>
           )}
           
-          {isGameActive && (
-            <div className="interactive-game__turn-info">
-              <div className="interactive-game__turn">
-                Turn {gameStats.currentTurn} of {gameStats.maxTurns}
-              </div>
-              <div className="interactive-game__player">
-                {isPlayerTurn && 'Your Turn'}
-                {isBotTurn && (isBotThinking ? 'Bot is thinking...' : 'Bot Turn')}
-              </div>
-            </div>
-          )}
-          
           {isGameFinished && showGameEnd && (
             <div className="interactive-game__end">
               <h2>Game Over!</h2>
@@ -388,7 +377,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
             {/* Word builder for player turn */}
             {isPlayerTurn && (
               <div className="interactive-game__word-builder">
-                <h3>Build Your Word:</h3>
                 <WordBuilder
                   currentWord={pendingWord}
                   wordHighlights={pendingWordHighlights}
@@ -407,12 +395,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
             <div className="interactive-game__score-actions">
               <ScoreDisplay
                 score={scoreBreakdown}
-                className="interactive-game__score"
-              />
-              
-              <ActionIndicators
                 actions={actionState}
-                className="interactive-game__actions"
+                isValid={isValidSubmit}
+                className="interactive-game__score"
               />
               
               <SubmitButton
@@ -422,19 +407,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 className="interactive-game__submit"
               />
             </div>
-            
-            {isPlayerTurn && (
-              <div className="interactive-game__player-actions">
-                <button
-                  className="interactive-game__pass-btn"
-                  onClick={handlePassTurn}
-                  disabled={isProcessingMove}
-                  type="button"
-                >
-                  Pass Turn
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Alphabet grid */}
@@ -447,6 +419,20 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
               enableDrag={false} // Disable drag for this version
             />
           </div>
+
+          {/* Pass turn button - moved under grid */}
+          {isPlayerTurn && (
+            <div className="interactive-game__pass-section">
+              <button
+                className="interactive-game__pass-btn"
+                onClick={handlePassTurn}
+                disabled={isProcessingMove}
+                type="button"
+              >
+                Pass Turn
+              </button>
+            </div>
+          )}
         </div>
       )}
 

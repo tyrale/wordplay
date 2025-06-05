@@ -28,6 +28,8 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   maxLength = 10,
   minLength = 3
 }) => {
+  // Suppress unused variable warning - maxLength kept for interface compatibility
+  void maxLength;
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   // Convert word to letter positions
@@ -175,29 +177,6 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
             )}
           </div>
         ))}
-        
-        {currentWord.length < maxLength && (
-          <div 
-            className="word-builder__add-position"
-            onDragOver={(e) => handleDragOver(e, currentWord.length)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, currentWord.length)}
-            aria-label="Drop letter here to add to word"
-          >
-            <span className="word-builder__add-icon" aria-hidden="true">+</span>
-          </div>
-        )}
-      </div>
-      
-      <div className="word-builder__stats" role="status" aria-live="polite">
-        <span className="word-builder__length">
-          {currentWord.length} / {maxLength} letters
-        </span>
-        {currentWord.length < minLength && (
-          <span className="word-builder__warning">
-            Minimum {minLength} letters required
-          </span>
-        )}
       </div>
     </div>
   );

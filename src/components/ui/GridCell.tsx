@@ -11,6 +11,9 @@ export interface GridCellProps {
   onClick?: () => void;
   onDragStart?: (e: React.DragEvent<HTMLButtonElement>) => void;
   onDragEnd?: (e: React.DragEvent<HTMLButtonElement>) => void;
+  onTouchStart?: (e: React.TouchEvent<HTMLButtonElement>) => void;
+  onTouchMove?: (e: React.TouchEvent<HTMLButtonElement>) => void;
+  onTouchEnd?: (e: React.TouchEvent<HTMLButtonElement>) => void;
   draggable?: boolean;
   disabled?: boolean;
   'aria-label'?: string;
@@ -23,6 +26,9 @@ export const GridCell: React.FC<GridCellProps> = ({
   onClick,
   onDragStart,
   onDragEnd,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
   draggable = false,
   disabled = false,
   'aria-label': ariaLabel,
@@ -45,6 +51,24 @@ export const GridCell: React.FC<GridCellProps> = ({
     }
   };
 
+  const handleTouchStart = (e: React.TouchEvent<HTMLButtonElement>) => {
+    if (!disabled && onTouchStart) {
+      onTouchStart(e);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLButtonElement>) => {
+    if (!disabled && onTouchMove) {
+      onTouchMove(e);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLButtonElement>) => {
+    if (!disabled && onTouchEnd) {
+      onTouchEnd(e);
+    }
+  };
+
   const cellClasses = [
     'grid-cell',
     `grid-cell--${state}`,
@@ -60,6 +84,9 @@ export const GridCell: React.FC<GridCellProps> = ({
       onClick={handleClick}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       draggable={draggable && !disabled}
       disabled={disabled}
       aria-label={ariaLabel || content}

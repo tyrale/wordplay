@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { GridCell } from '../ui/GridCell';
 import type { GridCellState } from '../ui/GridCell';
 import './AlphabetGrid.css';
@@ -24,11 +24,11 @@ const ALPHABET_GRID = [
   ['G', 'H', 'I', 'J', 'K', 'L'],
   ['M', 'N', 'O', 'P', 'Q', 'R'],
   ['S', 'T', 'U', 'V', 'W', 'X'],
-  ['←', '↶', 'Y', 'Z', '?', '≡']
+  ['←', '↻', 'Y', 'Z', '?', '≡']
 ];
 
 // Special action buttons in bottom row
-const ACTION_BUTTONS = ['←', '↶', '?', '≡'];
+const ACTION_BUTTONS = ['←', '↻', '?', '≡'];
 
 export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   letterStates = [],
@@ -39,6 +39,8 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   disabled = false,
   enableDrag = true
 }) => {
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number; letter: string } | null>(null);
+
   // Create a map for quick lookup of letter states
   const stateMap = letterStates.reduce((acc, { letter, state }) => {
     acc[letter] = state;
@@ -80,11 +82,64 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
     onLetterDragEnd?.();
   }, [onLetterDragEnd]);
 
+  // Touch handlers for mobile support
+  const handleTouchStart = useCallback((e: React.TouchEvent, content: string) => {
+    if (disabled || ACTION_BUTTONS.includes(content)) return;
+    
+    const touch = e.touches[0];
+    setTouchStart({
+      x: touch.clientX,
+      y: touch.clientY,
+      letter: content
+    });
+    
+    onLetterDragStart?.(content);
+    
+    // Prevent scrolling while dragging
+    e.preventDefault();
+  }, [disabled, onLetterDragStart]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStart) return;
+    
+    // Prevent scrolling while dragging
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const deltaX = Math.abs(touch.clientX - touchStart.x);
+    const deltaY = Math.abs(touch.clientY - touchStart.y);
+    
+    // If user has moved enough, consider it a drag
+    if (deltaX > 10 || deltaY > 10) {
+      // You could add visual feedback here for drag in progress
+    }
+  }, [touchStart]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchStart) return;
+    
+    const touch = e.changedTouches[0];
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+    // Check if we're over a word builder or other valid drop target
+    if (elementBelow) {
+      const wordBuilder = elementBelow.closest('.word-builder__container');
+      if (wordBuilder) {
+        // Simulate adding the letter to the word
+        // This would need to be connected to the parent component's state
+        onLetterClick?.(touchStart.letter);
+      }
+    }
+    
+    setTouchStart(null);
+    onLetterDragEnd?.();
+  }, [touchStart, onLetterClick, onLetterDragEnd]);
+
   const getAriaLabel = (content: string): string => {
     if (ACTION_BUTTONS.includes(content)) {
       switch (content) {
         case '←': return 'Return to home screen';
-        case '↶': return 'Undo changes';
+        case '↻': return 'Reset word';
         case '?': return 'Help';
         case '≡': return 'Settings menu';
         default: return content;
@@ -128,6 +183,9 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
                 onClick={() => handleCellClick(content)}
                 onDragStart={canDrag ? (e) => handleDragStart(e, content) : undefined}
                 onDragEnd={canDrag ? handleDragEnd : undefined}
+                onTouchStart={canDrag ? (e) => handleTouchStart(e, content) : undefined}
+                onTouchMove={canDrag ? handleTouchMove : undefined}
+                onTouchEnd={canDrag ? handleTouchEnd : undefined}
                 draggable={canDrag}
                 disabled={disabled}
                 aria-label={getDragAriaLabel(content, state)}

@@ -160,7 +160,8 @@
   align-items: center;
   gap: var(--spacing-md);
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .interactive-game__score,
@@ -169,9 +170,10 @@
   flex-shrink: 0;
 }
 
-.interactive-game__player-actions {
+.interactive-game__pass-section {
   display: flex;
-  gap: var(--spacing-sm);
+  justify-content: center;
+  margin-top: var(--spacing-md);
 }
 
 .interactive-game__pass-btn {
@@ -301,8 +303,9 @@
   }
   
   .interactive-game__score-actions {
-    flex-direction: column;
     gap: var(--spacing-sm);
+    flex-wrap: nowrap;
+    overflow-x: auto;
   }
   
   .interactive-game__final-scores {

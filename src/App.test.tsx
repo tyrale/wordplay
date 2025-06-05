@@ -16,7 +16,6 @@ describe('App Component', () => {
     
     // Now check for game components (wait for them to appear)
     expect(screen.getByLabelText(/Current word:/)).toBeInTheDocument();
-    expect(screen.getByText('Build Your Word:')).toBeInTheDocument();
     expect(screen.getByLabelText('Interactive word builder')).toBeInTheDocument();
   });
 
@@ -42,9 +41,8 @@ describe('App Component', () => {
     // Check for word builder (which contains interactive elements)
     expect(screen.getByLabelText('Interactive word builder')).toBeInTheDocument();
     
-    // Check for turn information
-    expect(screen.getByText(/Turn \d+ of \d+/)).toBeInTheDocument();
-    expect(screen.getByText('Your Turn')).toBeInTheDocument();
+    // Check for alphabet grid
+    expect(screen.getByLabelText('Alphabet grid')).toBeInTheDocument();
   });
 
   test('shows the word trail with game history', () => {
@@ -55,7 +53,7 @@ describe('App Component', () => {
     
     // Check for word trail component (it should be rendered but may be empty initially)
     // The WordTrail component is rendered but may not have visible content initially
-    expect(screen.getByText(/Turn \d+ of \d+/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Interactive word builder')).toBeInTheDocument();
   });
 
   test('shows the current word with key letter highlighting', () => {
@@ -80,7 +78,7 @@ describe('App Component', () => {
     
     // Check for main game board sections
     expect(screen.getByLabelText(/Current word:/)).toBeInTheDocument();
-    expect(screen.getByText('Build Your Word:')).toBeInTheDocument();
-    expect(screen.getByText(/Turn \d+ of \d+/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Interactive word builder')).toBeInTheDocument();
+    expect(screen.getByLabelText('Alphabet grid')).toBeInTheDocument();
   });
 });
