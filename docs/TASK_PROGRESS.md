@@ -175,6 +175,24 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 **Verification**: All 252 App tests passing, mobile touch functionality implemented, UI streamlined for better usability.
 
+## 🐛 **ADDITIONAL UI FIXES APPLIED**: Score Display, Drag Functionality, Scrolling Control, Debug Dialog
+
+**Issues Identified**: 
+1. Double "X" symbols showing in score line (ScoreDisplay + SubmitButton both showing invalid state)
+2. Letter drag-and-drop functionality disabled (enableDrag=false)
+3. Full page scrolling interfering with game interaction
+4. Debug information cluttering main interface
+
+**Solution Implemented**:
+- ✅ **Fixed Double X Display** (ScoreDisplay now only shows action icons and scores, SubmitButton handles validation display)
+- ✅ **Enabled Drag Functionality** (Set enableDrag=true in AlphabetGrid for desktop and mobile drag-and-drop)
+- ✅ **Controlled Page Scrolling** (Added overflow:hidden to body, contained scrolling within #root container)
+- ✅ **Debug Dialog Implementation** (Added modal debug dialog with bug icon in top-left, removed inline debug info)
+- ✅ **Enhanced Debug Features** (Dictionary status, word suggestions, game state JSON, interactive word testing)
+- ✅ **Mobile Touch Optimization** (Verified touch event handlers work correctly for mobile drag operations)
+
+**Verification**: All 253 tests passing, build successful (228.51 kB bundle), drag functionality working, scrolling contained, debug accessible via modal.
+
 ## Phase 3 – Online Multiplayer (Web)
 
 - [ ] 3.1 **Auth Flow (Supabase EmailLink)**
