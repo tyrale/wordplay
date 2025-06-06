@@ -13,6 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Interface Contracts**: packages/engine/interfaces.ts with complete dependency contracts for platform adapters
 - **Deviation Prevention**: Documented forbidden patterns and enforcement rules to prevent future architectural issues
 
+### Removed
+- **🧹 CLEANUP**: All browser-specific engine implementations eliminated
+  - Deleted `src/utils/browserDictionary.ts` (3.8KB, 120 lines)
+  - Deleted `src/utils/engineExports.ts` (3.5KB, 132 lines)
+  - Removed all imports from deleted browser-specific modules
+  - Added temporary placeholder types/functions for transition
+- **✅ PRESERVED**: All UI components and styling maintained
+  - React components in `src/components/` unchanged
+  - CSS styling and themes preserved completely
+  - Storybook stories and layout elements intact
+
 ### Fixed
 
 - **UI Fixes: Score Display, Drag Functionality, Scrolling Control, Debug Dialog** ✅ **VERIFIED**
