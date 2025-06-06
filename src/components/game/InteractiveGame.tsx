@@ -176,8 +176,21 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       score: turn.score,
       player: turn.playerId,
       turnNumber: turn.turnNumber,
-      actions: turn.scoringBreakdown.actions
+      actions: turn.scoringBreakdown.actions,
+      keyLetters: turn.scoringBreakdown.keyLettersUsed || []
     }));
+    
+    // If no moves yet, show the starting word
+    if (moves.length === 0 && wordState.currentWord) {
+      return [{
+        word: wordState.currentWord,
+        score: 0,
+        player: undefined,
+        turnNumber: 0,
+        actions: [],
+        keyLetters: []
+      }];
+    }
     
     // If in pass mode, add PASSED as the latest move
     if (isPassMode) {
@@ -186,7 +199,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         score: 0,
         player: gameState.players.find(p => p.isCurrentPlayer)?.id || 'human',
         turnNumber: gameState.currentTurn,
-        actions: []
+        actions: [],
+        keyLetters: []
       };
       return [
         ...moves,
@@ -194,9 +208,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       ];
     }
     
-    // Return actual moves only - start with empty trail
     return moves;
-  }, [gameState.turnHistory, isPassMode, gameState.players, gameState.currentTurn]);
+  }, [gameState.turnHistory, isPassMode, gameState.players, gameState.currentTurn, wordState.currentWord]);
 
   // Event handlers
   const handleActionClick = useCallback((action: string) => {

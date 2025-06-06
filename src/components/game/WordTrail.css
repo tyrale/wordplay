@@ -1,6 +1,8 @@
 .word-trail {
   width: 100%;
   position: relative;
+  height: 100%; /* Take full height of container */
+  min-height: 60px; /* Minimum height to always show at least one word */
 }
 
 .word-trail__container {
@@ -8,12 +10,17 @@
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-xs);
-  max-height: 200px;
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  /* Hide scrollbar */
+  /* Hide scrollbar but allow scrolling */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
+  /* Start from bottom, grow upward */
+  justify-content: flex-end;
+  padding: var(--spacing-xs) 0;
+  /* Ensure content is visible */
+  min-height: 100%;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -28,6 +35,7 @@
   justify-content: center;
   width: 100%;
   white-space: nowrap;
+  flex-shrink: 0; /* Prevent lines from shrinking */
 }
 
 .word-trail__line--clickable {
@@ -50,6 +58,21 @@
   letter-spacing: 0.05em;
   text-align: center;
   transition: color 0.2s ease;
+}
+
+.word-trail__word-container {
+  display: inline-flex;
+  gap: 0.02em;
+}
+
+.word-trail__letter {
+  color: var(--theme-text);
+  transition: color 0.2s ease;
+}
+
+.word-trail__letter--key {
+  color: var(--theme-accent);
+  font-weight: var(--theme-font-weight);
 }
 
 .word-trail__line--clickable .word-trail__word {
@@ -75,7 +98,6 @@
   font-weight: var(--theme-font-weight);
   font-size: var(--theme-font-size-sm);
   color: var(--theme-accent);
-  background-color: var(--theme-surface);
   padding: 2px var(--spacing-xs);
   border-radius: 12px;
   min-width: 24px;
@@ -85,7 +107,6 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .word-trail__container {
-    max-height: 150px;
     gap: calc(var(--spacing-xs) / 2);
   }
   
@@ -100,10 +121,6 @@
 }
 
 @media (max-width: 480px) {
-  .word-trail__container {
-    max-height: 120px;
-  }
-  
   .word-trail__word {
     font-size: var(--theme-font-size-sm);
   }
@@ -117,10 +134,18 @@
   .word-trail__line--clickable .word-trail__word:hover {
     border: 2px solid var(--theme-accent);
   }
+  
+  .word-trail__letter--key {
+    text-shadow: 0 0 1px var(--theme-accent);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .word-trail__word {
+    transition: none;
+  }
+  
+  .word-trail__letter {
     transition: none;
   }
 } 
