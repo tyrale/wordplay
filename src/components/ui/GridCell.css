@@ -101,7 +101,7 @@
   border-radius: 2px 2px 0 0;
   background: transparent;
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 }
 
 /* Add lock body with user's specific dimensions */
@@ -114,6 +114,43 @@
   height: 7px;
   background: var(--theme-accent);
   border-radius: 1px;
+}
+
+/* Background lock icon - slightly larger and in background color */
+.grid-cell__lock::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -4px;
+  width: 12px;
+  height: 14px;
+  border: 3px solid var(--theme-background);
+  border-radius: 3px 3px 0 0;
+  background: transparent;
+  z-index: -1;
+}
+
+/* Background lock body */
+.grid-cell__lock-background {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 18px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.grid-cell__lock-background::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: -5px;
+  width: 14px;
+  height: 10px;
+  background: var(--theme-background);
+  border-radius: 2px;
 }
 
 /* Focus styles removed per design requirements */

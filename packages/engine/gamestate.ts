@@ -856,8 +856,7 @@ export class LocalGameStateManagerWithDependencies {
   private generateRandomKeyLetter(): void {
     // Ensure we don't have any existing key letters before generating
     if (this.state.keyLetters.length > 0) {
-      console.warn('Key letters already exist, not generating new one');
-      return;
+      return; // Silent return, no warning needed
     }
     
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';

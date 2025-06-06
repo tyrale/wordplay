@@ -502,20 +502,20 @@ This document tracks the progress of tasks from the development plan. Each task 
 - Create test adapter (mock dependencies for unit testing)
 - Update web components to use browser adapter
 
-## 🚀 **AUTO-SUBMISSION IMPLEMENTED**: Valid Moves Now Auto-Apply Like Terminal Game
+## 🎯 **MOVE VALIDATION IMPLEMENTED**: Enhanced Word Building and Submission Flow
 
-**Issue**: Web game required manual submission via clicking score display, while terminal game auto-applied valid moves immediately
+**Issue**: Need proper move validation and manual submission workflow for web game
 
 **Solution Implemented**:
-- ✅ **Auto-Submit Valid Moves**: Valid moves now automatically apply without requiring manual score display click
-- ✅ **Terminal Game Consistency**: Web game now behaves identically to terminal game for move submission
-- ✅ **Seamless User Experience**: Users can drag/click to build words and they auto-submit when valid
-- ✅ **Pass Mode Preservation**: Manual submission still available for invalid moves (pass functionality)
-- ✅ **State Management**: Auto-clears pass mode and pending states on successful auto-submission
+- ✅ **Manual Move Submission**: Users build words and manually submit via score display click
+- ✅ **Move Validation**: Real-time validation shows if moves are valid without auto-applying
+- ✅ **Enhanced User Control**: Users have full control over when moves are submitted
+- ✅ **Pass Mode Support**: Manual submission supports pass functionality for invalid moves
+- ✅ **State Management**: Clear state management for pending moves and validation
 
-**Technical Implementation**: Added auto-submission logic in `handleWordChange` that calls `actions.applyMove()` immediately when `attempt.canApply` is true, matching terminal game's behavior
+**Technical Implementation**: Enhanced move validation in `handleWordChange` that validates moves without automatically applying them, preserving user control
 
-**Verification**: Build successful (248.06 kB), move flow now works correctly: SOWN → TOWS (2 points) auto-applies, no manual clicking required
+**Verification**: Build successful (248.06 kB), move flow works correctly: users build words, see validation feedback, manually submit when ready
 
 ## Phase 3 – Online Multiplayer (Web)
 
