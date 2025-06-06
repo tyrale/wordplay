@@ -186,7 +186,7 @@
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  height: 0; /* Fixed height to zero */
+  max-height: 40vh; /* Limit height to 40% of viewport */
   text-align: center;
   display: flex;
   flex-direction: column;
