@@ -36,10 +36,7 @@ export const useAnimations = (component: AnimationComponent): AnimationHookRetur
     [createAnimationTrigger]
   );
 
-  const animateLetterHover = useCallback(
-    (element: HTMLElement) => createAnimationTrigger('letterHover')(element),
-    [createAnimationTrigger]
-  );
+
 
   const animateLetterPress = useCallback(
     (element: HTMLElement) => createAnimationTrigger('letterPress')(element),
@@ -98,7 +95,6 @@ export const useAnimations = (component: AnimationComponent): AnimationHookRetur
     animateLetterEntry,
     animateLetterExit,
     animateLetterMove,
-    animateLetterHover,
     animateLetterPress,
     animateLetterSuccess,
     animateLetterError,

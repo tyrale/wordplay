@@ -56,16 +56,7 @@ export const defaultTheme: AnimationTheme = {
       fillMode: 'forwards'
     },
     
-    letterHover: {
-      name: 'gridCell-letterHover',
-      duration: 200,
-      easing: 'cubic-bezier(0.25, 0.8, 0.25, 1)',
-      keyframes: [
-        { offset: 0, scale: 1, transform: 'scale(1)' },
-        { offset: 1, scale: 1.05, transform: 'scale(1.05)' }
-      ],
-      fillMode: 'forwards'
-    },
+
     
     letterPress: {
       name: 'gridCell-letterPress',

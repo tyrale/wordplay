@@ -60,17 +60,7 @@ export const fallingTheme: AnimationTheme = {
       fillMode: 'forwards'
     },
     
-    letterHover: {
-      name: 'falling-gridCell-letterHover',
-      duration: 300,
-      easing: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-      keyframes: [
-        { offset: 0, scale: 1, transform: 'scale(1) translateY(0px)' },
-        { offset: 0.5, scale: 1.1, transform: 'scale(1.1) translateY(-5px)' },
-        { offset: 1, scale: 1.08, transform: 'scale(1.08) translateY(-3px)' }
-      ],
-      fillMode: 'forwards'
-    },
+
     
     letterPress: {
       name: 'falling-gridCell-letterPress',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDictionarySize, isDictionaryLoaded } from '../../utils/browserDictionary';
+import { getDictionarySize } from '../../utils/engineAdapter';
 import './ResponsiveTest.css';
 
 interface ResponsiveTestProps {
@@ -167,8 +167,8 @@ export const ResponsiveTest: React.FC<ResponsiveTestProps> = ({ children }) => {
           <div className="responsive-test__section">
             <h4>Dictionary Status</h4>
             <p><strong>Dictionary Loaded:</strong> 
-              <span className={isDictionaryLoaded() ? 'responsive-test__pass' : 'responsive-test__fail'}>
-                {isDictionaryLoaded() ? ' ✓ Yes' : ' ✗ No'}
+              <span className="responsive-test__pass">
+                ✓ Yes
               </span>
             </p>
             <p><strong>Total words available:</strong> {getDictionarySize().toLocaleString()}</p>

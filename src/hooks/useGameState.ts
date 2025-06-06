@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { LocalGameStateManager, type PublicGameState, type MoveAttempt, type GameConfig } from '../utils/browserGameEngine';
-import type { BotMove } from '../utils/browserGameEngine';
+import { createGameStateManager, LocalGameStateManager, type PublicGameState, type MoveAttempt, type GameConfig, type BotMove } from '../utils/engineAdapter';
 
 export interface UseGameStateOptions {
   config?: GameConfig;
@@ -58,7 +57,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
   const gameManagerRef = useRef<LocalGameStateManager | null>(null);
   
   if (!gameManagerRef.current) {
-    gameManagerRef.current = new LocalGameStateManager(config);
+    gameManagerRef.current = createGameStateManager(config);
   }
   
   const gameManager = gameManagerRef.current;

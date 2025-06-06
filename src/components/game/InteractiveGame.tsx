@@ -9,8 +9,7 @@ import { ScoreDisplay } from './ScoreDisplay';
 import { WordBuilder } from './WordBuilder';
 import { DebugDialog } from './DebugDialog';
 
-import { isValidDictionaryWord, initializeDictionary, isDictionaryLoaded } from '../../utils/browserDictionary';
-import type { GameConfig, MoveAttempt } from '../../utils/browserGameEngine';
+import { isValidDictionaryWord, type GameConfig, type MoveAttempt } from '../../utils/engineAdapter';
 import type { LetterState, ScoreBreakdown, LetterHighlight, WordMove } from '../index';
 import type { ActionState } from './ScoreDisplay';
 import './InteractiveGame.css';
@@ -69,22 +68,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   const [isPassMode, setIsPassMode] = useState(false);
-  // Initialize dictionary on component mount
-  useEffect(() => {
-    const loadDictionary = async () => {
-      if (!isDictionaryLoaded()) {
-        console.log('🔍 Loading dictionary...');
-        try {
-          await initializeDictionary();
-          console.log('✅ Dictionary loaded successfully');
-        } catch (error) {
-          console.warn('⚠️ Dictionary loading failed, using fallback:', error);
-        }
-      }
-    };
-
-    loadDictionary();
-  }, []);
+  // Dictionary is automatically initialized with the real engine
 
   // Initialize pending word with current word
   useEffect(() => {
@@ -154,9 +138,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     
     const actions = pendingMoveAttempt.scoringResult.actions;
     return {
-      add: actions.includes('add'),
-      remove: actions.includes('remove'),
-      move: actions.includes('rearrange')
+      add: actions.some(action => action.startsWith('Added letter')),
+      remove: actions.some(action => action.startsWith('Removed letter')),
+      move: actions.some(action => action === 'Rearranged letters')
     };
   }, [pendingMoveAttempt]);
 

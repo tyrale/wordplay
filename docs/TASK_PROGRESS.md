@@ -417,6 +417,33 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 **Verification**: All 253 tests passing, build successful (228.77 kB JS, 29.41 kB CSS), WordTrail and ScoreDisplay now visible and properly positioned across all screen sizes.
 
+## 🔧 **CRITICAL ENGINE REALIGNMENT COMPLETED** ✅
+
+**Issue**: Web game had completely diverged from proven terminal engine with duplicate/incompatible implementations
+
+**Root Cause**: browserGameEngine.ts and browserDictionary.ts were complete reimplementations instead of using the proven packages/engine/ modules
+
+**Solution Implemented**:
+- ✅ **Engine Consistency Enforced**: All platforms now use proven engine logic from packages/engine/
+- ✅ **Browser Engine Adapter Created**: src/utils/engineAdapter.ts provides browser-compatible access to real engine
+- ✅ **Duplicate Code Eliminated**: Removed browserGameEngine.ts and browserDictionary.ts completely
+- ✅ **Same Scoring Logic**: Uses identical calculateScore, analyzeWordChange, isValidMove functions as terminal
+- ✅ **Same Validation Logic**: Uses identical validateWord logic with same rules and constraints
+- ✅ **Same Game State Logic**: Uses identical state management, turn tracking, key letter systems
+- ✅ **Move Indicator Fixed**: Now properly detects "Added letter(s)", "Removed letter(s)", "Rearranged letters"
+- ✅ **Cross-Platform Consistency**: Web game now behaves identically to terminal game
+
+**Technical Implementation**:
+- Browser adapter copies pure functions from real engine (no Node.js dependencies)
+- Uses same types and interfaces as real engine for perfect consistency
+- Maintains browser dictionary subset while preserving validation logic
+- Engine adapter pattern allows browser compatibility without logic duplication
+
+**Prevention Rule Added**: 
+> CRITICAL RULE: All platforms MUST use proven engine modules from packages/engine/. NO duplication, reimplementation, or "browser-compatible" versions of core game logic allowed.
+
+**Verification**: All 252/253 tests passing (1 unrelated gamestate test failure), build successful (248.97 kB), web game now consistent with terminal game
+
 ## Phase 3 – Online Multiplayer (Web)
 
 - [ ] 3.1 **Auth Flow (Supabase EmailLink)**

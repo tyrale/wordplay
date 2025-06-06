@@ -33,7 +33,6 @@ export interface ComponentAnimations {
   letterEntry: Animation;      // Letter appears in grid/word
   letterExit: Animation;       // Letter disappears
   letterMove: Animation;       // Letter moves between positions
-  letterHover: Animation;      // Letter hover/focus state
   letterPress: Animation;      // Letter press/tap feedback
   letterSuccess: Animation;    // Letter successfully used
   letterError: Animation;      // Letter invalid/error state
@@ -93,7 +92,6 @@ export interface AnimationHookReturn {
   animateLetterEntry: (element: HTMLElement) => Promise<void>;
   animateLetterExit: (element: HTMLElement) => Promise<void>;
   animateLetterMove: (element: HTMLElement) => Promise<void>;
-  animateLetterHover: (element: HTMLElement) => Promise<void>;
   animateLetterPress: (element: HTMLElement) => Promise<void>;
   animateLetterSuccess: (element: HTMLElement) => Promise<void>;
   animateLetterError: (element: HTMLElement) => Promise<void>;
@@ -116,4 +114,4 @@ export interface AnimationHookReturn {
 
 export type AnimationTrigger = 'auto' | 'manual' | 'both';
 export type AnimationComponent = 'gridCell' | 'wordBuilder' | 'scoreDisplay' | 'wordTrail' | 'alphabetGrid' | 'background';
-export type AnimationEvent = 'entry' | 'exit' | 'move' | 'hover' | 'press' | 'success' | 'error' | 'complete' | 'invalid' | 'clear' | 'update' | 'pulse' | 'idle' | 'transition'; 
+export type AnimationEvent = 'entry' | 'exit' | 'move' | 'press' | 'success' | 'error' | 'complete' | 'invalid' | 'clear' | 'update' | 'pulse' | 'idle' | 'transition'; 
