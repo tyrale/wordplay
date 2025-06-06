@@ -130,7 +130,6 @@
 
 .word-builder__remove-btn:hover {
   transform: scale(1.1);
-  background-color: #dc2626;
 }
 
 .word-builder__drop-indicator {

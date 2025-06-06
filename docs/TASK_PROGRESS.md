@@ -222,6 +222,24 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 **Verification**: 252/253 tests passing, build successful (228.69 kB), drag operations now show no red circle or X, clean drag experience across browsers.
 
+## 🏗️ **ARCHITECTURE SIMPLIFICATION APPLIED**: Div-Based Drag and Drop System
+
+**Issue Identified**: Complex button-based GridCell with elaborate drag image manipulation was causing browser compatibility issues and code complexity
+
+**User Insight**: "There is no reason I can imagine why the game letters across the web app need to be buttons at all"
+
+**Architectural Decision**: Converted from button-based to div-based approach following successful WordBuilder pattern
+
+**Solution Implemented**:
+- ✅ **GridCell Conversion** (Changed from `<button>` to `<div>` with role="button" for accessibility)
+- ✅ **Simplified Drag Handlers** (Removed complex drag image manipulation, using native browser behavior)
+- ✅ **Cleaner CSS** (Removed webkit overrides and complex drag prevention properties)
+- ✅ **Consistent Pattern** (Now matches WordBuilder component architecture)
+- ✅ **Performance Improvement** (Bundle size reduced from 228.69 kB to 228.36 kB)
+- ✅ **Code Reduction** (50 lines removed, 28 lines added for net -22 lines complexity reduction)
+
+**Verification**: All 253 tests passing, simplified codebase, improved maintainability, native drag behavior working correctly across browsers.
+
 ## Phase 3 – Online Multiplayer (Web)
 
 - [ ] 3.1 **Auth Flow (Supabase EmailLink)**
