@@ -449,17 +449,23 @@ export class LocalGameStateManagerWithDependencies {
   }
 
   /**
-   * Apply a move to the game state
+   * Apply a move attempt to the game state
    */
   public applyMove(moveAttempt: MoveAttempt): boolean {
+    console.log('[DEBUG] applyMove: Called with word:', moveAttempt.newWord);
+    
     if (!moveAttempt.canApply || !moveAttempt.scoringResult) {
+      console.log('[DEBUG] applyMove: Cannot apply move - canApply:', moveAttempt.canApply, 'scoringResult:', !!moveAttempt.scoringResult);
       return false;
     }
 
     const currentPlayer = this.getCurrentPlayer();
     if (!currentPlayer) {
+      console.log('[DEBUG] applyMove: No current player found');
       return false;
     }
+
+    console.log('[DEBUG] applyMove: Applying move for player:', currentPlayer.name, 'Current key letters before:', this.state.keyLetters);
 
     const previousWord = this.state.currentWord;
 
@@ -504,14 +510,21 @@ export class LocalGameStateManagerWithDependencies {
 
     // Automatic key letter generation - maintain exactly 1 key letter per turn
     if (this.state.config.enableKeyLetters) {
+      console.log('[DEBUG] applyMove: Key letters enabled, processing key letter generation');
+      console.log('[DEBUG] applyMove: Current keyLetters before processing:', this.state.keyLetters);
+      
       // Track the current key letter as used (since it was active for this turn)
       this.state.keyLetters.forEach(letter => {
+        console.log('[DEBUG] applyMove: Marking key letter as used:', letter);
         this.state.usedKeyLetters.add(letter);
       });
       
       // Clear current key letters and generate exactly 1 new key letter
+      console.log('[DEBUG] applyMove: Clearing key letters. Current keyLetters:', this.state.keyLetters);
       this.state.keyLetters = [];
+      console.log('[DEBUG] applyMove: Calling generateRandomKeyLetter');
       this.generateRandomKeyLetter();
+      console.log('[DEBUG] applyMove: After generateRandomKeyLetter, keyLetters:', this.state.keyLetters);
     }
 
     // Notify listeners of word change
@@ -529,6 +542,7 @@ export class LocalGameStateManagerWithDependencies {
       this.finishGame();
     }
 
+    console.log('[DEBUG] applyMove: Completed successfully');
     return true;
   }
 
@@ -553,6 +567,8 @@ export class LocalGameStateManagerWithDependencies {
         maxCandidates: 500 // Reasonable limit for responsive gameplay
       });
 
+      console.log('[DEBUG] Bot move generation completed:', botResult.move?.word);
+
       if (!botResult.move) {
         console.warn('Bot could not generate a valid move, passing turn');
         // Automatically pass when bot can't find a valid move
@@ -566,11 +582,15 @@ export class LocalGameStateManagerWithDependencies {
       }
 
       // Attempt and apply the bot's move
+      console.log('[DEBUG] Attempting bot move:', botResult.move.word, 'from word:', this.state.currentWord);
       const moveAttempt = this.attemptMove(botResult.move.word);
       
       if (moveAttempt.canApply) {
+        console.log('[DEBUG] Bot move can be applied, calling applyMove');
         const success = this.applyMove(moveAttempt);
+        console.log('[DEBUG] applyMove result:', success);
         if (success) {
+          console.log('[DEBUG] Bot move successfully applied, returning botResult.move');
           return botResult.move;
         }
       }
@@ -853,8 +873,11 @@ export class LocalGameStateManagerWithDependencies {
    * and is not already present in the current word
    */
   private generateRandomKeyLetter(): void {
+    console.log('[DEBUG] generateRandomKeyLetter: Called. Current keyLetters.length:', this.state.keyLetters.length);
+    
     // Ensure we don't have any existing key letters before generating
     if (this.state.keyLetters.length > 0) {
+      console.log('[DEBUG] generateRandomKeyLetter: Already have key letters, returning early');
       return; // Silent return, no warning needed
     }
     
@@ -867,9 +890,12 @@ export class LocalGameStateManagerWithDependencies {
       !currentWordLetters.has(letter) // NEW: Don't use letters already in the current word
     );
     
+    console.log('[DEBUG] generateRandomKeyLetter: Available letters:', availableLetters.length, availableLetters);
+    
     if (availableLetters.length > 0) {
       const randomIndex = Math.floor(Math.random() * availableLetters.length);
       const newKeyLetter = availableLetters[randomIndex];
+      console.log('[DEBUG] generateRandomKeyLetter: Generated new key letter:', newKeyLetter);
       this.state.keyLetters.push(newKeyLetter);
       // Note: We'll track this letter as used when the next move is made
       
@@ -882,6 +908,10 @@ export class LocalGameStateManagerWithDependencies {
         },
         timestamp: Date.now()
       });
+      
+      console.log('[DEBUG] generateRandomKeyLetter: Key letter successfully added, final keyLetters:', this.state.keyLetters);
+    } else {
+      console.log('[DEBUG] generateRandomKeyLetter: No available letters to use as key letter');
     }
   }
 

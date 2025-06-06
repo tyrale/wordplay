@@ -289,18 +289,28 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
     }, [gameManager, isInitialized]),
     
     makeBotMove: useCallback(async () => {
-      if (!gameManager || !isInitialized) return null;
+      console.log('[DEBUG] useGameState makeBotMove: Called');
       
+      if (!gameManager || !isInitialized) {
+        console.log('[DEBUG] useGameState makeBotMove: Not initialized, returning null');
+        return null;
+      }
+
       try {
+        console.log('[DEBUG] useGameState makeBotMove: Setting bot thinking to true');
         setIsBotThinking(true);
+        console.log('[DEBUG] useGameState makeBotMove: Calling gameManager.makeBotMove()');
         const botMove = await gameManager.makeBotMove();
+        console.log('[DEBUG] useGameState makeBotMove: gameManager.makeBotMove() returned:', botMove);
         onBotMoveRef.current?.(botMove);
         return botMove;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Bot move failed';
+        console.log('[DEBUG] useGameState makeBotMove: Error occurred:', errorMsg);
         setLastError(errorMsg);
         return null;
       } finally {
+        console.log('[DEBUG] useGameState makeBotMove: Setting bot thinking to false');
         setIsBotThinking(false);
       }
     }, [gameManager, isInitialized]),

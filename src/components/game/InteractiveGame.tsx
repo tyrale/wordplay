@@ -95,20 +95,28 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   // Auto-trigger bot moves only when it becomes bot's turn
   useEffect(() => {
+    console.log('[DEBUG] Bot move useEffect triggered - isBotTurn:', isBotTurn, 'isGameActive:', isGameActive, 'isBotThinking:', isBotThinking);
+    
     let timeoutId: NodeJS.Timeout;
     
     if (isBotTurn && isGameActive && !isBotThinking) {
+      console.log('[DEBUG] Bot move useEffect: Conditions met, setting timeout');
       // Add delay for better UX
       timeoutId = setTimeout(async () => {
+        console.log('[DEBUG] Bot move useEffect: Timeout fired, calling makeBotMove');
         const botMove = await actions.makeBotMove();
+        console.log('[DEBUG] Bot move useEffect: makeBotMove completed with result:', botMove);
         if (botMove) {
           // setBotMoveHistory(prev => [...prev, botMove]);
         }
       }, 1000); // 1 second delay to show bot is "thinking"
+    } else {
+      console.log('[DEBUG] Bot move useEffect: Conditions not met, not triggering bot move');
     }
     
     return () => {
       if (timeoutId) {
+        console.log('[DEBUG] Bot move useEffect: Cleaning up timeout');
         clearTimeout(timeoutId);
       }
     };
