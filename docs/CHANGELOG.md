@@ -449,3 +449,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Build successful with reduced bundle size
 - Functional letter reordering via simple drag system
 - Clean, minimal UI exactly as requested by user
+
+## [2025-01-18] - Critical Responsiveness Fix: Click/Drag Event Handling
+
+### Fixed
+- **WordBuilder Responsiveness Issue**: Resolved critical bug where component became unresponsive after first interaction
+  - Fixed event state pollution where drag state wasn't properly reset
+  - Implemented gesture detection system with 5-pixel movement threshold  
+  - Separated click and drag operations into distinct event flows
+  - Added proper three-state management: draggedIndex, isDragging, dragStartPos
+  - Restored onLetterClick functionality for letter removal/interaction
+  - Enhanced drag detection with smooth visual feedback only during confirmed drags
+
+### Technical Improvements
+- **Event Handling Architecture**: Mouse and touch events work independently without conflicts
+- **State Management**: Complete state reset after each interaction (click or drag)
+- **Cross-Platform Reliability**: Gesture detection works consistently on desktop and mobile
+- **Performance**: Efficient event tracking with minimal overhead
+
+### Verification
+- All 253 tests passing
+- Build successful: 231.00 kB bundle
+- Responsive interactions working reliably on first and subsequent operations
+- Both click-to-interact and drag-to-reorder functionality fully operational
