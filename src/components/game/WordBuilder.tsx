@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { LetterHighlight } from './CurrentWord';
 import './WordBuilder.css';
 
@@ -30,6 +30,25 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Handle touch events with proper preventDefault support
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleNativeTouchMove = (e: TouchEvent) => {
+      if (isDragging) {
+        e.preventDefault(); // This works because we can control the passive option
+      }
+    };
+
+    // Add non-passive touch event listener
+    container.addEventListener('touchmove', handleNativeTouchMove, { passive: false });
+
+    return () => {
+      container.removeEventListener('touchmove', handleNativeTouchMove);
+    };
+  }, [isDragging]);
 
   const handleLetterClick = useCallback((index: number) => {
     if (disabled || isDragging) return;
@@ -81,32 +100,19 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     }
   }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
 
-  const handleMouseUp = useCallback((e: React.MouseEvent) => {
+  const handleMouseUp = useCallback(() => {
     if (draggedIndex !== null) {
-      if (isDragging && containerRef.current) {
-        // Handle drag operation
-        const elements = containerRef.current.querySelectorAll('[data-letter-index]');
+      if (isDragging && dropTargetIndex !== null && dropTargetIndex !== draggedIndex) {
+        // Handle drag operation using the calculated drop target
+        const letters = currentWord.split('');
+        const [movedLetter] = letters.splice(draggedIndex, 1);
         
-        for (let i = 0; i < elements.length; i++) {
-          const element = elements[i] as HTMLElement;
-          const rect = element.getBoundingClientRect();
-          
-          if (e.clientX >= rect.left && e.clientX <= rect.right &&
-              e.clientY >= rect.top && e.clientY <= rect.bottom) {
-            const targetIndex = parseInt(element.getAttribute('data-letter-index') || '', 10);
-            
-            if (!isNaN(targetIndex) && targetIndex !== draggedIndex) {
-              // Reorder letters
-              const letters = currentWord.split('');
-              const [movedLetter] = letters.splice(draggedIndex, 1);
-              letters.splice(targetIndex, 0, movedLetter);
-              
-              const newWord = letters.join('');
-              onWordChange?.(newWord);
-            }
-            break;
-          }
-        }
+        // Adjust target index if we're moving from left to right
+        const adjustedTargetIndex = dropTargetIndex > draggedIndex ? dropTargetIndex - 1 : dropTargetIndex;
+        letters.splice(adjustedTargetIndex, 0, movedLetter);
+        
+        const newWord = letters.join('');
+        onWordChange?.(newWord);
       } else if (!isDragging) {
         // Handle click operation
         handleLetterClick(draggedIndex);
@@ -118,7 +124,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     setIsDragging(false);
     setDragStartPos(null);
     setDropTargetIndex(null);
-  }, [draggedIndex, isDragging, currentWord, onWordChange, handleLetterClick]);
+  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent, index: number) => {
     if (disabled) return;
@@ -140,7 +146,6 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       
       // Update drop target during drag
       if (isDragging && containerRef.current) {
-        e.preventDefault(); // Prevent scrolling
         const elements = containerRef.current.querySelectorAll('[data-letter-index]');
         let newDropTarget = null;
         
@@ -168,33 +173,19 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     }
   }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+  const handleTouchEnd = useCallback(() => {
     if (draggedIndex !== null) {
-      if (isDragging && containerRef.current && e.changedTouches[0]) {
-        // Handle drag operation
-        const touch = e.changedTouches[0];
-        const elements = containerRef.current.querySelectorAll('[data-letter-index]');
+      if (isDragging && dropTargetIndex !== null && dropTargetIndex !== draggedIndex) {
+        // Handle drag operation using the calculated drop target
+        const letters = currentWord.split('');
+        const [movedLetter] = letters.splice(draggedIndex, 1);
         
-        for (let i = 0; i < elements.length; i++) {
-          const element = elements[i] as HTMLElement;
-          const rect = element.getBoundingClientRect();
-          
-          if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
-              touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
-            const targetIndex = parseInt(element.getAttribute('data-letter-index') || '', 10);
-            
-            if (!isNaN(targetIndex) && targetIndex !== draggedIndex) {
-              // Reorder letters
-              const letters = currentWord.split('');
-              const [movedLetter] = letters.splice(draggedIndex, 1);
-              letters.splice(targetIndex, 0, movedLetter);
-              
-              const newWord = letters.join('');
-              onWordChange?.(newWord);
-            }
-            break;
-          }
-        }
+        // Adjust target index if we're moving from left to right
+        const adjustedTargetIndex = dropTargetIndex > draggedIndex ? dropTargetIndex - 1 : dropTargetIndex;
+        letters.splice(adjustedTargetIndex, 0, movedLetter);
+        
+        const newWord = letters.join('');
+        onWordChange?.(newWord);
       } else if (!isDragging) {
         // Handle tap operation
         handleLetterClick(draggedIndex);
@@ -206,7 +197,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     setIsDragging(false);
     setDragStartPos(null);
     setDropTargetIndex(null);
-  }, [draggedIndex, isDragging, currentWord, onWordChange, handleLetterClick]);
+  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick]);
 
   return (
     <div 
