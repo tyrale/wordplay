@@ -164,8 +164,7 @@
   position: relative;
   width: 100%;
   max-width: 600px;
-  height: 80vh; /* Fixed height to prevent expansion */
-  min-height: 500px; /* Minimum height for small screens */
+  height: 0; /* Fixed height to zero */
 }
 
 /* Submit anchor - the absolute center point */
@@ -427,8 +426,7 @@
   }
   
   .interactive-game__centered-container {
-    height: 70vh; /* Reduce height on smaller screens */
-    min-height: 400px;
+    height: 0; /* Fixed height to zero */
   }
   
   .interactive-game__turn-info {
@@ -451,8 +449,7 @@
 
 @media (max-width: 480px) {
   .interactive-game__centered-container {
-    height: 60vh; /* Further reduce on mobile */
-    min-height: 350px;
+    height: 0; /* Fixed height to zero */
   }
   
   .interactive-game__word-builder {
