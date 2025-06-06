@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { createGameStateManager, LocalGameStateManager, type PublicGameState, type MoveAttempt, type GameConfig, type BotMove } from '../utils/engineAdapter';
+import { 
+  createGameStateManager, 
+  LocalGameStateManager, 
+  type PublicGameState, 
+  type MoveAttempt, 
+  type GameConfig,
+  type BotMove,
+  initializeBrowserDictionary
+} from '../utils/engineExports';
 
 export interface UseGameStateOptions {
   config?: GameConfig;
@@ -53,7 +61,7 @@ export interface UseGameStateReturn {
 export function useGameState(options: UseGameStateOptions = {}): UseGameStateReturn {
   const { config, onGameStateChange, onMoveAttempt, onBotMove } = options;
   
-  // Initialize game manager
+  // Initialize game manager using real engine
   const gameManagerRef = useRef<LocalGameStateManager | null>(null);
   
   if (!gameManagerRef.current) {
@@ -61,6 +69,13 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
   }
   
   const gameManager = gameManagerRef.current;
+  
+  // Initialize browser dictionary on first load
+  useEffect(() => {
+    initializeBrowserDictionary().catch(error => {
+      console.error('Failed to initialize dictionary:', error);
+    });
+  }, []);
   
   // React state
   const [gameState, setGameState] = useState<PublicGameState>(() => gameManager.getState());

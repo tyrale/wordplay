@@ -1,5 +1,5 @@
 import React from 'react';
-import { getDictionarySize } from '../../utils/engineAdapter';
+import { getDictionarySize } from '../../utils/engineExports';
 import './DebugDialog.css';
 
 export interface DebugDialogProps {

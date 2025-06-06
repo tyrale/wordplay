@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getDictionarySize } from '../../utils/engineAdapter';
+import { getDictionarySize } from '../../utils/engineExports';
 import './ResponsiveTest.css';
 
 interface ResponsiveTestProps {

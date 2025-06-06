@@ -9,7 +9,7 @@ import { ScoreDisplay } from './ScoreDisplay';
 import { WordBuilder } from './WordBuilder';
 import { DebugDialog } from './DebugDialog';
 
-import { isValidDictionaryWord, type GameConfig, type MoveAttempt } from '../../utils/engineAdapter';
+import { type GameConfig, type MoveAttempt, isValidDictionaryWord } from '../../utils/engineExports';
 import type { LetterState, ScoreBreakdown, LetterHighlight, WordMove } from '../index';
 import type { ActionState } from './ScoreDisplay';
 import './InteractiveGame.css';
@@ -97,9 +97,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     }
     
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     };
-  }, [isBotTurn, isGameActive, isBotThinking, actions]);
+  }, [isBotTurn, isGameActive, isBotThinking, actions, gameState.players]);
 
   // Letter grid state
   const letterStates: LetterState[] = React.useMemo(() => {
@@ -239,10 +241,21 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     setIsPassMode(false); // Reset pass mode when word changes
     
     // Validate the move attempt
+    console.log('🎯 Checking if should validate move:', {
+      newWord,
+      currentWord: wordState.currentWord,
+      shouldValidate: newWord !== wordState.currentWord,
+      gameState: gameState,
+      fullWordState: wordState
+    });
+    
     if (newWord !== wordState.currentWord) {
+      console.log('✅ Calling attemptMove for:', newWord);
       const attempt = actions.attemptMove(newWord);
+      console.log('📊 AttemptMove result:', attempt);
       setPendingMoveAttempt(attempt);
     } else {
+      console.log('❌ No validation - word same as current');
       setPendingMoveAttempt(null);
     }
   }, [isPlayerTurn, isProcessingMove, wordState.currentWord, actions, pendingWord]);
@@ -343,16 +356,26 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
 
   const handleSubmit = useCallback(() => {
+    console.log('🚀 handleSubmit called:', {
+      isPlayerTurn,
+      isProcessingMove,
+      canApply: pendingMoveAttempt?.canApply,
+      isPassMode,
+      pendingWord: pendingMoveAttempt?.newWord
+    });
+    
     if (!isPlayerTurn || isProcessingMove) return;
     
     // Handle pass mode - first click on invalid X activates pass mode
     if (!pendingMoveAttempt?.canApply && !isPassMode) {
+      console.log('🚀 Activating pass mode');
       setIsPassMode(true);
       return;
     }
     
     // Handle second click in pass mode - actually pass the turn
     if (isPassMode) {
+      console.log('🚀 Passing turn');
       actions.passTurn();
       setPendingWord(wordState.currentWord);
       setPendingMoveAttempt(null);
@@ -362,7 +385,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     
     // Handle normal valid submission
     if (pendingMoveAttempt?.canApply) {
+      console.log('🚀 Applying move:', pendingMoveAttempt.newWord);
       const success = actions.applyMove(pendingMoveAttempt);
+      console.log('🚀 Move applied, success:', success);
       if (success) {
         setPendingWord(pendingMoveAttempt.newWord);
         setPendingMoveAttempt(null);
