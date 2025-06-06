@@ -398,8 +398,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
 
 
-  const handleStartGame = useCallback(() => {
-    actions.startGame();
+  const handleStartGame = useCallback(async () => {
+    await actions.startGame();
     setShowGameEnd(false);
   }, [actions]);
 

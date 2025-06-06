@@ -7,7 +7,7 @@
  * The game logic remains IDENTICAL to the terminal game.
  */
 
-import { isValidDictionaryWordSync } from './browserDictionary';
+import { isValidDictionaryWordSync, getRandomWordByLength } from './browserDictionary';
 
 // Import only the core types and functions that don't use Node.js modules
 export type {
@@ -262,19 +262,42 @@ export class BrowserGameStateManager {
   private listeners: Array<() => void> = [];
   
   constructor(config: any = {}) {
+    // Generate random 4-letter starting word if none provided (same as real engine)
+    let initialWord = config.initialWord;
+    if (!initialWord) {
+      // For browser, we'll use a simple fallback since we can't async in constructor
+      // The real random word will be set when startGame() is called
+      initialWord = 'WORD'; // temporary fallback
+    }
+    
+    const now = Date.now();
+    
     this.state = {
       gameStatus: 'waiting',
-      currentWord: config.initialWord || 'WORD',
+      currentWord: initialWord.toUpperCase(),
       keyLetters: [],
       lockedLetters: [],
-      currentTurn: 0,
+      lockedKeyLetters: [], // NEW: Key letters locked for current player
+      currentTurn: 1, // FIXED: Start at 1 like real engine
       maxTurns: config.maxTurns || 10,
       players: [
         { id: 'human', score: 0, isCurrentPlayer: true },
         { id: 'bot', score: 0, isCurrentPlayer: false }
       ],
       turnHistory: [],
-      usedWords: new Set<string>()
+      usedWords: new Set<string>(),
+      usedKeyLetters: new Set<string>(), // NEW: Track used key letters
+      totalMoves: 0, // NEW: Track total moves
+      gameStartTime: now, // NEW: Game start timestamp
+      lastMoveTime: now, // NEW: Last move timestamp
+      config: {
+        maxTurns: config.maxTurns || 10,
+        allowBotPlayer: true,
+        enableKeyLetters: true,
+        enableLockedLetters: true,
+        ...config,
+        initialWord: initialWord
+      }
     };
   }
   
@@ -296,25 +319,46 @@ export class BrowserGameStateManager {
     this.listeners.forEach(listener => listener());
   }
   
-  startGame() {
+  async startGame() {
+    // Generate random 4-letter starting word if still using fallback (same as real engine)
+    if (this.state.currentWord === 'WORD') {
+      const randomWord = await getRandomWordByLength(4);
+      if (randomWord) {
+        this.state.currentWord = randomWord.toUpperCase();
+      }
+    }
+    
     this.state.gameStatus = 'playing';
+    this.state.gameStartTime = Date.now(); // FIXED: Set proper start time
+    this.state.lastMoveTime = Date.now();
+    
+    // Track the initial word as used
     this.state.usedWords.add(this.state.currentWord.toUpperCase());
-    this.generateRandomKeyLetter();
+    
+    // Generate initial key letters so players can see them from the start (same as real engine)
+    if (this.state.config.enableKeyLetters) {
+      this.generateRandomKeyLetter(); // Only 1 key letter at start
+    }
+    
     this.notifyListeners();
   }
   
   private generateRandomKeyLetter() {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const currentWordLetters = new Set(this.state.currentWord.toUpperCase().split(''));
-    const usedKeyLetters = new Set(this.state.keyLetters);
+    const currentWordLetters = new Set(this.state.currentWord.split(''));
     
+    // FIXED: Use proper exclusion logic like real engine
     const availableLetters = alphabet.split('').filter(letter => 
-      !currentWordLetters.has(letter) && !usedKeyLetters.has(letter)
+      !this.state.usedKeyLetters.has(letter) && 
+      !this.state.keyLetters.includes(letter) &&
+      !currentWordLetters.has(letter) // Don't use letters already in current word
     );
     
     if (availableLetters.length > 0) {
-      const randomLetter = availableLetters[Math.floor(Math.random() * availableLetters.length)];
-      this.state.keyLetters.push(randomLetter);
+      const randomIndex = Math.floor(Math.random() * availableLetters.length);
+      const newKeyLetter = availableLetters[randomIndex];
+      this.state.keyLetters.push(newKeyLetter);
+      // Note: We'll track this letter as used when the next move is made
     }
   }
   
@@ -347,6 +391,27 @@ export class BrowserGameStateManager {
         reason: 'Word already used in this game'
       };
     }
+
+    // LOCKED KEY LETTER VALIDATION (same as real engine)
+    if (this.state.lockedKeyLetters.length > 0) {
+      for (const lockedLetter of this.state.lockedKeyLetters) {
+        // If the locked letter is in the current word but not in the new word, it's being removed
+        if (this.state.currentWord.includes(lockedLetter) && !newWord.toUpperCase().includes(lockedLetter)) {
+          return {
+            newWord,
+            isValid: false,
+            validationResult: { 
+              isValid: false, 
+              reason: `Cannot remove locked key letter '${lockedLetter}' - it was used by the previous player`, 
+              word: newWord 
+            },
+            scoringResult: null,
+            canApply: false,
+            reason: `Cannot remove locked key letter '${lockedLetter}' - it was used by the previous player`
+          };
+        }
+      }
+    }
     
     // Calculate scoring using real engine logic
     const scoringResult = calculateScore(this.state.currentWord, newWord, this.state.keyLetters);
@@ -362,38 +427,71 @@ export class BrowserGameStateManager {
   }
   
   applyMove(attempt: any): boolean {
-    if (!attempt.canApply) {
+    if (!attempt.canApply || !attempt.scoringResult) {
       return false;
     }
     
-    // Update game state
-    this.state.currentWord = attempt.newWord;
-    this.state.usedWords.add(attempt.newWord.toUpperCase());
-    this.state.currentTurn++;
-    
-    // Update player score
     const currentPlayer = this.state.players.find((p: any) => p.isCurrentPlayer);
-    if (currentPlayer && attempt.scoringResult) {
-      currentPlayer.score += attempt.scoringResult.totalScore;
+    if (!currentPlayer) {
+      return false;
+    }
+
+    const previousWord = this.state.currentWord;
+
+    // Update game state (same as real engine)
+    this.state.currentWord = attempt.newWord;
+    this.state.lastMoveTime = Date.now();
+    this.state.totalMoves++;
+    
+    // Track this word as used
+    this.state.usedWords.add(attempt.newWord.toUpperCase());
+
+    // Update player score
+    currentPlayer.score += attempt.scoringResult.totalScore;
+
+    // Add to turn history (same format as real engine)
+    this.state.turnHistory.push({
+      turnNumber: this.state.currentTurn,
+      playerId: currentPlayer.id,
+      previousWord,
+      newWord: attempt.newWord,
+      score: attempt.scoringResult.totalScore,
+      scoringBreakdown: attempt.scoringResult,
+      timestamp: Date.now()
+    });
+
+    // KEY LETTER LOCKING FEATURE (same as real engine)
+    // Clear any existing locked key letters since this player has now completed their turn with them
+    this.state.lockedKeyLetters = [];
+    
+    // If this player used key letters, lock them for the next player
+    if (attempt.scoringResult.keyLettersUsed.length > 0) {
+      // Find which key letters were used and are now in the new word
+      const usedKeyLetters = attempt.scoringResult.keyLettersUsed.filter((letter: string) => 
+        attempt.newWord.toUpperCase().includes(letter.toUpperCase())
+      );
+      
+      // These letters will be locked for the next player's turn
+      this.state.lockedKeyLetters = usedKeyLetters.map((letter: string) => letter.toUpperCase());
+    }
+
+    // Automatic key letter generation - maintain exactly 1 key letter per turn (same as real engine)
+    if (this.state.config.enableKeyLetters) {
+      // Track the current key letter as used (since it was active for this turn)
+      this.state.keyLetters.forEach((letter: string) => {
+        this.state.usedKeyLetters.add(letter);
+      });
+      
+      // Clear current key letters and generate exactly 1 new key letter
+      this.state.keyLetters = [];
+      this.generateRandomKeyLetter();
     }
     
-    // Add to turn history
-    this.state.turnHistory.push({
-      turn: this.state.currentTurn,
-      player: currentPlayer?.id || 'unknown',
-      word: attempt.newWord,
-      score: attempt.scoringResult?.totalScore || 0,
-      action: analyzeWordChange(this.state.currentWord, attempt.newWord)
-    });
-    
-    // Switch players
+    // Switch to next player
     this.switchToNextPlayer();
     
-    // Generate new key letter
-    this.generateRandomKeyLetter();
-    
     // Check if game is finished
-    if (this.state.currentTurn >= this.state.maxTurns) {
+    if (this.state.currentTurn > this.state.maxTurns) {
       this.state.gameStatus = 'finished';
     }
     
@@ -405,6 +503,9 @@ export class BrowserGameStateManager {
     this.state.players.forEach((player: any) => {
       player.isCurrentPlayer = !player.isCurrentPlayer;
     });
+    
+    // Increment turn after switching players (same as real engine)
+    this.state.currentTurn++;
   }
   
   async makeBotMove() {
@@ -428,12 +529,20 @@ export class BrowserGameStateManager {
   }
   
   resetGame() {
+    const now = Date.now();
+    
     this.state.gameStatus = 'waiting';
-    this.state.currentTurn = 0;
+    this.state.currentTurn = 1; // FIXED: Start at 1 like real engine
     this.state.keyLetters = [];
     this.state.lockedLetters = [];
+    this.state.lockedKeyLetters = []; // NEW: Reset locked key letters
     this.state.turnHistory = [];
     this.state.usedWords.clear();
+    this.state.usedKeyLetters.clear(); // NEW: Reset used key letters
+    this.state.totalMoves = 0; // NEW: Reset total moves
+    this.state.gameStartTime = now; // NEW: Reset timestamps
+    this.state.lastMoveTime = now;
+    
     this.state.players.forEach((player: any) => {
       player.score = 0;
       player.isCurrentPlayer = player.id === 'human';
@@ -442,14 +551,59 @@ export class BrowserGameStateManager {
   }
   
   passTurn(): boolean {
+    if (this.state.gameStatus !== 'playing') {
+      return false;
+    }
+
+    const currentPlayer = this.state.players.find((p: any) => p.isCurrentPlayer);
+    if (!currentPlayer) {
+      return false;
+    }
+
+    // Clear locked key letters when passing (locks are removed) - same as real engine
+    this.state.lockedKeyLetters = [];
+
+    // Add to turn history to track the pass
+    this.state.turnHistory.push({
+      turnNumber: this.state.currentTurn,
+      playerId: currentPlayer.id,
+      previousWord: this.state.currentWord,
+      newWord: this.state.currentWord, // Word stays the same
+      score: 0, // No points for passing
+      scoringBreakdown: {
+        totalScore: 0,
+        breakdown: {
+          addLetterPoints: 0,
+          removeLetterPoints: 0,
+          rearrangePoints: 0,
+          keyLetterUsagePoints: 0,
+        },
+        actions: ['PASS'],
+        keyLettersUsed: []
+      },
+      timestamp: Date.now()
+    });
+
+    // Generate new key letters even on pass (maintains 1 per turn rule) - same as real engine
+    if (this.state.config.enableKeyLetters) {
+      // Track the current key letter as used (since it was active for this turn)
+      this.state.keyLetters.forEach((letter: string) => {
+        this.state.usedKeyLetters.add(letter);
+      });
+      
+      // Clear current key letters and generate exactly 1 new key letter
+      this.state.keyLetters = [];
+      this.generateRandomKeyLetter();
+    }
+
+    // Switch to next player
     this.switchToNextPlayer();
-    this.generateRandomKeyLetter();
-    this.state.currentTurn++;
-    
-    if (this.state.currentTurn >= this.state.maxTurns) {
+
+    // Check if game is finished
+    if (this.state.currentTurn > this.state.maxTurns) {
       this.state.gameStatus = 'finished';
     }
-    
+
     this.notifyListeners();
     return true;
   }

@@ -23,7 +23,7 @@ export interface GameStateActions {
   setCurrentWord: (word: string) => boolean;
   
   // Game flow
-  startGame: () => void;
+  startGame: () => Promise<void>;
   resetGame: () => void;
   passTurn: () => boolean;
   
@@ -146,9 +146,9 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
       }
     }, [gameManager]),
     
-    startGame: useCallback(() => {
+    startGame: useCallback(async () => {
       try {
-        gameManager.startGame();
+        await gameManager.startGame();
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to start game';
         setLastError(errorMsg);
