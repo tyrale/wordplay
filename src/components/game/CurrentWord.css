@@ -37,31 +37,32 @@
   font-weight: bold;
 }
 
-/* Lock icon for locked letters - positioned as badge */
+/* Lock icon for locked letters - centered on letter */
 .current-word__lock {
   position: absolute;
-  bottom: -0.1em;
-  right: -0.1em;
-  /* Use CSS to create lock shape instead of Unicode */
-  width: 0.3em;
-  height: 0.35em;
-  border: 0.08em solid var(--theme-accent);
-  border-radius: 0.08em 0.08em 0 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* Use CSS to create lock shape with consistent proportions */
+  width: 0.25em;
+  height: 0.3em;
+  border: 0.06em solid var(--theme-accent);
+  border-radius: 0.06em 0.06em 0 0;
   background: transparent;
   pointer-events: none;
   z-index: 1;
 }
 
-/* Add lock body */
+/* Add lock body with consistent proportions */
 .current-word__lock::after {
   content: '';
   position: absolute;
-  bottom: -0.22em;
-  left: -0.04em;
+  bottom: -0.15em;
+  left: -0.09em;
   width: 0.3em;
-  height: 0.22em;
+  height: 0.21em;
   background: var(--theme-accent);
-  border-radius: 0.04em;
+  border-radius: 0.03em;
 }
 
 /* Responsive typography */

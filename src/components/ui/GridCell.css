@@ -88,12 +88,13 @@
   pointer-events: none;
 }
 
-/* Lock icon positioning - badge style */
+/* Lock icon positioning - centered on the letter */
 .grid-cell__lock {
   position: absolute;
-  bottom: calc(4px * 2 + 4px); /* Move up 2x: was 4px from bottom, now 12px from bottom */
-  right: calc(4px * 2 + 4px); /* Move left 2x: was 4px from right, now 12px from right */
-  /* Use CSS to create lock shape instead of Unicode */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* Use CSS to create lock shape with user's specific dimensions */
   width: 8px;
   height: 10px;
   border: 2px solid var(--theme-accent);
@@ -103,14 +104,14 @@
   z-index: 1;
 }
 
-/* Add lock body */
+/* Add lock body with user's specific dimensions */
 .grid-cell__lock::after {
   content: '';
   position: absolute;
-  bottom: -6px;
-  left: -1px;
-  width: 8px;
-  height: 6px;
+  bottom: -5px;
+  left: -3px;
+  width: 10px;
+  height: 7px;
   background: var(--theme-accent);
   border-radius: 1px;
 }

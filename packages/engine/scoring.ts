@@ -209,8 +209,8 @@ export function calculateScore(
     }
   }
   
-  // Key letter usage: +1 if any key letter is used
-  const keyLetterUsagePoints = analysis.keyLettersUsed.length > 0 ? 1 : 0;
+  // Key letter usage: +1 for each key letter used (allowing multiple instances)
+  const keyLetterUsagePoints = analysis.keyLettersUsed.length;
 
   // Build actions list for transparency
   const actions: string[] = [];

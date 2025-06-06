@@ -854,6 +854,12 @@ export class LocalGameStateManagerWithDependencies {
    * and is not already present in the current word
    */
   private generateRandomKeyLetter(): void {
+    // Ensure we don't have any existing key letters before generating
+    if (this.state.keyLetters.length > 0) {
+      console.warn('Key letters already exist, not generating new one');
+      return;
+    }
+    
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const currentWordLetters = new Set(this.state.currentWord.split(''));
     
