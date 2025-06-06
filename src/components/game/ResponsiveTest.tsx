@@ -17,7 +17,7 @@ interface ScreenInfo {
 }
 
 export const ResponsiveTest: React.FC<ResponsiveTestProps> = ({ children }) => {
-  const [showDebug, setShowDebug] = useState(false);
+  const [showDebug] = useState(false);
   const [screenInfo, setScreenInfo] = useState<ScreenInfo>({
     width: 0,
     height: 0,
@@ -109,14 +109,7 @@ export const ResponsiveTest: React.FC<ResponsiveTestProps> = ({ children }) => {
     <>
       {children}
       
-      {/* Debug toggle button */}
-      <button
-        className="responsive-test__toggle"
-        onClick={() => setShowDebug(!showDebug)}
-        aria-label="Toggle responsive design debug info"
-      >
-        📱
-      </button>
+
       
       {/* Debug panel */}
       {showDebug && (

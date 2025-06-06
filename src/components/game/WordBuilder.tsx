@@ -29,7 +29,27 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  const [activeInputMethod, setActiveInputMethod] = useState<'touch' | 'mouse' | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastEventTimeRef = useRef<number>(0);
+  const lastTouchTimeRef = useRef<number>(0);
+  const lastWordRef = useRef<string>(currentWord);
+
+  // Reset drag state when word changes externally
+  useEffect(() => {
+    if (lastWordRef.current !== currentWord) {
+      console.log('🔄 WordBuilder: Word changed externally, resetting drag state', {
+        oldWord: lastWordRef.current,
+        newWord: currentWord
+      });
+      setDraggedIndex(null);
+      setIsDragging(false);
+      setDragStartPos(null);
+      setDropTargetIndex(null);
+      setActiveInputMethod(null);
+      lastWordRef.current = currentWord;
+    }
+  }, [currentWord]);
 
   // Handle touch events with proper preventDefault support
   useEffect(() => {
@@ -51,15 +71,41 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   }, [isDragging]);
 
   const handleLetterClick = useCallback((index: number) => {
-    if (disabled || isDragging) return;
+    console.log('🔤 WordBuilder handleLetterClick called:', {
+      index,
+      disabled,
+      isDragging,
+      timestamp: Date.now()
+    });
+    
+    if (disabled || isDragging) {
+      console.log('❌ WordBuilder handleLetterClick skipped - disabled or dragging');
+      return;
+    }
+    
+    console.log('📤 WordBuilder calling onLetterClick prop');
     onLetterClick?.(index);
   }, [disabled, isDragging, onLetterClick]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent, index: number) => {
-    if (disabled) return;
+    const now = Date.now();
+    const timeSinceTouch = now - lastTouchTimeRef.current;
+    
+    if (disabled || activeInputMethod === 'touch' || timeSinceTouch < 300) {
+      console.log('🖱️ WordBuilder handleMouseDown skipped:', {
+        disabled,
+        activeInputMethod,
+        timeSinceTouch,
+        reason: disabled ? 'disabled' : activeInputMethod === 'touch' ? 'touch active' : 'touch within 300ms'
+      });
+      return;
+    }
+    
+    console.log('🖱️ WordBuilder handleMouseDown - setting input method to mouse');
+    setActiveInputMethod('mouse');
     setDragStartPos({ x: e.clientX, y: e.clientY });
     setDraggedIndex(index);
-  }, [disabled]);
+  }, [disabled, activeInputMethod]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (draggedIndex !== null && dragStartPos) {
@@ -100,9 +146,39 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     }
   }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
 
-  const handleMouseUp = useCallback(() => {
-    if (draggedIndex !== null) {
+  const handleMouseUp = useCallback((e: React.MouseEvent) => {
+    const now = Date.now();
+    const timeSinceTouch = now - lastTouchTimeRef.current;
+    
+    console.log('🖱️ WordBuilder handleMouseUp:', {
+      timestamp: now,
+      draggedIndex,
+      isDragging,
+      dropTargetIndex,
+      activeInputMethod,
+      timeSinceLastEvent: now - lastEventTimeRef.current,
+      timeSinceTouch,
+      eventType: 'mouse'
+    });
+    
+    e.stopPropagation(); // Prevent bubbling to parent drag handlers
+    
+    if (activeInputMethod !== 'mouse' || timeSinceTouch < 300) {
+      console.log('❌ WordBuilder skipping mouse event:', {
+        activeInputMethod,
+        timeSinceTouch,
+        reason: activeInputMethod !== 'mouse' ? 'not active input method' : 'touch within 300ms'
+      });
+      return;
+    }
+    
+    const eventNow = Date.now();
+    if (draggedIndex !== null && eventNow - lastEventTimeRef.current > 100) {
+      console.log('✅ WordBuilder processing mouse event - conditions met');
+      lastEventTimeRef.current = eventNow;
+      
       if (isDragging && dropTargetIndex !== null && dropTargetIndex !== draggedIndex) {
+        console.log('🔄 WordBuilder handling drag operation');
         // Handle drag operation using the calculated drop target
         const letters = currentWord.split('');
         const [movedLetter] = letters.splice(draggedIndex, 1);
@@ -114,20 +190,31 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
         const newWord = letters.join('');
         onWordChange?.(newWord);
       } else if (!isDragging) {
+        console.log('🎯 WordBuilder handling click operation - calling handleLetterClick');
         // Handle click operation
         handleLetterClick(draggedIndex);
       }
+      
+      // Reset all state including input method
+      setDraggedIndex(null);
+      setIsDragging(false);
+      setDragStartPos(null);
+      setDropTargetIndex(null);
+      setActiveInputMethod(null);
+      console.log('🔄 WordBuilder reset input method to null (mouse end)');
+    } else {
+      console.log('❌ WordBuilder skipping mouse event - conditions not met');
     }
-    
-    // Reset all drag state
-    setDraggedIndex(null);
-    setIsDragging(false);
-    setDragStartPos(null);
-    setDropTargetIndex(null);
-  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick]);
+  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick, activeInputMethod]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent, index: number) => {
     if (disabled) return;
+    
+    // Record touch timestamp for 300ms mouse lockout
+    lastTouchTimeRef.current = Date.now();
+    console.log('👆 WordBuilder handleTouchStart - setting input method to touch, timestamp:', lastTouchTimeRef.current);
+    setActiveInputMethod('touch');
+    
     const touch = e.touches[0];
     setDragStartPos({ x: touch.clientX, y: touch.clientY });
     setDraggedIndex(index);
@@ -173,9 +260,31 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     }
   }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
 
-  const handleTouchEnd = useCallback(() => {
-    if (draggedIndex !== null) {
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    console.log('👆 WordBuilder handleTouchEnd:', {
+      timestamp: Date.now(),
+      draggedIndex,
+      isDragging,
+      dropTargetIndex,
+      activeInputMethod,
+      timeSinceLastEvent: Date.now() - lastEventTimeRef.current,
+      eventType: 'touch'
+    });
+    
+    e.stopPropagation(); // Prevent bubbling to parent drag handlers
+    
+    if (activeInputMethod !== 'touch') {
+      console.log('❌ WordBuilder skipping touch event - not active input method');
+      return;
+    }
+    
+    const eventNow = Date.now();
+    if (draggedIndex !== null && eventNow - lastEventTimeRef.current > 100) {
+      console.log('✅ WordBuilder processing touch event - conditions met');
+      lastEventTimeRef.current = eventNow;
+      
       if (isDragging && dropTargetIndex !== null && dropTargetIndex !== draggedIndex) {
+        console.log('🔄 WordBuilder handling touch drag operation');
         // Handle drag operation using the calculated drop target
         const letters = currentWord.split('');
         const [movedLetter] = letters.splice(draggedIndex, 1);
@@ -187,17 +296,22 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
         const newWord = letters.join('');
         onWordChange?.(newWord);
       } else if (!isDragging) {
+        console.log('🎯 WordBuilder handling touch tap operation - calling handleLetterClick');
         // Handle tap operation
         handleLetterClick(draggedIndex);
       }
+      
+      // Reset all state including input method
+      setDraggedIndex(null);
+      setIsDragging(false);
+      setDragStartPos(null);
+      setDropTargetIndex(null);
+      setActiveInputMethod(null);
+      console.log('🔄 WordBuilder reset input method to null (touch end)');
+    } else {
+      console.log('❌ WordBuilder skipping touch event - conditions not met');
     }
-    
-    // Reset all drag state
-    setDraggedIndex(null);
-    setIsDragging(false);
-    setDragStartPos(null);
-    setDropTargetIndex(null);
-  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick]);
+  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick, activeInputMethod]);
 
   return (
     <div 

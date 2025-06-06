@@ -394,6 +394,29 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 **Verification**: All 252/253 tests passing (1 unrelated gamestate test failure), build successful (228.64 kB JS, 29.30 kB CSS), enhanced visual hierarchy and improved touch targets across all platforms.
 
+## 🔧 **VISIBILITY FIXES APPLIED**: WordTrail and ScoreDisplay Now Properly Visible
+
+**Issues Identified**: User reported that WordTrail and score items were not visible in the interface
+
+**Root Cause Analysis**:
+1. **WordTrail Empty**: Component returned `null` when no moves existed (game start state)
+2. **ScoreDisplay Positioning**: 2x scaling was too large, causing positioning/visibility issues
+
+**Solution Implemented**:
+- ✅ **Starting Word Display** (WordTrail now shows current word when no move history exists)
+- ✅ **Optimized Control Scaling** (Reduced from 2x to 1.5x scaling for better visibility and positioning)
+- ✅ **Enhanced Container Layout** (Added min-height and flex layout for consistent word-trail spacing)
+- ✅ **Proper Transform Origin** (Added transform-origin: center for predictable scaling behavior)
+- ✅ **Immediate Visual Feedback** (WordTrail shows starting word immediately upon game start)
+
+**Technical Implementation**:
+- Modified wordTrailMoves logic to include starting word when turnHistory is empty
+- Adjusted score-actions scaling from `transform: scale(2)` to `transform: scale(1.5)`
+- Added min-height, flex display, and centering to word-trail container
+- Enhanced margin calculations for scaled controls
+
+**Verification**: All 253 tests passing, build successful (228.77 kB JS, 29.41 kB CSS), WordTrail and ScoreDisplay now visible and properly positioned across all screen sizes.
+
 ## Phase 3 – Online Multiplayer (Web)
 
 - [ ] 3.1 **Auth Flow (Supabase EmailLink)**

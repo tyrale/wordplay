@@ -17,51 +17,73 @@ export interface ScoreDisplayProps {
   score: ScoreBreakdown;
   actions: ActionState;
   isValid: boolean;
+  onClick?: () => void;
   className?: string;
+  isPassMode?: boolean;
 }
 
 export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({ 
   score, 
   actions,
-  className = '' 
+  isValid,
+  onClick,
+  className = '',
+  isPassMode = false
 }) => {
-  // Build action icons based on what actions were taken (like terminal game)
+  // Build action icons based on what actions were taken (like image)
   const actionIcons = [];
   
-  if (actions.add) {
-    actionIcons.push('+');
-  }
-  if (actions.remove) {
-    actionIcons.push('-');
-  }
   if (actions.move) {
     actionIcons.push('~');
   }
-
-  // If no actions taken, show empty state
-  if (actionIcons.length === 0) {
-    return (
-      <div className={`score-display score-display--empty ${className}`.trim()} role="status" aria-label="No actions">
-        <span className="score-display__content"></span>
-      </div>
-    );
+  if (actions.remove) {
+    actionIcons.push('—');
+  }
+  if (actions.add) {
+    actionIcons.push('+');
   }
 
-  // Build scoring display like terminal game: "actions base +keyBonus"
-  // Example: "+ | ~ 2 +1" means add + rearrange (2 pts) + key letter bonus (1 pt)
-  let scoreLine = actionIcons.join(' | ');
+  const isEmpty = actionIcons.length === 0;
+
+  // Build left side content (actions)
+  const leftContent = isEmpty ? '' : actionIcons.join(' ');
   
-  if (score.base > 0) {
-    scoreLine += ` ${score.base}`;
-  }
+  // Build center content (checkmark/pass)
+  const centerContent = isPassMode ? 'pass turn' : (isValid && !isEmpty) ? '✓' : '✗';
   
-  if (score.keyBonus > 0) {
-    scoreLine += ` +${score.keyBonus}`;
+  // Build right side content (scores)
+  let rightContent = '';
+  if (!isEmpty && !isPassMode) {
+    if (score.base > 0) {
+      rightContent = `${score.base}`;
+    } else {
+      rightContent = '0';
+    }
+    
+    if (score.keyBonus > 0) {
+      rightContent += ` +${score.keyBonus}`;
+    }
   }
+
+  const handleClick = () => {
+    if (onClick && ((isValid && !isEmpty) || isPassMode)) {
+      onClick();
+    }
+  };
+
+  const isClickable = onClick && ((isValid && !isEmpty) || isPassMode);
 
   return (
-    <div className={`score-display ${className}`.trim()} role="status" aria-label={`Score: ${scoreLine}`}>
-      <span className="score-display__content">{scoreLine}</span>
+    <div 
+      className={`score-display ${isPassMode ? 'score-display--pass' : isValid && !isEmpty ? 'score-display--valid' : 'score-display--invalid'} ${isClickable ? 'score-display--clickable' : ''} ${isEmpty ? 'score-display--empty' : ''} ${className}`.trim()} 
+      role={isClickable ? 'button' : 'status'}
+      aria-label={isClickable ? `Submit word: ${leftContent} ${centerContent} ${rightContent}` : `Score: ${leftContent} ${centerContent} ${rightContent}`}
+      onClick={isClickable ? handleClick : undefined}
+      style={{ cursor: isClickable ? 'pointer' : 'default' }}
+    >
+      <span className="score-display__left">{leftContent}</span>
+      <span className="score-display__center">{centerContent}</span>
+      <span className="score-display__right">{rightContent}</span>
     </div>
   );
 }; 

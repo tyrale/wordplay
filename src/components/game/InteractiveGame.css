@@ -1,21 +1,21 @@
 .interactive-game {
   width: 100%;
-  max-width: 800px;
+  height: 100vh;
   margin: 0 auto;
   padding: var(--spacing-md);
   font-family: var(--theme-font-family);
   color: var(--theme-text);
   background-color: var(--theme-background);
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow: hidden;
 }
 
-/* Debug button in top left */
+/* Debug button in bottom left */
 .interactive-game__debug-btn {
-  position: absolute;
-  top: var(--spacing-sm);
+  position: fixed;
+  bottom: var(--spacing-sm);
   left: var(--spacing-sm);
   width: 44px;
   height: 44px;
@@ -146,12 +146,83 @@
   font-weight: var(--theme-font-weight);
 }
 
-/* Main game board */
+/* Main game board - centered layout */
 .interactive-game__board {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* Centered game container */
+.interactive-game__centered-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+}
+
+/* Submit anchor - the absolute center point */
+.interactive-game__submit-anchor {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Word trail positioned above word builder */
+.interactive-game__word-trail-positioned {
+  position: absolute;
+  bottom: calc(100% + 100px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  text-align: center;
+}
+
+/* Apply same sizing to positioned word trail */
+.interactive-game__word-trail-positioned .word-trail__word {
+  font-size: 32px;
+}
+
+@media (max-width: 768px) {
+  .interactive-game__word-trail-positioned .word-trail__word {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .interactive-game__word-trail-positioned .word-trail__word {
+    font-size: 24px;
+  }
+}
+
+/* Word builder positioned above submit anchor */
+.interactive-game__word-builder-positioned {
+  position: absolute;
+  bottom: calc(100% + 20px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  text-align: center;
+}
+
+/* Letter grid positioned below submit anchor */
+.interactive-game__grid-positioned {
+  position: absolute;
+  top: calc(100% + 30px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  text-align: center;
 }
 
 .interactive-game__word-section {
@@ -166,21 +237,21 @@
   justify-content: center;
 }
 
-/* Scale word trail letters to 70% of word builder size */
+/* Scale word trail letters to be smaller than grid letters */
 .interactive-game__word-trail .word-trail__word {
-  font-size: calc(64px * 0.7); /* 70% of word builder font size */
+  font-size: 32px; /* Smaller than 2x grid letters */
 }
 
 /* Responsive sizing for word trail */
 @media (max-width: 768px) {
   .interactive-game__word-trail .word-trail__word {
-    font-size: calc(48px * 0.7);
+    font-size: 28px;
   }
 }
 
 @media (max-width: 480px) {
   .interactive-game__word-trail .word-trail__word {
-    font-size: calc(40px * 0.7);
+    font-size: 24px;
   }
 }
 
@@ -213,8 +284,8 @@
   flex-wrap: nowrap;
   white-space: nowrap;
   transform: scale(1.5);
-  margin: calc(var(--spacing-lg) * 1.5) 0;
-  transform-origin: center;
+  transform-origin: center center;
+  position: relative;
 }
 
 .interactive-game__score,
@@ -256,7 +327,6 @@
 .interactive-game__grid {
   display: flex;
   justify-content: center;
-  margin-top: var(--spacing-md);
 }
 
 /* Debug info */

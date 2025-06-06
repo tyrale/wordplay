@@ -1,8 +1,8 @@
 .grid-cell {
   /* Base styles */
   position: relative;
-  width: 56px;
-  height: 56px;
+  width: 112px;
+  height: 112px;
   border: 2px solid transparent;
   border-radius: 8px;
   cursor: default;
@@ -19,7 +19,7 @@
   /* Typography from theme */
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: var(--theme-font-size-md);
+  font-size: calc(var(--theme-font-size-md) * 2);
   
   /* Layout */
   display: flex;
@@ -37,9 +37,7 @@
 
 /* Key letter state */
 .grid-cell--key {
-  background-color: var(--theme-accent);
-  color: var(--theme-accent-text);
-  border-color: var(--theme-accent);
+  color: var(--theme-accent);
 }
 
 /* Locked letter state */
@@ -61,11 +59,7 @@
   cursor: pointer;
 }
 
-.grid-cell--interactive:hover,
-.grid-cell--draggable:hover {
-  background-color: var(--theme-surface-hover);
-  transform: translateY(-1px);
-}
+
 
 .grid-cell--interactive:active,
 .grid-cell--draggable:active {
@@ -74,15 +68,11 @@
 
 /* Action buttons (special bottom row) */
 .grid-cell--action {
-  background-color: var(--theme-surface);
-  color: var(--theme-text-secondary);
-  font-size: var(--theme-font-size-lg);
+  color: var(--theme-accent);
+  font-size: calc(var(--theme-font-size-lg) * 2);
 }
 
-.grid-cell--action.grid-cell--interactive:hover {
-  color: var(--theme-text);
-  background-color: var(--theme-surface-hover);
-}
+
 
 /* Content positioning */
 .grid-cell__content {
@@ -104,22 +94,21 @@
   pointer-events: none;
 }
 
-/* Focus styles for accessibility */
+/* Focus styles removed per design requirements */
 .grid-cell:focus {
-  outline: 2px solid var(--theme-accent);
-  outline-offset: 2px;
+  outline: none;
 }
 
 /* Responsive sizing */
 @media (max-width: 768px) {
   .grid-cell {
-    width: 48px;
-    height: 48px;
-    font-size: var(--theme-font-size-sm);
+    width: 96px;
+    height: 96px;
+    font-size: calc(var(--theme-font-size-sm) * 2);
   }
   
   .grid-cell--action {
-    font-size: var(--theme-font-size-md);
+    font-size: calc(var(--theme-font-size-md) * 2);
   }
   
   .grid-cell__lock {
@@ -131,8 +120,8 @@
 
 @media (max-width: 480px) {
   .grid-cell {
-    width: 44px;
-    height: 44px;
+    width: 60px;
+    height: 60px;
   }
 }
 
@@ -154,10 +143,7 @@
     transition: none;
   }
   
-  .grid-cell--interactive:hover,
-  .grid-cell--draggable:hover {
-    transform: none;
-  }
+
 }
 
 /* Draggable state */
@@ -180,9 +166,7 @@
 }
 
 /* Drag feedback states */
-.grid-cell--draggable[draggable="true"]:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
+
 
 .grid-cell[draggable="true"]:active {
   opacity: 0.7;

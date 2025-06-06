@@ -1,69 +1,45 @@
 .word-trail {
   width: 100%;
-  padding: var(--spacing-sm) 0;
+  position: relative;
 }
 
-.word-trail__expand-btn,
-.word-trail__collapse-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
-  background-color: var(--theme-surface);
-  color: var(--theme-text-secondary);
-  border: 1px solid var(--theme-surface);
-  border-radius: 16px;
-  font-family: var(--theme-font-family);
-  font-weight: var(--theme-font-weight);
-  font-size: var(--theme-font-size-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.word-trail__expand-btn:hover,
-.word-trail__collapse-btn:hover {
-  background-color: var(--theme-surface-hover);
-  color: var(--theme-text);
-}
-
-.word-trail__list {
+.word-trail__container {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-sm);
-  line-height: 1.4;
-}
-
-.word-trail__item {
-  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: var(--spacing-xs);
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Hide scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
-.word-trail__item--clickable {
+/* Hide scrollbar for Chrome, Safari and Opera */
+.word-trail__container::-webkit-scrollbar {
+  display: none;
+}
+
+.word-trail__line {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.word-trail__line--clickable {
   cursor: pointer;
 }
 
-.word-trail__item--player-human {
+.word-trail__line--player-human {
   color: var(--theme-accent);
 }
 
-.word-trail__item--player-bot {
+.word-trail__line--player-bot {
   color: var(--theme-text-secondary);
-}
-
-.word-trail__separator {
-  color: var(--theme-text-secondary);
-  font-weight: var(--theme-font-weight);
-  font-size: var(--theme-font-size-sm);
-  margin: 0 var(--spacing-xs);
-}
-
-.word-trail__word-container {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  flex-wrap: wrap;
 }
 
 .word-trail__word {
@@ -72,26 +48,29 @@
   font-size: var(--theme-font-size-lg);
   color: var(--theme-text);
   letter-spacing: 0.05em;
+  text-align: center;
   transition: color 0.2s ease;
 }
 
-.word-trail__item--clickable .word-trail__word {
+.word-trail__line--clickable .word-trail__word {
   cursor: pointer;
   border-radius: 4px;
   padding: var(--spacing-xs) var(--spacing-sm);
 }
 
-.word-trail__item--clickable .word-trail__word:hover {
+.word-trail__line--clickable .word-trail__word:hover {
   background-color: var(--theme-surface-hover);
   color: var(--theme-accent);
 }
 
-.word-trail__item--clickable .word-trail__word:focus {
+.word-trail__line--clickable .word-trail__word:focus {
   outline: 2px solid var(--theme-accent);
   outline-offset: 2px;
 }
 
 .word-trail__score {
+  position: absolute;
+  right: 10px;
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
   font-size: var(--theme-font-size-sm);
@@ -103,144 +82,44 @@
   text-align: center;
 }
 
-.word-trail__turn {
-  font-family: var(--theme-font-family);
-  font-weight: var(--theme-font-weight);
-  font-size: var(--theme-font-size-sm);
-  color: var(--theme-text-secondary);
-  background-color: var(--theme-surface);
-  padding: 2px var(--spacing-xs);
-  border-radius: 8px;
-  min-width: 20px;
-  text-align: center;
-}
-
-.word-trail__actions {
-  display: flex;
-  gap: 2px;
-  align-items: center;
-}
-
-.word-trail__action {
-  font-family: var(--theme-font-family);
-  font-weight: var(--theme-font-weight);
-  font-size: var(--theme-font-size-sm);
-  color: var(--theme-text-secondary);
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background-color: var(--theme-surface);
-}
-
-.word-trail__stats {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: var(--spacing-md);
-  padding-top: var(--spacing-sm);
-  border-top: 1px solid var(--theme-surface);
-  font-family: var(--theme-font-family);
-  font-weight: var(--theme-font-weight);
-  font-size: var(--theme-font-size-sm);
-  color: var(--theme-text-secondary);
-}
-
-.word-trail__count {
-  color: var(--theme-text);
-}
-
-.word-trail__total-score {
-  color: var(--theme-accent);
-  font-weight: var(--theme-font-weight);
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
-  .word-trail {
-    padding: var(--spacing-xs) 0;
-  }
-  
-  .word-trail__list {
-    gap: var(--spacing-xs);
+  .word-trail__container {
+    max-height: 150px;
+    gap: calc(var(--spacing-xs) / 2);
   }
   
   .word-trail__word {
     font-size: var(--theme-font-size-md);
   }
   
-  .word-trail__word-container {
-    gap: 2px;
-  }
-  
-  .word-trail__score,
-  .word-trail__turn {
+  .word-trail__score {
     font-size: 12px;
     padding: 1px 4px;
-  }
-  
-  .word-trail__action {
-    width: 14px;
-    height: 14px;
-    font-size: 10px;
-  }
-  
-  .word-trail__stats {
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    text-align: center;
   }
 }
 
 @media (max-width: 480px) {
-  .word-trail__list {
-    justify-content: center;
-  }
-  
-  .word-trail__item {
-    margin-bottom: var(--spacing-xs);
+  .word-trail__container {
+    max-height: 120px;
   }
   
   .word-trail__word {
     font-size: var(--theme-font-size-sm);
   }
-  
-  .word-trail__separator {
-    display: none;
-  }
-  
-  .word-trail__item::after {
-    content: "";
-    width: 100%;
-    height: 1px;
-    background-color: var(--theme-surface);
-    margin: var(--spacing-xs) 0;
-  }
-  
-  .word-trail__item:last-child::after {
-    display: none;
-  }
 }
 
-/* High contrast mode */
 @media (prefers-contrast: high) {
-  .word-trail__score,
-  .word-trail__turn,
-  .word-trail__action {
-    border: 1px solid var(--theme-text-secondary);
+  .word-trail__score {
+    border: 1px solid var(--theme-accent);
   }
   
-  .word-trail__item--clickable .word-trail__word:hover {
+  .word-trail__line--clickable .word-trail__word:hover {
     border: 2px solid var(--theme-accent);
   }
 }
 
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .word-trail__expand-btn,
-  .word-trail__collapse-btn,
   .word-trail__word {
     transition: none;
   }

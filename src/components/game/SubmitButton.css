@@ -40,6 +40,22 @@
   cursor: not-allowed;
 }
 
+/* Pass mode state */
+.submit-button--pass {
+  color: var(--theme-accent);
+  font-size: var(--theme-font-size-sm);
+  text-transform: lowercase;
+  cursor: pointer;
+}
+
+.submit-button--pass:hover {
+  opacity: 0.8;
+}
+
+.submit-button--pass:active {
+  transform: scale(0.95);
+}
+
 .submit-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;

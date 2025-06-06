@@ -4,7 +4,6 @@
   gap: var(--spacing-xs, 6px);
   align-items: center;
   max-width: 100%;
-  padding: 0 20px;
 }
 
 .alphabet-grid__row {
@@ -17,7 +16,6 @@
 @media (max-width: 768px) {
   .alphabet-grid {
     gap: calc(var(--spacing-xs, 6px) / 2);
-    padding: 0 20px;
   }
   
   .alphabet-grid__row {

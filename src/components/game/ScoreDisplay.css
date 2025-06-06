@@ -1,16 +1,109 @@
 .score-display {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  min-width: 120px;
 }
 
-.score-display__breakdown {
-  /* Typography from theme */
+.score-display__left {
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: var(--theme-font-size-md);
-  color: var(--theme-text);
-  
-  /* Layout */
-  padding: 0 var(--spacing-sm, 8px);
+  font-size: 64px;
+  color: var(--theme-accent);
   white-space: nowrap;
-} 
+  letter-spacing: 0.1em;
+  text-align: right;
+  justify-self: end;
+}
+
+.score-display__center {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 64px;
+  color: var(--theme-accent);
+  white-space: nowrap;
+  letter-spacing: 0.1em;
+  text-align: center;
+  justify-self: center;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-display__right {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 64px;
+  color: var(--theme-accent);
+  white-space: nowrap;
+  letter-spacing: 0.1em;
+  text-align: left;
+  justify-self: start;
+}
+
+.score-display--valid {
+  border: none;
+}
+
+.score-display--invalid {
+  border: none;
+}
+
+.score-display--pass {
+  border: none;
+}
+
+.score-display--pass .score-display__center {
+  color: var(--theme-accent);
+  text-transform: lowercase;
+}
+
+.score-display--clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+
+
+.score-display--clickable:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.score-display--empty {
+  opacity: 0.5;
+  border: 2px solid transparent;
+}
+
+.score-display--empty .score-display__center {
+  color: var(--theme-text);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .score-display__left,
+  .score-display__center,
+  .score-display__right {
+    font-size: 48px;
+  }
+}
+
+@media (max-width: 480px) {
+  .score-display {
+    padding: var(--spacing-xs);
+    min-width: 100px;
+  }
+  
+  .score-display__left,
+  .score-display__center,
+  .score-display__right {
+    font-size: 36px;
+  }
+}
+
+ 

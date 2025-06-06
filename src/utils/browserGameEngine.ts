@@ -251,16 +251,89 @@ export class LocalGameStateManager {
       };
     }
 
+    // Detect what actions were taken using character frequency analysis
+    const actions = [];
+    const currentWordUpper = this.state.currentWord.toUpperCase();
+    const newWordUpper = newWord.toUpperCase();
+    
+    // Create character frequency maps
+    const currentFreq = new Map<string, number>();
+    const newFreq = new Map<string, number>();
+    
+    currentWordUpper.split('').forEach((char: string) => {
+      currentFreq.set(char, (currentFreq.get(char) || 0) + 1);
+    });
+    
+    newWordUpper.split('').forEach((char: string) => {
+      newFreq.set(char, (newFreq.get(char) || 0) + 1);
+    });
+    
+    // Find added and removed letters
+    const addedLetters: string[] = [];
+    const removedLetters: string[] = [];
+    
+    const allChars = new Set([...currentFreq.keys(), ...newFreq.keys()]);
+    
+    allChars.forEach((char: string) => {
+      const currentCount = currentFreq.get(char) || 0;
+      const newCount = newFreq.get(char) || 0;
+      const diff = newCount - currentCount;
+      
+      if (diff > 0) {
+        // Letter was added
+        for (let i = 0; i < diff; i++) {
+          addedLetters.push(char);
+        }
+      } else if (diff < 0) {
+        // Letter was removed
+        for (let i = 0; i < Math.abs(diff); i++) {
+          removedLetters.push(char);
+        }
+      }
+    });
+    
+    // Check if letters were rearranged (same letters, different order)
+    const isRearranged = currentWordUpper.length === newWordUpper.length && 
+                        addedLetters.length === 0 && 
+                        removedLetters.length === 0 && 
+                        currentWordUpper !== newWordUpper;
+    
+    // Score calculation
+    let addLetterPoints = 0;
+    let removeLetterPoints = 0;
+    let rearrangePoints = 0;
+    
+    if (addedLetters.length > 0) {
+      addLetterPoints = 1;
+      actions.push('add');
+    }
+    
+    if (removedLetters.length > 0) {
+      removeLetterPoints = 1;
+      actions.push('remove');
+    }
+    
+    if (isRearranged) {
+      rearrangePoints = 1;
+      actions.push('rearrange');
+    }
+    
+    // Check for key letter usage
+    const keyLettersUsed = this.state.keyLetters.filter((letter: string) => newWordUpper.includes(letter));
+    const keyLetterUsagePoints = keyLettersUsed.length > 0 ? 1 : 0;
+    
+    const totalScore = addLetterPoints + removeLetterPoints + rearrangePoints + keyLetterUsagePoints;
+    
     const scoringResult: ScoringResult = {
-      totalScore: 1,
+      totalScore,
       breakdown: {
-        addLetterPoints: newWord.length > this.state.currentWord.length ? 1 : 0,
-        removeLetterPoints: newWord.length < this.state.currentWord.length ? 1 : 0,
-        rearrangePoints: newWord.length === this.state.currentWord.length ? 1 : 0,
-        keyLetterUsagePoints: this.state.keyLetters.some((letter: string) => newWord.includes(letter)) ? 1 : 0,
+        addLetterPoints,
+        removeLetterPoints,
+        rearrangePoints,
+        keyLetterUsagePoints,
       },
-      actions: ['move'],
-      keyLettersUsed: this.state.keyLetters.filter((letter: string) => newWord.includes(letter))
+      actions,
+      keyLettersUsed
     };
 
     console.log('Move attempt successful:', { newWord, scoringResult });
