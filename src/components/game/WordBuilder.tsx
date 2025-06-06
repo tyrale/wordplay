@@ -83,9 +83,16 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       return;
     }
     
+    // Check if this letter is locked (either regular locked or locked key letter)
+    const highlight = wordHighlights.find(h => h.index === index);
+    if (highlight?.type === 'locked' || highlight?.type === 'lockedKey') {
+      console.log('❌ WordBuilder handleLetterClick skipped - letter is locked');
+      return;
+    }
+    
     console.log('📤 WordBuilder calling onLetterClick prop');
     onLetterClick?.(index);
-  }, [disabled, isDragging, onLetterClick]);
+  }, [disabled, isDragging, onLetterClick, wordHighlights]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent, index: number) => {
     const now = Date.now();
@@ -363,7 +370,9 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
               }}
             >
               {letter}
-              {(isLocked || isLockedKey) && ' 🔒'}
+              {(isLocked || isLockedKey) && (
+                <span className="word-builder__lock-badge">🔒</span>
+              )}
             </span>
             
             {/* Drop indicator after the last letter */}

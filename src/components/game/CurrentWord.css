@@ -35,19 +35,17 @@
 .current-word__letter--lockedKey {
   color: var(--theme-accent);
   font-weight: bold;
-  background-color: var(--theme-locked);
-  padding: 0.05em 0.1em;
-  border-radius: 0.1em;
 }
 
-/* Lock icon for locked letters */
+/* Lock icon for locked letters - positioned as badge */
 .current-word__lock {
   position: absolute;
-  bottom: -0.2em;
-  left: -0.1em;
+  bottom: -0.1em;
+  right: -0.1em;
   font-size: 0.3em;
-  color: var(--theme-locked);
+  opacity: 0.9;
   pointer-events: none;
+  z-index: 1;
 }
 
 /* Responsive typography */

@@ -42,16 +42,12 @@
 
 /* Locked letter state */
 .grid-cell--locked {
-  background-color: var(--theme-locked);
-  color: var(--theme-accent-text);
-  border-color: var(--theme-locked);
+  color: var(--theme-locked);
 }
 
 /* Locked key letter state (key letter that became locked) */
 .grid-cell--lockedKey {
-  background-color: var(--theme-locked);
   color: var(--theme-accent);
-  border-color: var(--theme-accent);
   font-weight: bold;
 }
 
@@ -92,14 +88,15 @@
   pointer-events: none;
 }
 
-/* Lock icon positioning */
+/* Lock icon positioning - badge style */
 .grid-cell__lock {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
-  font-size: 12px;
-  opacity: 0.8;
+  bottom: 4px;
+  right: 4px;
+  font-size: 14px;
+  opacity: 0.9;
   pointer-events: none;
+  z-index: 1;
 }
 
 /* Focus styles removed per design requirements */

@@ -21,18 +21,27 @@
 
 .word-builder__letter--locked {
   color: var(--theme-locked);
+  position: relative;
 }
 
 .word-builder__letter--lockedKey {
   color: var(--theme-accent);
   font-weight: bold;
-  background-color: var(--theme-locked);
-  padding: 0.05em 0.1em;
-  border-radius: 0.1em;
+  position: relative;
 }
 
 .word-builder__letter--dragging {
   opacity: 0.5;
+}
+
+.word-builder__lock-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  font-size: 16px;
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .word-builder__drop-indicator {
@@ -62,6 +71,12 @@
   .word-builder__drop-indicator {
     font-size: 48px;
   }
+  
+  .word-builder__lock-badge {
+    font-size: 12px;
+    bottom: -1px;
+    right: -1px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -71,6 +86,12 @@
   
   .word-builder__drop-indicator {
     font-size: 40px;
+  }
+  
+  .word-builder__lock-badge {
+    font-size: 10px;
+    bottom: 0px;
+    right: 0px;
   }
 }
 
