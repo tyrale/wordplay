@@ -29,6 +29,12 @@ export const AnimationProvider: React.FC<AnimationProviderProps> = ({
 
   // Check for reduced motion preference
   useEffect(() => {
+    // Handle test environment where matchMedia might not exist
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      setIsReducedMotion(false);
+      return;
+    }
+
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     setIsReducedMotion(mediaQuery.matches);
 
@@ -45,13 +51,20 @@ export const AnimationProvider: React.FC<AnimationProviderProps> = ({
     const theme = getThemeByName(themeName);
     if (theme) {
       setCurrentTheme(theme);
-      // Save to localStorage for persistence
-      localStorage.setItem('wordplay-animation-theme', themeName);
+      // Save to localStorage for persistence (if available)
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('wordplay-animation-theme', themeName);
+      }
     }
   }, []);
 
   // Load saved theme from localStorage
   useEffect(() => {
+    // Handle environments where localStorage might not exist
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return;
+    }
+
     const savedTheme = localStorage.getItem('wordplay-animation-theme');
     if (savedTheme && getThemeByName(savedTheme)) {
       setTheme(savedTheme);
@@ -104,13 +117,15 @@ export const AnimationProvider: React.FC<AnimationProviderProps> = ({
       // Add element to active animations
       setActiveAnimations(prev => new Set(prev).add(element));
 
-      // Generate and inject CSS keyframes if needed
-      const styleId = `animation-${animation.name}`;
-      if (!document.getElementById(styleId)) {
-        const style = document.createElement('style');
-        style.id = styleId;
-        style.textContent = generateCSSAnimation(animation);
-        document.head.appendChild(style);
+      // Generate and inject CSS keyframes if needed (skip in test environment)
+      if (typeof document !== 'undefined') {
+        const styleId = `animation-${animation.name}`;
+        if (!document.getElementById(styleId)) {
+          const style = document.createElement('style');
+          style.id = styleId;
+          style.textContent = generateCSSAnimation(animation);
+          document.head.appendChild(style);
+        }
       }
 
       // Apply animation to element
