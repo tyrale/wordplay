@@ -28,6 +28,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleLetterClick = useCallback((index: number) => {
@@ -42,16 +43,43 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   }, [disabled]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (draggedIndex !== null && dragStartPos && !isDragging) {
+    if (draggedIndex !== null && dragStartPos) {
       const deltaX = Math.abs(e.clientX - dragStartPos.x);
       const deltaY = Math.abs(e.clientY - dragStartPos.y);
       
       // Start dragging if moved more than 5 pixels
-      if (deltaX > 5 || deltaY > 5) {
+      if (!isDragging && (deltaX > 5 || deltaY > 5)) {
         setIsDragging(true);
       }
+      
+      // Update drop target during drag
+      if (isDragging && containerRef.current) {
+        const elements = containerRef.current.querySelectorAll('[data-letter-index]');
+        let newDropTarget = null;
+        
+        for (let i = 0; i < elements.length; i++) {
+          const element = elements[i] as HTMLElement;
+          const rect = element.getBoundingClientRect();
+          const elementCenter = rect.left + rect.width / 2;
+          
+          if (e.clientX < elementCenter) {
+            newDropTarget = i;
+            break;
+          }
+        }
+        
+        // If no element found, drop at the end
+        if (newDropTarget === null) {
+          newDropTarget = currentWord.length;
+        }
+        
+        // Don't set drop target to the same position as dragged letter
+        if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1) {
+          setDropTargetIndex(newDropTarget);
+        }
+      }
     }
-  }, [draggedIndex, dragStartPos, isDragging]);
+  }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
     if (draggedIndex !== null) {
@@ -89,6 +117,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     setDraggedIndex(null);
     setIsDragging(false);
     setDragStartPos(null);
+    setDropTargetIndex(null);
   }, [draggedIndex, isDragging, currentWord, onWordChange, handleLetterClick]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent, index: number) => {
@@ -99,17 +128,45 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   }, [disabled]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (draggedIndex !== null && dragStartPos && !isDragging) {
+    if (draggedIndex !== null && dragStartPos) {
       const touch = e.touches[0];
       const deltaX = Math.abs(touch.clientX - dragStartPos.x);
       const deltaY = Math.abs(touch.clientY - dragStartPos.y);
       
       // Start dragging if moved more than 5 pixels
-      if (deltaX > 5 || deltaY > 5) {
+      if (!isDragging && (deltaX > 5 || deltaY > 5)) {
         setIsDragging(true);
       }
+      
+      // Update drop target during drag
+      if (isDragging && containerRef.current) {
+        e.preventDefault(); // Prevent scrolling
+        const elements = containerRef.current.querySelectorAll('[data-letter-index]');
+        let newDropTarget = null;
+        
+        for (let i = 0; i < elements.length; i++) {
+          const element = elements[i] as HTMLElement;
+          const rect = element.getBoundingClientRect();
+          const elementCenter = rect.left + rect.width / 2;
+          
+          if (touch.clientX < elementCenter) {
+            newDropTarget = i;
+            break;
+          }
+        }
+        
+        // If no element found, drop at the end
+        if (newDropTarget === null) {
+          newDropTarget = currentWord.length;
+        }
+        
+        // Don't set drop target to the same position as dragged letter
+        if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1) {
+          setDropTargetIndex(newDropTarget);
+        }
+      }
     }
-  }, [draggedIndex, dragStartPos, isDragging]);
+  }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     if (draggedIndex !== null) {
@@ -148,6 +205,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     setDraggedIndex(null);
     setIsDragging(false);
     setDragStartPos(null);
+    setDropTargetIndex(null);
   }, [draggedIndex, isDragging, currentWord, onWordChange, handleLetterClick]);
 
   return (
@@ -165,27 +223,49 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
         const isKey = highlight?.type === 'key';
         const isLocked = highlight?.type === 'locked';
         const isCurrentlyDragging = draggedIndex === index;
+        const showDropIndicatorBefore = isDragging && dropTargetIndex === index;
+        const showDropIndicatorAfter = isDragging && dropTargetIndex === currentWord.length && index === currentWord.length - 1;
         
         return (
-          <span
-            key={`${letter}-${index}`}
-            data-letter-index={index}
-            className={[
-              'word-builder__letter',
-              isKey && 'word-builder__letter--key',
-              isLocked && 'word-builder__letter--locked',
-              isCurrentlyDragging && isDragging && 'word-builder__letter--dragging'
-            ].filter(Boolean).join(' ')}
-            onMouseDown={(e) => handleMouseDown(e, index)}
-            onTouchStart={(e) => handleTouchStart(e, index)}
-            style={{
-              opacity: isCurrentlyDragging && isDragging ? 0.5 : 1,
-              cursor: disabled ? 'default' : 'grab'
-            }}
-          >
-            {letter}
-            {isLocked && ' 🔒'}
-          </span>
+          <React.Fragment key={`${letter}-${index}`}>
+            {/* Drop indicator before this letter */}
+            {showDropIndicatorBefore && (
+              <span className="word-builder__drop-indicator">
+                |
+              </span>
+            )}
+            
+            <span
+              data-letter-index={index}
+              className={[
+                'word-builder__letter',
+                isKey && 'word-builder__letter--key',
+                isLocked && 'word-builder__letter--locked',
+                isCurrentlyDragging && isDragging && 'word-builder__letter--dragging'
+              ].filter(Boolean).join(' ')}
+              onMouseDown={(e) => handleMouseDown(e, index)}
+              onTouchStart={(e) => handleTouchStart(e, index)}
+              style={{
+                opacity: isCurrentlyDragging && isDragging ? 0.5 : 1,
+                cursor: disabled ? 'default' : 'grab',
+                transform: isDragging && dropTargetIndex !== null ? 
+                  (index > dropTargetIndex && (draggedIndex === null || index > draggedIndex) ? 'translateX(16px)' :
+                   index >= dropTargetIndex && draggedIndex !== null && index < draggedIndex ? 'translateX(16px)' :
+                   'translateX(0)') : 'translateX(0)',
+                transition: 'transform 0.2s ease'
+              }}
+            >
+              {letter}
+              {isLocked && ' 🔒'}
+            </span>
+            
+            {/* Drop indicator after the last letter */}
+            {showDropIndicatorAfter && (
+              <span className="word-builder__drop-indicator">
+                |
+              </span>
+            )}
+          </React.Fragment>
         );
       })}
     </div>

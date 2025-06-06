@@ -8,7 +8,7 @@ import { SubmitButton } from './SubmitButton';
 import { ScoreDisplay } from './ScoreDisplay';
 import { WordBuilder } from './WordBuilder';
 import { DebugDialog } from './DebugDialog';
-import { SimpleDragTest } from './SimpleDragTest';
+
 import { isValidDictionaryWord, initializeDictionary, isDictionaryLoaded } from '../../utils/browserDictionary';
 import type { GameConfig, MoveAttempt } from '../../utils/browserGameEngine';
 import type { LetterState, ScoreBreakdown, LetterHighlight, WordMove } from '../index';
@@ -480,7 +480,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
           )}
 
           {/* Simple drag test */}
-          <SimpleDragTest />
+          
         </div>
       )}
 

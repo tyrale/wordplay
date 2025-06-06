@@ -10,7 +10,7 @@
 .word-builder__letter {
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: 32px;
+  font-size: 64px;
   color: var(--theme-text);
   transition: opacity 0.2s ease;
 }
@@ -27,6 +27,20 @@
   opacity: 0.5;
 }
 
+.word-builder__drop-indicator {
+  color: var(--theme-accent);
+  font-weight: bold;
+  font-size: 64px;
+  margin: 0 4px;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .word-builder {
@@ -34,13 +48,21 @@
   }
   
   .word-builder__letter {
-    font-size: var(--theme-font-size-sm);
+    font-size: 48px;
+  }
+  
+  .word-builder__drop-indicator {
+    font-size: 48px;
   }
 }
 
 @media (max-width: 480px) {
   .word-builder__letter {
-    font-size: var(--theme-font-size-sm);
+    font-size: 40px;
+  }
+  
+  .word-builder__drop-indicator {
+    font-size: 40px;
   }
 }
 
@@ -55,5 +77,9 @@
 @media (prefers-reduced-motion: reduce) {
   .word-builder__letter {
     transition: none;
+  }
+  
+  .word-builder__drop-indicator {
+    animation: none;
   }
 } 
