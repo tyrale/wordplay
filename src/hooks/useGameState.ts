@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { LocalGameStateManager, createGameStateManager } from '../../packages/engine/gamestate';
+import { 
+  LocalGameStateManagerWithDependencies, 
+  createGameStateManagerWithDependencies,
+  type GameStateDependencies
+} from '../../packages/engine/gamestate';
+import { BrowserAdapter } from '../adapters/browserAdapter';
 
 // Temporary placeholder types until dependency injection implemented - TODO: Replace in Step 3
 interface PublicGameState {
@@ -93,12 +98,37 @@ export interface UseGameStateReturn {
 export function useGameState(options: UseGameStateOptions = {}): UseGameStateReturn {
   const { config, onGameStateChange, onMoveAttempt, onBotMove } = options;
   
-  // Initialize game manager using legacy approach (TODO: Update in Step 4)
-  const gameManagerRef = useRef<LocalGameStateManager | null>(null);
+  // Initialize game manager using browser adapter (Step 4 completion)
+  const gameManagerRef = useRef<LocalGameStateManagerWithDependencies | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   
-  if (!gameManagerRef.current) {
-    gameManagerRef.current = createGameStateManager(config);
-  }
+  // Initialize browser adapter and create game manager
+  useEffect(() => {
+    let isMounted = true;
+    
+    async function initializeGameManager() {
+      try {
+        const browserAdapter = BrowserAdapter.getInstance();
+        await browserAdapter.initialize();
+        
+        if (isMounted) {
+          const dependencies = browserAdapter.getGameDependencies();
+          gameManagerRef.current = createGameStateManagerWithDependencies(dependencies, config);
+          setIsInitialized(true);
+        }
+      } catch (error) {
+        console.error('Failed to initialize game manager:', error);
+      }
+    }
+    
+    if (!gameManagerRef.current) {
+      initializeGameManager();
+    }
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [config]);
   
   const gameManager = gameManagerRef.current;
   
@@ -109,22 +139,36 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
     });
   }, []);
   
-  // React state
-  const [gameState, setGameState] = useState<PublicGameState>(() => gameManager.getState());
+  // React state - provide default state until initialized  
+  const [gameState, setGameState] = useState<PublicGameState>(() => ({
+    gameStatus: 'notStarted',
+    currentTurn: 0,
+    currentWord: '',
+    players: [],
+    turnHistory: [],
+    keyLetters: [],
+    lockedLetters: [],
+    usedWords: []
+  }));
   const [isBotThinking, setIsBotThinking] = useState(false);
   const [isProcessingMove, setIsProcessingMove] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   
   // Subscribe to game state changes
   useEffect(() => {
+    if (!gameManager || !isInitialized) return;
+    
     const unsubscribe = gameManager.subscribe(() => {
       const newState = gameManager.getState();
       setGameState(newState);
       onGameStateChange?.(newState);
     });
     
+    // Initialize state when game manager is ready
+    setGameState(gameManager.getState());
+    
     return unsubscribe;
-  }, [gameManager, onGameStateChange]);
+  }, [gameManager, onGameStateChange, isInitialized]);
   
   // Clear errors when state changes
   useEffect(() => {

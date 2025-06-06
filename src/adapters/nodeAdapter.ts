@@ -88,8 +88,11 @@ class NodeWordData implements WordDataDependencies {
       
       // Look for dictionary files in various locations
       const possiblePaths = [
-        path.join(__dirname, '../../public/data/enable1.txt'),
-        path.join(__dirname, '../../../public/data/enable1.txt'),
+        path.join(process.cwd(), 'public/enable1.txt'),
+        path.join(process.cwd(), 'packages/engine/enable1.txt'),
+        path.join(process.cwd(), 'dist/enable1.txt'),
+        path.join(__dirname, '../../public/enable1.txt'),
+        path.join(__dirname, '../../../public/enable1.txt'),
         path.join(process.cwd(), 'public/data/enable1.txt'),
         path.join(process.cwd(), 'data/enable1.txt')
       ];

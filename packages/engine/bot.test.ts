@@ -5,23 +5,33 @@
  * performance requirements, and 100-turn simulation capability.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import {
-  generateBotMove,
+  generateBotMoveWithDependencies,
   generateAddMoves,
   generateRemoveMoves,
   generateRearrangeMoves,
   generateSubstituteMoves,
-  filterValidCandidates,
-  scoreCandidates,
-  simulateBotGame,
-  performanceTestBot,
-  explainBotMove,
-  type MoveCandidate
+  filterValidCandidatesWithDependencies,
+  scoreCandidatesWithDependencies,
+  type MoveCandidate,
+  type BotDependencies
 } from './bot';
-import { validateWord } from './dictionary';
+import { validateWordWithDependencies } from './dictionary';
+import { createTestAdapter, type TestAdapter } from '../../src/adapters/testAdapter';
 
 describe('Bot AI Module', () => {
+  let testAdapter: TestAdapter;
+  let botDependencies: BotDependencies;
+
+  beforeAll(async () => {
+    testAdapter = createTestAdapter();
+    const gameDependencies = testAdapter.getGameDependencies();
+    botDependencies = {
+      ...gameDependencies,
+      isValidDictionaryWord: (word: string) => testAdapter.getWordData().hasWord(word)
+    };
+  });
 
   describe('Move Generation Functions', () => {
     it('should generate add moves for all positions and letters', () => {
