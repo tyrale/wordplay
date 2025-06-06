@@ -93,13 +93,26 @@
   position: absolute;
   bottom: calc(4px * 2 + 4px); /* Move up 2x: was 4px from bottom, now 12px from bottom */
   right: calc(4px * 2 + 4px); /* Move left 2x: was 4px from right, now 12px from right */
-  font-size: 14px;
-  color: var(--theme-accent); /* Flat solid accent color */
-  opacity: 1; /* Remove transparency for solid color */
+  /* Use CSS to create lock shape instead of Unicode */
+  width: 8px;
+  height: 10px;
+  border: 2px solid var(--theme-accent);
+  border-radius: 2px 2px 0 0;
+  background: transparent;
   pointer-events: none;
   z-index: 1;
-  /* Remove emoji effects for flat appearance */
-  filter: none;
+}
+
+/* Add lock body */
+.grid-cell__lock::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: -1px;
+  width: 8px;
+  height: 6px;
+  background: var(--theme-accent);
+  border-radius: 1px;
 }
 
 /* Focus styles removed per design requirements */

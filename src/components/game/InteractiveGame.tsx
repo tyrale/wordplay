@@ -80,6 +80,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   const [isPassMode, setIsPassMode] = useState(false);
   const [isSubmitAnimating, setIsSubmitAnimating] = useState(false);
+  const [invalidMessage, setInvalidMessage] = useState<string | null>(null);
   // Dictionary is automatically initialized with the real engine
 
   // Initialize pending word with current word
@@ -237,6 +238,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     
     setPendingWord(newWord);
     setIsPassMode(false); // Reset pass mode when word changes
+    setInvalidMessage(null); // Clear error message when word changes
     
     // Validate the move attempt
     if (newWord !== wordState.currentWord) {
@@ -299,6 +301,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     
     // Handle pass mode - first click on invalid X activates pass mode
     if (!pendingMoveAttempt?.canApply && !isPassMode) {
+      // Show contextual error message
+      if (pendingMoveAttempt?.reason?.includes('already been played')) {
+        setInvalidMessage('already played');
+      } else {
+        setInvalidMessage('invalid word');
+      }
       setIsPassMode(true);
       return;
     }
@@ -309,11 +317,15 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       setPendingWord(wordState.currentWord);
       setPendingMoveAttempt(null);
       setIsPassMode(false);
+      setInvalidMessage(null);
       return;
     }
     
     // Handle normal valid submission with animation
     if (pendingMoveAttempt?.canApply) {
+      // Clear any error message
+      setInvalidMessage(null);
+      
       // Start submit animation
       setIsSubmitAnimating(true);
       
@@ -451,6 +463,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 onClick={!isProcessingMove && isPlayerTurn ? handleSubmit : undefined}
                 className="interactive-game__score"
                 isPassMode={isPassMode}
+                invalidMessage={invalidMessage}
               />
             </div>
 

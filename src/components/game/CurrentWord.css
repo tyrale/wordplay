@@ -42,12 +42,26 @@
   position: absolute;
   bottom: -0.1em;
   right: -0.1em;
-  font-size: 0.3em;
-  color: var(--theme-accent);
-  opacity: 1;
+  /* Use CSS to create lock shape instead of Unicode */
+  width: 0.3em;
+  height: 0.35em;
+  border: 0.08em solid var(--theme-accent);
+  border-radius: 0.08em 0.08em 0 0;
+  background: transparent;
   pointer-events: none;
   z-index: 1;
-  filter: none;
+}
+
+/* Add lock body */
+.current-word__lock::after {
+  content: '';
+  position: absolute;
+  bottom: -0.22em;
+  left: -0.04em;
+  width: 0.3em;
+  height: 0.22em;
+  background: var(--theme-accent);
+  border-radius: 0.04em;
 }
 
 /* Responsive typography */

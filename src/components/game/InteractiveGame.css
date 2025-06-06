@@ -454,7 +454,7 @@
 
 /* Submit animation for word moving to trail */
 .interactive-game__word-builder--submitting .word-builder {
-  animation: submitToTrail 0.3s ease-in-out forwards;
+  animation: submitToTrail 0.3s ease-in-out;
 }
 
 @keyframes submitToTrail {
@@ -466,6 +466,13 @@
     transform: translateY(-120px) scale(0.7);
     opacity: 0.8;
   }
+}
+
+/* Ensure word builder resets to original position after animation */
+.word-builder {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  transition: none; /* Prevent transition conflicts with animation */
 }
 
 /* Reduced motion support */

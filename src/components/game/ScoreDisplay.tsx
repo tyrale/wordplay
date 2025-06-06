@@ -20,6 +20,7 @@ export interface ScoreDisplayProps {
   onClick?: () => void;
   className?: string;
   isPassMode?: boolean;
+  invalidMessage?: string | null;
 }
 
 export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({ 
@@ -28,7 +29,8 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
   isValid,
   onClick,
   className = '',
-  isPassMode = false
+  isPassMode = false,
+  invalidMessage = null
 }) => {
   // Build action icons based on what actions were taken (like image)
   const actionIcons = [];
@@ -65,6 +67,9 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
     }
   }
 
+  // Show invalid message to the left of X when invalid
+  const showInvalidMessage = !isValid && !isEmpty && !isPassMode && invalidMessage;
+
   const handleClick = () => {
     if (onClick && ((isValid && !isEmpty) || isPassMode)) {
       onClick();
@@ -82,6 +87,9 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
       style={{ cursor: isClickable ? 'pointer' : 'default' }}
     >
       <span className="score-display__left">{leftContent}</span>
+      {showInvalidMessage && (
+        <span className="score-display__invalid-message">{invalidMessage}</span>
+      )}
       <span className="score-display__center">{centerContent}</span>
       <span className="score-display__right">{rightContent}</span>
     </div>

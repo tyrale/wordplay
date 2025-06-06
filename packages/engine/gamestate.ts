@@ -744,7 +744,11 @@ export class LocalGameStateManagerWithDependencies {
    * Reset game to initial state
    */
   public resetGame(): void {
-    const newState = this.initializeGameState(this.state.config);
+    // Create a new config without initialWord to force random generation
+    const resetConfig = { ...this.state.config };
+    delete resetConfig.initialWord; // Force new random word generation
+    
+    const newState = this.initializeGameState(resetConfig);
     this.state = newState;
 
     this.notifyListeners({

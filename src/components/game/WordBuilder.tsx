@@ -307,7 +307,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
             >
               {letter}
               {(isLocked || isLockedKey) && (
-                <span className="word-builder__lock-badge">●</span>
+                <span className="word-builder__lock-badge"></span>
               )}
             </span>
             
