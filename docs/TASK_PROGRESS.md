@@ -417,43 +417,59 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 **Verification**: All 253 tests passing, build successful (228.77 kB JS, 29.41 kB CSS), WordTrail and ScoreDisplay now visible and properly positioned across all screen sizes.
 
-## 🔧 **CRITICAL ARCHITECTURE DECISION: Single Source of Truth Enforced** ✅
+## 🔧 **ARCHITECTURAL PRINCIPLES ESTABLISHED** ✅
 
-**Issue**: User correctly identified that `browserEngine.ts` violates single source of truth principle
+**Core Architecture Decision**: **Platform-Agnostic Engine with Dependency Injection**
 
-**Architecture Question**: "Should browserEngine.ts even exist? If we are meant to use the same core engine why do we need a browser specific engine?"
+### **✅ ESTABLISHED RULES**
 
-**Answer**: **NO, browserEngine.ts should NOT exist.** 
+1. **Single Source of Truth**: Core game logic exists ONLY in `packages/engine/`
+2. **Dependency Injection**: Engine components accept dependencies as parameters
+3. **Platform Adapters**: Only adapters are platform-specific
+4. **No Code Duplication**: Never recreate engine logic for different platforms
+5. **Interface Contracts**: All engine interactions via typed interfaces
 
-**Correct Architecture**:
-- ✅ **Real Engine Functions Direct**: `calculateScore`, `analyzeWordChange`, `generateBotMove` used directly from `packages/engine/`
-- ✅ **Only Dictionary Browser-Specific**: HTTP-based dictionary loading (vs file system) in `browserDictionary.ts`
-- ✅ **Web State Management**: React hooks manage game state instead of trying to use Node.js `LocalGameStateManager`
-- ✅ **No Duplication**: Zero code duplication, zero reimplementation, zero "browser-compatible versions" of core logic
+### **✅ IMPLEMENTATION PATTERN**
 
-**Implementation**: 
 ```typescript
-// ✅ CORRECT: Use real engine directly
-import { calculateScore, analyzeWordChange } from '../../packages/engine/scoring';
-import { generateBotMove } from '../../packages/engine/bot';
+// ✅ CORRECT: Agnostic engine with dependency injection
+function generateBotMove(word: string, dependencies: BotDependencies): BotResult {
+  // Uses provided dependencies, imports nothing platform-specific
+}
 
-// ✅ CORRECT: Only dictionary is browser-specific (HTTP vs file system)
-import { isValidDictionaryWordSync } from './browserDictionary';
-
-// ❌ WRONG: browserEngine.ts reimplementing everything
+// ✅ CORRECT: Platform adapters provide dependencies
+const browserDeps = createBrowserDependencies();
+const result = generateBotMove('CAT', browserDeps);
 ```
 
-**Files Removed**:
-- ❌ `src/utils/browserEngine.ts` (deleted - was reimplementation)
-- ❌ `src/utils/browserGameEngine.ts` (deleted - was duplication)  
-- ❌ `src/utils/engineAdapter.ts` (deleted - was unnecessary wrapper)
+### **❌ FORBIDDEN PATTERNS**
 
-**Single Source of Truth Maintained**: Core game logic exists only in `packages/engine/`, web app imports directly
+- `browserEngine.ts` - Reimplementing engine logic
+- Direct imports in engine files - `import { validateWord } from './dictionary'`
+- Platform-specific engine modifications
+- "Browser-compatible" versions of core logic
 
-**Prevention Rule Enforced**: 
-> **CRITICAL RULE**: All platforms MUST use proven engine modules from packages/engine/. NO duplication, reimplementation, or "browser-compatible" versions of core game logic allowed. ONLY dictionary loading can be platform-specific.
+### **🚨 DEVIATION PREVENTION**
 
-**Status**: Architecture cleaned, single source of truth enforced, browserEngine.ts correctly eliminated
+**Any PR containing these patterns will be automatically rejected:**
+- Files matching `*browserEngine*`, `*engineAdapter*`, `*browser*Engine*`
+- Engine files importing platform-specific modules
+- Code duplication between platform implementations
+- Direct engine imports in platform code
+
+**Before accepting any engine changes:**
+- ✅ Verify engine files have no platform-specific imports
+- ✅ Confirm adapters provide all dependencies
+- ✅ Test same functionality works across Node.js, Browser, and Test environments
+- ✅ Update interface contracts if dependencies change
+
+**Documentation Created:**
+- ✅ `docs/ARCHITECTURE.md` - Comprehensive architecture guide
+- ✅ `docs/ADR-001-DEPENDENCY-INJECTION.md` - Architecture Decision Record
+- ✅ `packages/engine/interfaces.ts` - Complete dependency contracts
+- ✅ Updated `docs/dev-plan.md` with mandatory rules and forbidden patterns
+
+**Status**: Architecture principles documented and enforced, dependency injection foundation ready for implementation
 
 ## 🚀 **AUTO-SUBMISSION IMPLEMENTED**: Valid Moves Now Auto-Apply Like Terminal Game
 

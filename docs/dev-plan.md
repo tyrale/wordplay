@@ -12,6 +12,33 @@
 4. **Tech Stack** – **React + TypeScript + Vite** (web), **Shared game engine** (pure TypeScript), **Supabase backend**, **Future: React Native** (native apps after web success)
 5. **Architecture Keyword** – _"ShipHipV2"_ ← Cursor should include this word in every PR title to guarantee thread continuity.
 
+## 🏗️ **CORE ARCHITECTURAL PRINCIPLES**
+
+### **MANDATORY RULES** *(Prevent Future Deviations)*
+
+| Rule | Description | Enforcement |
+|------|-------------|-------------|
+| **Single Source of Truth** | Core game logic exists ONLY in `packages/engine/` | NO browser-specific engines allowed |
+| **Dependency Injection** | Engine components accept dependencies, never import platform code | Use interfaces, not direct imports |
+| **Platform Adapters Only** | Only adapters are platform-specific (Node.js, Browser, Test) | Adapters provide dependencies to engine |
+| **No Code Duplication** | Never recreate engine logic for different platforms | Reuse via dependency injection |
+| **Interface Contracts** | All engine interactions via typed interfaces | Changes require interface updates |
+
+### **FORBIDDEN PATTERNS** *(Will be rejected in code review)*
+
+❌ `browserEngine.ts` - Reimplementing engine for browsers  
+❌ `import { validateWord } from './dictionary'` in bot.ts - Direct imports  
+❌ Platform-specific engine modifications - Use adapters instead  
+❌ Duplicate validation logic - Use dependency injection  
+❌ "Browser-compatible" versions of core logic - Use same engine + adapters  
+
+### **REQUIRED PATTERNS** *(Must be followed)*
+
+✅ **Dependency Injection**: `function botMove(word: string, deps: BotDependencies)`  
+✅ **Platform Adapters**: `createBrowserAdapter()`, `createNodeAdapter()`  
+✅ **Interface Contracts**: All engine interactions via TypeScript interfaces  
+✅ **Unified Testing**: Same test suite runs on all platforms via adapters  
+
 _When Cursor is unsure about a requirement it \***\*must\*\*** halt and request clarification rather than assuming._
 
 ---

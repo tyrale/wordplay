@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Architectural Foundation**: Complete dependency injection architecture with comprehensive interfaces
+- **Documentation**: ARCHITECTURE.md, ADR-001-DEPENDENCY-INJECTION.md, updated dev-plan.md with mandatory rules
+- **Interface Contracts**: packages/engine/interfaces.ts with complete dependency contracts for platform adapters
+- **Deviation Prevention**: Documented forbidden patterns and enforcement rules to prevent future architectural issues
+
 ### Fixed
 
 - **UI Fixes: Score Display, Drag Functionality, Scrolling Control, Debug Dialog** ✅ **VERIFIED**
