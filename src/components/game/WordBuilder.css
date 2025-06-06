@@ -104,33 +104,7 @@
   opacity: 0.8;
 }
 
-.word-builder__remove-btn {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 20px;
-  height: 20px;
-  border: none;
-  border-radius: 50%;
-  background-color: var(--theme-text);
-  color: var(--theme-background);
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
 
-.word-builder__letter:hover .word-builder__remove-btn {
-  opacity: 1;
-}
-
-.word-builder__remove-btn:hover {
-  transform: scale(1.1);
-}
 
 .word-builder__drop-indicator {
   position: absolute;
@@ -207,14 +181,6 @@
     font-size: var(--theme-font-size-sm);
   }
   
-  .word-builder__remove-btn {
-    width: 18px;
-    height: 18px;
-    font-size: 12px;
-    top: -6px;
-    right: -6px;
-  }
-  
   .word-builder__stats {
     flex-direction: column;
     gap: var(--spacing-xs);
@@ -248,7 +214,6 @@
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .word-builder__letter,
-  .word-builder__remove-btn,
   .word-builder__add-position,
   .word-builder__container {
     transition: none;

@@ -28,8 +28,9 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   maxLength = 10,
   minLength = 3
 }) => {
-  // Suppress unused variable warning - maxLength kept for interface compatibility
+  // Suppress unused variable warnings - kept for interface compatibility
   void maxLength;
+  void minLength;
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isDragOverContainer, setIsDragOverContainer] = useState(false);
 
@@ -104,22 +105,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     setDragOverIndex(null);
   }, [disabled, currentWord, onWordChange]);
 
-  const handleRemoveLetter = useCallback((index: number) => {
-    if (disabled) return;
-    
-    const letters = currentWord.split('');
-    letters.splice(index, 1);
-    const newWord = letters.join('');
-    
-    if (newWord.length >= minLength) {
-      onWordChange?.(newWord);
-    }
-  }, [disabled, currentWord, minLength, onWordChange]);
 
-  const canRemoveLetter = (index: number) => {
-    const highlight = wordHighlights.find(h => h.index === index);
-    return highlight?.type !== 'locked' && currentWord.length > minLength;
-  };
 
   // Handle drops from alphabet grid
   const handleContainerDragOver = useCallback((e: React.DragEvent) => {
@@ -199,21 +185,6 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
               <span className="word-builder__lock-icon" aria-hidden="true">
                 🔒
               </span>
-            )}
-            
-            {canRemoveLetter(index) && (
-              <button
-                className="word-builder__remove-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemoveLetter(index);
-                }}
-                aria-label={`Remove letter ${pos.letter}`}
-                disabled={disabled}
-                type="button"
-              >
-                ×
-              </button>
             )}
             
             {dragOverIndex === index && (
