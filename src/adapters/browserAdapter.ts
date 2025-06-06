@@ -105,40 +105,25 @@ class BrowserWordData implements WordDataDependencies {
        }
 
        // Initialize slang and profanity sets with basic examples
-       this.slangWords = new Set(['BRUH', 'YEAH', 'NOPE', 'YEET', 'FOMO', 'SELFIE', 'EMOJI']);
-       this.profanityWords = new Set(['DAMN', 'HELL', 'CRAP', 'PISS']);
-
+       this.slangWords = new Set(); // Could be extended with slang list
+       this.profanityWords = new Set(['damn', 'hell']); // Basic profanity list
        this.isLoaded = true;
-       console.log(`✅ Browser dictionary loaded: ${this.enableWords.size} words`);
       
     } catch (error) {
-      console.warn('Failed to load full dictionary, using fallback:', error);
-      
-      // Fallback to minimal word set
-      const fallbackWords = [
-        'CAT', 'DOG', 'WORD', 'GAME', 'PLAY', 'MOVE', 'TURN', 'SCORE',
-        'CATS', 'DOGS', 'WORDS', 'GAMES', 'PLAYS', 'MOVES', 'TURNS', 'SCORES',
-        'HELLO', 'WORLD', 'QUICK', 'BROWN', 'HOUSE', 'WATER', 'LIGHT', 'SOUND'
-      ];
-      
-             this.enableWords = new Set(fallbackWords);
-       this.wordsByLength.clear();
-       
-       for (const word of fallbackWords) {
-         const length = word.length;
-         if (!this.wordsByLength.has(length)) {
-           this.wordsByLength.set(length, []);
-         }
-         this.wordsByLength.get(length)!.push(word);
-       }
-       
-       // Initialize slang and profanity sets for fallback
-       this.slangWords = new Set(['BRUH', 'YEAH']);
-       this.profanityWords = new Set(['DAMN', 'HELL']);
-       
-       this.isLoaded = true;
-       console.log(`⚠️ Using fallback dictionary: ${this.enableWords.size} words`);
+      console.error('Failed to load dictionary:', error);
+      this.initializeFallback();
     }
+  }
+
+  private initializeFallback(): void {
+    // Fallback word set for development/testing
+    this.enableWords = new Set([
+      'CAT', 'DOG', 'FISH', 'BIRD', 'MOUSE', 'HORSE', 'COW', 'PIG', 'SHEEP', 'GOAT',
+      'CATS', 'DOGS', 'COAT', 'BOAT', 'GOATS', 'COATS', 'BOATS'
+    ]);
+    this.slangWords = new Set(['BRUH', 'YEET', 'FLEX']);
+    this.profanityWords = new Set(['DAMN', 'HELL']);
+    this.isLoaded = true;
   }
 
   /**

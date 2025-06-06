@@ -925,17 +925,8 @@ export class LocalGameStateManagerWithDependencies {
 
     this.state.turnHistory.push(turnRecord);
 
-    // Generate new key letters even on pass (maintains 1 per turn rule)
-    if (this.state.config.enableKeyLetters) {
-      // Track the current key letter as used (since it was active for this turn)
-      this.state.keyLetters.forEach(letter => {
-        this.state.usedKeyLetters.add(letter);
-      });
-      
-      // Clear current key letters and generate exactly 1 new key letter
-      this.state.keyLetters = [];
-      this.generateRandomKeyLetter();
-    }
+    // Do NOT generate new key letters on pass - this was causing double key letters
+    // Key letters should only be generated after successful moves in applyMove()
 
     // Notify listeners of the pass
     this.notifyListeners({

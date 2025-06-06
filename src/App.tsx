@@ -37,7 +37,7 @@ function ThemeSelector() {
 
 function App() {
   const handleGameEnd = (winner: string | null, finalScores: { human: number; bot: number }) => {
-    console.log('Game ended:', { winner, finalScores });
+    // Game ended - could show end screen or stats here
   };
 
   return (

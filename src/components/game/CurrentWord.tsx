@@ -44,7 +44,9 @@ export const CurrentWord: React.FC<CurrentWordProps> = ({
           >
             {letter}
             {(highlightType === 'locked' || highlightType === 'lockedKey') && (
-              <span className="current-word__lock" aria-hidden="true"></span>
+              <span className="current-word__lock" aria-hidden="true">
+                🔒
+              </span>
             )}
           </span>
         );

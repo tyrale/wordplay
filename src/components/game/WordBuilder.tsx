@@ -26,40 +26,43 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   void minLength;
   
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
-  const [activeInputMethod, setActiveInputMethod] = useState<'touch' | 'mouse' | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastEventTimeRef = useRef<number>(0);
   const lastTouchTimeRef = useRef<number>(0);
-  const prevWordRef = useRef<string>(currentWord);
+  const lastWordRef = useRef<string>(currentWord);
+  const inputMethodRef = useRef<string | null>(null);
 
+  // Reset drag state when word changes externally
   useEffect(() => {
-    // Reset drag state when word changes externally (e.g., from game state)
-    if (currentWord !== prevWordRef.current) {
-      prevWordRef.current = currentWord;
+    if (currentWord !== lastWordRef.current) {
       setDraggedIndex(null);
-      setIsDragging(false);
-      setDragStartPos(null);
       setDropTargetIndex(null);
-      setActiveInputMethod(null);
+      setIsDragging(false);
+      setDragStartPos({ x: 0, y: 0 });
+      inputMethodRef.current = null;
+      lastWordRef.current = currentWord;
     }
   }, [currentWord]);
 
-  // Native touch event handling for preventing scrolling during drag
+  // Handle touch events with proper preventDefault support
   useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
     const handleNativeTouchMove = (e: TouchEvent) => {
       if (isDragging) {
-        e.preventDefault();
+        e.preventDefault(); // This works because we can control the passive option
       }
     };
 
     // Add non-passive touch event listener
-    document.addEventListener('touchmove', handleNativeTouchMove, { passive: false });
+    container.addEventListener('touchmove', handleNativeTouchMove, { passive: false });
 
     return () => {
-      document.removeEventListener('touchmove', handleNativeTouchMove);
+      container.removeEventListener('touchmove', handleNativeTouchMove);
     };
   }, [isDragging]);
 
@@ -67,113 +70,101 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     if (disabled || isDragging) {
       return;
     }
-    
-    // Check if this letter is locked (either regular locked or locked key letter)
+
+    // Check if letter is locked based on highlights
     const highlight = wordHighlights.find(h => h.index === index);
-    if (highlight?.type === 'locked' || highlight?.type === 'lockedKey') {
+    const isLocked = highlight?.type === 'locked' || highlight?.type === 'lockedKey';
+    if (isLocked) {
       return;
     }
-    
-    onLetterClick?.(index);
+
+    if (onLetterClick) {
+      onLetterClick(index);
+    }
   }, [disabled, isDragging, onLetterClick, wordHighlights]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent, index: number) => {
-    const now = Date.now();
-    const timeSinceTouch = now - lastTouchTimeRef.current;
+    if (disabled) return;
     
-    if (disabled || activeInputMethod === 'touch' || timeSinceTouch < 300) {
+    if (inputMethodRef.current && inputMethodRef.current !== 'mouse') {
       return;
     }
-    
-    setActiveInputMethod('mouse');
-    setDragStartPos({ x: e.clientX, y: e.clientY });
+
+    inputMethodRef.current = 'mouse';
     setDraggedIndex(index);
-  }, [disabled, activeInputMethod]);
+    setIsDragging(false);
+    setDragStartPos({ x: e.clientX, y: e.clientY });
+    setDropTargetIndex(null);
+  }, [disabled]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (draggedIndex !== null && dragStartPos) {
-      const deltaX = Math.abs(e.clientX - dragStartPos.x);
-      const deltaY = Math.abs(e.clientY - dragStartPos.y);
+    if (draggedIndex === null || !dragStartPos || inputMethodRef.current !== 'mouse') return;
+
+    const deltaX = Math.abs(e.clientX - dragStartPos.x);
+    const deltaY = Math.abs(e.clientY - dragStartPos.y);
+    const moveDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    if (moveDistance > 5 && !isDragging) {
+      setIsDragging(true);
+    }
+
+    if (isDragging && containerRef.current) {
+      const elements = containerRef.current.querySelectorAll('[data-letter-index]');
+      let newDropTarget = null;
       
-      // Start dragging if moved more than 5 pixels
-      if (!isDragging && (deltaX > 5 || deltaY > 5)) {
-        setIsDragging(true);
+      for (let i = 0; i < elements.length; i++) {
+        const element = elements[i] as HTMLElement;
+        const rect = element.getBoundingClientRect();
+        const elementCenter = rect.left + rect.width / 2;
+        
+        if (e.clientX < elementCenter) {
+          newDropTarget = i;
+          break;
+        }
       }
       
-      // Update drop target during drag
-      if (isDragging && containerRef.current) {
-        const elements = containerRef.current.querySelectorAll('[data-letter-index]');
-        let newDropTarget = null;
-        
-        for (let i = 0; i < elements.length; i++) {
-          const element = elements[i] as HTMLElement;
-          const rect = element.getBoundingClientRect();
-          const elementCenter = rect.left + rect.width / 2;
-          
-          if (e.clientX < elementCenter) {
-            newDropTarget = i;
-            break;
-          }
-        }
-        
-        // If no element found, drop at the end
-        if (newDropTarget === null) {
-          newDropTarget = currentWord.length;
-        }
-        
-        // Don't set drop target to the same position as dragged letter
-        if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1) {
-          setDropTargetIndex(newDropTarget);
-        }
+      if (newDropTarget === null) {
+        newDropTarget = currentWord.length;
+      }
+      
+      if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1) {
+        setDropTargetIndex(newDropTarget);
       }
     }
   }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
-    const now = Date.now();
-    const timeSinceTouch = now - lastTouchTimeRef.current;
-    
-    e.stopPropagation(); // Prevent bubbling to parent drag handlers
-    
-    if (activeInputMethod !== 'mouse' || timeSinceTouch < 300) {
+    if (draggedIndex === null || inputMethodRef.current !== 'mouse') {
       return;
     }
-    
-    const eventNow = Date.now();
-    if (draggedIndex !== null && eventNow - lastEventTimeRef.current > 100) {
-      lastEventTimeRef.current = eventNow;
+
+    if (!isDragging) {
+      handleLetterClick(draggedIndex);
+    } else if (dropTargetIndex !== null) {
+      const newLetters = [...currentWord];
+      const draggedLetter = newLetters[draggedIndex];
+      newLetters.splice(draggedIndex, 1);
       
-      if (isDragging && dropTargetIndex !== null && dropTargetIndex !== draggedIndex) {
-        // Handle drag operation using the calculated drop target
-        const letters = currentWord.split('');
-        const [movedLetter] = letters.splice(draggedIndex, 1);
-        
-        // Adjust target index if we're moving from left to right
-        const adjustedTargetIndex = dropTargetIndex > draggedIndex ? dropTargetIndex - 1 : dropTargetIndex;
-        letters.splice(adjustedTargetIndex, 0, movedLetter);
-        
-        const newWord = letters.join('');
-        onWordChange?.(newWord);
-      } else if (!isDragging) {
-        // Handle click operation
-        handleLetterClick(draggedIndex);
+      const insertIndex = dropTargetIndex > draggedIndex ? dropTargetIndex - 1 : dropTargetIndex;
+      newLetters.splice(insertIndex, 0, draggedLetter);
+      
+      if (onWordChange) {
+        onWordChange(newLetters.join(''));
       }
-      
-      // Reset all state including input method
-      setDraggedIndex(null);
-      setIsDragging(false);
-      setDragStartPos(null);
-      setDropTargetIndex(null);
-      setActiveInputMethod(null);
     }
-  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick, activeInputMethod]);
+
+    setDraggedIndex(null);
+    setIsDragging(false);
+    setDragStartPos({ x: 0, y: 0 });
+    setDropTargetIndex(null);
+    inputMethodRef.current = null;
+  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent, index: number) => {
     if (disabled) return;
     
-    // Record touch timestamp for 300ms mouse lockout
     lastTouchTimeRef.current = Date.now();
-    setActiveInputMethod('touch');
+    inputMethodRef.current = 'touch';
     
     const touch = e.touches[0];
     setDragStartPos({ x: touch.clientX, y: touch.clientY });
@@ -221,9 +212,9 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    e.stopPropagation(); // Prevent bubbling to parent drag handlers
+    e.stopPropagation();
     
-    if (activeInputMethod !== 'touch') {
+    if (inputMethodRef.current !== 'touch') {
       return;
     }
     
@@ -232,29 +223,27 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       lastEventTimeRef.current = eventNow;
       
       if (isDragging && dropTargetIndex !== null && dropTargetIndex !== draggedIndex) {
-        // Handle drag operation using the calculated drop target
         const letters = currentWord.split('');
         const [movedLetter] = letters.splice(draggedIndex, 1);
         
-        // Adjust target index if we're moving from left to right
         const adjustedTargetIndex = dropTargetIndex > draggedIndex ? dropTargetIndex - 1 : dropTargetIndex;
         letters.splice(adjustedTargetIndex, 0, movedLetter);
         
         const newWord = letters.join('');
-        onWordChange?.(newWord);
+        if (onWordChange) {
+          onWordChange(newWord);
+        }
       } else if (!isDragging) {
-        // Handle tap operation
         handleLetterClick(draggedIndex);
       }
       
-      // Reset all state including input method
       setDraggedIndex(null);
       setIsDragging(false);
-      setDragStartPos(null);
+      setDragStartPos({ x: 0, y: 0 });
       setDropTargetIndex(null);
-      setActiveInputMethod(null);
+      inputMethodRef.current = null;
     }
-  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick, activeInputMethod]);
+  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick]);
 
   return (
     <div 
@@ -307,7 +296,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
             >
               {letter}
               {(isLocked || isLockedKey) && (
-                <span className="word-builder__lock-badge"></span>
+                <span className="word-builder__lock-badge">🔒</span>
               )}
             </span>
             

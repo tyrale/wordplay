@@ -502,20 +502,17 @@ This document tracks the progress of tasks from the development plan. Each task 
 - Create test adapter (mock dependencies for unit testing)
 - Update web components to use browser adapter
 
-## 🎯 **MOVE VALIDATION IMPLEMENTED**: Enhanced Word Building and Submission Flow
-
-**Issue**: Need proper move validation and manual submission workflow for web game
+## 🎯 **MANUAL SUBMISSION RESTORED**: Web Game Uses Manual Click-to-Submit Like Intended
 
 **Solution Implemented**:
-- ✅ **Manual Move Submission**: Users build words and manually submit via score display click
-- ✅ **Move Validation**: Real-time validation shows if moves are valid without auto-applying
-- ✅ **Enhanced User Control**: Users have full control over when moves are submitted
-- ✅ **Pass Mode Support**: Manual submission supports pass functionality for invalid moves
-- ✅ **State Management**: Clear state management for pending moves and validation
+- ✅ **Manual Submission Only**: Players must click the score display to submit valid moves
+- ✅ **No Auto-Submission**: Words do not automatically apply when valid
+- ✅ **Clear User Control**: Users build words and manually confirm submission
+- ✅ **Pass Mode Available**: Manual submission also enables pass functionality for invalid moves
 
-**Technical Implementation**: Enhanced move validation in `handleWordChange` that validates moves without automatically applying them, preserving user control
+**Technical Implementation**: Word validation shows scoring preview, but moves only apply when user clicks to submit
 
-**Verification**: Build successful (248.06 kB), move flow works correctly: users build words, see validation feedback, manually submit when ready
+**Verification**: Build successful, manual submission flow working as intended
 
 ## Phase 3 – Online Multiplayer (Web)
 
@@ -731,24 +728,3 @@ This document tracks the progress of tasks from the development plan. Each task 
 - ✅ **Game State Integration**: All adapters work with dependency-injected game state manager
 
 **Completion Status**: **Step 4 COMPLETE** - All major platform adapters implemented and verified working
-
-## 🎨 **UI REFINEMENTS APPLIED**: Enhanced Lock Icon and WordTrail Cleanup
-
-**User Requests Applied**:
-1. **Enhanced Lock Icon Design**: Added larger background lock icon beneath current lock icon for better visual depth
-2. **WordTrail Cleanup**: Removed starting word display - WordTrail now only shows actual game moves
-
-**Technical Implementation**:
-- ✅ **Background Lock Icon**: Added `grid-cell__lock::before` CSS pseudo-element with theme-background color
-- ✅ **Lock Icon Z-Index**: Enhanced layering with background (z-index: -1), main icon (z-index: 2), and background element (z-index: 1)
-- ✅ **GridCell Component**: Updated to render both `grid-cell__lock-background` and `grid-cell__lock` elements
-- ✅ **WordTrail Logic**: Removed starting word logic from `wordTrailMoves` useMemo in InteractiveGame.tsx
-- ✅ **Clean Word History**: WordTrail now only displays actual turn history, not initial game state
-
-**Visual Improvements**:
-- Background lock provides visual depth and better contrast
-- Lock icons maintain theme color consistency
-- WordTrail shows clean move history without cluttering initial state
-- Enhanced visual hierarchy for locked letter states
-
-**Verification**: All changes committed with ShipHip keyword, UI improvements applied while maintaining all existing functionality.

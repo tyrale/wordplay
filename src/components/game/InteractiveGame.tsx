@@ -79,8 +79,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   const [isPassMode, setIsPassMode] = useState(false);
-  const [isSubmitAnimating, setIsSubmitAnimating] = useState(false);
-  const [invalidMessage, setInvalidMessage] = useState<string | null>(null);
   // Dictionary is automatically initialized with the real engine
 
   // Initialize pending word with current word
@@ -223,10 +221,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         setPendingMoveAttempt(null);
         break;
       case '?': // Help
-        // TODO: Show help modal
+        handleHelp();
         break;
       case '≡': // Settings
-        // TODO: Show settings modal
+        handleSettings();
         break;
     }
   }, [isPlayerTurn, isProcessingMove, wordState.currentWord]);
@@ -238,7 +236,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     
     setPendingWord(newWord);
     setIsPassMode(false); // Reset pass mode when word changes
-    setInvalidMessage(null); // Clear error message when word changes
     
     // Validate the move attempt
     if (newWord !== wordState.currentWord) {
@@ -288,6 +285,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     if (!isPlayerTurn || isProcessingMove) {
       return;
     }
+
+    if (index < 0 || index >= pendingWord.length) {
+      return;
+    }
     
     const letters = pendingWord.split('');
     letters.splice(index, 1);
@@ -296,17 +297,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     handleWordChange(newWord);
   }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(() => {
     if (!isPlayerTurn || isProcessingMove) return;
     
     // Handle pass mode - first click on invalid X activates pass mode
     if (!pendingMoveAttempt?.canApply && !isPassMode) {
-      // Show contextual error message
-      if (pendingMoveAttempt?.reason?.includes('already been played')) {
-        setInvalidMessage('already played');
-      } else {
-        setInvalidMessage('invalid word');
-      }
       setIsPassMode(true);
       return;
     }
@@ -317,28 +312,17 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       setPendingWord(wordState.currentWord);
       setPendingMoveAttempt(null);
       setIsPassMode(false);
-      setInvalidMessage(null);
       return;
     }
     
-    // Handle normal valid submission with animation
+    // Handle normal valid submission
     if (pendingMoveAttempt?.canApply) {
-      // Clear any error message
-      setInvalidMessage(null);
-      
-      // Start submit animation
-      setIsSubmitAnimating(true);
-      
-      // Wait for animation to complete before applying move
-      setTimeout(() => {
-        const success = actions.applyMove(pendingMoveAttempt);
-        if (success) {
-          setPendingWord(pendingMoveAttempt.newWord);
-          setPendingMoveAttempt(null);
-          setIsPassMode(false);
-        }
-        setIsSubmitAnimating(false);
-      }, 300); // 300ms animation duration
+      const success = actions.applyMove(pendingMoveAttempt);
+      if (success) {
+        setPendingWord(pendingMoveAttempt.newWord);
+        setPendingMoveAttempt(null);
+        setIsPassMode(false);
+      }
     }
   }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, isPassMode, wordState.currentWord]);
 
@@ -391,6 +375,14 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     // Remove duplicates and return first 8
     return [...new Set(validSuggestions)].slice(0, 8);
   }, [wordState.usedWords]);
+
+  const handleHelp = useCallback(() => {
+    // Show help modal or navigate to help
+  }, []);
+
+  const handleSettings = useCallback(() => {
+    // Show settings modal or navigate to settings
+  }, []);
 
   return (
     <div className="interactive-game">
@@ -463,7 +455,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 onClick={!isProcessingMove && isPlayerTurn ? handleSubmit : undefined}
                 className="interactive-game__score"
                 isPassMode={isPassMode}
-                invalidMessage={invalidMessage}
               />
             </div>
 
@@ -479,7 +470,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
             
             {/* Word builder positioned below submit anchor */}
             {isPlayerTurn && (
-              <div className={`interactive-game__word-builder-positioned ${isSubmitAnimating ? 'interactive-game__word-builder--submitting' : ''}`.trim()}>
+              <div className="interactive-game__word-builder-positioned">
                 <div
                   onMouseUp={handleWordBuilderMouseUp}
                   onTouchEnd={handleWordBuilderTouchEnd}

@@ -144,36 +144,23 @@ class NodeWordData implements WordDataDependencies {
       ]);
 
       this.isLoaded = true;
-      console.log(`✅ Node.js dictionary loaded: ${this.enableWords.size} words`);
       
     } catch (error) {
-      console.warn('Failed to load full dictionary, using fallback:', error);
-      
-      // Fallback to minimal word set
-      const fallbackWords = [
-        'CAT', 'DOG', 'WORD', 'GAME', 'PLAY', 'MOVE', 'TURN', 'SCORE',
-        'CATS', 'DOGS', 'WORDS', 'GAMES', 'PLAYS', 'MOVES', 'TURNS', 'SCORES',
-        'HELLO', 'WORLD', 'QUICK', 'BROWN', 'HOUSE', 'WATER', 'LIGHT', 'SOUND'
-      ];
-      
-      this.enableWords = new Set(fallbackWords);
-      this.wordsByLength.clear();
-      
-      for (const word of fallbackWords) {
-        const length = word.length;
-        if (!this.wordsByLength.has(length)) {
-          this.wordsByLength.set(length, []);
-        }
-        this.wordsByLength.get(length)!.push(word);
-      }
-      
-      // Initialize slang and profanity sets for fallback
-      this.slangWords = new Set(['BRUH', 'YEAH']);
-      this.profanityWords = new Set(['DAMN', 'HELL']);
-      
-      this.isLoaded = true;
-      console.log(`⚠️ Using fallback dictionary: ${this.enableWords.size} words`);
+      console.error(`Failed to load dictionary from any path:`, error);
+      this.initializeFallback();
     }
+  }
+
+  private initializeFallback(): void {
+    const fallbackWords = [
+      'CAT', 'DOG', 'WORD', 'GAME', 'PLAY', 'MOVE', 'TURN', 'SCORE',
+      'CATS', 'DOGS', 'WORDS', 'GAMES', 'PLAYS', 'MOVES', 'TURNS', 'SCORES'
+    ];
+    
+    this.enableWords = new Set(fallbackWords);
+    this.slangWords = new Set(['BRUH', 'YEAH']);
+    this.profanityWords = new Set(['DAMN', 'HELL']);
+    this.isLoaded = true;
   }
 
   /**

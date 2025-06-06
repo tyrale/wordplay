@@ -43,14 +43,12 @@
 /* Locked letter state */
 .grid-cell--locked {
   color: var(--theme-locked);
-  opacity: 0.5;
 }
 
 /* Locked key letter state (key letter that became locked) */
 .grid-cell--lockedKey {
   color: var(--theme-accent);
   font-weight: bold;
-  opacity: 0.5;
 }
 
 /* Disabled state */
@@ -90,69 +88,16 @@
   pointer-events: none;
 }
 
-/* Lock icon positioning - centered on the letter */
+/* Lock icon positioning - centered over letter */
 .grid-cell__lock {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  /* Use CSS to create lock shape with user's specific dimensions */
-  width: 16px;
-  height: 20px;
-  border: 4px solid var(--theme-accent);
-  border-radius: 4px 4px 0 0;
-  background: transparent;
-  pointer-events: none;
-  z-index: 2;
-}
-
-/* Add lock body with user's specific dimensions */
-.grid-cell__lock::after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: -6px;
-  width: 20px;
-  height: 14px;
-  background: var(--theme-accent);
-  border-radius: 2px;
-}
-
-/* Background lock icon - slightly larger and in background color */
-.grid-cell__lock::before {
-  content: '';
-  position: absolute;
-  top: -6px;
-  left: -8px;
-  width: 24px;
-  height: 28px;
-  border: 6px solid var(--theme-background);
-  border-radius: 6px 6px 0 0;
-  background: transparent;
-  z-index: -1;
-}
-
-/* Background lock body */
-.grid-cell__lock-background {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 32px;
-  height: 36px;
+  font-size: 14px;
+  color: var(--theme-text);
   pointer-events: none;
   z-index: 1;
-}
-
-.grid-cell__lock-background::after {
-  content: '';
-  position: absolute;
-  bottom: -16px;
-  left: -10px;
-  width: 28px;
-  height: 20px;
-  background: var(--theme-background);
-  border-radius: 4px;
 }
 
 /* Focus styles removed per design requirements */
@@ -174,10 +119,6 @@
   
   .grid-cell__lock {
     font-size: 10px;
-    bottom: calc(1px * 2 + 1px); /* Maintain 2x offset for responsive */
-    right: calc(1px * 2 + 1px);
-    color: var(--theme-accent);
-    opacity: 1;
   }
 }
 

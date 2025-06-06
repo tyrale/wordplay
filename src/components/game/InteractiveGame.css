@@ -164,7 +164,6 @@
   position: relative;
   width: 100%;
   max-width: 600px;
-  height: 0; /* Fixed height to zero */
 }
 
 /* Submit anchor - the absolute center point */
@@ -182,7 +181,7 @@
 /* Word trail positioned above word builder */
 .interactive-game__word-trail-positioned {
   position: absolute;
-  bottom: calc(100% + 170px); /* Position above submit anchor with larger gap */
+  bottom: calc(100% + 80px); /* Position above submit anchor with larger gap */
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
@@ -190,8 +189,6 @@
   text-align: center;
   display: flex;
   flex-direction: column;
-  position: relative;
-  z-index: 2;
 }
 
 /* Apply same sizing to positioned word trail */
@@ -425,10 +422,6 @@
     padding: var(--spacing-sm);
   }
   
-  .interactive-game__centered-container {
-    height: 0; /* Fixed height to zero */
-  }
-  
   .interactive-game__turn-info {
     flex-direction: column;
     gap: var(--spacing-xs);
@@ -448,45 +441,11 @@
 }
 
 @media (max-width: 480px) {
-  .interactive-game__centered-container {
-    height: 0; /* Fixed height to zero */
-  }
-  
   .interactive-game__word-builder {
     padding: var(--spacing-sm);
   }
   
   .interactive-game__controls {
     gap: var(--spacing-sm);
-  }
-}
-
-/* Submit animation for word moving to trail - apply to container */
-.interactive-game__word-builder--submitting {
-  animation: submitToTrail 0.3s ease-in-out;
-}
-
-@keyframes submitToTrail {
-  0% {
-    transform: translateX(-50%) translateY(0) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(-50%) translateY(-120px) scale(0.7);
-    opacity: 0.8;
-  }
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  .interactive-game__word-builder--submitting {
-    animation: none;
-    transition: opacity 0.1s ease;
-  }
-  
-  @keyframes submitToTrail {
-    to {
-      opacity: 0.6;
-    }
   }
 } 
