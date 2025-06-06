@@ -37,7 +37,7 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
     actionIcons.push('~');
   }
   if (actions.remove) {
-    actionIcons.push('—');
+    actionIcons.push('-');
   }
   if (actions.add) {
     actionIcons.push('+');
