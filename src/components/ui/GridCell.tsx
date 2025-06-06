@@ -11,6 +11,8 @@ export interface GridCellProps {
   onClick?: () => void;
   onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onMouseDown?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onTouchStart?: (e: React.TouchEvent<HTMLDivElement>) => void;
   draggable?: boolean;
   disabled?: boolean;
   'aria-label'?: string;
@@ -23,6 +25,8 @@ export const GridCell: React.FC<GridCellProps> = ({
   onClick,
   onDragStart,
   onDragEnd,
+  onMouseDown,
+  onTouchStart,
   draggable = false,
   disabled = false,
   'aria-label': ariaLabel,
@@ -45,6 +49,18 @@ export const GridCell: React.FC<GridCellProps> = ({
     }
   };
 
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!disabled && onMouseDown) {
+      onMouseDown(e);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!disabled && onTouchStart) {
+      onTouchStart(e);
+    }
+  };
+
   const cellClasses = [
     'grid-cell',
     `grid-cell--${state}`,
@@ -60,6 +76,8 @@ export const GridCell: React.FC<GridCellProps> = ({
       onClick={handleClick}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
       draggable={draggable && !disabled}
       role="button"
       tabIndex={disabled ? -1 : 0}

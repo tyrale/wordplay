@@ -404,3 +404,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All 253 tests passing
 - Build successful with reduced bundle size
 - Complete removal maintains all other WordBuilder functionality
+
+## [2025-01-18] - Mouse/Touch Drag System Implementation
+
+### Added
+- **Mouse/Touch Letter Dragging**: Implemented reliable cross-platform letter dragging using same approach as working color divs
+  - Replaced unreliable HTML5 drag/drop (onDragStart/onDrop) with mouse/touch events (onMouseDown/onTouchStart)
+  - Added draggedLetter state management in InteractiveGame component
+  - Integrated drop detection via onMouseUp/onTouchEnd on WordBuilder container
+  - Added visual feedback with opacity changes during drag operations
+  - Maintained backward compatibility with click-to-add letter functionality
+
+### Technical Details
+- Mouse events for desktop drag operations
+- Touch events for mobile device compatibility  
+- Visual feedback system with opacity changes (0.7 during drag)
+- Cross-platform event handling ensuring consistent behavior
+
+### Verification
+- All 253 tests passing
+- Build successful: 231.23 kB bundle (slight increase due to additional event handlers)
+- Letter dragging now works reliably across all devices using proven approach

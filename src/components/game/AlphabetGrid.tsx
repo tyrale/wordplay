@@ -80,6 +80,52 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
     onLetterDragEnd?.();
   }, [onLetterDragEnd]);
 
+  const handleMouseDown = useCallback((e: React.MouseEvent, content: string) => {
+    if (disabled || ACTION_BUTTONS.includes(content)) {
+      return;
+    }
+    
+    // Trigger drag start with mouse events
+    onLetterDragStart?.(content);
+    
+    // Add visual feedback
+    const target = e.target as HTMLElement;
+    target.style.opacity = '0.7';
+  }, [disabled, onLetterDragStart]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent, content: string) => {
+    if (disabled || ACTION_BUTTONS.includes(content)) {
+      return;
+    }
+    
+    // Trigger drag start with touch events
+    onLetterDragStart?.(content);
+    
+    // Add visual feedback
+    const target = e.target as HTMLElement;
+    target.style.opacity = '0.7';
+  }, [disabled, onLetterDragStart]);
+
+  const handleMouseUp = useCallback((_e: React.MouseEvent) => {
+    // Reset visual feedback for all letters
+    const letters = document.querySelectorAll('.grid-cell--letter');
+    letters.forEach(letter => {
+      (letter as HTMLElement).style.opacity = '1';
+    });
+    
+    onLetterDragEnd?.();
+  }, [onLetterDragEnd]);
+
+  const handleTouchEnd = useCallback((_e: React.TouchEvent) => {
+    // Reset visual feedback for all letters
+    const letters = document.querySelectorAll('.grid-cell--letter');
+    letters.forEach(letter => {
+      (letter as HTMLElement).style.opacity = '1';
+    });
+    
+    onLetterDragEnd?.();
+  }, [onLetterDragEnd]);
+
 
 
   const getAriaLabel = (content: string): string => {
@@ -113,7 +159,13 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   };
 
   return (
-    <div className="alphabet-grid" role="grid" aria-label="Alphabet grid">
+    <div 
+      className="alphabet-grid" 
+      role="grid" 
+      aria-label="Alphabet grid"
+      onMouseUp={handleMouseUp}
+      onTouchEnd={handleTouchEnd}
+    >
       {ALPHABET_GRID.map((row, rowIndex) => (
         <div key={rowIndex} className="alphabet-grid__row" role="row">
           {row.map((content) => {
@@ -130,7 +182,8 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
                 onClick={() => handleCellClick(content)}
                 onDragStart={canDrag ? (e) => handleDragStart(e, content) : undefined}
                 onDragEnd={canDrag ? handleDragEnd : undefined}
-
+                onMouseDown={canDrag ? (e) => handleMouseDown(e, content) : undefined}
+                onTouchStart={canDrag ? (e) => handleTouchStart(e, content) : undefined}
                 draggable={canDrag}
                 disabled={disabled}
                 aria-label={getDragAriaLabel(content, state)}

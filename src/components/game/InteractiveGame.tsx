@@ -56,6 +56,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
   const [showGameEnd, setShowGameEnd] = useState(false);
   const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
+  const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   // Initialize dictionary on component mount
   useEffect(() => {
     const loadDictionary = async () => {
@@ -231,6 +232,31 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     }
   }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
 
+  const handleLetterDragStart = useCallback((letter: string) => {
+    if (!isPlayerTurn || isProcessingMove) return;
+    setDraggedLetter(letter);
+  }, [isPlayerTurn, isProcessingMove]);
+
+  const handleLetterDragEnd = useCallback(() => {
+    setDraggedLetter(null);
+  }, []);
+
+  const handleWordBuilderMouseUp = useCallback((_e: React.MouseEvent) => {
+    if (draggedLetter && pendingWord.length < 10) {
+      const newWord = pendingWord + draggedLetter;
+      handleWordChange(newWord);
+    }
+    setDraggedLetter(null);
+  }, [draggedLetter, pendingWord, handleWordChange]);
+
+  const handleWordBuilderTouchEnd = useCallback((_e: React.TouchEvent) => {
+    if (draggedLetter && pendingWord.length < 10) {
+      const newWord = pendingWord + draggedLetter;
+      handleWordChange(newWord);
+    }
+    setDraggedLetter(null);
+  }, [draggedLetter, pendingWord, handleWordChange]);
+
   const handleLetterRemove = useCallback((index: number) => {
     if (!isPlayerTurn || isProcessingMove) return;
     
@@ -389,15 +415,20 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
             {/* Word builder for player turn */}
             {isPlayerTurn && (
               <div className="interactive-game__word-builder">
-                <WordBuilder
-                  currentWord={pendingWord}
-                  wordHighlights={pendingWordHighlights}
-                  onWordChange={handleWordChange}
-                  onLetterClick={handleLetterRemove}
-                  disabled={isProcessingMove}
-                  maxLength={10}
-                  minLength={3}
-                />
+                <div
+                  onMouseUp={handleWordBuilderMouseUp}
+                  onTouchEnd={handleWordBuilderTouchEnd}
+                >
+                  <WordBuilder
+                    currentWord={pendingWord}
+                    wordHighlights={pendingWordHighlights}
+                    onWordChange={handleWordChange}
+                    onLetterClick={handleLetterRemove}
+                    disabled={isProcessingMove}
+                    maxLength={10}
+                    minLength={3}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -427,6 +458,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
               letterStates={letterStates}
               onLetterClick={handleLetterClick}
               onActionClick={handleActionClick}
+              onLetterDragStart={handleLetterDragStart}
+              onLetterDragEnd={handleLetterDragEnd}
               disabled={!isPlayerTurn || isProcessingMove}
               enableDrag={true} // Enable drag for mobile and desktop
             />

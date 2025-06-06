@@ -253,6 +253,20 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 **Verification**: All 253 tests passing, build successful (230.10 kB bundle), complete removal of remove button functionality while maintaining all other WordBuilder features.
 
+## 🖱️ **MOUSE/TOUCH DRAG SYSTEM IMPLEMENTED**: Color Div Approach Applied to Letters
+
+**Issue Identified**: HTML5 drag and drop doesn't work reliably on mobile devices, but color div dragging works perfectly using mouse/touch events
+
+**Solution Implemented**:
+- ✅ **Mouse/Touch Event System** (Replaced HTML5 drag/drop with onMouseDown/onTouchStart approach like SimpleDragTest)
+- ✅ **Drag State Management** (Added draggedLetter state to track which letter is being dragged)
+- ✅ **Visual Feedback** (Letter opacity changes to 0.7 during drag, resets on drop)
+- ✅ **Cross-Platform Compatibility** (Mouse events for desktop, touch events for mobile devices)
+- ✅ **WordBuilder Integration** (Drop detection via onMouseUp/onTouchEnd on WordBuilder container)
+- ✅ **Maintained All Features** (Click-to-add still works, drag-to-add now works reliably)
+
+**Verification**: All 253 tests passing, build successful (231.23 kB bundle), letter dragging now uses same reliable approach as working color divs.
+
 ## Phase 3 – Online Multiplayer (Web)
 
 - [ ] 3.1 **Auth Flow (Supabase EmailLink)**
