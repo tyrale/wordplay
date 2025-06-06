@@ -65,25 +65,6 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
     e.dataTransfer.setData('application/x-letter-source', 'alphabet-grid');
     e.dataTransfer.effectAllowed = 'copy';
     
-    // Create completely invisible drag image to replace browser default
-    const invisibleElement = document.createElement('div');
-    invisibleElement.style.width = '1px';
-    invisibleElement.style.height = '1px';
-    invisibleElement.style.backgroundColor = 'transparent';
-    invisibleElement.style.position = 'absolute';
-    invisibleElement.style.top = '-1000px';
-    invisibleElement.style.left = '-1000px';
-    document.body.appendChild(invisibleElement);
-    
-    e.dataTransfer.setDragImage(invisibleElement, 0, 0);
-    
-    // Clean up the invisible element after drag starts
-    setTimeout(() => {
-      if (document.body.contains(invisibleElement)) {
-        document.body.removeChild(invisibleElement);
-      }
-    }, 0);
-    
     onLetterDragStart?.(content);
     
     // Add visual feedback
