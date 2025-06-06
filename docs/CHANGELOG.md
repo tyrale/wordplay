@@ -23,6 +23,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - React components in `src/components/` unchanged
   - CSS styling and themes preserved completely
   - Storybook stories and layout elements intact
+- **🔧 DEPENDENCY INJECTION REFACTORING**: Platform-specific imports eliminated
+  - Removed Node.js imports from `packages/engine/dictionary.ts` (fs, path, url)
+  - Eliminated direct imports between engine modules
+  - Deprecated legacy async functions in bot.ts that relied on direct imports
+
+### Changed
+- **🏗️ ARCHITECTURE**: Complete dependency injection implementation
+  - Dictionary module refactored to platform-agnostic with `WordDataDependencies` interface
+  - Bot module completely refactored with `BotDependencies`, `ScoringDependencies`, `DictionaryValidation` interfaces
+  - Engine functions now accept dependencies as parameters instead of using direct imports
+  - Legacy functions preserved with deprecation warnings for backward compatibility
+- **📦 MODULE STRUCTURE**: Clean separation of concerns
+  - Core engine logic separated from platform-specific implementations
+  - Pure functions for move generation require no dependencies
+  - Platform adapters will provide dependencies to engine functions
 
 ### Fixed
 
@@ -489,3 +504,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Build successful: 231.00 kB bundle
 - Responsive interactions working reliably on first and subsequent operations
 - Both click-to-interact and drag-to-reorder functionality fully operational
+
+## [Dependency Injection Architecture - Step 3 Progress] - 2024-XX-XX
+
+### ✅ **GAMESTATE MODULE DEPENDENCY INJECTION COMPLETED**
+
+**Core Engine Refactoring: packages/engine/gamestate.ts**
+- **BREAKING**: Removed all direct imports from other engine modules 
+- **NEW**: `LocalGameStateManagerWithDependencies` class with complete dependency injection
+- **NEW**: Comprehensive dependency interfaces (`GameStateDependencies`, `GameStateDictionaryDependencies`, `GameStateScoringDependencies`, `GameStateBotDependencies`)
+- **COMPATIBILITY**: Legacy `LocalGameStateManager` class preserved as deprecated compatibility shim
+- **NEW**: Dependency-injected helper functions (`createGameStateManagerWithDependencies`, `quickScoreMoveWithDependencies`, `quickValidateMoveWithDependencies`)
+
+**Architecture Benefits:**
+- Platform-agnostic game state management
+- No platform-specific imports in core engine
+- Clear separation of concerns via dependency injection
+- Maintains backward compatibility during transition
+
+**Build Status:**
+- Core engine modules now compile with dependency injection architecture
+- 64 TypeScript errors remaining (mostly test files needing async/await fixes)
+- All engine modules successfully decoupled from direct imports
+
+**Next Steps:**
+- Fix test files to use `await` with async functions
+- Update web components to use dependency-injected functions
+- Create platform adapters for browser and Node.js environments

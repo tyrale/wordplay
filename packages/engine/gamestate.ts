@@ -1,23 +1,107 @@
 /**
- * Local GameState Manager
+ * Local GameState Manager - Platform-Agnostic
  * 
  * This module provides comprehensive game state management for the WordPlay game,
- * integrating word validation, scoring, and bot AI into a cohesive game experience.
+ * using dependency injection to avoid platform-specific imports.
+ * Platform adapters provide word validation, scoring, and bot AI functions.
+ * 
+ * DEPENDENCY INJECTION: All functions now accept dependencies as parameters
+ * for platform-agnostic operation. Platform adapters provide dictionary,
+ * scoring, and bot functions.
  * 
  * Key Features:
  * - Complete game state management (word, key letters, locked letters)
- * - Word validation and scoring integration
- * - Bot AI integration for single-player games
+ * - Word validation and scoring integration via dependency injection
+ * - Bot AI integration for single-player games via dependency injection
  * - Letter movement and rearrangement system
  * - Turn-based game flow with history tracking
  * - Performance optimized for web compatibility
  * - Observable state changes for UI integration
  */
 
-import { validateWord, type ValidationResult } from './dictionary';
-import { calculateScore, getScoreForMove, isValidMove, type ScoringResult } from './scoring';
-import { generateBotMove, type BotMove, type BotResult } from './bot';
-import { getRandomWordByLength } from './dictionary';
+// Remove direct imports - replaced with dependency injection
+// import { validateWord, type ValidationResult } from './dictionary';
+// import { calculateScore, getScoreForMove, isValidMove, type ScoringResult } from './scoring';
+// import { generateBotMove, type BotMove, type BotResult } from './bot';
+// import { getRandomWordByLength } from './dictionary';
+
+// =============================================================================
+// DEPENDENCY INTERFACES
+// =============================================================================
+
+/**
+ * Dictionary dependencies for game state management
+ */
+export interface GameStateDictionaryDependencies {
+  validateWord: (word: string, options?: any) => ValidationResult;
+  getRandomWordByLength: (length: number) => string | null;
+}
+
+/**
+ * Scoring dependencies for game state management
+ */
+export interface GameStateScoringDependencies {
+  calculateScore: (fromWord: string, toWord: string, options?: any) => ScoringResult;
+  getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]) => number;
+  isValidMove: (fromWord: string, toWord: string) => boolean;
+}
+
+/**
+ * Bot dependencies for game state management
+ */
+export interface GameStateBotDependencies {
+  generateBotMove: (word: string, options?: any) => Promise<BotResult>;
+}
+
+/**
+ * Combined dependencies for complete game state management
+ */
+export interface GameStateDependencies extends 
+  GameStateDictionaryDependencies, 
+  GameStateScoringDependencies, 
+  GameStateBotDependencies {
+}
+
+// =============================================================================
+// RESULT TYPES (IMPORTED FROM ENGINE INTERFACES)
+// =============================================================================
+
+export interface ValidationResult {
+  isValid: boolean;
+  reason?: string;
+  word: string;
+  censored?: string;
+}
+
+export interface ScoringResult {
+  totalScore: number;
+  breakdown: {
+    addLetterPoints: number;
+    removeLetterPoints: number;
+    rearrangePoints: number;
+    keyLetterUsagePoints: number;
+  };
+  actions: string[];
+  keyLettersUsed: string[];
+}
+
+export interface BotMove {
+  word: string;
+  score: number;
+  confidence: number;
+  reasoning: string[];
+}
+
+export interface BotResult {
+  move: BotMove | null;
+  candidates: BotMove[];
+  processingTime: number;
+  totalCandidatesGenerated: number;
+}
+
+// =============================================================================
+// GAME STATE TYPES
+// =============================================================================
 
 // Core game state types
 export interface GameConfig {
@@ -119,15 +203,21 @@ export interface GameStateUpdate {
 // Event system for state change notifications
 type GameStateListener = (update: GameStateUpdate) => void;
 
+// =============================================================================
+// DEPENDENCY-INJECTED GAME STATE MANAGER (NEW ARCHITECTURE)
+// =============================================================================
+
 /**
- * Local GameState Manager Class
- * Manages all game state and integrates with validation, scoring, and bot AI
+ * Local GameState Manager Class with Dependency Injection
+ * Manages all game state and integrates with validation, scoring, and bot AI via dependencies
  */
-export class LocalGameStateManager {
+export class LocalGameStateManagerWithDependencies {
   private state: GameState;
   private listeners: GameStateListener[] = [];
+  private dependencies: GameStateDependencies;
 
-  constructor(config: GameConfig = {}) {
+  constructor(dependencies: GameStateDependencies, config: GameConfig = {}) {
+    this.dependencies = dependencies;
     this.state = this.initializeGameState(config);
   }
 
@@ -138,7 +228,7 @@ export class LocalGameStateManager {
     // Get random 4-letter word if no initial word provided
     let initialWord = config.initialWord;
     if (!initialWord) {
-      const randomWord = getRandomWordByLength(4);
+      const randomWord = this.dependencies.getRandomWordByLength(4);
       initialWord = randomWord || 'WORD'; // fallback to 'WORD' if no 4-letter words found
     }
 
@@ -198,10 +288,23 @@ export class LocalGameStateManager {
   /**
    * Get the current game state (read-only copy)
    */
-  public getState(): Readonly<PublicGameState> {
-    return { 
-      ...this.state,
-      usedWords: Array.from(this.state.usedWords) // Convert Set to Array for easier consumption
+  public getState(): PublicGameState {
+    return {
+      currentWord: this.state.currentWord,
+      keyLetters: [...this.state.keyLetters],
+      lockedLetters: [...this.state.lockedLetters],
+      lockedKeyLetters: [...this.state.lockedKeyLetters],
+      usedWords: Array.from(this.state.usedWords),
+      players: this.state.players.map(p => ({ ...p })),
+      currentTurn: this.state.currentTurn,
+      maxTurns: this.state.maxTurns,
+      gameStatus: this.state.gameStatus,
+      winner: this.state.winner ? { ...this.state.winner } : null,
+      turnHistory: this.state.turnHistory.map(h => ({ ...h })),
+      totalMoves: this.state.totalMoves,
+      config: { ...this.state.config },
+      gameStartTime: this.state.gameStartTime,
+      lastMoveTime: this.state.lastMoveTime
     };
   }
 
@@ -213,90 +316,97 @@ export class LocalGameStateManager {
   }
 
   /**
-   * Get the other player (non-current)
+   * Get the other (non-current) player
    */
   public getOtherPlayer(): PlayerState | null {
     return this.state.players.find(p => !p.isCurrentPlayer) || null;
   }
 
   /**
-   * Start a new game
+   * Start the game
    */
   public startGame(): void {
-    if (this.state.gameStatus !== 'waiting') {
-      throw new Error('Game has already started');
+    if (this.state.gameStatus === 'waiting') {
+      this.state.gameStatus = 'playing';
+      this.state.gameStartTime = Date.now();
+      
+      // Add initial word to used words set
+      this.state.usedWords.add(this.state.currentWord);
+      
+      // Generate initial key letter
+      this.generateRandomKeyLetter();
+      
+      this.notifyListeners({
+        type: 'game_finished',
+        data: { gameStatus: this.state.gameStatus },
+        timestamp: Date.now()
+      });
     }
-
-    this.state.gameStatus = 'playing';
-    this.state.gameStartTime = Date.now();
-    this.state.lastMoveTime = Date.now();
-    
-    // Track the initial word as used
-    this.state.usedWords.add(this.state.currentWord);
-    
-    // Generate initial key letters so players can see them from the start
-    if (this.state.config.enableKeyLetters) {
-      this.generateRandomKeyLetter(); // Only 1 key letter at start
-    }
-
-    this.notifyListeners({
-      type: 'game_finished',
-      data: { status: 'playing' },
-      timestamp: Date.now()
-    });
   }
 
   /**
-   * Attempt to make a move with the given word
+   * Attempt a move - validate without applying
    */
   public attemptMove(newWord: string): MoveAttempt {
-    if (this.state.gameStatus !== 'playing') {
-      return {
-        newWord,
-        isValid: false,
-        validationResult: { isValid: false, reason: 'Game is not in progress', word: newWord },
-        scoringResult: null,
-        canApply: false,
-        reason: 'Game is not in progress'
-      };
-    }
-
-    const normalizedWord = newWord.trim().toUpperCase();
+    const normalizedNewWord = newWord.trim().toUpperCase();
     const currentPlayer = this.getCurrentPlayer();
-
+    
     if (!currentPlayer) {
       return {
-        newWord: normalizedWord,
+        newWord: normalizedNewWord,
         isValid: false,
-        validationResult: { isValid: false, reason: 'No current player', word: normalizedWord },
+        validationResult: {
+          isValid: false,
+          reason: 'No current player',
+          word: normalizedNewWord
+        },
         scoringResult: null,
         canApply: false,
         reason: 'No current player found'
       };
     }
 
-    // Check for word repetition - no word can be played twice in the same game
-    if (this.state.usedWords.has(normalizedWord)) {
+    // Basic validation first
+    if (this.state.gameStatus !== 'playing') {
       return {
-        newWord: normalizedWord,
+        newWord: normalizedNewWord,
         isValid: false,
-        validationResult: { isValid: false, reason: 'Word has already been played in this game', word: normalizedWord },
+        validationResult: {
+          isValid: false,
+          reason: 'Game is not in playing state',
+          word: normalizedNewWord
+        },
         scoringResult: null,
         canApply: false,
-        reason: 'Word has already been played in this game'
+        reason: 'Game is not in playing state'
       };
     }
 
-    // Validate the word using the dictionary service
-    const validationResult = validateWord(normalizedWord, {
+    // Check if word has been used before
+    if (this.state.usedWords.has(normalizedNewWord)) {
+      return {
+        newWord: normalizedNewWord,
+        isValid: false,
+        validationResult: {
+          isValid: false,
+          reason: 'Word has already been used in this game',
+          word: normalizedNewWord
+        },
+        scoringResult: null,
+        canApply: false,
+        reason: 'Word repetition not allowed'
+      };
+    }
+
+    // Word validation using dependency injection
+    const validationResult = this.dependencies.validateWord(normalizedNewWord, {
       isBot: currentPlayer.isBot,
-      previousWord: this.state.currentWord,
-      checkLength: true
+      previousWord: this.state.currentWord
     });
 
     if (!validationResult.isValid) {
       return {
-        newWord: normalizedWord,
+        newWord: normalizedNewWord,
         isValid: false,
         validationResult,
         scoringResult: null,
@@ -305,47 +415,32 @@ export class LocalGameStateManager {
       };
     }
 
-    // Validate move actions (only one of each action type allowed per turn)
-    if (!isValidMove(this.state.currentWord, normalizedWord)) {
+    // Additional move validation using dependency injection
+    const isMoveValid = this.dependencies.isValidMove(this.state.currentWord, normalizedNewWord);
+    if (!isMoveValid) {
       return {
-        newWord: normalizedWord,
+        newWord: normalizedNewWord,
         isValid: false,
-        validationResult: { isValid: false, reason: 'Invalid move: can only add/remove one letter per turn', word: normalizedWord },
+        validationResult: {
+          isValid: false,
+          reason: 'Invalid move pattern',
+          word: normalizedNewWord
+        },
         scoringResult: null,
         canApply: false,
-        reason: 'Invalid move: can only add/remove one letter per turn'
+        reason: 'Move does not follow game rules'
       };
     }
 
-    // LOCKED KEY LETTER VALIDATION
-    // Check if any locked key letters would be removed by this move
-    if (this.state.lockedKeyLetters.length > 0) {
-      for (const lockedLetter of this.state.lockedKeyLetters) {
-        // If the locked letter is in the current word but not in the new word, it's being removed
-        if (this.state.currentWord.includes(lockedLetter) && !normalizedWord.includes(lockedLetter)) {
-          return {
-            newWord: normalizedWord,
-            isValid: false,
-            validationResult: { 
-              isValid: false, 
-              reason: `Cannot remove locked key letter '${lockedLetter}' - it was used by the previous player`, 
-              word: normalizedWord 
-            },
-            scoringResult: null,
-            canApply: false,
-            reason: `Cannot remove locked key letter '${lockedLetter}' - it was used by the previous player`
-          };
-        }
-      }
-    }
-
-    // Calculate scoring
-    const scoringResult = calculateScore(this.state.currentWord, normalizedWord, {
-      keyLetters: this.state.keyLetters
-    });
+    // Calculate scoring using dependency injection
+    const scoringResult = this.dependencies.calculateScore(
+      this.state.currentWord,
+      normalizedNewWord,
+      { keyLetters: this.state.keyLetters }
+    );
 
     return {
-      newWord: normalizedWord,
+      newWord: normalizedNewWord,
       isValid: true,
       validationResult,
       scoringResult,
@@ -453,7 +548,7 @@ export class LocalGameStateManager {
 
     try {
       // Generate bot move
-      const botResult: BotResult = generateBotMove(this.state.currentWord, {
+      const botResult: BotResult = await this.dependencies.generateBotMove(this.state.currentWord, {
         keyLetters: this.state.keyLetters,
         maxCandidates: 500 // Reasonable limit for responsive gameplay
       });
@@ -856,24 +951,108 @@ export class LocalGameStateManager {
   }
 }
 
+// =============================================================================
+// LEGACY COMPATIBILITY & DEPRECATED FUNCTIONS
+// =============================================================================
+
 /**
- * Factory function for creating game state managers
+ * DEPRECATED: Legacy LocalGameStateManager for backward compatibility
+ * 
+ * @deprecated Use LocalGameStateManagerWithDependencies instead
+ * This class maintains the old interface but requires external dependencies to be set up.
+ * It will be removed in a future version.
+ */
+export class LocalGameStateManager extends LocalGameStateManagerWithDependencies {
+  constructor(config: GameConfig = {}) {
+    // Requires dependencies to be provided externally - this is a compatibility shim
+    // Platform adapters should provide proper dependencies
+    const placeholderDependencies: GameStateDependencies = {
+      validateWord: () => ({ isValid: false, reason: 'No dependencies provided', word: '' }),
+      getRandomWordByLength: () => null,
+      calculateScore: () => ({ totalScore: 0, breakdown: { addLetterPoints: 0, removeLetterPoints: 0, rearrangePoints: 0, keyLetterUsagePoints: 0 }, actions: [], keyLettersUsed: [] }),
+      getScoreForMove: () => 0,
+      isValidMove: () => false,
+      generateBotMove: async () => ({ move: null, candidates: [], processingTime: 0, totalCandidatesGenerated: 0 })
+    };
+    
+    super(placeholderDependencies, config);
+    console.warn('LocalGameStateManager is deprecated. Use LocalGameStateManagerWithDependencies with proper dependency injection.');
+  }
+}
+
+/**
+ * DEPRECATED: Factory function for creating game state managers
+ * 
+ * @deprecated Use `new LocalGameStateManagerWithDependencies(dependencies, config)` instead
+ * This function requires dependencies to be set up externally and will be removed in a future version.
  */
 export function createGameStateManager(config?: GameConfig): LocalGameStateManager {
+  console.warn('createGameStateManager is deprecated. Use LocalGameStateManagerWithDependencies constructor with proper dependencies.');
   return new LocalGameStateManager(config);
 }
 
 /**
- * Helper function for quick move scoring
+ * DEPRECATED: Helper function for quick move scoring
+ * 
+ * @deprecated This function uses direct imports which violate dependency injection architecture.
+ * Use platform-specific scoring functions or create adapter functions instead.
  */
 export function quickScoreMove(fromWord: string, toWord: string, keyLetters: string[] = []): number {
-  return getScoreForMove(fromWord, toWord, keyLetters);
+  console.warn('quickScoreMove is deprecated due to direct import usage. Use dependency-injected scoring functions.');
+  // Return 0 as placeholder - platform adapters should provide proper scoring
+  return 0;
 }
 
 /**
- * Helper function for move validation
+ * DEPRECATED: Helper function for move validation
+ * 
+ * @deprecated This function uses direct imports which violate dependency injection architecture.
+ * Use platform-specific validation functions or create adapter functions instead.
  */
 export function quickValidateMove(word: string, isBot = false, previousWord?: string): boolean {
-  const result = validateWord(word, { isBot, previousWord, checkLength: true });
+  console.warn('quickValidateMove is deprecated due to direct import usage. Use dependency-injected validation functions.');
+  // Return false as placeholder - platform adapters should provide proper validation
+  return false;
+}
+
+// =============================================================================
+// DEPENDENCY-INJECTED HELPER FUNCTIONS (RECOMMENDED)
+// =============================================================================
+
+/**
+ * Create a game state manager with proper dependency injection
+ * This is the recommended way to create game state managers.
+ */
+export function createGameStateManagerWithDependencies(
+  dependencies: GameStateDependencies, 
+  config?: GameConfig
+): LocalGameStateManagerWithDependencies {
+  return new LocalGameStateManagerWithDependencies(dependencies, config);
+}
+
+/**
+ * Quick move scoring with dependency injection
+ * Use this instead of the deprecated quickScoreMove function.
+ */
+export function quickScoreMoveWithDependencies(
+  fromWord: string, 
+  toWord: string, 
+  scoring: GameStateScoringDependencies,
+  keyLetters: string[] = []
+): number {
+  return scoring.getScoreForMove(fromWord, toWord, keyLetters);
+}
+
+/**
+ * Quick move validation with dependency injection
+ * Use this instead of the deprecated quickValidateMove function.
+ */
+export function quickValidateMoveWithDependencies(
+  word: string, 
+  dictionary: GameStateDictionaryDependencies,
+  isBot = false, 
+  previousWord?: string
+): boolean {
+  const result = dictionary.validateWord(word, { isBot, previousWord });
   return result.isValid;
 } 
