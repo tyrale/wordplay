@@ -160,6 +160,10 @@
 
 .interactive-game__word-trail {
   margin-bottom: var(--spacing-md);
+  min-height: 2em;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 /* Scale word trail letters to 70% of word builder size */
@@ -208,8 +212,9 @@
   justify-content: center;
   flex-wrap: nowrap;
   white-space: nowrap;
-  transform: scale(2);
-  margin: var(--spacing-lg) 0;
+  transform: scale(1.5);
+  margin: calc(var(--spacing-lg) * 1.5) 0;
+  transform-origin: center;
 }
 
 .interactive-game__score,

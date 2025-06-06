@@ -164,14 +164,27 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   // Word trail with move details
   const wordTrailMoves: WordMove[] = React.useMemo(() => {
-    return gameState.turnHistory.map((turn) => ({
+    const moves = gameState.turnHistory.map((turn) => ({
       word: turn.newWord,
       score: turn.score,
       player: turn.playerId,
       turnNumber: turn.turnNumber,
       actions: turn.scoringBreakdown.actions
     }));
-  }, [gameState.turnHistory]);
+    
+    // If no moves yet, show the starting word
+    if (moves.length === 0 && wordState.currentWord) {
+      return [{
+        word: wordState.currentWord,
+        score: 0,
+        player: 'start',
+        turnNumber: 0,
+        actions: []
+      }];
+    }
+    
+    return moves;
+  }, [gameState.turnHistory, wordState.currentWord]);
 
   // Event handlers
   const handleActionClick = useCallback((action: string) => {
