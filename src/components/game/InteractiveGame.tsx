@@ -329,7 +329,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       // Start submit animation
       setIsSubmitAnimating(true);
       
-      // Wait for animation to complete
+      // Wait for animation to complete before applying move
       setTimeout(() => {
         const success = actions.applyMove(pendingMoveAttempt);
         if (success) {

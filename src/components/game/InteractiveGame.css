@@ -452,32 +452,25 @@
   }
 }
 
-/* Submit animation for word moving to trail */
-.interactive-game__word-builder--submitting .word-builder {
+/* Submit animation for word moving to trail - apply to container */
+.interactive-game__word-builder--submitting {
   animation: submitToTrail 0.3s ease-in-out;
 }
 
 @keyframes submitToTrail {
   0% {
-    transform: translateY(0) scale(1);
+    transform: translateX(-50%) translateY(0) scale(1);
     opacity: 1;
   }
   100% {
-    transform: translateY(-120px) scale(0.7);
+    transform: translateX(-50%) translateY(-120px) scale(0.7);
     opacity: 0.8;
   }
 }
 
-/* Ensure word builder resets to original position after animation */
-.word-builder {
-  transform: translateY(0) scale(1);
-  opacity: 1;
-  transition: none; /* Prevent transition conflicts with animation */
-}
-
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  .interactive-game__word-builder--submitting .word-builder {
+  .interactive-game__word-builder--submitting {
     animation: none;
     transition: opacity 0.1s ease;
   }
