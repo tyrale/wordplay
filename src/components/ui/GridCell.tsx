@@ -88,7 +88,7 @@ export const GridCell: React.FC<GridCellProps> = ({
       </span>
       {(state === 'locked' || state === 'lockedKey') && (
         <span className="grid-cell__lock" aria-hidden="true">
-          🔒
+          ●
         </span>
       )}
     </div>

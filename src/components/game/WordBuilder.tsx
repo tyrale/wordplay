@@ -33,64 +33,47 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const lastEventTimeRef = useRef<number>(0);
   const lastTouchTimeRef = useRef<number>(0);
-  const lastWordRef = useRef<string>(currentWord);
+  const prevWordRef = useRef<string>(currentWord);
 
-  // Reset drag state when word changes externally
   useEffect(() => {
-    if (lastWordRef.current !== currentWord) {
-      console.log('🔄 WordBuilder: Word changed externally, resetting drag state', {
-        oldWord: lastWordRef.current,
-        newWord: currentWord
-      });
+    // Reset drag state when word changes externally (e.g., from game state)
+    if (currentWord !== prevWordRef.current) {
+      prevWordRef.current = currentWord;
       setDraggedIndex(null);
       setIsDragging(false);
       setDragStartPos(null);
       setDropTargetIndex(null);
       setActiveInputMethod(null);
-      lastWordRef.current = currentWord;
     }
   }, [currentWord]);
 
-  // Handle touch events with proper preventDefault support
+  // Native touch event handling for preventing scrolling during drag
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
     const handleNativeTouchMove = (e: TouchEvent) => {
       if (isDragging) {
-        e.preventDefault(); // This works because we can control the passive option
+        e.preventDefault();
       }
     };
 
     // Add non-passive touch event listener
-    container.addEventListener('touchmove', handleNativeTouchMove, { passive: false });
+    document.addEventListener('touchmove', handleNativeTouchMove, { passive: false });
 
     return () => {
-      container.removeEventListener('touchmove', handleNativeTouchMove);
+      document.removeEventListener('touchmove', handleNativeTouchMove);
     };
   }, [isDragging]);
 
   const handleLetterClick = useCallback((index: number) => {
-    console.log('🔤 WordBuilder handleLetterClick called:', {
-      index,
-      disabled,
-      isDragging,
-      timestamp: Date.now()
-    });
-    
     if (disabled || isDragging) {
-      console.log('❌ WordBuilder handleLetterClick skipped - disabled or dragging');
       return;
     }
     
     // Check if this letter is locked (either regular locked or locked key letter)
     const highlight = wordHighlights.find(h => h.index === index);
     if (highlight?.type === 'locked' || highlight?.type === 'lockedKey') {
-      console.log('❌ WordBuilder handleLetterClick skipped - letter is locked');
       return;
     }
     
-    console.log('📤 WordBuilder calling onLetterClick prop');
     onLetterClick?.(index);
   }, [disabled, isDragging, onLetterClick, wordHighlights]);
 
@@ -99,16 +82,9 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     const timeSinceTouch = now - lastTouchTimeRef.current;
     
     if (disabled || activeInputMethod === 'touch' || timeSinceTouch < 300) {
-      console.log('🖱️ WordBuilder handleMouseDown skipped:', {
-        disabled,
-        activeInputMethod,
-        timeSinceTouch,
-        reason: disabled ? 'disabled' : activeInputMethod === 'touch' ? 'touch active' : 'touch within 300ms'
-      });
       return;
     }
     
-    console.log('🖱️ WordBuilder handleMouseDown - setting input method to mouse');
     setActiveInputMethod('mouse');
     setDragStartPos({ x: e.clientX, y: e.clientY });
     setDraggedIndex(index);
@@ -157,35 +133,17 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     const now = Date.now();
     const timeSinceTouch = now - lastTouchTimeRef.current;
     
-    console.log('🖱️ WordBuilder handleMouseUp:', {
-      timestamp: now,
-      draggedIndex,
-      isDragging,
-      dropTargetIndex,
-      activeInputMethod,
-      timeSinceLastEvent: now - lastEventTimeRef.current,
-      timeSinceTouch,
-      eventType: 'mouse'
-    });
-    
     e.stopPropagation(); // Prevent bubbling to parent drag handlers
     
     if (activeInputMethod !== 'mouse' || timeSinceTouch < 300) {
-      console.log('❌ WordBuilder skipping mouse event:', {
-        activeInputMethod,
-        timeSinceTouch,
-        reason: activeInputMethod !== 'mouse' ? 'not active input method' : 'touch within 300ms'
-      });
       return;
     }
     
     const eventNow = Date.now();
     if (draggedIndex !== null && eventNow - lastEventTimeRef.current > 100) {
-      console.log('✅ WordBuilder processing mouse event - conditions met');
       lastEventTimeRef.current = eventNow;
       
       if (isDragging && dropTargetIndex !== null && dropTargetIndex !== draggedIndex) {
-        console.log('🔄 WordBuilder handling drag operation');
         // Handle drag operation using the calculated drop target
         const letters = currentWord.split('');
         const [movedLetter] = letters.splice(draggedIndex, 1);
@@ -197,7 +155,6 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
         const newWord = letters.join('');
         onWordChange?.(newWord);
       } else if (!isDragging) {
-        console.log('🎯 WordBuilder handling click operation - calling handleLetterClick');
         // Handle click operation
         handleLetterClick(draggedIndex);
       }
@@ -208,9 +165,6 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       setDragStartPos(null);
       setDropTargetIndex(null);
       setActiveInputMethod(null);
-      console.log('🔄 WordBuilder reset input method to null (mouse end)');
-    } else {
-      console.log('❌ WordBuilder skipping mouse event - conditions not met');
     }
   }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick, activeInputMethod]);
 
@@ -219,7 +173,6 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     
     // Record touch timestamp for 300ms mouse lockout
     lastTouchTimeRef.current = Date.now();
-    console.log('👆 WordBuilder handleTouchStart - setting input method to touch, timestamp:', lastTouchTimeRef.current);
     setActiveInputMethod('touch');
     
     const touch = e.touches[0];
@@ -268,30 +221,17 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    console.log('👆 WordBuilder handleTouchEnd:', {
-      timestamp: Date.now(),
-      draggedIndex,
-      isDragging,
-      dropTargetIndex,
-      activeInputMethod,
-      timeSinceLastEvent: Date.now() - lastEventTimeRef.current,
-      eventType: 'touch'
-    });
-    
     e.stopPropagation(); // Prevent bubbling to parent drag handlers
     
     if (activeInputMethod !== 'touch') {
-      console.log('❌ WordBuilder skipping touch event - not active input method');
       return;
     }
     
     const eventNow = Date.now();
     if (draggedIndex !== null && eventNow - lastEventTimeRef.current > 100) {
-      console.log('✅ WordBuilder processing touch event - conditions met');
       lastEventTimeRef.current = eventNow;
       
       if (isDragging && dropTargetIndex !== null && dropTargetIndex !== draggedIndex) {
-        console.log('🔄 WordBuilder handling touch drag operation');
         // Handle drag operation using the calculated drop target
         const letters = currentWord.split('');
         const [movedLetter] = letters.splice(draggedIndex, 1);
@@ -303,7 +243,6 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
         const newWord = letters.join('');
         onWordChange?.(newWord);
       } else if (!isDragging) {
-        console.log('🎯 WordBuilder handling touch tap operation - calling handleLetterClick');
         // Handle tap operation
         handleLetterClick(draggedIndex);
       }
@@ -314,9 +253,6 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       setDragStartPos(null);
       setDropTargetIndex(null);
       setActiveInputMethod(null);
-      console.log('🔄 WordBuilder reset input method to null (touch end)');
-    } else {
-      console.log('❌ WordBuilder skipping touch event - conditions not met');
     }
   }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick, activeInputMethod]);
 
@@ -371,7 +307,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
             >
               {letter}
               {(isLocked || isLockedKey) && (
-                <span className="word-builder__lock-badge">🔒</span>
+                <span className="word-builder__lock-badge">●</span>
               )}
             </span>
             

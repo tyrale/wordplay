@@ -79,6 +79,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   const [isPassMode, setIsPassMode] = useState(false);
+  const [isSubmitAnimating, setIsSubmitAnimating] = useState(false);
   // Dictionary is automatically initialized with the real engine
 
   // Initialize pending word with current word
@@ -222,11 +223,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         break;
       case '?': // Help
         // TODO: Show help modal
-        console.log('Help requested');
         break;
       case '≡': // Settings
         // TODO: Show settings modal
-        console.log('Settings requested');
         break;
     }
   }, [isPlayerTurn, isProcessingMove, wordState.currentWord]);
@@ -284,72 +283,28 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, [draggedLetter, pendingWord, handleWordChange]);
 
   const handleLetterRemove = useCallback((index: number) => {
-    console.log('🗑️ InteractiveGame handleLetterRemove called:', {
-      index,
-      isPlayerTurn,
-      isProcessingMove,
-      pendingWord,
-      pendingWordLength: pendingWord.length,
-      timestamp: Date.now(),
-      callStack: new Error().stack?.split('\n').slice(1, 4).join('\n')
-    });
-    
     if (!isPlayerTurn || isProcessingMove) {
-      console.log('❌ InteractiveGame handleLetterRemove skipped - not player turn or processing');
       return;
     }
     
-    console.log('✂️ InteractiveGame removing letter at index', index, 'from word:', pendingWord);
-    console.log('📝 BEFORE removal - letters array:', pendingWord.split('').map((letter, i) => `${i}:${letter}`));
-    console.log('🎯 Target: removing letter at index', index, '=', pendingWord[index]);
-    
     const letters = pendingWord.split('');
-    const originalLength = letters.length;
-    const targetLetter = letters[index];
-    
-    // Enhanced splice logging
-    console.log('🔪 About to splice - array:', letters, 'index:', index, 'deleteCount: 1');
-    const splicedElements = letters.splice(index, 1);
-    console.log('✂️ Splice result - removed:', splicedElements, 'remaining array:', letters);
-    console.log('📊 Length change:', originalLength, '→', letters.length, '(should be -1)');
-    
+    letters.splice(index, 1);
     const newWord = letters.join('');
-    console.log('🔄 Final result:', pendingWord, '→', newWord);
-    console.log('📝 AFTER removal - letters array:', letters.map((letter, i) => `${i}:${letter}`));
     
-    // Verify splice behavior
-    if (splicedElements.length !== 1) {
-      console.error('🚨 SPLICE ERROR: Expected to remove 1 element, actually removed:', splicedElements.length, splicedElements);
-    }
-    if (splicedElements[0] !== targetLetter) {
-      console.error('🚨 TARGET ERROR: Expected to remove', targetLetter, 'actually removed:', splicedElements[0]);
-    }
-    
-    console.log('🔄 InteractiveGame calling handleWordChange with new word:', newWord);
     handleWordChange(newWord);
   }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
 
-  const handleSubmit = useCallback(() => {
-    console.log('🚀 handleSubmit called:', {
-      isPlayerTurn,
-      isProcessingMove,
-      canApply: pendingMoveAttempt?.canApply,
-      isPassMode,
-      pendingWord: pendingMoveAttempt?.newWord
-    });
-    
+  const handleSubmit = useCallback(async () => {
     if (!isPlayerTurn || isProcessingMove) return;
     
     // Handle pass mode - first click on invalid X activates pass mode
     if (!pendingMoveAttempt?.canApply && !isPassMode) {
-      console.log('🚀 Activating pass mode');
       setIsPassMode(true);
       return;
     }
     
     // Handle second click in pass mode - actually pass the turn
     if (isPassMode) {
-      console.log('🚀 Passing turn');
       actions.passTurn();
       setPendingWord(wordState.currentWord);
       setPendingMoveAttempt(null);
@@ -357,16 +312,21 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       return;
     }
     
-    // Handle normal valid submission
+    // Handle normal valid submission with animation
     if (pendingMoveAttempt?.canApply) {
-      console.log('🚀 Applying move:', pendingMoveAttempt.newWord);
-      const success = actions.applyMove(pendingMoveAttempt);
-      console.log('🚀 Move applied, success:', success);
-      if (success) {
-        setPendingWord(pendingMoveAttempt.newWord);
-        setPendingMoveAttempt(null);
-        setIsPassMode(false);
-      }
+      // Start submit animation
+      setIsSubmitAnimating(true);
+      
+      // Wait for animation to complete
+      setTimeout(() => {
+        const success = actions.applyMove(pendingMoveAttempt);
+        if (success) {
+          setPendingWord(pendingMoveAttempt.newWord);
+          setPendingMoveAttempt(null);
+          setIsPassMode(false);
+        }
+        setIsSubmitAnimating(false);
+      }, 300); // 300ms animation duration
     }
   }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, isPassMode, wordState.currentWord]);
 
@@ -506,7 +466,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
             
             {/* Word builder positioned below submit anchor */}
             {isPlayerTurn && (
-              <div className="interactive-game__word-builder-positioned">
+              <div className={`interactive-game__word-builder-positioned ${isSubmitAnimating ? 'interactive-game__word-builder--submitting' : ''}`.trim()}>
                 <div
                   onMouseUp={handleWordBuilderMouseUp}
                   onTouchEnd={handleWordBuilderTouchEnd}

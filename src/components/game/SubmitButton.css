@@ -36,7 +36,8 @@
 
 /* Invalid state (non-interactive) */
 .submit-button--invalid {
-  color: var(--theme-disabled);
+  color: var(--theme-accent);
+  opacity: 0.5;
   cursor: not-allowed;
 }
 

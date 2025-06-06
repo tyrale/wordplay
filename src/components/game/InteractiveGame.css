@@ -189,6 +189,8 @@
   text-align: center;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 2;
 }
 
 /* Apply same sizing to positioned word trail */
@@ -447,5 +449,35 @@
   
   .interactive-game__controls {
     gap: var(--spacing-sm);
+  }
+}
+
+/* Submit animation for word moving to trail */
+.interactive-game__word-builder--submitting .word-builder {
+  animation: submitToTrail 0.3s ease-in-out forwards;
+}
+
+@keyframes submitToTrail {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-120px) scale(0.7);
+    opacity: 0.8;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .interactive-game__word-builder--submitting .word-builder {
+    animation: none;
+    transition: opacity 0.1s ease;
+  }
+  
+  @keyframes submitToTrail {
+    to {
+      opacity: 0.6;
+    }
   }
 } 

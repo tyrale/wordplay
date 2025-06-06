@@ -7,6 +7,7 @@ export interface WordMove {
   player?: string;
   turnNumber?: number;
   actions?: string[];
+  keyLetters?: string[];
 }
 
 export interface WordTrailProps {
@@ -38,14 +39,16 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         score: move.score,
         player: move.player,
         turnNumber: move.turnNumber || index + 1,
-        actions: move.actions || []
+        actions: move.actions || [],
+        keyLetters: move.keyLetters || []
       }))
     : words.map((word, index) => ({
         word,
         score: 0,
         player: undefined,
         turnNumber: index + 1,
-        actions: []
+        actions: [],
+        keyLetters: []
       }));
 
   if (displayData.length === 0) {
@@ -56,6 +59,27 @@ export const WordTrail: React.FC<WordTrailProps> = ({
     if (onWordClick) {
       onWordClick(word, index);
     }
+  };
+
+  // Render a word with key letter highlighting
+  const renderWordWithHighlights = (word: string, keyLetters: string[]) => {
+    const letters = word.toUpperCase().split('');
+    
+    return (
+      <span className="word-trail__word-container">
+        {letters.map((letter, index) => {
+          const isKeyLetter = keyLetters.includes(letter);
+          return (
+            <span
+              key={index}
+              className={`word-trail__letter ${isKeyLetter ? 'word-trail__letter--key' : ''}`}
+            >
+              {letter}
+            </span>
+          );
+        })}
+      </span>
+    );
   };
 
   return (
@@ -78,7 +102,7 @@ export const WordTrail: React.FC<WordTrailProps> = ({
               tabIndex={onWordClick ? 0 : undefined}
               aria-label={`Word: ${item.word}${showScores ? `, ${item.score} points` : ''}`}
             >
-              {item.word.toUpperCase()}
+              {renderWordWithHighlights(item.word, item.keyLetters)}
             </span>
             
             {showScores && item.score > 0 && (

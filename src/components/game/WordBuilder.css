@@ -36,12 +36,14 @@
 
 .word-builder__lock-badge {
   position: absolute;
-  bottom: -2px;
+  bottom: calc(50% - 1px);
   right: -2px;
   font-size: 16px;
-  opacity: 0.9;
+  color: var(--theme-accent);
+  opacity: 1;
   pointer-events: none;
   z-index: 1;
+  filter: none;
 }
 
 .word-builder__drop-indicator {
@@ -74,8 +76,10 @@
   
   .word-builder__lock-badge {
     font-size: 12px;
-    bottom: -1px;
+    bottom: calc(50% - 0.5px);
     right: -1px;
+    color: var(--theme-accent);
+    opacity: 1;
   }
 }
 
@@ -90,8 +94,10 @@
   
   .word-builder__lock-badge {
     font-size: 10px;
-    bottom: 0px;
+    bottom: calc(50% - 0px);
     right: 0px;
+    color: var(--theme-accent);
+    opacity: 1;
   }
 }
 

@@ -43,9 +43,11 @@
   bottom: -0.1em;
   right: -0.1em;
   font-size: 0.3em;
-  opacity: 0.9;
+  color: var(--theme-accent);
+  opacity: 1;
   pointer-events: none;
   z-index: 1;
+  filter: none;
 }
 
 /* Responsive typography */

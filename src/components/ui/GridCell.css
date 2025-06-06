@@ -91,12 +91,15 @@
 /* Lock icon positioning - badge style */
 .grid-cell__lock {
   position: absolute;
-  bottom: 4px;
-  right: 4px;
+  bottom: calc(4px * 2 + 4px); /* Move up 2x: was 4px from bottom, now 12px from bottom */
+  right: calc(4px * 2 + 4px); /* Move left 2x: was 4px from right, now 12px from right */
   font-size: 14px;
-  opacity: 0.9;
+  color: var(--theme-accent); /* Flat solid accent color */
+  opacity: 1; /* Remove transparency for solid color */
   pointer-events: none;
   z-index: 1;
+  /* Remove emoji effects for flat appearance */
+  filter: none;
 }
 
 /* Focus styles removed per design requirements */
@@ -118,8 +121,10 @@
   
   .grid-cell__lock {
     font-size: 10px;
-    bottom: 1px;
-    right: 1px;
+    bottom: calc(1px * 2 + 1px); /* Maintain 2x offset for responsive */
+    right: calc(1px * 2 + 1px);
+    color: var(--theme-accent);
+    opacity: 1;
   }
 }
 
