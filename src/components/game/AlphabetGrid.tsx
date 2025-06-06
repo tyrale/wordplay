@@ -151,6 +151,8 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
       return `${baseLabel} (key letter, draggable)`;
     } else if (state === 'locked') {
       return `${baseLabel} (locked)`;
+    } else if (state === 'lockedKey') {
+      return `${baseLabel} (locked key letter, cannot be removed)`;
     } else if (state === 'disabled') {
       return `${baseLabel} (disabled)`;
     }

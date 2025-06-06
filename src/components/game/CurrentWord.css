@@ -31,6 +31,15 @@
   color: var(--theme-text);
 }
 
+/* Locked key letter styling (key letter that became locked) */
+.current-word__letter--lockedKey {
+  color: var(--theme-accent);
+  font-weight: bold;
+  background-color: var(--theme-locked);
+  padding: 0.05em 0.1em;
+  border-radius: 0.1em;
+}
+
 /* Lock icon for locked letters */
 .current-word__lock {
   position: absolute;

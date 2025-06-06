@@ -23,6 +23,14 @@
   color: var(--theme-locked);
 }
 
+.word-builder__letter--lockedKey {
+  color: var(--theme-accent);
+  font-weight: bold;
+  background-color: var(--theme-locked);
+  padding: 0.05em 0.1em;
+  border-radius: 0.1em;
+}
+
 .word-builder__letter--dragging {
   opacity: 0.5;
 }

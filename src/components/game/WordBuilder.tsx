@@ -327,6 +327,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
         const highlight = wordHighlights.find(h => h.index === index);
         const isKey = highlight?.type === 'key';
         const isLocked = highlight?.type === 'locked';
+        const isLockedKey = highlight?.type === 'lockedKey';
         const isCurrentlyDragging = draggedIndex === index;
         const showDropIndicatorBefore = isDragging && dropTargetIndex === index;
         const showDropIndicatorAfter = isDragging && dropTargetIndex === currentWord.length && index === currentWord.length - 1;
@@ -346,6 +347,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
                 'word-builder__letter',
                 isKey && 'word-builder__letter--key',
                 isLocked && 'word-builder__letter--locked',
+                isLockedKey && 'word-builder__letter--lockedKey',
                 isCurrentlyDragging && isDragging && 'word-builder__letter--dragging'
               ].filter(Boolean).join(' ')}
               onMouseDown={(e) => handleMouseDown(e, index)}
@@ -361,7 +363,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
               }}
             >
               {letter}
-              {isLocked && ' 🔒'}
+              {(isLocked || isLockedKey) && ' 🔒'}
             </span>
             
             {/* Drop indicator after the last letter */}

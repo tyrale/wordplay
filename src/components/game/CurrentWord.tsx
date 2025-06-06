@@ -3,7 +3,7 @@ import './CurrentWord.css';
 
 export interface LetterHighlight {
   index: number;
-  type: 'key' | 'locked';
+  type: 'key' | 'locked' | 'lockedKey';
 }
 
 export interface CurrentWordProps {
@@ -23,7 +23,7 @@ export const CurrentWord: React.FC<CurrentWordProps> = ({
   const highlightMap = highlights.reduce((acc, { index, type }) => {
     acc[index] = type;
     return acc;
-  }, {} as Record<number, 'key' | 'locked'>);
+  }, {} as Record<number, 'key' | 'locked' | 'lockedKey'>);
 
   return (
     <div className={`current-word ${className}`.trim()} role="status" aria-label={`Current word: ${word}`}>
@@ -43,7 +43,7 @@ export const CurrentWord: React.FC<CurrentWordProps> = ({
             }
           >
             {letter}
-            {highlightType === 'locked' && (
+            {(highlightType === 'locked' || highlightType === 'lockedKey') && (
               <span className="current-word__lock" aria-hidden="true">
                 🔒
               </span>

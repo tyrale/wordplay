@@ -1,7 +1,7 @@
 import React from 'react';
 import './GridCell.css';
 
-export type GridCellState = 'normal' | 'key' | 'locked' | 'disabled';
+export type GridCellState = 'normal' | 'key' | 'locked' | 'lockedKey' | 'disabled';
 export type GridCellType = 'letter' | 'action';
 
 export interface GridCellProps {
@@ -86,7 +86,7 @@ export const GridCell: React.FC<GridCellProps> = ({
       <span className="grid-cell__content">
         {content}
       </span>
-      {state === 'locked' && (
+      {(state === 'locked' || state === 'lockedKey') && (
         <span className="grid-cell__lock" aria-hidden="true">
           🔒
         </span>

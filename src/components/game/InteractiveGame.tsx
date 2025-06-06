@@ -118,6 +118,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const letterStates: LetterState[] = React.useMemo(() => {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
     return alphabet.map(letter => {
+      // Locked key letters take priority (they were key letters that became locked)
+      if (wordState.lockedKeyLetters.includes(letter)) {
+        return { letter, state: 'lockedKey' as const };
+      }
       if (wordState.keyLetters.includes(letter)) {
         return { letter, state: 'key' as const };
       }
@@ -126,11 +130,15 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       }
       return { letter, state: 'normal' as const };
     });
-  }, [wordState.keyLetters, wordState.lockedLetters]);
+  }, [wordState.keyLetters, wordState.lockedLetters, wordState.lockedKeyLetters]);
 
   // Pending word highlights (for word builder)
   const pendingWordHighlights: LetterHighlight[] = React.useMemo(() => {
     return pendingWord.split('').map((letter, index) => {
+      // Locked key letters take priority (they were key letters that became locked)
+      if (wordState.lockedKeyLetters.includes(letter)) {
+        return { index, type: 'lockedKey' as const };
+      }
       if (wordState.keyLetters.includes(letter)) {
         return { index, type: 'key' as const };
       }
@@ -139,7 +147,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       }
       return null;
     }).filter((highlight): highlight is LetterHighlight => highlight !== null);
-  }, [pendingWord, wordState.keyLetters, wordState.lockedLetters]);
+  }, [pendingWord, wordState.keyLetters, wordState.lockedLetters, wordState.lockedKeyLetters]);
 
   // Action indicators based on pending move
   const actionState: ActionState = React.useMemo(() => {

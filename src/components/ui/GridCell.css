@@ -47,6 +47,14 @@
   border-color: var(--theme-locked);
 }
 
+/* Locked key letter state (key letter that became locked) */
+.grid-cell--lockedKey {
+  background-color: var(--theme-locked);
+  color: var(--theme-accent);
+  border-color: var(--theme-accent);
+  font-weight: bold;
+}
+
 /* Disabled state */
 .grid-cell--disabled {
   opacity: 0.4;
