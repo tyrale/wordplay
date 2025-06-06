@@ -154,6 +154,18 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
   const [isProcessingMove, setIsProcessingMove] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   
+  // Use refs to avoid dependency issues
+  const onGameStateChangeRef = useRef(onGameStateChange);
+  const onMoveAttemptRef = useRef(onMoveAttempt);
+  const onBotMoveRef = useRef(onBotMove);
+  
+  // Update refs when callbacks change
+  useEffect(() => {
+    onGameStateChangeRef.current = onGameStateChange;
+    onMoveAttemptRef.current = onMoveAttempt;
+    onBotMoveRef.current = onBotMove;
+  });
+
   // Subscribe to game state changes
   useEffect(() => {
     if (!gameManager || !isInitialized) return;
@@ -161,14 +173,14 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
     const unsubscribe = gameManager.subscribe(() => {
       const newState = gameManager.getState();
       setGameState(newState);
-      onGameStateChange?.(newState);
+      onGameStateChangeRef.current?.(newState);
     });
     
     // Initialize state when game manager is ready
     setGameState(gameManager.getState());
     
     return unsubscribe;
-  }, [gameManager, onGameStateChange, isInitialized]);
+  }, [gameManager, isInitialized]);
   
   // Clear errors when state changes
   useEffect(() => {
@@ -192,7 +204,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
       try {
         setIsProcessingMove(true);
         const attempt = gameManager.attemptMove(newWord);
-        onMoveAttempt?.(attempt);
+        onMoveAttemptRef.current?.(attempt);
         return attempt;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -208,7 +220,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
       } finally {
         setIsProcessingMove(false);
       }
-    }, [gameManager, onMoveAttempt, isInitialized]),
+    }, [gameManager, isInitialized]),
     
     applyMove: useCallback((attempt: MoveAttempt) => {
       if (!gameManager || !isInitialized) return false;
@@ -280,7 +292,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
       try {
         setIsBotThinking(true);
         const botMove = await gameManager.makeBotMove();
-        onBotMove?.(botMove);
+        onBotMoveRef.current?.(botMove);
         return botMove;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Bot move failed';
@@ -289,7 +301,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
       } finally {
         setIsBotThinking(false);
       }
-    }, [gameManager, onBotMove, isInitialized]),
+    }, [gameManager, isInitialized]),
     
     addKeyLetter: useCallback((letter: string) => {
       if (!gameManager || !isInitialized) return;

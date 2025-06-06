@@ -80,7 +80,7 @@ class BrowserWordData implements WordDataDependencies {
   private async loadDictionaryInternal(): Promise<void> {
     try {
       // Load the full ENABLE dictionary (172,819 words)
-      const response = await fetch('/data/enable1.txt');
+      const response = await fetch('/enable1.txt');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
