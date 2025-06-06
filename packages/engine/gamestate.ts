@@ -576,7 +576,6 @@ export class LocalGameStateManagerWithDependencies {
       }
 
       // If bot move failed to apply, pass instead
-      console.warn('Bot move failed to apply, passing turn');
       this.passTurn();
       return {
         word: this.state.currentWord,

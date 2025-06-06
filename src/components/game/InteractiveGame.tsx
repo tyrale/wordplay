@@ -93,7 +93,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     }
   }, [isGameFinished, showGameEnd]);
 
-  // Auto-trigger bot moves
+  // Auto-trigger bot moves only when it becomes bot's turn
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     
@@ -112,7 +112,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         clearTimeout(timeoutId);
       }
     };
-  }, [isBotTurn, isGameActive, isBotThinking, actions, gameState.players]);
+  }, [isBotTurn, isGameActive, isBotThinking, actions.makeBotMove]); // Removed gameState.players to prevent retriggering
 
   // Letter grid state
   const letterStates: LetterState[] = React.useMemo(() => {
