@@ -13,7 +13,8 @@
  * - Performance monitoring
  */
 
-import { createGameStateManager, type LocalGameStateManager, type GameConfig } from './gamestate';
+import { createGameStateManagerWithDependencies, type LocalGameStateManagerWithDependencies, type GameConfig } from './gamestate';
+import { createNodeAdapter } from '../../src/adapters/nodeAdapter';
 import * as readline from 'readline';
 
 // Terminal colors for better UX with turn-based theming
@@ -57,7 +58,7 @@ interface TerminalGameOptions {
 }
 
 export class TerminalGame {
-  private gameManager: LocalGameStateManager;
+  private gameManager: LocalGameStateManagerWithDependencies;
   private rl: readline.Interface;
 
   constructor(options: TerminalGameOptions = {}) {
@@ -69,7 +70,8 @@ export class TerminalGame {
       enableLockedLetters: options.enableLockedLetters ?? true
     };
 
-    this.gameManager = createGameStateManager(gameConfig);
+    // Initialize with dummy manager, will be replaced in start()
+    this.gameManager = null as any;
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout
@@ -92,6 +94,19 @@ export class TerminalGame {
   public async start(): Promise<void> {
     this.showWelcome();
     this.showHelp();
+    
+    // Initialize Node.js adapter and create game manager
+    const nodeAdapter = await createNodeAdapter();
+    const dependencies = nodeAdapter.getGameDependencies();
+    
+    const gameConfig: GameConfig = {
+      maxTurns: this.gameManager === null ? 10 : 10, // Default config, will be overridden
+      allowBotPlayer: true,
+      enableKeyLetters: true,
+      enableLockedLetters: true
+    };
+    
+    this.gameManager = createGameStateManagerWithDependencies(dependencies, gameConfig);
     this.gameManager.startGame();
     
     await this.gameLoop();

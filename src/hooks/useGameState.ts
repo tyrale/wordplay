@@ -93,7 +93,7 @@ export interface UseGameStateReturn {
 export function useGameState(options: UseGameStateOptions = {}): UseGameStateReturn {
   const { config, onGameStateChange, onMoveAttempt, onBotMove } = options;
   
-  // Initialize game manager using real engine
+  // Initialize game manager using legacy approach (TODO: Update in Step 4)
   const gameManagerRef = useRef<LocalGameStateManager | null>(null);
   
   if (!gameManagerRef.current) {
