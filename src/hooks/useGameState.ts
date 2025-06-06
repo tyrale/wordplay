@@ -16,6 +16,7 @@ interface PublicGameState {
   turnHistory: any[];
   keyLetters: string[];
   lockedLetters: string[];
+  lockedKeyLetters: string[];
   usedWords: string[];
   [key: string]: any;
 }
@@ -148,6 +149,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
     turnHistory: [],
     keyLetters: [],
     lockedLetters: [],
+    lockedKeyLetters: [],
     usedWords: []
   }));
   const [isBotThinking, setIsBotThinking] = useState(false);
@@ -390,9 +392,9 @@ export function useWordState(gameState: PublicGameState) {
   return {
     currentWord: gameState.currentWord,
     wordHistory: gameState.turnHistory.map(turn => turn.newWord),
-    keyLetters: gameState.keyLetters,
-    lockedLetters: gameState.lockedLetters,
-    lockedKeyLetters: gameState.lockedKeyLetters,
+    keyLetters: gameState.keyLetters || [],
+    lockedLetters: gameState.lockedLetters || [],
+    lockedKeyLetters: gameState.lockedKeyLetters || [],
     usedWords: Array.from(gameState.usedWords || [])
   };
 } 
