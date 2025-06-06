@@ -181,7 +181,7 @@
 /* Word trail positioned above word builder */
 .interactive-game__word-trail-positioned {
   position: absolute;
-  bottom: calc(100% + 50px); /* Position above submit anchor with gap */
+  bottom: calc(100% + 80px); /* Position above submit anchor with larger gap */
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
