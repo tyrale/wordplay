@@ -19,7 +19,25 @@
  */
 
 import { getScoreForMove } from './scoring';
-import { validateWord, isValidDictionaryWord } from './dictionary';
+
+// Dictionary validation interface for agnostic usage
+export interface DictionaryValidation {
+  validateWord: (word: string, options?: any) => { isValid: boolean; reason?: string; word: string };
+  isValidDictionaryWord: (word: string) => boolean;
+}
+
+// Dynamic import for Node.js dictionary (avoids bundling in browser)
+let nodeDictionary: any = null;
+async function getNodeDictionary() {
+  if (!nodeDictionary) {
+    try {
+      nodeDictionary = await import('./dictionary');
+    } catch (error) {
+      throw new Error('Node.js dictionary not available in this environment');
+    }
+  }
+  return nodeDictionary;
+}
 
 // Types for bot operations
 export interface BotOptions {
@@ -172,16 +190,30 @@ export function generateSubstituteMoves(currentWord: string): MoveCandidate[] {
 }
 
 /**
+ * Agnostic version that accepts dictionary validation functions
+ */
+export function filterValidCandidatesAgnostic(
+  candidates: MoveCandidate[], 
+  dictionaryValidation: DictionaryValidation
+): MoveCandidate[] {
+  return candidates.filter(candidate => {
+    const validation = dictionaryValidation.validateWord(candidate.word, { isBot: false });
+    return validation.isValid && dictionaryValidation.isValidDictionaryWord(candidate.word);
+  });
+}
+
+/**
  * Filters candidates to only include valid dictionary words that human players could use
+ * Uses Node.js dictionary (for backward compatibility)
  * 
  * Note: This v0 Greedy bot intentionally plays by human rules for fair gameplay.
  * Future bots could use isBot: true for rule-breaking behavior if desired.
  */
-export function filterValidCandidates(candidates: MoveCandidate[]): MoveCandidate[] {
-  return candidates.filter(candidate => {
-    // This bot plays by the same rules as human players for balanced gameplay
-    const validation = validateWord(candidate.word, { isBot: false });
-    return validation.isValid && isValidDictionaryWord(candidate.word);
+export async function filterValidCandidates(candidates: MoveCandidate[]): Promise<MoveCandidate[]> {
+  const dict = await getNodeDictionary();
+  return filterValidCandidatesAgnostic(candidates, {
+    validateWord: dict.validateWord,
+    isValidDictionaryWord: dict.isValidDictionaryWord
   });
 }
 
@@ -241,12 +273,87 @@ export function scoreCandidates(
 }
 
 /**
- * Main bot AI function - generates the best move using greedy strategy
+ * Agnostic bot AI function - accepts dictionary validation functions
  */
-export function generateBotMove(
-  currentWord: string, 
+export function generateBotMoveAgnostic(
+  currentWord: string,
+  dictionaryValidation: DictionaryValidation,
   options: BotOptions = {}
 ): BotResult {
+  const startTime = performance.now();
+  const {
+    keyLetters = [],
+    maxCandidates = 1000,
+    timeLimit = 100
+  } = options;
+  
+  let allCandidates: MoveCandidate[] = [];
+  
+  try {
+    // Generate all possible moves
+    const addMoves = generateAddMoves(currentWord);
+    const removeMoves = generateRemoveMoves(currentWord);
+    const rearrangeMoves = generateRearrangeMoves(currentWord);
+    const substituteMoves = generateSubstituteMoves(currentWord);
+    
+    allCandidates = [
+      ...addMoves,
+      ...removeMoves, 
+      ...rearrangeMoves,
+      ...substituteMoves
+    ];
+    
+    // Check time limit
+    if (performance.now() - startTime > timeLimit) {
+      return {
+        move: null,
+        candidates: [],
+        processingTime: performance.now() - startTime,
+        totalCandidatesGenerated: allCandidates.length
+      };
+    }
+    
+    // Filter to valid words only
+    const validCandidates = filterValidCandidatesAgnostic(allCandidates, dictionaryValidation);
+    
+    // Limit candidates for performance
+    const limitedCandidates = validCandidates.slice(0, maxCandidates);
+    
+    // Score and rank candidates
+    const scoredMoves = scoreCandidates(limitedCandidates, currentWord, keyLetters);
+    
+    // Select best move (greedy strategy)
+    const bestMove = scoredMoves.length > 0 ? scoredMoves[0] : null;
+    
+    const processingTime = performance.now() - startTime;
+    
+    return {
+      move: bestMove,
+      candidates: scoredMoves.slice(0, 10),
+      processingTime,
+      totalCandidatesGenerated: allCandidates.length
+    };
+    
+  } catch (error) {
+    console.error('Bot move generation failed:', error);
+    
+    return {
+      move: null,
+      candidates: [],
+      processingTime: performance.now() - startTime,
+      totalCandidatesGenerated: allCandidates.length
+    };
+  }
+}
+
+/**
+ * Main bot AI function - generates the best move using greedy strategy
+ * Uses Node.js dictionary (for backward compatibility)
+ */
+export async function generateBotMove(
+  currentWord: string, 
+  options: BotOptions = {}
+): Promise<BotResult> {
   const startTime = performance.now();
   const {
     keyLetters = [],

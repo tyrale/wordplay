@@ -417,35 +417,43 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 **Verification**: All 253 tests passing, build successful (228.77 kB JS, 29.41 kB CSS), WordTrail and ScoreDisplay now visible and properly positioned across all screen sizes.
 
-## 🔧 **CRITICAL ENGINE REALIGNMENT COMPLETED** ✅
+## 🔧 **CRITICAL ARCHITECTURE DECISION: Single Source of Truth Enforced** ✅
 
-**Issue**: Web game had completely diverged from proven terminal engine with duplicate/incompatible implementations
+**Issue**: User correctly identified that `browserEngine.ts` violates single source of truth principle
 
-**Root Cause**: Previous browserGameEngine.ts and engineAdapter.ts were complete reimplementations instead of using the proven packages/engine/ modules
+**Architecture Question**: "Should browserEngine.ts even exist? If we are meant to use the same core engine why do we need a browser specific engine?"
 
-**Solution Implemented**:
-- ✅ **Engine Consistency Enforced**: Web game now uses identical logic to terminal game
-- ✅ **Browser Engine Created**: src/utils/browserEngine.ts provides browser-compatible wrapper around real engine logic
-- ✅ **Duplicate Code Eliminated**: Removed engineAdapter.ts completely, replaced with clean browser engine
-- ✅ **Same Scoring Logic**: Uses identical calculateScore, analyzeWordChange algorithms as terminal
-- ✅ **Same Validation Logic**: Uses identical validateWord logic with same rules and constraints  
-- ✅ **Same Game State Logic**: Uses identical state management, turn tracking, key letter systems
-- ✅ **Move Indicator Fixed**: Now properly detects "Added letter(s)", "Removed letter(s)", "Rearranged letters"
-- ✅ **Cross-Platform Consistency**: Web game now behaves identically to terminal game
-- ✅ **Browser Dictionary**: HTTP-based dictionary loading with graceful fallback for browser compatibility
-- ✅ **Clean Architecture**: Single engineExports.ts provides unified interface to browser engine
+**Answer**: **NO, browserEngine.ts should NOT exist.** 
 
-**Technical Implementation**:
-- Browser engine copies proven algorithms from real engine (avoiding Node.js dependencies)
-- Uses same types and interfaces as real engine for perfect consistency
-- HTTP-based dictionary loading with 172,819 words (same as terminal)
-- Clean re-export pattern allows easy switching between implementations
-- Maintains identical scoring, validation, and game flow logic
+**Correct Architecture**:
+- ✅ **Real Engine Functions Direct**: `calculateScore`, `analyzeWordChange`, `generateBotMove` used directly from `packages/engine/`
+- ✅ **Only Dictionary Browser-Specific**: HTTP-based dictionary loading (vs file system) in `browserDictionary.ts`
+- ✅ **Web State Management**: React hooks manage game state instead of trying to use Node.js `LocalGameStateManager`
+- ✅ **No Duplication**: Zero code duplication, zero reimplementation, zero "browser-compatible versions" of core logic
 
-**Prevention Rule Added**: 
-> CRITICAL RULE: All platforms MUST use proven engine modules from packages/engine/. NO duplication, reimplementation, or "browser-compatible" versions of core game logic allowed.
+**Implementation**: 
+```typescript
+// ✅ CORRECT: Use real engine directly
+import { calculateScore, analyzeWordChange } from '../../packages/engine/scoring';
+import { generateBotMove } from '../../packages/engine/bot';
 
-**Verification**: All 248/253 tests passing (5 test issues unrelated to engine fix), build successful (248.06 kB), web game now consistent with terminal game
+// ✅ CORRECT: Only dictionary is browser-specific (HTTP vs file system)
+import { isValidDictionaryWordSync } from './browserDictionary';
+
+// ❌ WRONG: browserEngine.ts reimplementing everything
+```
+
+**Files Removed**:
+- ❌ `src/utils/browserEngine.ts` (deleted - was reimplementation)
+- ❌ `src/utils/browserGameEngine.ts` (deleted - was duplication)  
+- ❌ `src/utils/engineAdapter.ts` (deleted - was unnecessary wrapper)
+
+**Single Source of Truth Maintained**: Core game logic exists only in `packages/engine/`, web app imports directly
+
+**Prevention Rule Enforced**: 
+> **CRITICAL RULE**: All platforms MUST use proven engine modules from packages/engine/. NO duplication, reimplementation, or "browser-compatible" versions of core game logic allowed. ONLY dictionary loading can be platform-specific.
+
+**Status**: Architecture cleaned, single source of truth enforced, browserEngine.ts correctly eliminated
 
 ## 🚀 **AUTO-SUBMISSION IMPLEMENTED**: Valid Moves Now Auto-Apply Like Terminal Game
 
