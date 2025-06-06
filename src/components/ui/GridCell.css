@@ -43,12 +43,14 @@
 /* Locked letter state */
 .grid-cell--locked {
   color: var(--theme-locked);
+  opacity: 0.5;
 }
 
 /* Locked key letter state (key letter that became locked) */
 .grid-cell--lockedKey {
   color: var(--theme-accent);
   font-weight: bold;
+  opacity: 0.5;
 }
 
 /* Disabled state */
