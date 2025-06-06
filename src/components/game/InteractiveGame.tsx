@@ -254,6 +254,18 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       const attempt = actions.attemptMove(newWord);
       console.log('📊 AttemptMove result:', attempt);
       setPendingMoveAttempt(attempt);
+      
+      // AUTO-SUBMIT VALID MOVES (same as terminal game behavior)
+      if (attempt.canApply) {
+        console.log('🚀 Auto-submitting valid move:', attempt.newWord);
+        const success = actions.applyMove(attempt);
+        console.log('🚀 Auto-submission result:', success);
+        if (success) {
+          setPendingWord(attempt.newWord);
+          setPendingMoveAttempt(null);
+          setIsPassMode(false);
+        }
+      }
     } else {
       console.log('❌ No validation - word same as current');
       setPendingMoveAttempt(null);
