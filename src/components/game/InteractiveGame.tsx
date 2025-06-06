@@ -20,7 +20,7 @@ interface MoveAttempt {
   validationResult: any;
   scoringResult: any;
   canApply: boolean;
-  reason: string;
+  reason?: string;
 }
 
 const isValidDictionaryWord = (word: string): boolean => false; // TODO: Replace with dependency injection in Step 3
@@ -38,7 +38,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   config,
   onGameEnd
 }) => {
-  console.log('🎨 InteractiveGame RENDER - timestamp:', Date.now());
+
   
   // Game state management
   const {
@@ -72,11 +72,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   
   // Track pendingWord changes
   useEffect(() => {
-    console.log('📱 pendingWord STATE CHANGE:', {
-      newValue: pendingWord,
-      length: pendingWord.length,
-      timestamp: Date.now()
-    });
+    // Clean, no debug logs
   }, [pendingWord]);
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
   const [showGameEnd, setShowGameEnd] = useState(false);
@@ -153,9 +149,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     
     const actions = pendingMoveAttempt.scoringResult.actions;
     return {
-      add: actions.some(action => action.startsWith('Added letter')),
-      remove: actions.some(action => action.startsWith('Removed letter')),
-      move: actions.some(action => action === 'Rearranged letters')
+      add: actions.some((action: string) => action.startsWith('Added letter')),
+      remove: actions.some((action: string) => action.startsWith('Removed letter')),
+      move: actions.some((action: string) => action === 'Rearranged letters')
     };
   }, [pendingMoveAttempt]);
 
@@ -227,48 +223,25 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, [isPlayerTurn, isProcessingMove, wordState.currentWord]);
 
   const handleWordChange = useCallback((newWord: string) => {
-    console.log('🔄 InteractiveGame handleWordChange called:', {
-      newWord,
-      oldWord: pendingWord,
-      isPlayerTurn,
-      isProcessingMove,
-      timestamp: Date.now(),
-      callStack: new Error().stack?.split('\n').slice(1, 4).join('\n')
-    });
-    
     if (!isPlayerTurn || isProcessingMove) {
-      console.log('❌ InteractiveGame handleWordChange skipped - not player turn or processing');
       return;
     }
-    
-    console.log('✅ InteractiveGame updating word from', pendingWord, 'to', newWord);
-    console.log('📊 Word change analysis:', {
-      oldLength: pendingWord.length,
-      newLength: newWord.length,
-      lengthDiff: newWord.length - pendingWord.length,
-      expectedDiff: -1,
-      isCorrectChange: (newWord.length - pendingWord.length) === -1
-    });
     
     setPendingWord(newWord);
     setIsPassMode(false); // Reset pass mode when word changes
     
     // Validate the move attempt
-    console.log('🎯 Checking if should validate move:', {
-      newWord,
-      currentWord: wordState.currentWord,
-      shouldValidate: newWord !== wordState.currentWord,
-      gameState: gameState,
-      fullWordState: wordState
-    });
-    
     if (newWord !== wordState.currentWord) {
-      console.log('✅ Calling attemptMove for:', newWord);
       const attempt = actions.attemptMove(newWord);
-      console.log('📊 AttemptMove result:', attempt);
       setPendingMoveAttempt(attempt);
+      
+      // Auto-submit valid moves (like terminal game)
+      if (attempt.canApply) {
+        actions.applyMove(attempt);
+        setIsPassMode(false);
+        setPendingMoveAttempt(null);
+      }
     } else {
-      console.log('❌ No validation - word same as current');
       setPendingMoveAttempt(null);
     }
   }, [isPlayerTurn, isProcessingMove, wordState.currentWord, actions, pendingWord]);
@@ -293,14 +266,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, []);
 
   const handleWordBuilderMouseUp = useCallback((_e: React.MouseEvent) => {
-    console.log('🖱️ InteractiveGame handleWordBuilderMouseUp:', {
-      draggedLetter,
-      pendingWordLength: pendingWord.length,
-      timestamp: Date.now()
-    });
-    
     if (draggedLetter && pendingWord.length < 10) {
-      console.log('✅ InteractiveGame adding dragged letter to word');
       const newWord = pendingWord + draggedLetter;
       handleWordChange(newWord);
     }
@@ -308,14 +274,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, [draggedLetter, pendingWord, handleWordChange]);
 
   const handleWordBuilderTouchEnd = useCallback((_e: React.TouchEvent) => {
-    console.log('👆 InteractiveGame handleWordBuilderTouchEnd:', {
-      draggedLetter,
-      pendingWordLength: pendingWord.length,
-      timestamp: Date.now()
-    });
-    
     if (draggedLetter && pendingWord.length < 10) {
-      console.log('✅ InteractiveGame adding dragged letter to word via touch');
       const newWord = pendingWord + draggedLetter;
       handleWordChange(newWord);
     }

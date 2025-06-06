@@ -178,6 +178,17 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
   // Game actions
   const actions: GameStateActions = {
     attemptMove: useCallback((newWord: string) => {
+      if (!gameManager || !isInitialized) {
+        return {
+          newWord,
+          isValid: false,
+          validationResult: { isValid: false, reason: 'Game not initialized', word: newWord },
+          scoringResult: null,
+          canApply: false,
+          reason: 'Game not initialized'
+        };
+      }
+      
       try {
         setIsProcessingMove(true);
         const attempt = gameManager.attemptMove(newWord);
@@ -197,9 +208,11 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
       } finally {
         setIsProcessingMove(false);
       }
-    }, [gameManager, onMoveAttempt]),
+    }, [gameManager, onMoveAttempt, isInitialized]),
     
     applyMove: useCallback((attempt: MoveAttempt) => {
+      if (!gameManager || !isInitialized) return false;
+      
       try {
         setIsProcessingMove(true);
         return gameManager.applyMove(attempt);
@@ -210,9 +223,11 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
       } finally {
         setIsProcessingMove(false);
       }
-    }, [gameManager]),
+    }, [gameManager, isInitialized]),
     
     setCurrentWord: useCallback((word: string) => {
+      if (!gameManager || !isInitialized) return false;
+      
       try {
         return gameManager.setWord(word);
       } catch (error) {
@@ -220,18 +235,22 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
         setLastError(errorMsg);
         return false;
       }
-    }, [gameManager]),
+    }, [gameManager, isInitialized]),
     
     startGame: useCallback(async () => {
+      if (!gameManager || !isInitialized) return;
+      
       try {
         await gameManager.startGame();
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to start game';
         setLastError(errorMsg);
       }
-    }, [gameManager]),
+    }, [gameManager, isInitialized]),
     
     resetGame: useCallback(() => {
+      if (!gameManager || !isInitialized) return;
+      
       try {
         gameManager.resetGame();
         setIsBotThinking(false);
@@ -241,9 +260,11 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
         const errorMsg = error instanceof Error ? error.message : 'Failed to reset game';
         setLastError(errorMsg);
       }
-    }, [gameManager]),
+    }, [gameManager, isInitialized]),
     
     passTurn: useCallback(() => {
+      if (!gameManager || !isInitialized) return false;
+      
       try {
         return gameManager.passTurn();
       } catch (error) {
@@ -251,9 +272,11 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
         setLastError(errorMsg);
         return false;
       }
-    }, [gameManager]),
+    }, [gameManager, isInitialized]),
     
     makeBotMove: useCallback(async () => {
+      if (!gameManager || !isInitialized) return null;
+      
       try {
         setIsBotThinking(true);
         const botMove = await gameManager.makeBotMove();
@@ -266,43 +289,51 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
       } finally {
         setIsBotThinking(false);
       }
-    }, [gameManager, onBotMove]),
+    }, [gameManager, onBotMove, isInitialized]),
     
     addKeyLetter: useCallback((letter: string) => {
+      if (!gameManager || !isInitialized) return;
+      
       try {
         gameManager.addKeyLetter(letter);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to add key letter';
         setLastError(errorMsg);
       }
-    }, [gameManager]),
+    }, [gameManager, isInitialized]),
     
     removeKeyLetter: useCallback((letter: string) => {
+      if (!gameManager || !isInitialized) return;
+      
       try {
         gameManager.removeKeyLetter(letter);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to remove key letter';
         setLastError(errorMsg);
       }
-    }, [gameManager]),
+    }, [gameManager, isInitialized]),
     
     addLockedLetter: useCallback((letter: string) => {
+      if (!gameManager || !isInitialized) return;
+      
       try {
         gameManager.addLockedLetter(letter);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to add locked letter';
         setLastError(errorMsg);
       }
-    }, [gameManager]),
+    }, [gameManager, isInitialized]),
     
     removeLockedLetter: useCallback((letter: string) => {
+      if (!gameManager || !isInitialized) return;
+      
       try {
         gameManager.removeLockedLetter(letter);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to remove locked letter';
         setLastError(errorMsg);
       }
-    }, [gameManager])
+    }, [gameManager, isInitialized])
   };
   
   // Computed state
