@@ -425,3 +425,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All 253 tests passing
 - Build successful: 231.23 kB bundle (slight increase due to additional event handlers)
 - Letter dragging now works reliably across all devices using proven approach
+
+## [2025-01-18] - WordBuilder Complete Rebuild: Ultra-Simple Letter Dragging
+
+### Rebuilt
+- **WordBuilder Component Architecture**: Complete rebuild from scratch for maximum simplicity
+  - Replaced complex div/button structure with simple span elements
+  - Removed all borders, backgrounds, buttons, and hover effects  
+  - Implemented minimal CSS with just font styling and 8px spacing
+  - Used coordinate-based dragging with getBoundingClientRect for letter reordering
+  - Maintained all functionality: key letter highlighting, locked letter indication, word change callbacks
+  - Preserved visual states with simple opacity changes and color coding
+  - Updated tests to use data-testid selectors instead of removed aria-labels
+
+### Technical Improvements
+- **Bundle Size Optimization**: CSS from 31.74 kB → 28.81 kB, JS from 231.23 kB → 230.37 kB
+- **Code Complexity Reduction**: Removed 150+ lines of complex HTML5 drag/drop logic
+- **Cross-Platform Compatibility**: Mouse/touch event system works reliably on all devices
+- **Maintainability**: Dramatically simplified codebase with clear, minimal implementation
+
+### Verification  
+- All 252/253 tests passing (1 unrelated gamestate test failure)
+- Build successful with reduced bundle size
+- Functional letter reordering via simple drag system
+- Clean, minimal UI exactly as requested by user

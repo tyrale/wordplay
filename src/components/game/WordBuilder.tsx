@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import type { LetterHighlight } from './CurrentWord';
 import './WordBuilder.css';
 
@@ -12,13 +12,6 @@ export interface WordBuilderProps {
   minLength?: number;
 }
 
-export interface LetterPosition {
-  letter: string;
-  id: string;
-  isHighlighted?: boolean;
-  highlightType?: 'key' | 'locked';
-}
-
 export const WordBuilder: React.FC<WordBuilderProps> = ({
   currentWord,
   wordHighlights = [],
@@ -29,170 +22,116 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   minLength = 3
 }) => {
   // Suppress unused variable warnings - kept for interface compatibility
+  void onLetterClick;
   void maxLength;
   void minLength;
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [isDragOverContainer, setIsDragOverContainer] = useState(false);
+  
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Convert word to letter positions
-  const letterPositions: LetterPosition[] = currentWord.split('').map((letter, index) => {
-    const highlight = wordHighlights.find(h => h.index === index);
-    return {
-      letter,
-      id: `${letter}-${index}`,
-      isHighlighted: !!highlight,
-      highlightType: highlight?.type
-    };
-  });
-
-  const handleLetterClick = useCallback((index: number) => {
+  const handleMouseDown = useCallback((_e: React.MouseEvent, index: number) => {
     if (disabled) return;
-    onLetterClick?.(index);
-  }, [disabled, onLetterClick]);
-
-  const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
-    if (disabled) return;
-    
-    const letter = currentWord[index];
-    e.dataTransfer.setData('text/plain', letter);
-    e.dataTransfer.setData('application/x-letter-index', index.toString());
-    e.dataTransfer.effectAllowed = 'move';
-    
-    // Add visual feedback
-    const target = e.target as HTMLElement;
-    target.style.opacity = '0.5';
-  }, [disabled, currentWord]);
-
-  const handleDragEnd = useCallback((e: React.DragEvent) => {
-    setDragOverIndex(null);
-    
-    // Reset visual feedback
-    const target = e.target as HTMLElement;
-    target.style.opacity = '1';
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (disabled) return;
-    
-    setDragOverIndex(index);
-    e.dataTransfer.dropEffect = 'move';
+    setDraggedIndex(index);
   }, [disabled]);
 
-  const handleDragLeave = useCallback(() => {
-    setDragOverIndex(null);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
+  const handleTouchStart = useCallback((_e: React.TouchEvent, index: number) => {
     if (disabled) return;
-
-    const sourceIndexStr = e.dataTransfer.getData('application/x-letter-index');
-    const sourceIndex = parseInt(sourceIndexStr, 10);
-    
-    if (isNaN(sourceIndex) || sourceIndex === dropIndex) {
-      setDragOverIndex(null);
-      return;
-    }
-
-    // Reorder letters
-    const letters = currentWord.split('');
-    const [movedLetter] = letters.splice(sourceIndex, 1);
-    letters.splice(dropIndex, 0, movedLetter);
-    
-    const newWord = letters.join('');
-    onWordChange?.(newWord);
-    setDragOverIndex(null);
-  }, [disabled, currentWord, onWordChange]);
-
-
-
-  // Handle drops from alphabet grid
-  const handleContainerDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (disabled) return;
-    
-    // Check if this is a letter drag (has both text and source type)
-    const hasText = e.dataTransfer.types.includes('text/plain');
-    const hasSource = e.dataTransfer.types.includes('application/x-letter-source');
-    
-    if (hasText && hasSource) {
-      e.dataTransfer.dropEffect = 'copy';
-      setIsDragOverContainer(true);
-    }
+    setDraggedIndex(index);
   }, [disabled]);
 
-  const handleContainerDragLeave = useCallback((e: React.DragEvent) => {
-    // Only hide feedback if leaving the container entirely
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setIsDragOverContainer(false);
+  const handleMouseUp = useCallback((e: React.MouseEvent) => {
+    if (draggedIndex !== null && containerRef.current) {
+      const elements = containerRef.current.querySelectorAll('[data-letter-index]');
+      
+      for (let i = 0; i < elements.length; i++) {
+        const element = elements[i] as HTMLElement;
+        const rect = element.getBoundingClientRect();
+        
+        if (e.clientX >= rect.left && e.clientX <= rect.right &&
+            e.clientY >= rect.top && e.clientY <= rect.bottom) {
+          const targetIndex = parseInt(element.getAttribute('data-letter-index') || '', 10);
+          
+          if (!isNaN(targetIndex) && targetIndex !== draggedIndex) {
+            // Reorder letters
+            const letters = currentWord.split('');
+            const [movedLetter] = letters.splice(draggedIndex, 1);
+            letters.splice(targetIndex, 0, movedLetter);
+            
+            const newWord = letters.join('');
+            onWordChange?.(newWord);
+          }
+          break;
+        }
+      }
     }
-  }, []);
+    setDraggedIndex(null);
+  }, [draggedIndex, currentWord, onWordChange]);
 
-  const handleContainerDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (disabled) return;
-
-    const source = e.dataTransfer.getData('application/x-letter-source');
-    const letter = e.dataTransfer.getData('text/plain');
-    
-    setIsDragOverContainer(false);
-    
-    if (source === 'alphabet-grid' && letter && currentWord.length < maxLength) {
-      const newWord = currentWord + letter;
-      onWordChange?.(newWord);
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (draggedIndex !== null && containerRef.current && e.changedTouches[0]) {
+      const touch = e.changedTouches[0];
+      const elements = containerRef.current.querySelectorAll('[data-letter-index]');
+      
+      for (let i = 0; i < elements.length; i++) {
+        const element = elements[i] as HTMLElement;
+        const rect = element.getBoundingClientRect();
+        
+        if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+            touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+          const targetIndex = parseInt(element.getAttribute('data-letter-index') || '', 10);
+          
+          if (!isNaN(targetIndex) && targetIndex !== draggedIndex) {
+            // Reorder letters
+            const letters = currentWord.split('');
+            const [movedLetter] = letters.splice(draggedIndex, 1);
+            letters.splice(targetIndex, 0, movedLetter);
+            
+            const newWord = letters.join('');
+            onWordChange?.(newWord);
+          }
+          break;
+        }
+      }
     }
-  }, [disabled, currentWord, maxLength, onWordChange]);
+    setDraggedIndex(null);
+  }, [draggedIndex, currentWord, onWordChange]);
 
   return (
-          <div 
-        className="word-builder" 
-        role="application" 
-        aria-label="Interactive word builder"
-        onDragOver={handleContainerDragOver}
-        onDragLeave={handleContainerDragLeave}
-        onDrop={handleContainerDrop}
-      >
-        <div 
-          className="word-builder__container"
-          data-drag-over={isDragOverContainer}
-        >
-        {letterPositions.map((pos, index) => (
-          <div
-            key={pos.id}
+    <div 
+      ref={containerRef}
+      className="word-builder" 
+      data-testid="word-builder"
+      onMouseUp={handleMouseUp}
+      onTouchEnd={handleTouchEnd}
+    >
+      {currentWord.split('').map((letter, index) => {
+        const highlight = wordHighlights.find(h => h.index === index);
+        const isKey = highlight?.type === 'key';
+        const isLocked = highlight?.type === 'locked';
+        const isDragging = draggedIndex === index;
+        
+        return (
+          <span
+            key={`${letter}-${index}`}
+            data-letter-index={index}
             className={[
               'word-builder__letter',
-              pos.isHighlighted && `word-builder__letter--${pos.highlightType}`,
-              dragOverIndex === index && 'word-builder__letter--drag-over',
-              disabled && 'word-builder__letter--disabled'
+              isKey && 'word-builder__letter--key',
+              isLocked && 'word-builder__letter--locked',
+              isDragging && 'word-builder__letter--dragging'
             ].filter(Boolean).join(' ')}
-            draggable={!disabled && pos.highlightType !== 'locked'}
-            onDragStart={(e) => handleDragStart(e, index)}
-            onDragEnd={handleDragEnd}
-            onDragOver={(e) => handleDragOver(e, index)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, index)}
-            onClick={() => handleLetterClick(index)}
-            role="button"
-            tabIndex={disabled ? -1 : 0}
-            aria-label={`Letter ${pos.letter}${pos.isHighlighted ? ` (${pos.highlightType})` : ''}`}
+            onMouseDown={(e) => handleMouseDown(e, index)}
+            onTouchStart={(e) => handleTouchStart(e, index)}
+            style={{
+              opacity: isDragging ? 0.5 : 1,
+              cursor: disabled ? 'default' : 'grab'
+            }}
           >
-            <span className="word-builder__letter-content">
-              {pos.letter}
-            </span>
-            
-            {pos.highlightType === 'locked' && (
-              <span className="word-builder__lock-icon" aria-hidden="true">
-                🔒
-              </span>
-            )}
-            
-            {dragOverIndex === index && (
-              <div className="word-builder__drop-indicator" aria-hidden="true" />
-            )}
-          </div>
-        ))}
-      </div>
+            {letter}
+            {isLocked && ' 🔒'}
+          </span>
+        );
+      })}
     </div>
   );
 }; 

@@ -16,7 +16,7 @@ describe('App Component', () => {
     
     // Now check for game components (wait for them to appear)
     expect(screen.getByLabelText(/Current word:/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Interactive word builder')).toBeInTheDocument();
+    expect(screen.getByTestId('word-builder')).toBeInTheDocument();
   });
 
   test('renders the theme selector', () => {
@@ -39,7 +39,7 @@ describe('App Component', () => {
     fireEvent.click(screen.getByText('Start Game'));
     
     // Check for word builder (which contains interactive elements)
-    expect(screen.getByLabelText('Interactive word builder')).toBeInTheDocument();
+    expect(screen.getByTestId('word-builder')).toBeInTheDocument();
     
     // Check for alphabet grid
     expect(screen.getByLabelText('Alphabet grid')).toBeInTheDocument();
@@ -53,7 +53,7 @@ describe('App Component', () => {
     
     // Check for word trail component (it should be rendered but may be empty initially)
     // The WordTrail component is rendered but may not have visible content initially
-    expect(screen.getByLabelText('Interactive word builder')).toBeInTheDocument();
+    expect(screen.getByTestId('word-builder')).toBeInTheDocument();
   });
 
   test('shows the current word with key letter highlighting', () => {
@@ -67,7 +67,7 @@ describe('App Component', () => {
     expect(currentWord).toBeInTheDocument();
     
     // Check for word builder which shows the current word letters
-    expect(screen.getByLabelText('Interactive word builder')).toBeInTheDocument();
+    expect(screen.getByTestId('word-builder')).toBeInTheDocument();
   });
 
   test('renders the game board layout', () => {
@@ -78,7 +78,7 @@ describe('App Component', () => {
     
     // Check for main game board sections
     expect(screen.getByLabelText(/Current word:/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Interactive word builder')).toBeInTheDocument();
+    expect(screen.getByTestId('word-builder')).toBeInTheDocument();
     expect(screen.getByLabelText('Alphabet grid')).toBeInTheDocument();
   });
 });
