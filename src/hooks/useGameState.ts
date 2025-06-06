@@ -1,13 +1,45 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  createGameStateManager, 
-  LocalGameStateManager, 
-  type PublicGameState, 
-  type MoveAttempt, 
-  type GameConfig,
-  type BotMove,
-  initializeBrowserDictionary
-} from '../utils/engineExports';
+import { LocalGameStateManager, createGameStateManager } from '../../packages/engine/gamestate';
+
+// Temporary placeholder types until dependency injection implemented - TODO: Replace in Step 3
+interface PublicGameState {
+  gameStatus: string;
+  currentTurn: number;
+  currentWord: string;
+  players: any[];
+  winner?: any;
+  turnHistory: any[];
+  keyLetters: string[];
+  lockedLetters: string[];
+  usedWords: string[];
+  [key: string]: any;
+}
+
+interface MoveAttempt {
+  newWord: string;
+  isValid: boolean;
+  validationResult: any;
+  scoringResult: any;
+  canApply: boolean;
+  reason?: string;
+}
+
+interface GameConfig {
+  maxTurns?: number;
+  startingWord?: string;
+  [key: string]: any;
+}
+
+interface BotMove {
+  word: string;
+  score: number;
+  confidence: number;
+  reasoning: string[];
+}
+
+const initializeBrowserDictionary = async (): Promise<void> => {
+  // TODO: Replace with dependency injection in Step 3
+}
 
 export interface UseGameStateOptions {
   config?: GameConfig;

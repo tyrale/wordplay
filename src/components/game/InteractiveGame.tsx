@@ -3,13 +3,28 @@ import { useGameState, useGameStats, useWordState } from '../../hooks/useGameSta
 import { AlphabetGrid } from './AlphabetGrid';
 import { WordTrail } from './WordTrail';
 
-
-
 import { ScoreDisplay } from './ScoreDisplay';
 import { WordBuilder } from './WordBuilder';
 import { DebugDialog } from './DebugDialog';
 
-import { type GameConfig, type MoveAttempt, isValidDictionaryWord } from '../../utils/engineExports';
+// Temporary placeholder types until dependency injection implemented - TODO: Replace in Step 3
+interface GameConfig {
+  maxTurns?: number;
+  startingWord?: string;
+  [key: string]: any;
+}
+
+interface MoveAttempt {
+  newWord: string;
+  isValid: boolean;
+  validationResult: any;
+  scoringResult: any;
+  canApply: boolean;
+  reason: string;
+}
+
+const isValidDictionaryWord = (word: string): boolean => false; // TODO: Replace with dependency injection in Step 3
+
 import type { LetterState, ScoreBreakdown, LetterHighlight, WordMove } from '../index';
 import type { ActionState } from './ScoreDisplay';
 import './InteractiveGame.css';
@@ -116,8 +131,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       return { letter, state: 'normal' as const };
     });
   }, [wordState.keyLetters, wordState.lockedLetters]);
-
-
 
   // Pending word highlights (for word builder)
   const pendingWordHighlights: LetterHighlight[] = React.useMemo(() => {
@@ -396,8 +409,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     }
   }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, isPassMode, wordState.currentWord]);
 
-
-
   const handleStartGame = useCallback(async () => {
     await actions.startGame();
     setShowGameEnd(false);
@@ -504,8 +515,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
             </div>
           )}
         </div>
-
-
       </div>
 
       {/* Main game area */}
@@ -566,8 +575,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 enableDrag={true} // Enable drag for mobile and desktop
               />
             </div>
-
-
           </div>
         </div>
       )}

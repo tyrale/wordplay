@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { getDictionarySize } from '../../utils/engineExports';
+// import { getDictionarySize } from '../../utils/engineExports'; // REMOVED: Part of Step 2 cleanup
 import './ResponsiveTest.css';
+
+// Temporary placeholder until dependency injection implemented
+const getDictionarySize = () => 0; // TODO: Replace with dependency injection in Step 3
 
 interface ResponsiveTestProps {
   children: React.ReactNode;
