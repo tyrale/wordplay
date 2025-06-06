@@ -32,7 +32,6 @@
 
 /* Normal state */
 .grid-cell--normal {
-  background-color: var(--theme-surface);
   color: var(--theme-text);
 }
 

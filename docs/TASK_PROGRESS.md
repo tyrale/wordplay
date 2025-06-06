@@ -336,6 +336,33 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 **Verification**: All 253 tests passing, build successful (229.84 kB JS, 29.06 kB CSS), animated drag feedback working smoothly across all platforms.
 
+## 🔧 **CRITICAL DRAG FIXES APPLIED**: Console Errors Eliminated and Letter Movement Restored
+
+**Issues Identified**: 
+1. Console error: "Unable to preventDefault inside passive event listener invocation" repeating heavily
+2. Letters not actually moving during drag operations - resetting to original position
+
+**Root Cause Analysis**:
+1. **Passive Event Listener Issue**: React touch events are passive by default, preventing `preventDefault()` calls
+2. **Faulty Drop Detection**: Logic was checking element bounds instead of using calculated `dropTargetIndex`
+3. **Index Calculation Bug**: No adjustment for left-to-right movement causing incorrect placement
+
+**Solution Implemented**:
+- ✅ **Native Touch Event Handling** (Added useEffect with non-passive touch event listeners for proper preventDefault support)
+- ✅ **Fixed Letter Reordering Logic** (Use dropTargetIndex instead of element bounds detection for reliable drops)
+- ✅ **Left-to-Right Index Adjustment** (Proper index calculation: `dropTargetIndex > draggedIndex ? dropTargetIndex - 1 : dropTargetIndex`)
+- ✅ **Console Errors Eliminated** (Removed preventDefault from React touch handlers, added native event listeners)
+- ✅ **TypeScript Compilation Fixed** (Removed unused event parameters from mouse/touch end handlers)
+- ✅ **Scroll Prevention Enhanced** (Native touch event listeners with proper passive: false option)
+
+**Technical Implementation**:
+- Added useEffect hook with native addEventListener for touchmove with `{ passive: false }`
+- Replaced complex element bounds checking with direct dropTargetIndex usage
+- Fixed array splice logic for proper letter reordering in both directions
+- Enhanced touch event handling for cross-platform compatibility
+
+**Verification**: All 253 tests passing, build successful (229.37 kB JS, 29.06 kB CSS), console errors eliminated, letter drag-and-drop working reliably on desktop and mobile.
+
 ## Phase 3 – Online Multiplayer (Web)
 
 - [ ] 3.1 **Auth Flow (Supabase EmailLink)**

@@ -15,7 +15,6 @@ describe('App Component', () => {
     fireEvent.click(screen.getByText('Start Game'));
     
     // Now check for game components (wait for them to appear)
-    expect(screen.getByLabelText(/Current word:/)).toBeInTheDocument();
     expect(screen.getByTestId('word-builder')).toBeInTheDocument();
   });
 
@@ -62,12 +61,13 @@ describe('App Component', () => {
     // Start the game first
     fireEvent.click(screen.getByText('Start Game'));
     
-    // Check that a current word is displayed (will be random)
-    const currentWord = screen.getByLabelText(/Current word:/);
-    expect(currentWord).toBeInTheDocument();
-    
     // Check for word builder which shows the current word letters
     expect(screen.getByTestId('word-builder')).toBeInTheDocument();
+    
+    // Check that the word builder contains letters (the word will be random)
+    const wordBuilder = screen.getByTestId('word-builder');
+    expect(wordBuilder).toBeInTheDocument();
+    expect(wordBuilder.textContent).toMatch(/[A-Z]+/);
   });
 
   test('renders the game board layout', () => {
@@ -77,7 +77,6 @@ describe('App Component', () => {
     fireEvent.click(screen.getByText('Start Game'));
     
     // Check for main game board sections
-    expect(screen.getByLabelText(/Current word:/)).toBeInTheDocument();
     expect(screen.getByTestId('word-builder')).toBeInTheDocument();
     expect(screen.getByLabelText('Alphabet grid')).toBeInTheDocument();
   });

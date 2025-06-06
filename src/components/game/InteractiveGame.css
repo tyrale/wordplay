@@ -158,11 +158,31 @@
   text-align: center;
 }
 
+.interactive-game__word-trail {
+  margin-bottom: var(--spacing-md);
+}
+
+/* Scale word trail letters to 70% of word builder size */
+.interactive-game__word-trail .word-trail__word {
+  font-size: calc(64px * 0.7); /* 70% of word builder font size */
+}
+
+/* Responsive sizing for word trail */
+@media (max-width: 768px) {
+  .interactive-game__word-trail .word-trail__word {
+    font-size: calc(48px * 0.7);
+  }
+}
+
+@media (max-width: 480px) {
+  .interactive-game__word-trail .word-trail__word {
+    font-size: calc(40px * 0.7);
+  }
+}
+
 .interactive-game__word-builder {
   margin-top: var(--spacing-lg);
   padding: var(--spacing-md);
-  background-color: var(--theme-surface);
-  border-radius: 12px;
 }
 
 .interactive-game__word-builder h3 {
@@ -188,6 +208,8 @@
   justify-content: center;
   flex-wrap: nowrap;
   white-space: nowrap;
+  transform: scale(2);
+  margin: var(--spacing-lg) 0;
 }
 
 .interactive-game__score,

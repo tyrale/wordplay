@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useGameState, useGameStats, useWordState } from '../../hooks/useGameState';
 import { AlphabetGrid } from './AlphabetGrid';
 import { WordTrail } from './WordTrail';
-import { CurrentWord } from './CurrentWord';
+
 
 import { SubmitButton } from './SubmitButton';
 import { ScoreDisplay } from './ScoreDisplay';
@@ -119,18 +119,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     });
   }, [wordState.keyLetters, wordState.lockedLetters]);
 
-  // Word highlights for the current word display
-  const wordHighlights: LetterHighlight[] = React.useMemo(() => {
-    return wordState.currentWord.split('').map((letter, index) => {
-      if (wordState.keyLetters.includes(letter)) {
-        return { index, type: 'key' as const };
-      }
-      if (wordState.lockedLetters.includes(letter)) {
-        return { index, type: 'locked' as const };
-      }
-      return null;
-    }).filter((highlight): highlight is LetterHighlight => highlight !== null);
-  }, [wordState.currentWord, wordState.keyLetters, wordState.lockedLetters]);
+
 
   // Pending word highlights (for word builder)
   const pendingWordHighlights: LetterHighlight[] = React.useMemo(() => {
@@ -391,26 +380,23 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
           )}
         </div>
 
-        {/* Word trail */}
-        {isGameActive && (
-          <WordTrail
-            moves={wordTrailMoves}
-            showScores={true}
-            showTurnNumbers={true}
-            maxVisible={5}
-          />
-        )}
+
       </div>
 
       {/* Main game area */}
       {isGameActive && (
         <div className="interactive-game__board">
-          {/* Current word display */}
+          {/* Word section */}
           <div className="interactive-game__word-section">
-            <CurrentWord
-              word={wordState.currentWord}
-              highlights={wordHighlights}
-            />
+            {/* Word trail - history of words played */}
+            <div className="interactive-game__word-trail">
+              <WordTrail
+                moves={wordTrailMoves}
+                showScores={true}
+                showTurnNumbers={true}
+                maxVisible={5}
+              />
+            </div>
             
             {/* Word builder for player turn */}
             {isPlayerTurn && (
