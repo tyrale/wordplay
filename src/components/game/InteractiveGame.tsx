@@ -126,11 +126,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       if (wordState.keyLetters.includes(letter)) {
         return { letter, state: 'key' as const };
       }
-      // Regular locked letters (not key letters) get locked styling
-      if (wordState.lockedLetters.includes(letter)) {
+      // Both regular locked letters and locked key letters get lock icon with normal background
+      if (wordState.lockedLetters.includes(letter) || wordState.lockedKeyLetters.includes(letter)) {
         return { letter, state: 'locked' as const };
       }
-      // Locked key letters and normal letters both appear normal
+      // Normal letters
       return { letter, state: 'normal' as const };
     });
     
