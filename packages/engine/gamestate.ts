@@ -337,8 +337,11 @@ export class LocalGameStateManagerWithDependencies {
       // Add initial word to used words set
       this.state.usedWords.add(this.state.currentWord);
       
-      // NOTE: Key letters should only be generated after moves are made, not at game start
-      // The first key letter will be generated after the first move in applyMove()
+      // Generate initial key letter so first player can use it for bonus points
+      if (this.state.config.enableKeyLetters) {
+        this.generateRandomKeyLetter();
+      }
+      
       console.log('[DEBUG] startGame: Game started, final keyLetters:', this.state.keyLetters);
       
       this.notifyListeners({
