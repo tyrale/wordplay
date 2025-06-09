@@ -156,6 +156,11 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
   const [isProcessingMove, setIsProcessingMove] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   
+  // Debug log React state changes
+  useEffect(() => {
+    console.log('[DEBUG] useGameState React state updated: keyLetters:', gameState.keyLetters, 'lockedKeyLetters:', gameState.lockedKeyLetters);
+  }, [gameState.keyLetters, gameState.lockedKeyLetters]);
+  
   // Use refs to avoid dependency issues
   const onGameStateChangeRef = useRef(onGameStateChange);
   const onMoveAttemptRef = useRef(onMoveAttempt);
@@ -174,12 +179,15 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
     
     const unsubscribe = gameManager.subscribe(() => {
       const newState = gameManager.getState();
+      console.log('[DEBUG] useGameState subscription: Engine state keyLetters:', newState.keyLetters);
       setGameState(newState);
       onGameStateChangeRef.current?.(newState);
     });
     
     // Initialize state when game manager is ready
-    setGameState(gameManager.getState());
+    const initialState = gameManager.getState();
+    console.log('[DEBUG] useGameState subscription: Initial engine state keyLetters:', initialState.keyLetters);
+    setGameState(initialState);
     
     return unsubscribe;
   }, [gameManager, isInitialized]);
@@ -399,7 +407,7 @@ export function useGameStats(gameState: PublicGameState) {
 }
 
 export function useWordState(gameState: PublicGameState) {
-  return {
+  const wordState = {
     currentWord: gameState.currentWord,
     wordHistory: gameState.turnHistory.map(turn => turn.newWord),
     keyLetters: gameState.keyLetters || [],
@@ -407,4 +415,8 @@ export function useWordState(gameState: PublicGameState) {
     lockedKeyLetters: gameState.lockedKeyLetters || [],
     usedWords: Array.from(gameState.usedWords || [])
   };
+  
+  console.log('[DEBUG] useWordState: React state keyLetters:', wordState.keyLetters, 'lockedKeyLetters:', wordState.lockedKeyLetters);
+  
+  return wordState;
 } 

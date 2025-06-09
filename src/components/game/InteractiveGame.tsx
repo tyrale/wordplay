@@ -121,7 +121,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // Letter grid state
   const letterStates: LetterState[] = React.useMemo(() => {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    return alphabet.map(letter => {
+    const states = alphabet.map(letter => {
       // Locked key letters take priority (they were key letters that became locked)
       if (wordState.lockedKeyLetters.includes(letter)) {
         return { letter, state: 'lockedKey' as const };
@@ -134,6 +134,13 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       }
       return { letter, state: 'normal' as const };
     });
+    
+    // Debug log what letter states are calculated
+    const keyLetterStates = states.filter(s => s.state === 'key');
+    const lockedKeyLetterStates = states.filter(s => s.state === 'lockedKey');
+    console.log('[DEBUG] InteractiveGame letterStates: key letters:', keyLetterStates.map(s => s.letter), 'locked key letters:', lockedKeyLetterStates.map(s => s.letter));
+    
+    return states;
   }, [wordState.keyLetters, wordState.lockedLetters, wordState.lockedKeyLetters]);
 
   // Pending word highlights (for word builder)
