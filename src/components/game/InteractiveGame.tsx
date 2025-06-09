@@ -122,23 +122,22 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const letterStates: LetterState[] = React.useMemo(() => {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
     const states = alphabet.map(letter => {
-      // Locked key letters take priority (they were key letters that became locked)
-      if (wordState.lockedKeyLetters.includes(letter)) {
-        return { letter, state: 'lockedKey' as const };
-      }
+      // Only current key letters get accent color styling
       if (wordState.keyLetters.includes(letter)) {
         return { letter, state: 'key' as const };
       }
+      // Regular locked letters (not key letters) get locked styling
       if (wordState.lockedLetters.includes(letter)) {
         return { letter, state: 'locked' as const };
       }
+      // Locked key letters and normal letters both appear normal
       return { letter, state: 'normal' as const };
     });
     
     // Debug log what letter states are calculated
     const keyLetterStates = states.filter(s => s.state === 'key');
-    const lockedKeyLetterStates = states.filter(s => s.state === 'lockedKey');
-    console.log('[DEBUG] InteractiveGame letterStates: key letters:', keyLetterStates.map(s => s.letter), 'locked key letters:', lockedKeyLetterStates.map(s => s.letter));
+    const lockedLetterStates = states.filter(s => s.state === 'locked');
+    console.log('[DEBUG] InteractiveGame letterStates: key letters:', keyLetterStates.map(s => s.letter), 'locked letters:', lockedLetterStates.map(s => s.letter), 'locked key letters (appear normal):', wordState.lockedKeyLetters);
     
     return states;
   }, [wordState.keyLetters, wordState.lockedLetters, wordState.lockedKeyLetters]);
