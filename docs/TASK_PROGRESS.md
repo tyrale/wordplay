@@ -554,6 +554,41 @@ public async makeBotMove(): Promise<BotMove | null> {
 
 **Build Status**: All tests passing, game state properly maintained, one key letter per turn guaranteed
 
+## 🎨 **ALPHABET GRID STYLING FIXED**: Only Current Key Letters Show Accent Color
+
+**Issue Identified**: Locked key letters were showing special styling in the alphabet grid, causing visual confusion with multiple colored letters
+
+**User Requirement**: Only the current active key letter should have accent color styling in the alphabet grid
+
+**Solution Implemented**:
+- ✅ **Modified letterStates Calculation**: Removed special styling for locked key letters in alphabet grid
+- ✅ **Single Accent Color**: Only current key letters (keyLetters array) receive accent color styling
+- ✅ **Normal Appearance**: Locked key letters now appear as normal letters in alphabet grid
+- ✅ **Preserved Functionality**: Key letter locking feature still works for game logic, just without visual highlighting
+- ✅ **Cleaned Up Debug Logs**: Removed verbose console output for better user experience
+
+**Technical Implementation**:
+```typescript
+// OLD (showed both current and locked key letters with special styling)
+if (wordState.lockedKeyLetters.includes(letter)) {
+  return { letter, state: 'lockedKey' as const };
+}
+if (wordState.keyLetters.includes(letter)) {
+  return { letter, state: 'key' as const };
+}
+
+// NEW (only current key letters get accent color)
+if (wordState.keyLetters.includes(letter)) {
+  return { letter, state: 'key' as const };
+}
+// Locked key letters appear normal
+return { letter, state: 'normal' as const };
+```
+
+**Visual Result**: Clean alphabet grid with exactly one accent-colored key letter, locked key letters appear normal but still function in game logic
+
+**Build Status**: All tests passing, UI cleaner and less confusing, key letter system working as intended
+
 ## Phase 3 – Online Multiplayer (Web)
 
 - [ ] 3.1 **Auth Flow (Supabase EmailLink)**
