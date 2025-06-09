@@ -327,15 +327,19 @@ export class LocalGameStateManagerWithDependencies {
    * Start the game
    */
   public startGame(): void {
+    console.log('[DEBUG] startGame: Called');
+    
     if (this.state.gameStatus === 'waiting') {
+      console.log('[DEBUG] startGame: Starting game, current keyLetters:', this.state.keyLetters);
       this.state.gameStatus = 'playing';
       this.state.gameStartTime = Date.now();
       
       // Add initial word to used words set
       this.state.usedWords.add(this.state.currentWord);
       
-      // Generate initial key letter
-      this.generateRandomKeyLetter();
+      // NOTE: Key letters should only be generated after moves are made, not at game start
+      // The first key letter will be generated after the first move in applyMove()
+      console.log('[DEBUG] startGame: Game started, final keyLetters:', this.state.keyLetters);
       
       this.notifyListeners({
         type: 'game_finished',

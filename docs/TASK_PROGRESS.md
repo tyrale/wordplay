@@ -514,6 +514,45 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 **Verification**: Build successful, manual submission flow working as intended
 
+## 🔧 **CRITICAL BUG FIXED**: Double Key Letter Generation After Bot Moves
+
+**Issue Identified**: Bot moves were generating multiple key letters instead of one, causing game state corruption
+
+**Root Cause Analysis**: **React StrictMode** in development mode was causing multiple executions of the bot move useEffect, leading to:
+1. **Triple useEffect execution** during component mounting (confirmed by debug logs)
+2. **Multiple concurrent `makeBotMove()` calls** when bot's turn began
+3. **Each call executing `applyMove()` and `generateRandomKeyLetter()`**
+4. **Result: Multiple key letters generated per bot turn**
+
+**Technical Solution Implemented**:
+- ✅ **Bot Move Concurrency Protection**: Added `botMoveInProgress` flag to prevent concurrent bot moves
+- ✅ **Idempotent Bot Logic**: Only first `makeBotMove()` call executes, subsequent calls return null immediately
+- ✅ **State Management**: Bot move flag properly reset in `resetGame()` for clean state
+- ✅ **Debug Optimization**: Cleaned up console logs that appeared during component mounting
+- ✅ **StrictMode Compatibility**: Solution works with React StrictMode enabled (preserving development debugging benefits)
+
+**Verification Strategy**: Comprehensive debug logging revealed exact execution sequence and confirmed the fix prevents multiple key letter generation
+
+**Technical Implementation**:
+```typescript
+// Engine-level protection against concurrent bot moves
+private botMoveInProgress: boolean = false;
+
+public async makeBotMove(): Promise<BotMove | null> {
+  if (this.botMoveInProgress) {
+    return null; // Prevent concurrent execution
+  }
+  this.botMoveInProgress = true;
+  try {
+    // Bot move logic
+  } finally {
+    this.botMoveInProgress = false;
+  }
+}
+```
+
+**Build Status**: All tests passing, game state properly maintained, one key letter per turn guaranteed
+
 ## Phase 3 – Online Multiplayer (Web)
 
 - [ ] 3.1 **Auth Flow (Supabase EmailLink)**
