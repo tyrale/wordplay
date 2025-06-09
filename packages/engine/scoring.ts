@@ -161,24 +161,86 @@ export function calculateScore(
   // Check if we also have rearrangement in addition to add/remove
   // This happens when letters change AND the remaining letters are rearranged
   if (!analysis.isRearranged && (analysis.addedLetters.length > 0 || analysis.removedLetters.length > 0)) {
-    // For add/remove operations, we should NOT count natural position shifts as rearrangements
-    // Only count as rearrangement if letters are intentionally reordered beyond natural shifts
-    
-    // SIMPLIFIED LOGIC: If we have adds/removes, don't look for additional rearrangement
-    // The complex heuristic was incorrectly flagging natural shifts as rearrangements
+    // We need to detect true rearrangements while avoiding false positives from natural shifts
     // 
-    // Examples that should NOT get rearrangement points:
-    // - FLOE → FOES (remove L, add S - O,E naturally shift, not rearranged)
-    // - CAT → CART (add R - A,T naturally shift, not rearranged) 
-    //
-    // True rearrangement only happens when:
-    // 1. Same letter set, different order (already handled by analysis.isRearranged)
-    // 2. Complex cases where adds/removes AND letters are intentionally reordered
-    //    (these are rare and hard to detect reliably, so we'll be conservative)
+    // TRUE REARRANGEMENT: NARD → YARN (N moves from pos 0 to pos 3, plus D→Y substitution)
+    // FALSE POSITIVE: FLOE → FOES (O,E naturally shift left when L removed)
     
-    // For now, don't award rearrangement points for add/remove combinations
-    // This prevents the FLOE → FOES scoring bug
-    rearrangePoints = 0;
+    const prev = previousWord.toUpperCase();
+    const curr = currentWord.toUpperCase();
+    
+    // Strategy: Check if any letters that exist in BOTH words changed positions
+    // beyond what would be natural shifts from the add/remove operations
+    
+    // Find letters that appear in both words (survived the add/remove)
+    const prevChars = prev.split('');
+    const currChars = curr.split('');
+    
+    // Get frequency maps to handle repeated letters correctly
+    const prevFreq = new Map<string, number>();
+    const currFreq = new Map<string, number>();
+    
+    prevChars.forEach(char => prevFreq.set(char, (prevFreq.get(char) || 0) + 1));
+    currChars.forEach(char => currFreq.set(char, (currFreq.get(char) || 0) + 1));
+    
+    // Find letters that stayed (appear in both words with same or higher frequency)
+    const stayedLetters: string[] = [];
+    for (const [char, prevCount] of prevFreq) {
+      const currCount = currFreq.get(char) || 0;
+      const stayedCount = Math.min(prevCount, currCount);
+      for (let i = 0; i < stayedCount; i++) {
+        stayedLetters.push(char);
+      }
+    }
+    
+    // Now check if any of these stayed letters are in different relative positions
+    // We'll use a simple approach: check if the subsequence of stayed letters
+    // appears in a different order
+    
+    if (stayedLetters.length >= 2) {
+      // Extract the subsequence of stayed letters from each word
+      const prevStayedSeq: string[] = [];
+      const currStayedSeq: string[] = [];
+      
+      // Build sequences maintaining order and frequency
+      const stayedSet = new Set(stayedLetters);
+      const stayedFreq = new Map<string, number>();
+      stayedLetters.forEach(char => stayedFreq.set(char, (stayedFreq.get(char) || 0) + 1));
+      
+      // Extract stayed letters in order from previous word
+      const prevUsed = new Map<string, number>();
+      for (const char of prevChars) {
+        if (stayedSet.has(char)) {
+          const used = prevUsed.get(char) || 0;
+          const maxUse = stayedFreq.get(char) || 0;
+          if (used < maxUse) {
+            prevStayedSeq.push(char);
+            prevUsed.set(char, used + 1);
+          }
+        }
+      }
+      
+      // Extract stayed letters in order from current word
+      const currUsed = new Map<string, number>();
+      for (const char of currChars) {
+        if (stayedSet.has(char)) {
+          const used = currUsed.get(char) || 0;
+          const maxUse = stayedFreq.get(char) || 0;
+          if (used < maxUse) {
+            currStayedSeq.push(char);
+            currUsed.set(char, used + 1);
+          }
+        }
+      }
+      
+      // If the stayed letter sequences are different, we have rearrangement
+      const prevSeqStr = prevStayedSeq.join('');
+      const currSeqStr = currStayedSeq.join('');
+      
+      if (prevSeqStr !== currSeqStr && prevSeqStr.length > 0) {
+        rearrangePoints = 1;
+      }
+    }
   }
   
   // Key letter usage: +1 if any key letter is used
