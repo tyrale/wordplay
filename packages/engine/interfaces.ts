@@ -10,12 +10,14 @@
 // CORE RESULT TYPES
 // =============================================================================
 
-export interface ValidationResult {
-  isValid: boolean;
-  reason?: string;
-  word: string;
-  censored?: string;
-}
+export type GameStatus = 'ready' | 'playing' | 'finished';
+
+export type ValidationResult = 
+  | { isValid: true; word: string; }
+  | { isValid: false; reason: 'NOT_IN_DICTIONARY'; word: string; }
+  | { isValid: false; reason: 'ALREADY_PLAYED'; word: string; }
+  | { isValid: false; reason: 'INVALID_ACTION'; word: string; }
+  | { isValid: false; reason: 'TOO_SHORT'; word: string; };
 
 export interface ScoringResult {
   score: number;
@@ -47,9 +49,7 @@ export interface BotMove {
 
 export interface BotResult {
   move: BotMove | null;
-  candidates: BotMove[];
-  processingTime: number;
-  totalCandidatesGenerated: number;
+  executionTime: number;
 }
 
 export interface MoveCandidate {
@@ -166,17 +166,13 @@ export interface ValidationOptions {
 export interface BotOptions {
   keyLetters?: string[];
   lockedLetters?: string[];
-  usedWords?: string[];
   difficulty?: 'easy' | 'medium' | 'hard';
   maxCandidates?: number;
-  timeLimit?: number; // milliseconds
+  timeLimit?: number;
 }
 
 export interface ScoringOptions {
-  keyLetterBonus?: number;
-  addLetterPoints?: number;
-  removeLetterPoints?: number;
-  rearrangePoints?: number;
+  keyLetters?: string[];
 }
 
 export interface GameEngineOptions {
@@ -436,4 +432,101 @@ export function createTestDependencies(config: {
     getRandomWordByLength: (length) => validWords.find(w => w.length === length) || null,
     getWordCount: () => validWords.length
   };
+}
+
+export interface IGameState {
+  // Game state properties
+  currentWord: string;
+  // ... existing code ...
+}
+
+export interface Player {
+  id: string;
+  name: string;
+  isBot: boolean;
+  score: number;
+  isCurrentPlayer: boolean;
+}
+
+export interface GameState {
+  gameId: string;
+  config: GameConfig;
+  gameStatus: 'waiting' | 'playing' | 'finished';
+  players: Player[];
+  currentTurn: number;
+  currentWord: string;
+  keyLetters: string[];
+  lockedLetters: string[];
+  lockedKeyLetters: string[];
+  usedWords: Set<string>;
+  usedKeyLetters: Set<string>;
+  turnHistory: TurnHistory[];
+  gameStartTime: number | null;
+  lastMoveTime: number | null;
+  winner: Player | null;
+  totalMoves: number;
+}
+
+export interface GameStateDictionaryDependencies {
+  validateWord: (word: string) => ValidationResult;
+  getRandomWordByLength: (length: number) => string | null;
+}
+
+export interface GameStateScoringDependencies {
+  calculateScore: (previousWord: string, currentWord: string, options: ScoringOptions) => ScoringResult;
+  isValidMove: (previousWord: string, currentWord: string) => boolean;
+}
+
+export interface GameStateBotDependencies {
+  generateBotMove: (currentWord: string, options: BotOptions) => Promise<BotResult>;
+}
+
+export interface GameStateDependencies {
+  dictionary: GameStateDictionaryDependencies;
+  scoring: GameStateScoringDependencies;
+  bot: GameStateBotDependencies;
+}
+
+export interface GameStateUpdate {
+  type: string;
+  data: any;
+  timestamp: number;
+}
+
+export interface GameConfig {
+  maxTurns?: number;
+  initialWord?: string;
+  players?: Player[];
+  allowBotPlayer?: boolean;
+  enableKeyLetters?: boolean;
+  enableLockedLetters?: boolean;
+  allowProfanity?: boolean;
+}
+
+export interface TurnHistory {
+  turnNumber: number;
+  playerId: string;
+  previousWord: string;
+  newWord: string;
+  score: number;
+  scoringBreakdown: ScoringResult;
+  timestamp: number;
+}
+
+export interface IGameStateManager {
+  subscribe(listener: (update: GameStateUpdate) => void): () => void;
+  getState(): GameState;
+  startGame(initialWord?: string): void;
+  resetGame(config?: GameConfig): void;
+  passTurn(): boolean;
+  applyMove(word: string): ScoringResult | null;
+  validateMove(word: string): ValidationResult;
+  makeBotMove(): Promise<BotMove | null>;
+  getCurrentPlayer(): Player | null;
+  getWinner(): Player | null;
+  addPlayer(name: string, isBot: boolean): void;
+  addKeyLetter(letter: string): void;
+  removeKeyLetter(letter: string): void;
+  addLockedLetter(letter: string): void;
+  removeLockedLetter(letter: string): void;
 } 

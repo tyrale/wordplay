@@ -7,6 +7,8 @@ export interface SubmitButtonProps {
   disabled?: boolean;
   className?: string;
   isPassMode?: boolean;
+  isInvalid: boolean;
+  isPassConfirming: boolean;
 }
 
 export const SubmitButton: React.FC<SubmitButtonProps> = ({
@@ -14,7 +16,9 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
   onClick,
   disabled = false,
   className = '',
-  isPassMode = false
+  isPassMode = false,
+  isInvalid,
+  isPassConfirming
 }) => {
   const canClick = (isValid || isPassMode) && !disabled && onClick;
   
@@ -38,17 +42,20 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
     return isValid ? 'Submit word' : 'Word is invalid - click to pass turn';
   };
 
+  const icon = isInvalid || isPassConfirming ? '×' : '✓';
+  const buttonClass = `submit-button ${
+    isInvalid || isPassConfirming ? 'submit-button--invalid' : 'submit-button--valid'
+  } ${className}`.trim();
+
   return (
     <button
-      className={`submit-button ${
-        isValid ? 'submit-button--valid' : isPassMode ? 'submit-button--pass' : 'submit-button--invalid'
-      } ${className}`.trim()}
+      className={buttonClass}
       onClick={handleClick}
       disabled={!canClick}
       aria-label={getAriaLabel()}
       type="button"
     >
-      {getButtonText()}
+      {icon}
     </button>
   );
 }; 

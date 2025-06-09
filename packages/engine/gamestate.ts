@@ -110,6 +110,7 @@ export interface GameConfig {
   allowBotPlayer?: boolean;
   enableKeyLetters?: boolean;
   enableLockedLetters?: boolean;
+  allowProfanity?: boolean;
 }
 
 export interface PlayerState {
@@ -353,149 +354,72 @@ export class LocalGameStateManagerWithDependencies {
   }
 
   /**
-   * Attempt a move - validate without applying
+   * Validate a move before applying it to the game state
    */
-  public attemptMove(newWord: string): MoveAttempt {
-    const normalizedNewWord = newWord.trim().toUpperCase();
-    const currentPlayer = this.getCurrentPlayer();
+  public validateMove(word: string): ValidationResult {
+    const normalizedWord = word.trim().toUpperCase();
     
-    if (!currentPlayer) {
-      return {
-        newWord: normalizedNewWord,
-        isValid: false,
-        validationResult: {
-          isValid: false,
-          reason: 'No current player',
-          word: normalizedNewWord
-        },
-        scoringResult: null,
-        canApply: false,
-        reason: 'No current player found'
-      };
+    if (this.state.usedWords.has(normalizedWord)) {
+      return { isValid: false, reason: 'ALREADY_PLAYED', word: normalizedWord };
     }
 
-    // Basic validation first
-    if (this.state.gameStatus !== 'playing') {
-      return {
-        newWord: normalizedNewWord,
-        isValid: false,
-        validationResult: {
-          isValid: false,
-          reason: 'Game is not in playing state',
-          word: normalizedNewWord
-        },
-        scoringResult: null,
-        canApply: false,
-        reason: 'Game is not in playing state'
-      };
-    }
-
-    // Check if word has been used before
-    if (this.state.usedWords.has(normalizedNewWord)) {
-      return {
-        newWord: normalizedNewWord,
-        isValid: false,
-        validationResult: {
-          isValid: false,
-          reason: 'Word has already been used in this game',
-          word: normalizedNewWord
-        },
-        scoringResult: null,
-        canApply: false,
-        reason: 'Word repetition not allowed'
-      };
-    }
-
-    // Word validation using dependency injection
-    const validationResult = this.dependencies.validateWord(normalizedNewWord, {
-      isBot: currentPlayer.isBot,
-      previousWord: this.state.currentWord
+    // Validate the word using dictionary and profanity rules
+    const dictionaryValidation = this.dependencies.validateWord(word, {
+      allowProfanity: this.state.config.allowProfanity
     });
 
-    if (!validationResult.isValid) {
-      return {
-        newWord: normalizedNewWord,
-        isValid: false,
-        validationResult,
-        scoringResult: null,
-        canApply: false,
-        reason: validationResult.reason
-      };
+    if (!dictionaryValidation.isValid) {
+      return dictionaryValidation;
+    }
+    
+    // Validate the move itself (e.g., only one letter change)
+    if (!this.dependencies.isValidMove(this.state.currentWord, normalizedWord)) {
+      return { isValid: false, reason: 'INVALID_ACTION', word: normalizedWord };
     }
 
-    // Additional move validation using dependency injection
-    const isMoveValid = this.dependencies.isValidMove(this.state.currentWord, normalizedNewWord);
-    if (!isMoveValid) {
-      return {
-        newWord: normalizedNewWord,
-        isValid: false,
-        validationResult: {
-          isValid: false,
-          reason: 'Invalid move pattern',
-          word: normalizedNewWord
-        },
-        scoringResult: null,
-        canApply: false,
-        reason: 'Move does not follow game rules'
-      };
-    }
-
-    // Calculate scoring using dependency injection
-    const scoringResult = this.dependencies.calculateScore(
-      this.state.currentWord,
-      normalizedNewWord,
-      { keyLetters: this.state.keyLetters }
-    );
-
-    return {
-      newWord: normalizedNewWord,
-      isValid: true,
-      validationResult,
-      scoringResult,
-      canApply: true
-    };
+    return { isValid: true, word: normalizedWord };
   }
 
   /**
    * Apply a move attempt to the game state
    */
-  public applyMove(moveAttempt: MoveAttempt): boolean {
-    console.log('[DEBUG] applyMove: Called with word:', moveAttempt.newWord);
-    
-    if (!moveAttempt.canApply || !moveAttempt.scoringResult) {
-      console.log('[DEBUG] applyMove: Cannot apply move - canApply:', moveAttempt.canApply, 'scoringResult:', !!moveAttempt.scoringResult);
-      return false;
+  public applyMove(word: string): ScoringResult | null {
+    const validation = this.validateMove(word);
+
+    if (!validation.isValid) {
+      // For now, we return null for any invalid move.
+      // In the future, this could return the reason for the failure.
+      return null;
     }
 
-    const currentPlayer = this.getCurrentPlayer();
-    if (!currentPlayer) {
-      console.log('[DEBUG] applyMove: No current player found');
-      return false;
-    }
+    const normalizedWord = validation.word;
 
-    console.log('[DEBUG] applyMove: Applying move for player:', currentPlayer.name, 'Current key letters before:', this.state.keyLetters);
-
-    const previousWord = this.state.currentWord;
+    const score = this.dependencies.calculateScore(this.state.currentWord, normalizedWord, { 
+      keyLetters: this.state.keyLetters 
+    });
 
     // Update game state
-    this.state.currentWord = moveAttempt.newWord;
+    this.state.currentWord = normalizedWord;
     this.state.lastMoveTime = Date.now();
     this.state.totalMoves++;
     
     // Track this word as used
-    this.state.usedWords.add(moveAttempt.newWord);
+    this.state.usedWords.add(normalizedWord);
 
     // Update player score
-    currentPlayer.score += moveAttempt.scoringResult.totalScore;
+    const currentPlayer = this.getCurrentPlayer();
+    if (currentPlayer) {
+      currentPlayer.score += score.totalScore;
+    }
 
     // Add to turn history
     const turnRecord: TurnHistory = {
       turnNumber: this.state.currentTurn,
-      playerId: currentPlayer.id,
-      previousWord,
-      newWord: moveAttempt.newWord,
-      score: moveAttempt.scoringResult.totalScore,
-      scoringBreakdown: moveAttempt.scoringResult,
+      playerId: currentPlayer?.id || '',
+      previousWord: this.state.currentWord,
+      newWord: normalizedWord,
+      score: score.totalScore,
+      scoringBreakdown: score,
       timestamp: Date.now()
     };
 
@@ -506,10 +430,10 @@ export class LocalGameStateManagerWithDependencies {
     this.state.lockedKeyLetters = [];
     
     // If this player used key letters, lock them for the next player
-    if (moveAttempt.scoringResult.keyLettersUsed.length > 0) {
+    if (score.keyLettersUsed.length > 0) {
       // Find which key letters were used and are now in the new word
-      const usedKeyLetters = moveAttempt.scoringResult.keyLettersUsed.filter(letter => 
-        moveAttempt.newWord.toUpperCase().includes(letter.toUpperCase())
+      const usedKeyLetters = score.keyLettersUsed.filter(letter => 
+        normalizedWord.toUpperCase().includes(letter.toUpperCase())
       );
       
       // These letters will be locked for the next player's turn
@@ -538,7 +462,7 @@ export class LocalGameStateManagerWithDependencies {
     // Notify listeners of word change
     this.notifyListeners({
       type: 'word_changed',
-      data: { previousWord, newWord: moveAttempt.newWord, score: moveAttempt.scoringResult.totalScore },
+      data: { previousWord: this.state.currentWord, newWord: normalizedWord, score: score.totalScore },
       timestamp: Date.now()
     });
 
@@ -550,95 +474,34 @@ export class LocalGameStateManagerWithDependencies {
       this.finishGame();
     }
 
-    console.log('[DEBUG] applyMove: Completed successfully');
-    return true;
+    return score;
   }
 
   /**
    * Make a bot move (if current player is bot)
    */
   public async makeBotMove(): Promise<BotMove | null> {
-    console.log('[DEBUG] makeBotMove: Called. botMoveInProgress:', this.botMoveInProgress);
-    
-    // Prevent concurrent bot moves
-    if (this.botMoveInProgress) {
-      console.log('[DEBUG] makeBotMove: Bot move already in progress, returning null');
-      return null;
-    }
-    
-    const currentPlayer = this.getCurrentPlayer();
-    
-    if (!currentPlayer || !currentPlayer.isBot) {
-      console.log('[DEBUG] makeBotMove: Current player is not a bot, returning null');
-      return null;
+    const bot = this.getCurrentPlayer();
+    if (!bot || !bot.isBot) {
+      return null; // Not a bot's turn
     }
 
-    if (this.state.gameStatus !== 'playing') {
-      console.log('[DEBUG] makeBotMove: Game not in playing status, returning null');
-      return null;
-    }
+    const botResult = await this.dependencies.generateBotMove(this.state.currentWord, {
+      keyLetters: this.state.keyLetters,
+      lockedLetters: this.state.lockedLetters
+    });
 
-    try {
-      console.log('[DEBUG] makeBotMove: Setting botMoveInProgress to true');
-      this.botMoveInProgress = true;
+    if (botResult && botResult.move) {
+      const move = botResult.move;
       
-      // Generate bot move
-      const botResult: BotResult = await this.dependencies.generateBotMove(this.state.currentWord, {
-        keyLetters: this.state.keyLetters,
-        maxCandidates: 500 // Reasonable limit for responsive gameplay
-      });
-
-      console.log('[DEBUG] Bot move generation completed:', botResult.move?.word);
-
-      if (!botResult.move) {
-        console.warn('Bot could not generate a valid move, passing turn');
-        // Automatically pass when bot can't find a valid move
-        this.passTurn();
-        return {
-          word: this.state.currentWord,
-          score: 0,
-          confidence: 0,
-          reasoning: ['PASS - No valid moves available']
-        };
-      }
-
-      // Attempt and apply the bot's move
-      console.log('[DEBUG] Attempting bot move:', botResult.move.word, 'from word:', this.state.currentWord);
-      const moveAttempt = this.attemptMove(botResult.move.word);
+      this.applyMove(move.word);
       
-      if (moveAttempt.canApply) {
-        console.log('[DEBUG] Bot move can be applied, calling applyMove');
-        const success = this.applyMove(moveAttempt);
-        console.log('[DEBUG] applyMove result:', success);
-        if (success) {
-          console.log('[DEBUG] Bot move successfully applied, returning botResult.move');
-          return botResult.move;
-        }
-      }
-
-      // If bot move failed to apply, pass instead
-      this.passTurn();
-      return {
-        word: this.state.currentWord,
-        score: 0,
-        confidence: 0,
-        reasoning: ['PASS - Move validation failed']
-      };
-
-    } catch (error) {
-      console.error('Bot move generation failed:', error);
-      // Pass on error
-      this.passTurn();
-      return {
-        word: this.state.currentWord,
-        score: 0,
-        confidence: 0,
-        reasoning: ['PASS - Error in move generation']
-      };
-    } finally {
-      console.log('[DEBUG] makeBotMove: Setting botMoveInProgress to false');
-      this.botMoveInProgress = false;
+      return move;
     }
+
+    // Bot fails to find a move, so it passes
+    this.passTurn();
+    return null;
   }
 
   /**

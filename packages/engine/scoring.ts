@@ -143,11 +143,6 @@ export function calculateScore(
   let removeLetterPoints = 0;
   let rearrangePoints = 0;
 
-  // Check for rearrangement (only when no adds/removes)
-  if (analysis.isRearranged) {
-    rearrangePoints = 1;
-  }
-
   // Score add operations
   if (analysis.addedLetters.length > 0) {
     addLetterPoints = 1;
@@ -158,87 +153,38 @@ export function calculateScore(
     removeLetterPoints = 1;
   }
 
-  // Check if we also have rearrangement in addition to add/remove
-  // This happens when letters change AND the remaining letters are rearranged
-  if (!analysis.isRearranged && (analysis.addedLetters.length > 0 || analysis.removedLetters.length > 0)) {
-    // We need to detect true rearrangements while avoiding false positives from natural shifts
-    // 
-    // TRUE REARRANGEMENT: NARD → YARN (N moves from pos 0 to pos 3, plus D→Y substitution)
-    // FALSE POSITIVE: FLOE → FOES (O,E naturally shift left when L removed)
-    
-    const prev = previousWord.toUpperCase();
-    const curr = currentWord.toUpperCase();
-    
-    // Strategy: Check if any letters that exist in BOTH words changed positions
-    // beyond what would be natural shifts from the add/remove operations
-    
-    // Find letters that appear in both words (survived the add/remove)
-    const prevChars = prev.split('');
-    const currChars = curr.split('');
-    
-    // Get frequency maps to handle repeated letters correctly
-    const prevFreq = new Map<string, number>();
-    const currFreq = new Map<string, number>();
-    
-    prevChars.forEach(char => prevFreq.set(char, (prevFreq.get(char) || 0) + 1));
-    currChars.forEach(char => currFreq.set(char, (currFreq.get(char) || 0) + 1));
-    
-    // Find letters that stayed (appear in both words with same or higher frequency)
-    const stayedLetters: string[] = [];
-    for (const [char, prevCount] of prevFreq) {
-      const currCount = currFreq.get(char) || 0;
-      const stayedCount = Math.min(prevCount, currCount);
-      for (let i = 0; i < stayedCount; i++) {
-        stayedLetters.push(char);
-      }
+  // Check for rearrangement, but only if it's not a simple add/remove "natural shift"
+  let isNaturalShift = false;
+  // Case 1: Only additions. Is the old word a subsequence of the new?
+  if (analysis.addedLetters.length > 0 && analysis.removedLetters.length === 0) {
+    if (isSubsequence(previousWord.toUpperCase(), currentWord.toUpperCase())) {
+      isNaturalShift = true;
     }
-    
-    // Now check if any of these stayed letters are in different relative positions
-    // We'll use a simple approach: check if the subsequence of stayed letters
-    // appears in a different order
-    
-    if (stayedLetters.length >= 2) {
-      // Extract the subsequence of stayed letters from each word
-      const prevStayedSeq: string[] = [];
-      const currStayedSeq: string[] = [];
-      
-      // Build sequences maintaining order and frequency
-      const stayedSet = new Set(stayedLetters);
-      const stayedFreq = new Map<string, number>();
-      stayedLetters.forEach(char => stayedFreq.set(char, (stayedFreq.get(char) || 0) + 1));
-      
-      // Extract stayed letters in order from previous word
-      const prevUsed = new Map<string, number>();
-      for (const char of prevChars) {
-        if (stayedSet.has(char)) {
-          const used = prevUsed.get(char) || 0;
-          const maxUse = stayedFreq.get(char) || 0;
-          if (used < maxUse) {
-            prevStayedSeq.push(char);
-            prevUsed.set(char, used + 1);
-          }
+  }
+  // Case 2: Only removals. Is the new word a subsequence of the old?
+  if (analysis.removedLetters.length > 0 && analysis.addedLetters.length === 0) {
+    if (isSubsequence(currentWord.toUpperCase(), previousWord.toUpperCase())) {
+      isNaturalShift = true;
+    }
+  }
+
+  // Only check for rearrangement points if it's NOT a natural shift
+  if (!isNaturalShift) {
+    // This handles pure rearrangements (isRearranged) and combo-moves like NAG->LANG
+    if (analysis.isRearranged) {
+      rearrangePoints = 1;
+    } else {
+      // Use subsequence analysis for combo moves (add/remove + rearrange)
+      const prev = previousWord.toUpperCase();
+      const curr = currentWord.toUpperCase();
+      const stayedLetters = findLettersThatStayed(prev, curr);
+
+      if (stayedLetters.length >= 2) {
+        const prevStayedSeq = extractStayedSequence(prev, stayedLetters);
+        const currStayedSeq = extractStayedSequence(curr, stayedLetters);
+        if (prevStayedSeq !== currStayedSeq) {
+          rearrangePoints = 1;
         }
-      }
-      
-      // Extract stayed letters in order from current word
-      const currUsed = new Map<string, number>();
-      for (const char of currChars) {
-        if (stayedSet.has(char)) {
-          const used = currUsed.get(char) || 0;
-          const maxUse = stayedFreq.get(char) || 0;
-          if (used < maxUse) {
-            currStayedSeq.push(char);
-            currUsed.set(char, used + 1);
-          }
-        }
-      }
-      
-      // If the stayed letter sequences are different, we have rearrangement
-      const prevSeqStr = prevStayedSeq.join('');
-      const currSeqStr = currStayedSeq.join('');
-      
-      if (prevSeqStr !== currSeqStr && prevSeqStr.length > 0) {
-        rearrangePoints = 1;
       }
     }
   }
@@ -275,6 +221,73 @@ export function calculateScore(
     actions,
     keyLettersUsed: analysis.keyLettersUsed
   };
+}
+
+/**
+ * Checks if a string is a subsequence of another string.
+ * e.g., isSubsequence("ACE", "ABCDE") -> true
+ */
+function isSubsequence(s1: string, s2: string): boolean {
+  let i = 0;
+  let j = 0;
+  while (i < s1.length && j < s2.length) {
+    if (s1[i] === s2[j]) {
+      i++;
+    }
+    j++;
+  }
+  return i === s1.length;
+}
+
+/**
+ * Finds the letters that are common between two words, respecting counts.
+ * Example: findLettersThatStayed("APPLE", "PALE") -> ['P', 'L', 'E']
+ */
+function findLettersThatStayed(word1: string, word2: string): string[] {
+  const freq1 = new Map<string, number>();
+  for (const char of word1) {
+    freq1.set(char, (freq1.get(char) || 0) + 1);
+  }
+
+  const freq2 = new Map<string, number>();
+  for (const char of word2) {
+    freq2.set(char, (freq2.get(char) || 0) + 1);
+  }
+
+  const stayed: string[] = [];
+  for (const [char, count1] of freq1) {
+    const count2 = freq2.get(char) || 0;
+    const stayedCount = Math.min(count1, count2);
+    for (let i = 0; i < stayedCount; i++) {
+      stayed.push(char);
+    }
+  }
+  return stayed;
+}
+
+/**
+ * Extracts the subsequence of specified letters from a word, preserving their order.
+ * Example: extractStayedSequence("NAG", ['N', 'A', 'G']) -> "NAG"
+ * Example: extractStayedSequence("LANG", ['N', 'A', 'G']) -> "ANG"
+ */
+function extractStayedSequence(word: string, stayedLetters: string[]): string {
+  const stayedFreq = new Map<string, number>();
+  stayedLetters.forEach(char => stayedFreq.set(char, (stayedFreq.get(char) || 0) + 1));
+
+  const sequence: string[] = [];
+  const usedCount = new Map<string, number>();
+
+  for (const char of word) {
+    const max = stayedFreq.get(char) || 0;
+    if (max > 0) {
+      const used = usedCount.get(char) || 0;
+      if (used < max) {
+        sequence.push(char);
+        usedCount.set(char, used + 1);
+      }
+    }
+  }
+  return sequence.join('');
 }
 
 /**

@@ -58,6 +58,7 @@ export interface BotDependencies extends DictionaryValidation, ScoringDependenci
 
 export interface BotOptions {
   keyLetters?: string[];
+  lockedLetters?: string[];
   difficulty?: 'easy' | 'medium' | 'hard';
   maxCandidates?: number;
   timeLimit?: number; // ms
@@ -116,13 +117,20 @@ export function generateAddMoves(currentWord: string): MoveCandidate[] {
 /**
  * Generates all possible single letter removals from a word
  */
-export function generateRemoveMoves(currentWord: string): MoveCandidate[] {
+export function generateRemoveMoves(currentWord: string, protectedLetters: string[] = []): MoveCandidate[] {
   const candidates: MoveCandidate[] = [];
   const word = currentWord.toUpperCase();
+  const protectedSet = new Set(protectedLetters.map(l => l.toUpperCase()));
   
   // Try removing each letter
   for (let pos = 0; pos < word.length; pos++) {
     const removedLetter = word[pos];
+
+    // Do not generate moves that remove a protected letter
+    if (protectedSet.has(removedLetter)) {
+      continue;
+    }
+
     const newWord = word.slice(0, pos) + word.slice(pos + 1);
     
     candidates.push({
@@ -185,13 +193,19 @@ export function generateRearrangeMoves(currentWord: string, maxVariations = 50):
 /**
  * Generates substitution moves (remove one letter, add another)
  */
-export function generateSubstituteMoves(currentWord: string): MoveCandidate[] {
+export function generateSubstituteMoves(currentWord: string, protectedLetters: string[] = []): MoveCandidate[] {
   const candidates: MoveCandidate[] = [];
   const word = currentWord.toUpperCase();
-  
+  const protectedSet = new Set(protectedLetters.map(l => l.toUpperCase()));
+
   // Try substituting each position with each letter
   for (let pos = 0; pos < word.length; pos++) {
     const originalLetter = word[pos];
+
+    // Do not generate moves that substitute a protected letter
+    if (protectedSet.has(originalLetter)) {
+      continue;
+    }
     
     for (const newLetter of COMMON_LETTERS) {
       if (newLetter !== originalLetter) {
@@ -273,16 +287,28 @@ export function generateBotMoveWithDependencies(
   options: BotOptions = {}
 ): BotResult {
   const startTime = performance.now();
-  const { keyLetters = [], maxCandidates = 1000, timeLimit = 5000 } = options;
-  
-  // Generate all possible moves
+  const { 
+    keyLetters = [], 
+    lockedLetters = [],
+    maxCandidates = 200, 
+    timeLimit = 100 
+  } = options;
+
+  // Combine key and locked letters into a single protected set
+  const protectedLetters = [...keyLetters, ...lockedLetters];
+
+  // Generate move candidates from all categories
   const addMoves = generateAddMoves(currentWord);
-  const removeMoves = generateRemoveMoves(currentWord);
+  const removeMoves = generateRemoveMoves(currentWord, protectedLetters);
   const rearrangeMoves = generateRearrangeMoves(currentWord);
-  const substituteMoves = generateSubstituteMoves(currentWord);
-  
-  // Combine all candidates
-  const allCandidates = [...addMoves, ...removeMoves, ...rearrangeMoves, ...substituteMoves];
+  const substituteMoves = generateSubstituteMoves(currentWord, protectedLetters);
+
+  let allCandidates = [
+    ...addMoves, 
+    ...removeMoves, 
+    ...rearrangeMoves, 
+    ...substituteMoves
+  ];
   const totalCandidatesGenerated = allCandidates.length;
   
   // Limit candidates for performance

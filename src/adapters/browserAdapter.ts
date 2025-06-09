@@ -172,12 +172,18 @@ const browserWordData = new BrowserWordData();
  * Browser dictionary dependencies implementation
  */
 const browserDictionaryDependencies: GameStateDictionaryDependencies = {
-  validateWord: (word: string, options?: any): ValidationResult => {
-    return validateWordWithDependencies(word, browserWordData, options);
+  validateWord: (word: string): ValidationResult => {
+    if (word.length < 3) {
+      return { isValid: false, reason: 'TOO_SHORT' };
+    }
+    if (browserWordData.hasWord(word)) {
+      return { isValid: true };
+    }
+    return { isValid: false, reason: 'NOT_IN_DICTIONARY' };
   },
 
   getRandomWordByLength: (length: number): string | null => {
-    return getRandomWordByLengthWithDependencies(length, browserWordData);
+    return browserWordData.getRandomWordByLength(length);
   }
 };
 
@@ -347,7 +353,7 @@ export function getBrowserGameDependencies(): GameStateDependencies {
  * Quick validation using browser dependencies
  */
 export function validateWordBrowser(word: string, options?: any): ValidationResult {
-  return browserDictionaryDependencies.validateWord(word, options);
+  return browserDictionaryDependencies.validateWord(word);
 }
 
 /**

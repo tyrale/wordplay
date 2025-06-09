@@ -68,8 +68,6 @@
   user-select: none;
 }
 
-
-
 .score-display--clickable:active {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -87,6 +85,45 @@
 .score-display--invalid .score-display__center {
   color: var(--theme-accent);
   opacity: 0.5;
+}
+
+.score-display--invalid .score-display__x {
+  opacity: 0.5;
+  color: var(--color-accent);
+}
+
+.score-display--pass-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0.5em 1em;
+  border-radius: 8px;
+  background-color: var(--color-background-muted);
+  color: var(--color-text);
+  transition: all 0.2s ease;
+}
+
+.score-display__reason {
+  color: var(--color-accent);
+  opacity: 0.5;
+}
+
+.score-display__pass-x {
+  color: var(--color-accent);
+  opacity: 0.5;
+  font-weight: 900;
+  font-size: 1.5em;
+  line-height: 1;
+}
+
+.score-display__pass-prompt {
+  color: var(--color-accent);
+  opacity: 1;
+  font-weight: normal;
 }
 
 /* Responsive Design */

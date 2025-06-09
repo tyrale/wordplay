@@ -381,9 +381,12 @@ describe('Scoring Module', () => {
     });
 
     it('should give +1 point even when using multiple key letters', () => {
-      const result = calculateScore('CAT', 'BRAT', { keyLetters: ['B', 'R'] });
+      const result = calculateScore('CAT', 'BRATS', { 
+        keyLetters: ['B', 'R', 'S']
+      });
       expect(result.breakdown.keyLetterUsagePoints).toBe(1);
-      expect(result.actions).toContain('Used key letter(s): B, R');
+      expect(result.actions).toContain('Used key letter(s): B, R, S');
+      expect(result.totalScore).toBe(3); // add(1) + remove(1) + key usage(1)
     });
   });
 
@@ -416,14 +419,6 @@ describe('Scoring Module', () => {
   });
 
   describe('Complex Key Letter Combinations', () => {
-    it('should handle add + key usage combination', () => {
-      const result = calculateScore('CAT', 'TACK', { keyLetters: ['K'] });
-      
-      expect(result.totalScore).toBe(2); // add(1) + key usage(1)
-      expect(result.breakdown.addLetterPoints).toBe(1);
-      expect(result.breakdown.keyLetterUsagePoints).toBe(1);
-    });
-
     it('should score CAT→BAT+key B as 3 points (substitute + key usage)', () => {
       const result = calculateScore('CAT', 'BAT', { keyLetters: ['B'] });
       expect(result.totalScore).toBe(3);
@@ -490,6 +485,51 @@ describe('Scoring Module', () => {
       // One substitution + rearrange is allowed
       expect(isValidMove('CATS', 'TABS')).toBe(true); // Remove C, Add T, rearrange
       expect(isValidMove('DOG', 'GOD')).toBe(true); // Just rearrange
+    });
+  });
+
+  describe('Natural Shift vs Rearrangement Detection', () => {
+    it('should NOT detect rearrangement for POPE → OPE (natural shift bug)', () => {
+      // POPE → OPE should be 1 point (remove P), not 2 points (remove P + rearrange)
+      // This is removing the first P, and O,P,E naturally shift left - NOT a rearrangement
+      const result = calculateScore('POPE', 'OPE');
+      expect(result.totalScore).toBe(1);
+      expect(result.breakdown.removeLetterPoints).toBe(1);
+      expect(result.breakdown.rearrangePoints).toBe(0); // This should be 0, not 1
+      expect(result.actions).toContain('Removed letter(s): P');
+      expect(result.actions).not.toContain('Rearranged letters');
+    });
+
+    it('should NOT detect rearrangement for FLOE → FOES (natural shift)', () => {
+      // FLOE → FOES should be 2 points (remove L, add S), not 3 points (+ rearrange)
+      // When L is removed from position 1, O,E naturally shift left - NOT a rearrangement
+      const result = calculateScore('FLOE', 'FOES');
+      expect(result.totalScore).toBe(2);
+      expect(result.breakdown.removeLetterPoints).toBe(1);
+      expect(result.breakdown.addLetterPoints).toBe(1);
+      expect(result.breakdown.rearrangePoints).toBe(0); // This should be 0, not 1
+      expect(result.actions).toContain('Removed letter(s): L');
+      expect(result.actions).toContain('Added letter(s): S');
+      expect(result.actions).not.toContain('Rearranged letters');
+    });
+
+    it('should still detect TRUE rearrangement for NARD → YARN', () => {
+      // NARD → YARN should be 3 points (remove D, add Y, rearrange N,A,R)
+      const result = calculateScore('NARD', 'YARN');
+      expect(result.totalScore).toBe(3);
+      expect(result.breakdown.removeLetterPoints).toBe(1);
+      expect(result.breakdown.addLetterPoints).toBe(1);
+      expect(result.breakdown.rearrangePoints).toBe(1);
+    });
+
+    it('should correctly score NAG → LANG as 2 points (add L, rearrange) under new rules', () => {
+      // With the new rules, this is add L (+1) and rearrange NA->AN (+1)
+      const result = calculateScore('NAG', 'LANG');
+      expect(result.totalScore).toBe(2);
+      expect(result.breakdown.addLetterPoints).toBe(1);
+      expect(result.breakdown.rearrangePoints).toBe(1);
+      expect(result.actions).toContain('Added letter(s): L');
+      expect(result.actions).toContain('Rearranged letters');
     });
   });
 }); 

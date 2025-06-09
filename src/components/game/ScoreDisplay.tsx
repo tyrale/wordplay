@@ -17,6 +17,8 @@ export interface ScoreDisplayProps {
   score: ScoreBreakdown;
   actions: ActionState;
   isValid: boolean;
+  isPassConfirming: boolean;
+  passReason: string | null;
   onClick?: () => void;
   className?: string;
   isPassMode?: boolean;
@@ -26,6 +28,8 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
   score, 
   actions,
   isValid,
+  isPassConfirming,
+  passReason,
   onClick,
   className = '',
   isPassMode = false
@@ -72,6 +76,16 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
   };
 
   const isClickable = onClick && ((isValid && !isEmpty) || isPassMode);
+
+  if (isPassConfirming) {
+    return (
+      <div className={`score-display score-display--pass-confirm ${className || ''}`} onClick={onClick}>
+        <span className="score-display__reason">{passReason}</span>
+        <span className="score-display__pass-x">×</span>
+        <span className="score-display__pass-prompt">tap again to pass</span>
+      </div>
+    );
+  }
 
   return (
     <div 
