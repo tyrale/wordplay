@@ -914,7 +914,9 @@ private generateRandomKeyLetter(): void {
 **Root Cause**: The application layout used `100vh`, which does not account for the dynamic size of the browser's visible viewport when UI elements like the address bar are present.
 
 **Solution Implemented**:
-- ✅ **Dynamic Viewport Height (`dvh`)** (Replaced all instances of `100vh` with `100dvh` in `index.css` for `body` and `#root` elements)
-- ✅ **Cross-Browser Compatibility** (`dvh` unit provides better layout stability on modern mobile browsers like Chrome and Safari)
+- ✅ **Dynamic Viewport Height System** (Created a JavaScript-based solution that updates a CSS custom property `--vh` to match the actual viewport height)
+- ✅ **Real-time Updates** (Handles resize, orientation change, scroll, and load events to ensure accurate height)
+- ✅ **Cross-Browser Compatibility** (Works across all modern mobile browsers by using CSS calc() with a fallback)
+- ✅ **Smooth Transitions** (Uses requestAnimationFrame for smooth updates during scroll/resize)
 
-**Verification**: Implementation is complete and follows modern CSS best practices. Requires visual confirmation on a mobile device to fully verify the fix.
+**Verification**: Implementation complete with comprehensive event handling for mobile browsers. Requires visual confirmation on mobile devices.

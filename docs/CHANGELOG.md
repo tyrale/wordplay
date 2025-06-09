@@ -112,8 +112,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UI Fix: Mobile Viewport Height**
   - **Issue**: Game board was partially obscured by the browser's UI on mobile devices.
   - **Root Cause**: The use of `100vh` for the main container's height did not account for the mobile browser's dynamic UI elements (like the address bar).
-  - **Solution**: Replaced `100vh` with `100dvh` in `index.css` for the `body` and `#root` elements. This ensures the layout dynamically adjusts to the visible viewport height.
-  - **Verification**: This is the standard, modern CSS solution for this common mobile layout problem. Visual confirmation on target devices is required to fully close the issue.
+  - **Solution**: Implemented a JavaScript-based solution that dynamically updates a CSS custom property `--vh` to match the actual viewport height. This ensures the layout adjusts correctly when the mobile browser's UI elements appear/disappear.
+  - **Technical Details**:
+    - Added `viewportHeight.ts` utility for managing viewport height updates
+    - Uses CSS calc() with custom property: `height: calc(var(--vh, 1vh) * 100)`
+    - Handles resize, orientation change, scroll, and load events
+    - Uses requestAnimationFrame for smooth updates
+  - **Verification**: Implementation complete with comprehensive event handling. Visual confirmation on mobile devices required.
 
 ### Added
 

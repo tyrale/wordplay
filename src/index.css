@@ -5,6 +5,7 @@
   --spacing-md: 20px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
+  --vh: 1vh; /* This will be updated by JavaScript */
 
   /* Theme variables (will be updated by ThemeProvider) */
   --theme-primary: #3b82f6;
@@ -54,8 +55,8 @@ body {
   display: flex;
   place-items: center;
   min-width: 320px;
-  min-height: 100dvh;
-  max-height: 100dvh;
+  min-height: calc(var(--vh, 1vh) * 100);
+  max-height: calc(var(--vh, 1vh) * 100);
   background-color: var(--theme-background);
   color: var(--theme-text);
   overflow: hidden; /* Prevent page scrolling */
@@ -104,8 +105,8 @@ button:focus-visible {
   padding: 2rem;
   text-align: center;
   width: 100%;
-  height: 100dvh;
-  max-height: 100dvh;
+  height: calc(var(--vh, 1vh) * 100);
+  max-height: calc(var(--vh, 1vh) * 100);
   overflow-y: auto; /* Allow scrolling within root container */
   overflow-x: hidden;
 }
