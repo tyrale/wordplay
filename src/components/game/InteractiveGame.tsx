@@ -134,11 +134,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       return { letter, state: 'normal' as const };
     });
     
-    // Debug log what letter states are calculated
-    const keyLetterStates = states.filter(s => s.state === 'key');
-    const lockedLetterStates = states.filter(s => s.state === 'locked');
-    console.log('[DEBUG] InteractiveGame letterStates: key letters:', keyLetterStates.map(s => s.letter), 'locked letters:', lockedLetterStates.map(s => s.letter), 'locked key letters (appear normal):', wordState.lockedKeyLetters);
-    
     return states;
   }, [wordState.keyLetters, wordState.lockedLetters, wordState.lockedKeyLetters]);
 
