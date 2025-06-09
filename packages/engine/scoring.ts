@@ -161,52 +161,24 @@ export function calculateScore(
   // Check if we also have rearrangement in addition to add/remove
   // This happens when letters change AND the remaining letters are rearranged
   if (!analysis.isRearranged && (analysis.addedLetters.length > 0 || analysis.removedLetters.length > 0)) {
-    // Check if remaining letters after add/remove operations are rearranged
-    const prevSorted = previousWord.toUpperCase().split('').sort().join('');
-    const currSorted = currentWord.toUpperCase().split('').sort().join('');
+    // For add/remove operations, we should NOT count natural position shifts as rearrangements
+    // Only count as rearrangement if letters are intentionally reordered beyond natural shifts
     
-    // If sorted versions are different, we have add/remove
-    // But we also need to check if position changes occurred beyond just add/remove
-    if (prevSorted !== currSorted) {
-      // We have add/remove operations, now check for additional rearrangement
-      // This is complex to detect perfectly, so for now we'll use a heuristic:
-      // If the words have different lengths but share some common letters in different positions
-      
-      const prev = previousWord.toUpperCase();
-      const curr = currentWord.toUpperCase();
-      
-      // Simple heuristic: if lengths are same and we have adds/removes, likely substitution + rearrange
-      // More complex: analyze position changes of non-added/removed letters
-      if (prev.length === curr.length && analysis.addedLetters.length > 0 && analysis.removedLetters.length > 0) {
-        // Same length with substitution - check if other letters moved
-        // For CATS->TABS: C->T substitution, but A,S positions also changed
-        const prevChars = prev.split('');
-        const currChars = curr.split('');
-        
-        // Find letters that stayed (weren't added or removed)
-        const stayedLetters = prevChars.filter(char => 
-          !analysis.removedLetters.includes(char) && currChars.includes(char)
-        );
-        
-        // Check if any stayed letters changed positions
-        let hasPositionChanges = false;
-        for (let i = 0; i < prevChars.length; i++) {
-          const prevChar = prevChars[i];
-          const currChar = currChars[i];
-          
-          // If this position had a letter that stayed but is now different, 
-          // and the original letter moved somewhere else, it's rearrangement
-          if (stayedLetters.includes(prevChar) && prevChar !== currChar && currChars.includes(prevChar)) {
-            hasPositionChanges = true;
-            break;
-          }
-        }
-        
-        if (hasPositionChanges) {
-          rearrangePoints = 1;
-        }
-      }
-    }
+    // SIMPLIFIED LOGIC: If we have adds/removes, don't look for additional rearrangement
+    // The complex heuristic was incorrectly flagging natural shifts as rearrangements
+    // 
+    // Examples that should NOT get rearrangement points:
+    // - FLOE → FOES (remove L, add S - O,E naturally shift, not rearranged)
+    // - CAT → CART (add R - A,T naturally shift, not rearranged) 
+    //
+    // True rearrangement only happens when:
+    // 1. Same letter set, different order (already handled by analysis.isRearranged)
+    // 2. Complex cases where adds/removes AND letters are intentionally reordered
+    //    (these are rare and hard to detect reliably, so we'll be conservative)
+    
+    // For now, don't award rearrangement points for add/remove combinations
+    // This prevents the FLOE → FOES scoring bug
+    rearrangePoints = 0;
   }
   
   // Key letter usage: +1 if any key letter is used
