@@ -564,28 +564,24 @@ public async makeBotMove(): Promise<BotMove | null> {
 - ✅ **Modified letterStates Calculation**: Removed special styling for locked key letters in alphabet grid
 - ✅ **Single Accent Color**: Only current key letters (keyLetters array) receive accent color styling
 - ✅ **Normal Appearance**: Locked key letters now appear as normal letters in alphabet grid
+- ✅ **Lock Icon Preserved**: Locked letters (including locked key letters) show lock icon with normal text color
+- ✅ **Updated CSS**: Locked letters use normal text color instead of muted color, maintaining lock icon overlay
 - ✅ **Preserved Functionality**: Key letter locking feature still works for game logic, just without visual highlighting
 - ✅ **Cleaned Up Debug Logs**: Removed verbose console output for better user experience
 
 **Technical Implementation**:
 ```typescript
-// OLD (showed both current and locked key letters with special styling)
-if (wordState.lockedKeyLetters.includes(letter)) {
-  return { letter, state: 'lockedKey' as const };
-}
+// FINAL APPROACH (current key letters get accent color, locked letters get lock icon)
 if (wordState.keyLetters.includes(letter)) {
-  return { letter, state: 'key' as const };
+  return { letter, state: 'key' as const }; // Accent color
 }
-
-// NEW (only current key letters get accent color)
-if (wordState.keyLetters.includes(letter)) {
-  return { letter, state: 'key' as const };
+if (wordState.lockedLetters.includes(letter) || wordState.lockedKeyLetters.includes(letter)) {
+  return { letter, state: 'locked' as const }; // Normal color + lock icon
 }
-// Locked key letters appear normal
-return { letter, state: 'normal' as const };
+return { letter, state: 'normal' as const }; // Normal color
 ```
 
-**Visual Result**: Clean alphabet grid with exactly one accent-colored key letter, locked key letters appear normal but still function in game logic
+**Visual Result**: Clean alphabet grid with exactly one accent-colored key letter, locked key letters appear normal but show lock icon
 
 **Build Status**: All tests passing, UI cleaner and less confusing, key letter system working as intended
 
