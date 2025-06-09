@@ -595,9 +595,11 @@ return { letter, state: 'normal' as const }; // Normal color
 
 ## 🔧 **SCORING ALGORITHM BUG FIXED**: Natural Position Shifts No Longer Count as Rearrangements
 
-**Issue Identified**: Scoring algorithm incorrectly awarded rearrangement points for natural position shifts caused by letter removal/addition
+**Issue Identified**: Scoring algorithm incorrectly awarded rearrangement points for natural position shifts caused by letter removal/addition, and failed to detect legitimate rearrangements in add/remove combinations
 
-**Example Bug**: FLOE → FOES scored 4 points (remove L +1, add S +1, rearrange +1, key letter F +1) instead of correct 3 points
+**Example Bugs**: 
+- FLOE → FOES scored 4 points (remove L +1, add S +1, rearrange +1, key letter F +1) instead of correct 3 points
+- NARD → YARN scored 2 points (remove D +1, add Y +1) instead of correct 3 points (missing rearrangement +1)
 
 **Root Cause**: Complex heuristic in scoring algorithm flagged natural shifts as intentional rearrangements
 - When L was removed from position 1, O and E naturally shifted left
@@ -608,26 +610,34 @@ return { letter, state: 'normal' as const }; // Normal color
 - ✅ **Simplified Rearrangement Detection**: Removed complex heuristic that caused false positives
 - ✅ **Conservative Approach**: Only true letter reordering (same letter set, different order) counts as rearrangement
 - ✅ **Fixed Natural Shifts**: Add/remove operations no longer trigger false rearrangement detection
+- ✅ **REFINED DETECTION**: Improved algorithm to catch legitimate rearrangements like NARD → YARN while avoiding false positives like FLOE → FOES
+- ✅ **Subsequence Analysis**: Uses stayed letter subsequence comparison to detect true rearrangements
 - ✅ **Preserved Core Scoring**: Add (+1), Remove (+1), True Rearrange (+1), Key Letter (+1) still work correctly
 
 **Technical Fix**:
 ```typescript
-// OLD (buggy): Complex heuristic that flagged natural shifts
-if (hasPositionChanges) {
-  rearrangePoints = 1; // BUG: natural shifts counted as rearrangement
-}
-
-// NEW (fixed): Conservative approach
+// REFINED (final): Subsequence analysis of stayed letters
 if (!analysis.isRearranged && (adds/removes)) {
-  rearrangePoints = 0; // Don't count natural shifts as rearrangement
+  // Find letters that appear in both words (survived add/remove)
+  const stayedLetters = findLettersThatStayed(prev, curr);
+  
+  // Extract subsequence of stayed letters from each word
+  const prevStayedSeq = extractStayedSequence(prev, stayedLetters);
+  const currStayedSeq = extractStayedSequence(curr, stayedLetters);
+  
+  // If stayed letters appear in different order → true rearrangement
+  if (prevStayedSeq !== currStayedSeq) {
+    rearrangePoints = 1;
+  }
 }
 ```
 
 **Examples Fixed**:
-- ✅ FLOE → FOES: Remove L, Add S = 2 base points (not 3)
-- ✅ CAT → CART: Add R = 1 point (not 2)
-- ✅ CATS → BATS: Remove C, Add B = 2 points (correct)
-- ✅ FLOE → OELF: True rearrangement = 1 point (still works)
+- ✅ FLOE → FOES: Remove L, Add S = 2 base points (not 3) - stayed letters F,O,E maintain order
+- ✅ NARD → YARN: Remove D, Add Y, Move N = 3 points - stayed letters N,A,R change order (NAR → ARN)
+- ✅ CAT → CART: Add R = 1 point (not 2) - stayed letters C,A,T maintain order
+- ✅ CATS → BATS: Remove C, Add B = 2 points (correct) - stayed letters A,T,S maintain order
+- ✅ FLOE → OELF: True rearrangement = 1 point (still works) - same letters, different order
 
 **Build Status**: Scoring algorithm accurate, false rearrangement detection eliminated, core game balance preserved
 
