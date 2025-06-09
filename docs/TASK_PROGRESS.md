@@ -530,7 +530,7 @@ This document tracks the progress of tasks from the development plan. Each task 
 - ✅ **State Management**: Bot move flag properly reset in `resetGame()` for clean state
 - ✅ **Debug Optimization**: Cleaned up console logs that appeared during component mounting
 - ✅ **StrictMode Compatibility**: Solution works with React StrictMode enabled (preserving development debugging benefits)
-- ✅ **ADDITIONAL FIX**: Removed initial key letter generation from `startGame()` function - key letters should only be generated after moves are made, not at game start
+- ✅ **GAME DESIGN FIX**: Restored initial key letter generation in `startGame()` so first player has key letter available for bonus points
 
 **Verification Strategy**: Comprehensive debug logging revealed exact execution sequence and confirmed the fix prevents multiple key letter generation
 
@@ -548,6 +548,14 @@ public async makeBotMove(): Promise<BotMove | null> {
     // Bot move logic
   } finally {
     this.botMoveInProgress = false;
+  }
+}
+
+// Initial key letter for first turn game design
+public startGame(): void {
+  // ... game setup ...
+  if (this.state.config.enableKeyLetters) {
+    this.generateRandomKeyLetter(); // First player gets key letter opportunity
   }
 }
 ```
