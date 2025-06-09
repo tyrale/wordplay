@@ -215,6 +215,7 @@ export class LocalGameStateManagerWithDependencies {
   private state: GameState;
   private listeners: GameStateListener[] = [];
   private dependencies: GameStateDependencies;
+  private botMoveInProgress: boolean = false; // NEW: Prevent concurrent bot moves
 
   constructor(dependencies: GameStateDependencies, config: GameConfig = {}) {
     this.dependencies = dependencies;
@@ -550,17 +551,30 @@ export class LocalGameStateManagerWithDependencies {
    * Make a bot move (if current player is bot)
    */
   public async makeBotMove(): Promise<BotMove | null> {
+    console.log('[DEBUG] makeBotMove: Called. botMoveInProgress:', this.botMoveInProgress);
+    
+    // Prevent concurrent bot moves
+    if (this.botMoveInProgress) {
+      console.log('[DEBUG] makeBotMove: Bot move already in progress, returning null');
+      return null;
+    }
+    
     const currentPlayer = this.getCurrentPlayer();
     
     if (!currentPlayer || !currentPlayer.isBot) {
+      console.log('[DEBUG] makeBotMove: Current player is not a bot, returning null');
       return null;
     }
 
     if (this.state.gameStatus !== 'playing') {
+      console.log('[DEBUG] makeBotMove: Game not in playing status, returning null');
       return null;
     }
 
     try {
+      console.log('[DEBUG] makeBotMove: Setting botMoveInProgress to true');
+      this.botMoveInProgress = true;
+      
       // Generate bot move
       const botResult: BotResult = await this.dependencies.generateBotMove(this.state.currentWord, {
         keyLetters: this.state.keyLetters,
@@ -614,6 +628,9 @@ export class LocalGameStateManagerWithDependencies {
         confidence: 0,
         reasoning: ['PASS - Error in move generation']
       };
+    } finally {
+      console.log('[DEBUG] makeBotMove: Setting botMoveInProgress to false');
+      this.botMoveInProgress = false;
     }
   }
 
@@ -763,15 +780,12 @@ export class LocalGameStateManagerWithDependencies {
    * Reset game to initial state
    */
   public resetGame(): void {
-    // Create a new config without initialWord to force random generation
-    const resetConfig = { ...this.state.config };
-    delete resetConfig.initialWord; // Force new random word generation
+    console.log('[DEBUG] resetGame: Called');
+    this.state = this.initializeGameState(this.state.config);
+    this.botMoveInProgress = false; // Reset bot move flag
     
-    const newState = this.initializeGameState(resetConfig);
-    this.state = newState;
-
     this.notifyListeners({
-      type: 'game_finished',
+      type: 'game_finished', // Use existing event type for simplicity
       data: { type: 'reset' },
       timestamp: Date.now()
     });
