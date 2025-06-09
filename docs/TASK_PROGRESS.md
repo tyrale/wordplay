@@ -593,6 +593,44 @@ return { letter, state: 'normal' as const }; // Normal color
 
 **Build Status**: All tests passing, UI cleaner and less confusing, key letter system working as intended
 
+## 🔧 **SCORING ALGORITHM BUG FIXED**: Natural Position Shifts No Longer Count as Rearrangements
+
+**Issue Identified**: Scoring algorithm incorrectly awarded rearrangement points for natural position shifts caused by letter removal/addition
+
+**Example Bug**: FLOE → FOES scored 4 points (remove L +1, add S +1, rearrange +1, key letter F +1) instead of correct 3 points
+
+**Root Cause**: Complex heuristic in scoring algorithm flagged natural shifts as intentional rearrangements
+- When L was removed from position 1, O and E naturally shifted left
+- Algorithm incorrectly detected this as "rearrangement" 
+- True rearrangement should only be same letters in different order (like FLOE → OELF)
+
+**Solution Implemented**:
+- ✅ **Simplified Rearrangement Detection**: Removed complex heuristic that caused false positives
+- ✅ **Conservative Approach**: Only true letter reordering (same letter set, different order) counts as rearrangement
+- ✅ **Fixed Natural Shifts**: Add/remove operations no longer trigger false rearrangement detection
+- ✅ **Preserved Core Scoring**: Add (+1), Remove (+1), True Rearrange (+1), Key Letter (+1) still work correctly
+
+**Technical Fix**:
+```typescript
+// OLD (buggy): Complex heuristic that flagged natural shifts
+if (hasPositionChanges) {
+  rearrangePoints = 1; // BUG: natural shifts counted as rearrangement
+}
+
+// NEW (fixed): Conservative approach
+if (!analysis.isRearranged && (adds/removes)) {
+  rearrangePoints = 0; // Don't count natural shifts as rearrangement
+}
+```
+
+**Examples Fixed**:
+- ✅ FLOE → FOES: Remove L, Add S = 2 base points (not 3)
+- ✅ CAT → CART: Add R = 1 point (not 2)
+- ✅ CATS → BATS: Remove C, Add B = 2 points (correct)
+- ✅ FLOE → OELF: True rearrangement = 1 point (still works)
+
+**Build Status**: Scoring algorithm accurate, false rearrangement detection eliminated, core game balance preserved
+
 ## Phase 3 – Online Multiplayer (Web)
 
 - [ ] 3.1 **Auth Flow (Supabase EmailLink)**
