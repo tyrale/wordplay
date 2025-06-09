@@ -906,3 +906,15 @@ private generateRandomKeyLetter(): void {
 - ✅ **Game State Integration**: All adapters work with dependency-injected game state manager
 
 **Completion Status**: **Step 4 COMPLETE** - All major platform adapters implemented and verified working
+
+## 🐛 **UI FIX APPLIED**: Mobile Viewport Height Adjustment
+
+**Issue Identified**: On mobile devices, the browser's URL bar was obscuring the bottom of the game board.
+
+**Root Cause**: The application layout used `100vh`, which does not account for the dynamic size of the browser's visible viewport when UI elements like the address bar are present.
+
+**Solution Implemented**:
+- ✅ **Dynamic Viewport Height (`dvh`)** (Replaced all instances of `100vh` with `100dvh` in `index.css` for `body` and `#root` elements)
+- ✅ **Cross-Browser Compatibility** (`dvh` unit provides better layout stability on modern mobile browsers like Chrome and Safari)
+
+**Verification**: Implementation is complete and follows modern CSS best practices. Requires visual confirmation on a mobile device to fully verify the fix.

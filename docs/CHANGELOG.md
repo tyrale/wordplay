@@ -109,6 +109,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Files Updated**: InteractiveGame.tsx, ScoreDisplay.tsx, WordBuilder.tsx, AlphabetGrid.tsx, GridCell.tsx, CSS files
   - **Build Verification**: Successful production build with no TypeScript errors
 
+- **UI Fix: Mobile Viewport Height**
+  - **Issue**: Game board was partially obscured by the browser's UI on mobile devices.
+  - **Root Cause**: The use of `100vh` for the main container's height did not account for the mobile browser's dynamic UI elements (like the address bar).
+  - **Solution**: Replaced `100vh` with `100dvh` in `index.css` for the `body` and `#root` elements. This ensures the layout dynamically adjusts to the visible viewport height.
+  - **Verification**: This is the standard, modern CSS solution for this common mobile layout problem. Visual confirmation on target devices is required to fully close the issue.
+
 ### Added
 
 - **Task 0.1**: Initial web project setup with React 19, TypeScript, and Vite ✅ **VERIFIED**
