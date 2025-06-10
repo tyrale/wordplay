@@ -7,6 +7,7 @@ import { ScoreDisplay } from './ScoreDisplay';
 import { WordBuilder } from './WordBuilder';
 import { DebugDialog } from './DebugDialog';
 
+
 // Temporary placeholder types until dependency injection implemented - TODO: Replace in Step 3
 interface GameConfig {
   maxTurns?: number;
@@ -79,6 +80,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   const [isPassMode, setIsPassMode] = useState(false);
+
   // Dictionary is automatically initialized with the real engine
 
   // Initialize pending word with current word
@@ -389,6 +391,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     // Show settings modal or navigate to settings
   }, []);
 
+
+
   return (
     <div className="interactive-game">
       {/* Debug button in top left */}
@@ -400,6 +404,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       >
         🐛
       </button>
+
+
 
       {/* Error display */}
       {lastError && (
@@ -526,6 +532,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         onWordChange={handleWordChange}
         isProcessingMove={isProcessingMove}
       />
+
+
     </div>
   );
 }; 

@@ -37,6 +37,8 @@
   transform: scale(1.1);
 }
 
+
+
 /* Error display */
 .interactive-game__error {
   display: flex;
@@ -448,4 +450,7 @@
   .interactive-game__controls {
     gap: var(--spacing-sm);
   }
-} 
+}
+
+/* Statistics Modal */
+ 

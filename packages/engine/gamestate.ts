@@ -924,8 +924,9 @@ export class LocalGameStateManagerWithDependencies {
   /**
    * Log key letter statistics to persistent file for cross-game analysis
    */
-  private logKeyLetterStats(letter: string): void {
-    KeyLetterLogger.logKeyLetter(letter, this.state.gameStartTime, this.state.currentTurn);
+  private async logKeyLetterStats(letter: string): Promise<void> {
+    const gameId = `game_${this.state.gameStartTime}`;
+    await KeyLetterLogger.logKeyLetter(letter, gameId, this.state.currentTurn);
   }
 
   /**
@@ -960,7 +961,9 @@ export class LocalGameStateManagerWithDependencies {
       // Note: We'll track this letter as used when the next move is made
       
               // Log key letter statistics across all games
-        this.logKeyLetterStats(newKeyLetter);
+        this.logKeyLetterStats(newKeyLetter).catch(error => {
+          console.warn('Failed to log key letter statistics:', error);
+        });
       
       this.notifyListeners({
         type: 'letters_updated',
