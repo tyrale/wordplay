@@ -12,7 +12,7 @@ export interface KeyLetterLogEntry {
 }
 
 export class KeyLetterLogger {
-  private static logFilePath = 'key-letter-stats.log';
+  private static logFilePath = 'key-letter-counts.txt';
 
   /**
    * Log a key letter generation event (universal - all platforms write to same file)
@@ -22,21 +22,15 @@ export class KeyLetterLogger {
     gameId: string,
     turnNumber: number
   ): Promise<void> {
-    const entry: KeyLetterLogEntry = {
-      timestamp: new Date().toISOString(),
-      letter: letter.toUpperCase(),
-      gameId,
-      turnNumber,
-      platform: this.detectPlatform()
-    };
+    const upperLetter = letter.toUpperCase();
 
-    // Try to write to central log file
+    // Try to update the count file
     if (this.isNodeEnvironment()) {
-      // Node.js environment - write directly to file
-      await this.writeToFile(entry);
+      // Node.js environment - update file directly
+      await this.updateCountFile(upperLetter);
     } else {
       // Browser environment - send to logging endpoint
-      await this.sendToEndpoint(entry);
+      await this.sendToEndpoint(upperLetter);
     }
   }
 
@@ -44,6 +38,119 @@ export class KeyLetterLogger {
     return typeof window === 'undefined' && typeof process !== 'undefined';
   }
 
+  private static async updateCountFile(letter: string): Promise<void> {
+    try {
+      // Dynamic import for Node.js file system operations
+      const fs = await import('fs');
+      
+      // Read current counts
+      const counts = await this.readCounts();
+      
+      // Increment the count for this letter
+      counts[letter] = (counts[letter] || 0) + 1;
+      
+      // Write back to file
+      await this.writeCounts(counts);
+    } catch (error) {
+      console.warn('Failed to update key letter count:', error);
+    }
+  }
+
+  private static async sendToEndpoint(letter: string): Promise<void> {
+    try {
+      // Try to send to local logging endpoint
+      const response = await fetch('http://localhost:3001/log-key-letter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ letter }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+    } catch (error) {
+      // If endpoint fails, fall back to console logging
+      console.log('Key Letter Count:', letter);
+      console.warn('Failed to send to logging endpoint, logged to console instead:', error);
+    }
+  }
+
+  private static async readCounts(): Promise<{ [key: string]: number }> {
+    try {
+      const fs = await import('fs');
+      
+      if (!fs.existsSync(this.logFilePath)) {
+        return {};
+      }
+      
+      const content = fs.readFileSync(this.logFilePath, 'utf-8');
+      const counts: { [key: string]: number } = {};
+      
+      // Parse the simple format: "A: 5"
+      const lines = content.split('\n').filter(line => line.trim());
+      for (const line of lines) {
+        const match = line.match(/^([A-Z]):\s*(\d+)$/);
+        if (match) {
+          counts[match[1]] = parseInt(match[2], 10);
+        }
+      }
+      
+      return counts;
+    } catch (error) {
+      console.warn('Failed to read counts file:', error);
+      return {};
+    }
+  }
+
+  private static async writeCounts(counts: { [key: string]: number }): Promise<void> {
+    try {
+      const fs = await import('fs');
+      
+      // Sort letters alphabetically
+      const sortedLetters = Object.keys(counts).sort();
+      
+      // Create content in simple format
+      const lines = sortedLetters.map(letter => `${letter}: ${counts[letter]}`);
+      const content = lines.join('\n') + '\n';
+      
+      // Write to file
+      fs.writeFileSync(this.logFilePath, content);
+    } catch (error) {
+      console.warn('Failed to write counts file:', error);
+    }
+  }
+
+  /**
+   * Get current letter counts
+   */
+  static async getCounts(): Promise<{ [key: string]: number }> {
+    if (this.isNodeEnvironment()) {
+      return await this.readCounts();
+    } else {
+      // Browser can't read files directly
+      return {};
+    }
+  }
+
+  /**
+   * Clear all counts
+   */
+  static async clearCounts(): Promise<void> {
+    if (this.isNodeEnvironment()) {
+      try {
+        const fs = await import('fs');
+        if (fs.existsSync(this.logFilePath)) {
+          fs.unlinkSync(this.logFilePath);
+        }
+      } catch (error) {
+        console.warn('Failed to clear counts file:', error);
+      }
+    }
+  }
+
+  // Legacy methods for compatibility
   private static detectPlatform(): string {
     if (this.isNodeEnvironment()) {
       return 'nodejs';
@@ -61,97 +168,52 @@ export class KeyLetterLogger {
     return 'unknown';
   }
 
-  private static async writeToFile(entry: KeyLetterLogEntry): Promise<void> {
-    try {
-      // Dynamic import for Node.js file system operations
-      const fs = await import('fs');
-      const csvLine = `${entry.timestamp},${entry.letter},${entry.gameId},${entry.turnNumber},${entry.platform}\n`;
-      
-      // Append to log file
-      fs.writeFileSync(this.logFilePath, csvLine, { flag: 'a' });
-    } catch (error) {
-      console.warn('Failed to write key letter log:', error);
-    }
-  }
-
-  private static async sendToEndpoint(entry: KeyLetterLogEntry): Promise<void> {
-    try {
-      // Try to send to local logging endpoint
-      const response = await fetch('http://localhost:3001/log-key-letter', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(entry),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-    } catch (error) {
-      // If endpoint fails, fall back to console logging
-      console.log('Key Letter Log:', entry);
-      console.warn('Failed to send to logging endpoint, logged to console instead:', error);
-    }
-  }
-
   /**
-   * Get the central log file path (Node.js only)
+   * Get log file path (Node.js only)
    */
-  static async getLogPath(): Promise<string | null> {
+  static async getLogFilePath(): Promise<string | null> {
     try {
       if (typeof window === 'undefined' && typeof process !== 'undefined') {
         const { join } = await import('path');
         return join(process.cwd(), this.logFilePath);
       }
       return null;
-    } catch {
+    } catch (error) {
       return null;
     }
   }
 
   /**
-   * Get combined statistics from file + browser buffer
+   * Get comprehensive statistics (simplified for new format)
    */
-  static async getCombinedStats(): Promise<any> {
+  static async getStats(): Promise<{
+    totalEntries: number;
+    letterFrequency: { [key: string]: number };
+    platformBreakdown: { [key: string]: number };
+    fileEntries: number;
+    needsSync: boolean;
+  }> {
     const stats = {
-      fileEntries: 0,
-      browserEntries: 0,
       totalEntries: 0,
       letterFrequency: {} as { [key: string]: number },
-      platformBreakdown: {} as { [key: string]: number },
+      platformBreakdown: { 'all_platforms': 0 } as { [key: string]: number },
+      fileEntries: 0,
       needsSync: false
     };
 
     // Try to read file data (Node.js only)
     if (this.isNodeEnvironment()) {
       try {
-        const fs = await import('fs');
-        const path = await import('path');
-        const logPath = path.join(process.cwd(), this.logFilePath);
-        
-        if (fs.existsSync(logPath)) {
-          const content = fs.readFileSync(logPath, 'utf8');
-          const lines = content.split('\n').filter(line => line.trim() && !line.startsWith('#') && line.includes(','));
-          
-          stats.fileEntries = lines.length;
-          
-          lines.forEach(line => {
-            const [timestamp, letter, gameId, turnNumber, platform] = line.split(',');
-            if (letter && letter.trim()) {
-              const cleanLetter = letter.trim();
-              const cleanPlatform = platform?.trim() || 'unknown';
-              stats.letterFrequency[cleanLetter] = (stats.letterFrequency[cleanLetter] || 0) + 1;
-              stats.platformBreakdown[cleanPlatform] = (stats.platformBreakdown[cleanPlatform] || 0) + 1;
-            }
-          });
-        }
+        const counts = await this.readCounts();
+        stats.letterFrequency = counts;
+        stats.totalEntries = Object.values(counts).reduce((sum, count) => sum + count, 0);
+        stats.fileEntries = stats.totalEntries;
+        stats.platformBreakdown['all_platforms'] = stats.totalEntries;
       } catch (error) {
-        // File reading failed
+        console.warn('Failed to read stats:', error);
       }
     }
 
-    stats.totalEntries = stats.fileEntries;
     return stats;
   }
 } 
