@@ -18,7 +18,6 @@ export interface ValidationOptions {
   allowProfanity?: boolean;
   checkLength?: boolean;
   previousWord?: string;
-  minLength?: number;
 }
 
 export interface ValidationResult {
@@ -33,8 +32,6 @@ export interface WordDataDependencies {
   enableWords: Set<string>;
   slangWords: Set<string>;
   profanityWords: Set<string>;
-  hasWord: (word: string) => boolean;
-  isProfane: (word: string) => boolean;
 }
 
 // Word sets for different validation scenarios
@@ -161,34 +158,100 @@ const dictionary = new WordDictionary();
 // =============================================================================
 
 /**
- * Main validation function that checks all word rules.
- * This is the primary export for word validation.
+ * Validates a word using dependency-injected word data
+ * This is the new platform-agnostic approach
  */
 export function validateWordWithDependencies(
   word: string, 
-  dependencies: WordDataDependencies,
+  wordData: WordDataDependencies,
   options: ValidationOptions = {}
 ): ValidationResult {
-  const { minLength = 3, allowProfanity = false } = options;
-  const upperWord = word.toUpperCase();
+  const {
+    isBot = false,
+    allowSlang = true,
+    checkLength = true,
+    previousWord
+  } = options;
 
-  // Rule 1: Minimum length
-  if (upperWord.length < minLength) {
-    return { isValid: false, reason: 'TOO_SHORT', word: upperWord };
+  // Handle null/undefined gracefully
+  if (word == null) {
+    return {
+      isValid: false,
+      reason: 'Word cannot be empty',
+      word: ''
+    };
   }
 
-  // Rule 2: Must be in a valid dictionary (enable or slang)
-  if (!dependencies.hasWord(upperWord)) {
-    return { isValid: false, reason: 'NOT_IN_DICTIONARY', word: upperWord };
+  const normalizedWord = word.trim().toUpperCase();
+
+  // Bots can bypass all validation rules - early return
+  if (isBot) {
+    return {
+      isValid: true,
+      word: normalizedWord
+    };
   }
 
-  // Rule 3: Check for profanity if not allowed
-  if (!allowProfanity && dependencies.isProfane(upperWord)) {
-    // This case might need a different reason if we want to distinguish it
-    return { isValid: false, reason: 'NOT_IN_DICTIONARY', word: upperWord }; 
+  // Early validation: empty or invalid characters
+  if (!normalizedWord) {
+    return {
+      isValid: false,
+      reason: 'Word cannot be empty',
+      word: normalizedWord
+    };
   }
 
-  return { isValid: true, word: upperWord };
+  // Character validation (alphabetic only for humans)
+  if (!/^[A-Z]+$/.test(normalizedWord)) {
+    return {
+      isValid: false,
+      reason: 'Word must contain only alphabetic characters',
+      word: normalizedWord
+    };
+  }
+
+  // Length validation (minimum 3 letters)
+  if (checkLength && normalizedWord.length < 3) {
+    return {
+      isValid: false,
+      reason: 'Word must be at least 3 letters long',
+      word: normalizedWord
+    };
+  }
+
+  // Length change validation (max ±1 letter change)
+  if (previousWord && checkLength) {
+    const lengthDiff = Math.abs(normalizedWord.length - previousWord.length);
+    if (lengthDiff > 1) {
+      return {
+        isValid: false,
+        reason: `Word length can only change by 1 letter (was ${previousWord.length}, now ${normalizedWord.length})`,
+        word: normalizedWord
+      };
+    }
+  }
+
+  // Dictionary validation
+  const isInEnable = wordData.enableWords.has(normalizedWord);
+  const isSlang = wordData.slangWords.has(normalizedWord);
+  const isProfanity = wordData.profanityWords.has(normalizedWord);
+
+  // Word must be in dictionary or accepted slang
+  if (!isInEnable && !(allowSlang && isSlang)) {
+    return {
+      isValid: false,
+      reason: 'Word not found in dictionary',
+      word: normalizedWord
+    };
+  }
+
+  // Profanity is valid for play but may be displayed differently
+  // Use inline symbol transformation to avoid dependency on helper function
+  return {
+    isValid: true,
+    word: normalizedWord,
+    censored: isProfanity ? normalizedWord.split('').map((_, i) => ['!', '@', '#', '$', '%', '^', '&', '*'][i % 8]).join('') : undefined
+  };
 }
 
 /**
