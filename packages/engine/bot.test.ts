@@ -388,6 +388,52 @@ describe('Bot AI Module', () => {
       }
     });
 
+    it('should respect locked letters and not remove them', async () => {
+      // Test with a word that has a locked letter
+      const currentWord = 'CATS';
+      const lockedLetters = ['S']; // S is locked and cannot be removed
+      
+      const result = await generateBotMoveWithDependencies(currentWord, botDependencies, { 
+        lockedLetters,
+        maxCandidates: 100 
+      });
+      
+      // Bot should not generate any moves that remove the locked letter S
+      if (result.move) {
+        // If bot made a move, it should still contain the locked letter S
+        expect(result.move.word.includes('S')).toBe(true);
+      }
+      
+      // Check that all candidates respect the locked letter constraint
+      result.candidates.forEach(candidate => {
+        // Any valid candidate should still contain the locked letter S
+        expect(candidate.word.includes('S')).toBe(true);
+      });
+    });
+
+    it('should respect multiple locked letters', async () => {
+      // Test with multiple locked letters
+      const currentWord = 'CARTS';
+      const lockedLetters = ['C', 'S']; // Both C and S are locked
+      
+      const result = await generateBotMoveWithDependencies(currentWord, botDependencies, { 
+        lockedLetters,
+        maxCandidates: 100 
+      });
+      
+      // Bot should not generate any moves that remove locked letters C or S
+      if (result.move) {
+        expect(result.move.word.includes('C')).toBe(true);
+        expect(result.move.word.includes('S')).toBe(true);
+      }
+      
+      // Check that all candidates respect both locked letters
+      result.candidates.forEach(candidate => {
+        expect(candidate.word.includes('C')).toBe(true);
+        expect(candidate.word.includes('S')).toBe(true);
+      });
+    });
+
     it('should handle complex word transformations fairly', async () => {
       const complexWords = ['HELLO', 'WORLD', 'TESTING'];
       

@@ -602,9 +602,18 @@ export class LocalGameStateManagerWithDependencies {
       console.log('[DEBUG] makeBotMove: Setting botMoveInProgress to true');
       this.botMoveInProgress = true;
       
+      // Combine all locked letters for bot constraints
+      const allLockedLetters = [...this.state.lockedLetters, ...this.state.lockedKeyLetters];
+      console.log('[DEBUG] makeBotMove: Current word:', this.state.currentWord);
+      console.log('[DEBUG] makeBotMove: Key letters:', this.state.keyLetters);
+      console.log('[DEBUG] makeBotMove: Locked letters:', this.state.lockedLetters);
+      console.log('[DEBUG] makeBotMove: Locked key letters:', this.state.lockedKeyLetters);
+      console.log('[DEBUG] makeBotMove: All locked letters passed to bot:', allLockedLetters);
+      
       // Generate bot move
       const botResult: BotResult = await this.dependencies.generateBotMove(this.state.currentWord, {
         keyLetters: this.state.keyLetters,
+        lockedLetters: allLockedLetters,
         maxCandidates: 500 // Reasonable limit for responsive gameplay
       });
 
