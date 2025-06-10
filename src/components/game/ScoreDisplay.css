@@ -126,6 +126,27 @@
   font-weight: normal;
 }
 
+/* NEW: Error state when showing validation messages */
+.score-display--error .score-display__right {
+  font-size: 32px; /* Smaller font for error messages */
+  color: var(--theme-accent);
+  opacity: 0.8;
+  text-align: center;
+  justify-self: center;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score-display--error .score-display__left {
+  opacity: 0.3; /* Dim the action icons when showing error */
+}
+
+.score-display--error .score-display__center {
+  opacity: 0.8;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .score-display__left,

@@ -214,7 +214,7 @@ This document tracks the progress of tasks from the development plan. Each task 
 - ✅ **Enhanced ValidationResult Interface** (`packages/engine/interfaces.ts`) - Added `userMessage` field for user-friendly descriptions
 - ✅ **Updated Dictionary Validation** (`packages/engine/dictionary.ts`) - Returns structured errors with user messages  
 - ✅ **Enhanced Game State Manager** (`packages/engine/gamestate.ts`) - Added move rule validation with specific error messages
-- ✅ **Updated Terminal Display** (`packages/engine/terminal-game.ts`) - Uses `userMessage` field instead of generic reason codes
+- ✅ **Updated Terminal Display** (`packages/engine/terminal-game.ts`) - Uses `userMessage` field instead of generic reason codes with improved UX for hidden words
 - ✅ **Cross-Platform Compatibility** - Works agnostically across terminal and web applications
 - ✅ **Comprehensive Test Coverage** - 17/17 enhanced validation tests passing
 
@@ -225,6 +225,12 @@ This document tracks the progress of tasks from the development plan. Each task 
 - Character: `"only letters allowed"` (CAT123), `"word cannot be empty"` ("")
 - Length: `"word too short"` (A, IT - under 3 letters)
 - System: `"game not active"` (Moving when game not started)
+
+**Terminal UX Improvements**:
+- ✅ **Hidden Words Indicator** - Shows "(+N more)" when words are hidden from recent display
+- ✅ **Helpful Hints** - Prompts users to use 'state' command to see all used words
+- ✅ **Enhanced Error Messages** - Explains when "was played" words were used earlier but aren't visible
+- ✅ **Fixed UX Bug** - Resolved confusion where words showed "was played" but weren't in visible recent words list
 
 **Verification Status**: ✅ **ALL 17 ENHANCED VALIDATION TESTS PASSING** + All core engine tests (160/160) still passing, confirming no regressions introduced.
 

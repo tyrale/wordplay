@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Terminal Game UX Improvements** ✅ **VERIFIED**
+  - **Purpose**: Fixed confusing "was played" errors where words appeared invalid but weren't visible in recent words display
+  - **Requirements Delivered**:
+    - Hidden words indicator showing "(+N more)" when words aren't visible in recent display
+    - Helpful hints prompting users to use 'state' command to see all used words
+    - Enhanced error messaging explaining when "was played" words were used earlier
+    - Clear distinction between recent words display (last 5) vs. full validation scope (all words)
+  - **Technical Implementation**:
+    - Enhanced terminal display to show word count differences between visible and total
+    - Added contextual help messages for "was played" errors with hidden word counts
+    - Improved user guidance with actionable suggestions (use 'state' command)
+    - Fixed UX confusion where validation scope differed from display scope
+  - **Bug Fix**: Resolved reported issue where "LOCK" and "CLOCK" showed "was played" but weren't in visible recent words
+  - **Verification**: Manual testing confirms clear communication when words are hidden from display
+
 - **Enhanced Validation System with Rich Error Messages** ✅ **VERIFIED**
   - **Purpose**: Extended game engine to return descriptive error messages for invalid word submissions so players understand exactly why their moves fail
   - **Requirements Delivered**: 

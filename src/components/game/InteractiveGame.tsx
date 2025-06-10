@@ -80,6 +80,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   const [isPassMode, setIsPassMode] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
 
   // Dictionary is automatically initialized with the real engine
 
@@ -243,6 +244,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     
     setPendingWord(newWord);
     setIsPassMode(false); // Reset pass mode when word changes
+    setShowValidationError(false); // Reset error display when word changes
     
     // Validate the move attempt
     if (newWord !== wordState.currentWord) {
@@ -251,7 +253,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     } else {
       setPendingMoveAttempt(null);
     }
-  }, [isPlayerTurn, isProcessingMove, wordState.currentWord, actions, pendingWord]);
+  }, [isPlayerTurn, isProcessingMove, wordState.currentWord, actions]);
 
   const handleLetterClick = useCallback((letter: string) => {
     if (!isPlayerTurn || isProcessingMove) return;
@@ -307,10 +309,18 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const handleSubmit = useCallback(() => {
     if (!isPlayerTurn || isProcessingMove) return;
     
-    // Handle pass mode - first click on invalid X activates pass mode
-    if (!pendingMoveAttempt?.canApply && !isPassMode) {
-      setIsPassMode(true);
-      return;
+    // Handle clicking invalid X to show/hide error message
+    if (!pendingMoveAttempt?.canApply && !isPassMode && pendingMoveAttempt?.validationResult?.userMessage) {
+      // First click on invalid X shows the error message
+      if (!showValidationError) {
+        setShowValidationError(true);
+        return;
+      } else {
+        // Second click on invalid X (with error showing) activates pass mode
+        setShowValidationError(false);
+        setIsPassMode(true);
+        return;
+      }
     }
     
     // Handle second click in pass mode - actually pass the turn
@@ -319,6 +329,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       setPendingWord(wordState.currentWord);
       setPendingMoveAttempt(null);
       setIsPassMode(false);
+      setShowValidationError(false);
       return;
     }
     
@@ -329,9 +340,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         setPendingWord(pendingMoveAttempt.newWord);
         setPendingMoveAttempt(null);
         setIsPassMode(false);
+        setShowValidationError(false);
       }
     }
-  }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, isPassMode, wordState.currentWord]);
+  }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, isPassMode, wordState.currentWord, showValidationError]);
 
   const handleStartGame = useCallback(async () => {
     await actions.startGame();
@@ -468,6 +480,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 onClick={!isProcessingMove && isPlayerTurn ? handleSubmit : undefined}
                 className="interactive-game__score"
                 isPassMode={isPassMode}
+                validationError={pendingMoveAttempt?.validationResult?.userMessage || null}
+                showValidationError={showValidationError}
               />
             </div>
 
