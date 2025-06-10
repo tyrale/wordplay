@@ -179,7 +179,6 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
             
             // Special handling for menu button - add close icon overlay when menu is open
             if (content === '≡') {
-              console.log('[DEBUG] Menu button rendering, isMenuOpen:', isMenuOpen);
               return (
                 <div key={content} className="alphabet-grid__cell alphabet-grid__cell--menu">
                   <GridCell

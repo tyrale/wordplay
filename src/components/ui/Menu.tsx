@@ -129,9 +129,7 @@ export const Menu: React.FC<MenuProps> = ({
   }, []);
 
   const handleTier2Click = useCallback((tier1Id: string, tier2Id: string) => {
-    console.log(`Tier 2 clicked: ${tier1Id} -> ${tier2Id}`);
-    
-    // Handle specific actions
+    // Handle specific actions that should close the menu
     if (tier1Id === 'themes') {
       // Find and set the selected theme
       const selectedTheme = availableThemes.find(theme => 
@@ -139,14 +137,16 @@ export const Menu: React.FC<MenuProps> = ({
       );
       if (selectedTheme) {
         setTheme(selectedTheme);
+        onClose(); // Close menu after theme change
       }
     } else if (tier1Id === 'about' && tier2Id === 'debug') {
       // Open debug dialog
       onDebugOpen?.();
+      onClose(); // Close menu after opening debug
     }
     
-    // Close the menu after selection
-    onClose();
+    // For other items (challenge, mechanics, bots, other about items), keep menu open
+    // These are placeholder items that don't have functionality yet
   }, [onClose, onDebugOpen, availableThemes, setTheme]);
 
   if (!isOpen) return null;
