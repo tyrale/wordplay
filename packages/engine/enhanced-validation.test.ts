@@ -90,6 +90,47 @@ describe('Enhanced Validation System', () => {
         expect(replay.validationResult.userMessage).toBe('was played');
       });
     });
+
+    it('should properly handle word repetition validation during game simulation', () => {
+      // Test for the bug where valid words are incorrectly flagged as "was played"
+      // Simulate the exact scenario from the terminal game
+      
+      // Start with CATS
+      expect(gameManager.getState().currentWord).toBe('CATS');
+      
+      // Check initial usedWords state
+      const initialUsedWords = gameManager.getState().usedWords;
+      console.log('Initial used words:', initialUsedWords);
+      
+      // The problem words that should NOT be "was played"
+      const problemWords = ['LOCK', 'CLOCK'];
+      
+      // First let's test if these words are in our test dictionary
+      const testDeps = createTestDependencies({ validWords: ['CAT', 'CATS', 'DOG', 'DOGS', 'PLAY', 'PLAYS', 'WORD', 'WORDS', 'GAME', 'GAMES', 'TEST', 'TESTS', 'HELLO', 'WORLD', 'BAT', 'BATS', 'CATSXY', 'CATSXYZ', 'C', 'CATSX', 'TACS', 'GAM', 'LOCK', 'CLOCK'] });
+      
+      problemWords.forEach(word => {
+        console.log(`\n=== Testing word: ${word} ===`);
+        
+        // Test with test dependencies first
+        const testValidation = testDeps.validateWord(word);
+        console.log(`- Test dict validation: valid=${testValidation.isValid}, message="${testValidation.userMessage}"`);
+        
+        // Test with actual game manager
+        const attempt = gameManager.attemptMove(word);
+        console.log(`- Game validation: valid=${attempt.isValid}, message="${attempt.validationResult.userMessage}"`);
+        console.log(`- Used words: ${gameManager.getState().usedWords}`);
+        
+        // If the word is being rejected as "was played", check if it's actually in usedWords
+        if (!attempt.isValid && attempt.validationResult.userMessage === 'was played') {
+          const usedWords = gameManager.getState().usedWords;
+          const isActuallyUsed = usedWords.includes(word);
+          console.log(`- Word "${word}" is actually in usedWords: ${isActuallyUsed}`);
+          
+          // This should not happen - if the word wasn't actually played, it shouldn't be "was played"
+          expect(isActuallyUsed).toBe(true); // If this fails, we found the bug
+        }
+      });
+    });
   });
 
   describe('Move Rule Error Messages', () => {
