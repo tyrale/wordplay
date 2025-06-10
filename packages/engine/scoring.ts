@@ -2,20 +2,21 @@
  * Scoring Module
  * 
  * This module provides comprehensive scoring functionality for the WordPlay game,
- * including scoring for letter additions, removals, rearrangements, and key letter bonuses.
+ * including scoring for letter additions, removals, moves, and key letter bonuses.
  * 
  * Core Rules:
  * - Add letter: +1 point
  * - Remove letter: +1 point  
- * - Rearrange letters: +1 point
+ * - Move letters: +1 point (only when stayed letters change their relative sequence)
  * - Substitution = Add + Remove = +2 points
  * - Complex combinations: Each action type scores independently
  * 
  * Examples:
- * - CAT→CATS: +1 point (add letter)
- * - CAT→COAT: +1 point (add letter)
+ * - CAT→CATS: +1 point (add letter, natural shift)
+ * - CAT→COAT: +1 point (add letter, natural shift)
  * - CATS→BATS: +2 points (remove C, add B)
- * - CATS→TABS: +3 points (remove C, add T, rearrange)
+ * - NAG→LANG: +2 points (add L, move N-A-G to A-N-G)
+ * - NARD→YARN: +3 points (remove D, add Y, move N-A-R to A-R-N)
  */
 
 // Types for scoring operations
@@ -28,7 +29,7 @@ export interface ScoringResult {
   breakdown: {
     addLetterPoints: number;
     removeLetterPoints: number;
-    rearrangePoints: number;
+    movePoints: number;
     keyLetterUsagePoints: number;
   };
   actions: string[];
@@ -38,7 +39,7 @@ export interface ScoringResult {
 export interface WordAnalysis {
   addedLetters: string[];
   removedLetters: string[];
-  isRearranged: boolean;
+  isMoved: boolean;
   keyLettersUsed: string[];
 }
 
@@ -92,12 +93,61 @@ export function analyzeWordChange(previousWord: string, currentWord: string, key
     }
   });
 
-  // Check if letters were rearranged (same letters, different order)
-  // This only applies when no letters were added or removed
-  const isRearranged = prev.length === curr.length && 
-                      addedLetters.length === 0 && 
-                      removedLetters.length === 0 && 
-                      prev !== curr;
+  // Check if letters were moved (stayed letters changed their relative sequence)
+  // This applies to any case where letters that exist in both words have changed order
+  let isMoved = false;
+  
+  if (prev !== curr) {
+    // For natural shift detection, check if one word is a subsequence of the other
+    // If so, it's a natural shift and not a move
+    let isNaturalShift = false;
+    
+    // Case 1: Only additions - is the old word a subsequence of the new?
+    if (addedLetters.length > 0 && removedLetters.length === 0) {
+      isNaturalShift = isSubsequence(prev, curr);
+    }
+    // Case 2: Only removals - is the new word a subsequence of the old?
+    else if (removedLetters.length > 0 && addedLetters.length === 0) {
+      isNaturalShift = isSubsequence(curr, prev);
+    }
+    // Case 3: Both additions and removals - check for natural shift patterns
+    else if (addedLetters.length > 0 && removedLetters.length > 0) {
+      // Find the longest common subsequence
+      const lcs = findLongestCommonSubsequence(prev, curr);
+      
+      // Natural shift occurs when the LCS is contiguous in both words
+      // and represents the majority of both words
+      if (lcs.length >= 3) { // Need at least 3 letters for meaningful sequence
+        // Check if the LCS appears as a contiguous substring in both words
+        const prevContainsLcsContiguous = prev.includes(lcs);
+        const currContainsLcsContiguous = curr.includes(lcs);
+        
+        if (prevContainsLcsContiguous && currContainsLcsContiguous) {
+          // Additional check: the LCS should represent most of the word content
+          const minWordLength = Math.min(prev.length, curr.length);
+          const lcsRatio = lcs.length / minWordLength;
+          
+          // If the LCS represents 75% or more of the shorter word, it's likely a natural shift
+          isNaturalShift = lcsRatio >= 0.75;
+        }
+      }
+    }
+    
+    // If it's not a natural shift, check for actual moves
+    if (!isNaturalShift) {
+      // Find letters that stayed (exist in both words)
+      const stayedLetters = findLettersThatStayed(prev, curr);
+      
+      if (stayedLetters.length >= 2) {
+        // Extract the sequence of stayed letters from both words
+        const prevStayedSeq = extractStayedSequence(prev, stayedLetters);
+        const currStayedSeq = extractStayedSequence(curr, stayedLetters);
+        
+        // If the sequences are different, letters were moved
+        isMoved = prevStayedSeq !== currStayedSeq;
+      }
+    }
+  }
 
   // Find key letters used in the current word
   const keyLettersUsed = currChars.filter(char => keys.includes(char));
@@ -105,7 +155,7 @@ export function analyzeWordChange(previousWord: string, currentWord: string, key
   return {
     addedLetters,
     removedLetters,
-    isRearranged,
+    isMoved,
     keyLettersUsed,
   };
 }
@@ -127,7 +177,7 @@ export function calculateScore(
       breakdown: {
         addLetterPoints: 0,
         removeLetterPoints: 0,
-        rearrangePoints: 0,
+        movePoints: 0,
         keyLetterUsagePoints: 0,
       },
       actions: [],
@@ -141,7 +191,7 @@ export function calculateScore(
   // Score calculation based on core rules
   let addLetterPoints = 0;
   let removeLetterPoints = 0;
-  let rearrangePoints = 0;
+  let movePoints = 0;
 
   // Score add operations
   if (analysis.addedLetters.length > 0) {
@@ -153,40 +203,9 @@ export function calculateScore(
     removeLetterPoints = 1;
   }
 
-  // Check for rearrangement, but only if it's not a simple add/remove "natural shift"
-  let isNaturalShift = false;
-  // Case 1: Only additions. Is the old word a subsequence of the new?
-  if (analysis.addedLetters.length > 0 && analysis.removedLetters.length === 0) {
-    if (isSubsequence(previousWord.toUpperCase(), currentWord.toUpperCase())) {
-      isNaturalShift = true;
-    }
-  }
-  // Case 2: Only removals. Is the new word a subsequence of the old?
-  if (analysis.removedLetters.length > 0 && analysis.addedLetters.length === 0) {
-    if (isSubsequence(currentWord.toUpperCase(), previousWord.toUpperCase())) {
-      isNaturalShift = true;
-    }
-  }
-
-  // Only check for rearrangement points if it's NOT a natural shift
-  if (!isNaturalShift) {
-    // This handles pure rearrangements (isRearranged) and combo-moves like NAG->LANG
-    if (analysis.isRearranged) {
-      rearrangePoints = 1;
-    } else {
-      // Use subsequence analysis for combo moves (add/remove + rearrange)
-      const prev = previousWord.toUpperCase();
-      const curr = currentWord.toUpperCase();
-      const stayedLetters = findLettersThatStayed(prev, curr);
-
-      if (stayedLetters.length >= 2) {
-        const prevStayedSeq = extractStayedSequence(prev, stayedLetters);
-        const currStayedSeq = extractStayedSequence(curr, stayedLetters);
-        if (prevStayedSeq !== currStayedSeq) {
-          rearrangePoints = 1;
-        }
-      }
-    }
+  // Score move operations - award points if stayed letters changed their sequence
+  if (analysis.isMoved) {
+    movePoints = 1;
   }
   
   // Key letter usage: +1 if any key letter is used
@@ -201,21 +220,21 @@ export function calculateScore(
   if (removeLetterPoints > 0) {
     actions.push(`Removed letter(s): ${analysis.removedLetters.join(', ')}`);
   }
-  if (rearrangePoints > 0) {
-    actions.push('Rearranged letters');
+  if (movePoints > 0) {
+    actions.push('Moved letters');
   }
   if (keyLetterUsagePoints > 0) {
     actions.push(`Used key letter(s): ${analysis.keyLettersUsed.join(', ')}`);
   }
 
-  const totalScore = addLetterPoints + removeLetterPoints + rearrangePoints + keyLetterUsagePoints;
+  const totalScore = addLetterPoints + removeLetterPoints + movePoints + keyLetterUsagePoints;
 
   return {
     totalScore,
     breakdown: {
       addLetterPoints,
       removeLetterPoints,
-      rearrangePoints,
+      movePoints,
       keyLetterUsagePoints,
     },
     actions,
@@ -288,6 +307,64 @@ function extractStayedSequence(word: string, stayedLetters: string[]): string {
     }
   }
   return sequence.join('');
+}
+
+/**
+ * Finds the longest common subsequence between two strings.
+ * Example: findLongestCommonSubsequence("REAR", "EARL") -> "EAR"
+ */
+function findLongestCommonSubsequence(str1: string, str2: string): string {
+  const m = str1.length;
+  const n = str2.length;
+  
+  // Create a 2D array to store lengths of common subsequences
+  const dp: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+  
+  // Fill the dp table
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (str1[i - 1] === str2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+  
+  // Reconstruct the LCS
+  let lcs = '';
+  let i = m, j = n;
+  while (i > 0 && j > 0) {
+    if (str1[i - 1] === str2[j - 1]) {
+      lcs = str1[i - 1] + lcs;
+      i--;
+      j--;
+    } else if (dp[i - 1][j] > dp[i][j - 1]) {
+      i--;
+    } else {
+      j--;
+    }
+  }
+  
+  return lcs;
+}
+
+/**
+ * Extracts a subsequence from a word, preserving order.
+ * Example: extractSubsequence("REAR", "EAR") -> "EAR"
+ */
+function extractSubsequence(word: string, subsequence: string): string {
+  let subIndex = 0;
+  let result = '';
+  
+  for (const char of word) {
+    if (subIndex < subsequence.length && char === subsequence[subIndex]) {
+      result += char;
+      subIndex++;
+    }
+  }
+  
+  return result;
 }
 
 /**
@@ -369,8 +446,8 @@ export function formatScoreBreakdown(result: ScoringResult): string {
   if (result.breakdown.removeLetterPoints > 0) {
     parts.push(`Remove: +${result.breakdown.removeLetterPoints}`);
   }
-  if (result.breakdown.rearrangePoints > 0) {
-    parts.push(`Rearrange: +${result.breakdown.rearrangePoints}`);
+  if (result.breakdown.movePoints > 0) {
+    parts.push(`Move: +${result.breakdown.movePoints}`);
   }
   if (result.breakdown.keyLetterUsagePoints > 0) {
     parts.push(`Key Usage: +${result.breakdown.keyLetterUsagePoints}`);
@@ -383,7 +460,7 @@ export function formatScoreBreakdown(result: ScoringResult): string {
  * Validates that a word change follows the game rules:
  * - Can only add ONE letter per turn
  * - Can only remove ONE letter per turn  
- * - Can rearrange letters (no limit)
+ * - Can move letters (no limit)
  * - Each action type can only be used once per turn
  */
 export function isValidMove(previousWord: string, currentWord: string): boolean {
@@ -399,8 +476,8 @@ export function isValidMove(previousWord: string, currentWord: string): boolean 
     return false;
   }
   
-  // Rearrangement is always allowed (no limits)
-  // Combination of one add + one remove + rearrange is allowed
+  // Moving letters is always allowed (no limits)
+  // Combination of one add + one remove + move is allowed
   
   return true;
 } 

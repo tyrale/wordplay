@@ -78,7 +78,7 @@ export interface ScoringResult {
   breakdown: {
     addLetterPoints: number;
     removeLetterPoints: number;
-    rearrangePoints: number;
+    movePoints: number;
     keyLetterUsagePoints: number;
   };
   actions: string[];
@@ -985,7 +985,7 @@ export class LocalGameStateManagerWithDependencies {
         breakdown: {
           addLetterPoints: 0,
           removeLetterPoints: 0,
-          rearrangePoints: 0,
+          movePoints: 0,
           keyLetterUsagePoints: 0,
         },
         actions: ['PASS'],
@@ -1040,7 +1040,7 @@ export class LocalGameStateManager extends LocalGameStateManagerWithDependencies
     const placeholderDependencies: GameStateDependencies = {
       validateWord: () => ({ isValid: false, reason: 'No dependencies provided', word: '' }),
       getRandomWordByLength: () => null,
-      calculateScore: () => ({ totalScore: 0, breakdown: { addLetterPoints: 0, removeLetterPoints: 0, rearrangePoints: 0, keyLetterUsagePoints: 0 }, actions: [], keyLettersUsed: [] }),
+              calculateScore: () => ({ totalScore: 0, breakdown: { addLetterPoints: 0, removeLetterPoints: 0, movePoints: 0, keyLetterUsagePoints: 0 }, actions: [], keyLettersUsed: [] }),
       getScoreForMove: () => 0,
       isValidMove: () => false,
       generateBotMove: async () => ({ move: null, candidates: [], processingTime: 0, totalCandidatesGenerated: 0 })

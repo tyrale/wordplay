@@ -164,7 +164,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     return {
       add: actions.some((action: string) => action.startsWith('Added letter')),
       remove: actions.some((action: string) => action.startsWith('Removed letter')),
-      move: actions.some((action: string) => action === 'Rearranged letters')
+      move: actions.some((action: string) => action === 'Moved letters')
     };
   }, [pendingMoveAttempt]);
 
@@ -176,7 +176,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     
     const result = pendingMoveAttempt.scoringResult;
     return {
-      base: result.breakdown.addLetterPoints + result.breakdown.removeLetterPoints + result.breakdown.rearrangePoints,
+      base: result.breakdown.addLetterPoints + result.breakdown.removeLetterPoints + result.breakdown.movePoints,
       keyBonus: result.breakdown.keyLetterUsagePoints,
       total: result.totalScore
     };
@@ -457,6 +457,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 score={scoreBreakdown}
                 actions={actionState}
                 isValid={isValidSubmit}
+                isPassConfirming={false}
+                passReason={null}
                 onClick={!isProcessingMove && isPlayerTurn ? handleSubmit : undefined}
                 className="interactive-game__score"
                 isPassMode={isPassMode}

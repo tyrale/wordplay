@@ -364,14 +364,14 @@ export class TerminalGame {
     if (breakdown.removeLetterPoints > 0) {
       actions.push('-');
     }
-    if (breakdown.rearrangePoints > 0) {
+    if (breakdown.movePoints > 0) {
       actions.push('~'); // Using ~ for rearrangement/move
     }
     
     // Calculate base score (non-key-letter points)
     const baseScore = (breakdown.addLetterPoints || 0) + 
                      (breakdown.removeLetterPoints || 0) + 
-                     (breakdown.rearrangePoints || 0);
+                     (breakdown.movePoints || 0);
     
     // Build the scoring display line
     if (actions.length > 0) {

@@ -28,7 +28,7 @@ export interface ScoringResult {
 export interface ScoringBreakdown {
   addLetterPoints: number;
   removeLetterPoints: number;
-  rearrangePoints: number;
+  movePoints: number;
   keyLetterBonus: number;
   total: number;
 }
