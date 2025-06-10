@@ -71,10 +71,24 @@ export class KeyLetterLogger {
         throw new Error(`HTTP ${response.status}`);
       }
     } catch (error) {
-      // If endpoint fails, fall back to console logging
-      console.log('Key Letter Count:', letter);
-      console.warn('Failed to send to logging endpoint, logged to console instead:', error);
+      // In development, only log the key letter without the error message to reduce console noise
+      if (this.isDevelopmentEnvironment()) {
+        console.log('Key Letter Count:', letter);
+        // Suppress the error message in development
+      } else {
+        // In production, log the error for debugging
+        console.log('Key Letter Count:', letter);
+        console.warn('Failed to send to logging endpoint, logged to console instead:', error);
+      }
     }
+  }
+
+  private static isDevelopmentEnvironment(): boolean {
+    // Check if we're in development mode
+    return typeof window !== 'undefined' && 
+           (window.location.hostname === 'localhost' || 
+            window.location.hostname === '127.0.0.1' ||
+            window.location.hostname.includes('localhost'));
   }
 
   private static async readCounts(): Promise<{ [key: string]: number }> {
