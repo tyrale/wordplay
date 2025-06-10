@@ -19,9 +19,10 @@ export const MenuButton: React.FC<MenuButtonProps> = ({
       aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
       type="button"
     >
-      <span className="menu-button__icon">
-        {isMenuOpen ? '×' : '≡'}
-      </span>
+      <span className="menu-button__icon menu-button__icon--menu">≡</span>
+      {isMenuOpen && (
+        <span className="menu-button__icon menu-button__icon--close">×</span>
+      )}
     </button>
   );
 }; 

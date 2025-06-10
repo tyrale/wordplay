@@ -23,6 +23,9 @@
   
   /* Transition for smooth animation */
   transition: all 0.2s ease-in-out;
+  
+  /* Remove focus outline */
+  outline: none;
 }
 
 .menu-button:hover {
@@ -38,16 +41,24 @@
   display: inline-block;
   font-size: inherit;
   line-height: 1;
-  transition: transform 0.3s ease-in-out;
+  position: absolute;
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
   
   /* Ensure proper alignment */
   text-align: center;
   min-width: 20px;
 }
 
-/* Animation states */
-.menu-button--open .menu-button__icon {
-  transform: rotate(180deg);
+.menu-button__icon--menu {
+  /* Menu icon (≡) - always visible */
+  opacity: 1;
+}
+
+.menu-button__icon--close {
+  /* Close icon (×) - positioned exactly over menu icon */
+  opacity: 1;
+  transform: scale(1.2);
+  font-weight: bold;
 }
 
 /* Responsive sizing */

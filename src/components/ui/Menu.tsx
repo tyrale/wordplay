@@ -150,24 +150,22 @@ export const Menu: React.FC<MenuProps> = ({
                   {tier1Item.title}
                 </button>
                 
-                {expandedItem === tier1Item.id && (
-                  <div 
-                    className="menu-tier2-list"
-                    id={`menu-${tier1Item.id}-submenu`}
-                    role="region"
-                    aria-labelledby={`menu-${tier1Item.id}-button`}
-                  >
-                    {tier1Item.children.map((tier2Item: MenuTier2Item) => (
-                      <button
-                        key={tier2Item.id}
-                        className={`menu-tier2-item ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''}`}
-                        onClick={() => handleTier2Click(tier1Item.id, tier2Item.id)}
-                      >
-                        {tier2Item.title}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <div 
+                  className={`menu-tier2-list ${expandedItem === tier1Item.id ? 'menu-tier2-list--expanded' : ''}`}
+                  id={`menu-${tier1Item.id}-submenu`}
+                  role="region"
+                  aria-labelledby={`menu-${tier1Item.id}-button`}
+                >
+                  {tier1Item.children.map((tier2Item: MenuTier2Item) => (
+                    <button
+                      key={tier2Item.id}
+                      className={`menu-tier2-item ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''}`}
+                      onClick={() => handleTier2Click(tier1Item.id, tier2Item.id)}
+                    >
+                      {tier2Item.title}
+                    </button>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
