@@ -220,7 +220,7 @@ export function validateWordWithDependencies(
       isValid: false,
       reason: 'TOO_SHORT',
       word: normalizedWord,
-      userMessage: 'word too short'
+      userMessage: 'too short'
     };
   }
 
@@ -232,7 +232,7 @@ export function validateWordWithDependencies(
         isValid: false,
         reason: 'LENGTH_CHANGE_TOO_LARGE',
         word: normalizedWord,
-        userMessage: `can only change word length by 1 letter`
+        userMessage: `illegal action`
       };
     }
   }
@@ -345,7 +345,7 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
       isValid: false,
       reason: 'Word must be at least 3 letters long',
       word: normalizedWord,
-      userMessage: 'word too short'
+      userMessage: 'too short'
     };
   }
 
@@ -357,7 +357,7 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
         isValid: false,
         reason: `Word length can only change by 1 letter (was ${previousWord.length}, now ${normalizedWord.length})`,
         word: normalizedWord,
-        userMessage: 'can only change word length by 1 letter'
+        userMessage: 'illegal action'
       };
     }
   }

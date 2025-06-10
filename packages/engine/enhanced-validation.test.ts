@@ -134,16 +134,16 @@ describe('Enhanced Validation System', () => {
   });
 
   describe('Move Rule Error Messages', () => {
-    it('should return "too many adds" when adding more than 1 letter', () => {
+    it('should return "illegal action" when adding more than 1 letter', () => {
       // Current word is CATS, try to add multiple letters
       const result = gameManager.attemptMove('CATSXY'); // Adding X and Y
       
       expect(result.isValid).toBe(false);
       expect(result.validationResult.reason).toBe('TOO_MANY_ADDS');
-      expect(result.validationResult.userMessage).toBe('too many adds');
+      expect(result.validationResult.userMessage).toBe('illegal action');
     });
 
-    it('should return "too many removes" when removing more than 1 letter', () => {
+    it('should return "illegal action" when removing more than 1 letter', () => {
       // Start with a longer word and remove multiple letters
       // Use a test manager with a longer initial word
       const deps = createTestDependencies({ 
@@ -161,7 +161,7 @@ describe('Enhanced Validation System', () => {
       
       expect(result.isValid).toBe(false);
       expect(result.validationResult.reason).toBe('TOO_MANY_REMOVES');
-      expect(result.validationResult.userMessage).toBe('too many removes');
+      expect(result.validationResult.userMessage).toBe('illegal action');
     });
 
     it('should allow valid single letter changes', () => {
@@ -236,7 +236,7 @@ describe('Enhanced Validation System', () => {
         const result = testManager.attemptMove(word);
         expect(result.isValid).toBe(false);
         expect(result.validationResult.reason).toBe('TOO_SHORT');
-        expect(result.validationResult.userMessage).toBe('word too short');
+        expect(result.validationResult.userMessage).toBe('too short');
       });
     });
   });

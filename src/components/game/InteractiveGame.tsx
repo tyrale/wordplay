@@ -79,7 +79,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const [showGameEnd, setShowGameEnd] = useState(false);
   const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
-  const [isPassMode, setIsPassMode] = useState(false);
+
   const [showValidationError, setShowValidationError] = useState(false);
 
   // Dictionary is automatically initialized with the real engine
@@ -196,24 +196,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       keyLetters: turn.scoringBreakdown.keyLettersUsed || []
     }));
     
-    // If in pass mode, add PASSED as the latest move
-    if (isPassMode) {
-      const passMove = {
-        word: 'PASSED',
-        score: 0,
-        player: gameState.players.find(p => p.isCurrentPlayer)?.id || 'human',
-        turnNumber: gameState.currentTurn,
-        actions: [],
-        keyLetters: []
-      };
-      return [
-        ...moves,
-        passMove
-      ];
-    }
-    
     return moves;
-  }, [gameState.turnHistory, isPassMode, gameState.players, gameState.currentTurn]);
+  }, [gameState.turnHistory, gameState.players, gameState.currentTurn]);
 
   // Event handlers
   const handleActionClick = useCallback((action: string) => {
@@ -243,7 +227,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     }
     
     setPendingWord(newWord);
-    setIsPassMode(false); // Reset pass mode when word changes
     setShowValidationError(false); // Reset error display when word changes
     
     // Validate the move attempt
@@ -307,30 +290,23 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
 
   const handleSubmit = useCallback(() => {
+    
     if (!isPlayerTurn || isProcessingMove) return;
     
-    // Handle clicking invalid X to show/hide error message
-    if (!pendingMoveAttempt?.canApply && !isPassMode) {
-      // First click on invalid X shows the error message (if we have a validation error)
-      if (!showValidationError && pendingMoveAttempt?.validationResult?.userMessage) {
+    // Handle clicking X to pass turn (valid for any non-winning move)
+    if (!isValidSubmit) {
+      if (!showValidationError) {
+        // First click on X shows validation error
         setShowValidationError(true);
         return;
       } else if (showValidationError) {
-        // Second click on invalid X (with error showing) activates pass mode
+        // Second click on X (with validation error showing) immediately passes the turn
+        actions.passTurn();
+        setPendingWord(wordState.currentWord);
+        setPendingMoveAttempt(null);
         setShowValidationError(false);
-        setIsPassMode(true);
         return;
       }
-    }
-    
-    // Handle second click in pass mode - actually pass the turn
-    if (isPassMode) {
-      actions.passTurn();
-      setPendingWord(wordState.currentWord);
-      setPendingMoveAttempt(null);
-      setIsPassMode(false);
-      setShowValidationError(false);
-      return;
     }
     
     // Handle normal valid submission
@@ -339,11 +315,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       if (success) {
         setPendingWord(pendingMoveAttempt.newWord);
         setPendingMoveAttempt(null);
-        setIsPassMode(false);
         setShowValidationError(false);
       }
     }
-  }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, isPassMode, wordState.currentWord, showValidationError]);
+  }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, wordState.currentWord, showValidationError]);
 
   const handleStartGame = useCallback(async () => {
     await actions.startGame();
@@ -359,6 +334,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   // Determine if submit is valid
   const isValidSubmit = pendingMoveAttempt?.canApply || false;
+  
+  // The X should always be clickable unless we have a valid move to submit
+  // This allows users to pass even without attempting to change the word
+  const showInvalidX = !isValidSubmit;
 
   // Helper function to generate word suggestions
   const generateWordSuggestions = useCallback((currentWord: string): string[] => {
@@ -474,12 +453,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
               <ScoreDisplay
                 score={scoreBreakdown}
                 actions={actionState}
-                isValid={isValidSubmit}
+                isValid={!showInvalidX}
                 isPassConfirming={false}
                 passReason={null}
                 onClick={!isProcessingMove && isPlayerTurn ? handleSubmit : undefined}
                 className="interactive-game__score"
-                isPassMode={isPassMode}
+                isPassMode={false}
                 validationError={pendingMoveAttempt?.validationResult?.userMessage || null}
                 showValidationError={showValidationError}
               />

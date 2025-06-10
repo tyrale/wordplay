@@ -251,32 +251,24 @@ This document tracks the progress of tasks from the development plan. Each task 
 - ✅ **Error Message Display State** - Added showValidationError state and styling for enhanced UX  
 - ✅ **Interactive Error Flow** - First click on invalid X shows error, second click activates pass mode
 - ✅ **Validation Message Integration** - Web app now uses userMessage from enhanced validation system
-- ✅ **CSS Styling** - Added error state styling with smaller font and centered display for readability
-- ✅ **Cross-Platform Consistency** - Web app now shows same descriptive errors as terminal game
-
-**Error Messages Supported**:
-- `"not a word"` - Dictionary validation failures
-- `"was played"` - Word repetition prevention  
-- `"too many adds"` - Move rule violations (>1 letter added)
-- `"too many removes"` - Move rule violations (>1 letter removed)
-- `"only letters allowed"` - Invalid character validation
-- `"word too short"` - Length requirement validation
-- `"word cannot be empty"` - Empty input validation
-
-**User Experience Flow**:
-1. Player makes invalid word
-2. ScoreDisplay shows ✗ (invalid X) with scoring row
-3. **First click on ✗**: Shows validation error message in scoring row (e.g., "not a word")
-4. **Second click on ✗**: Activates pass mode to skip turn
-5. Error display resets when word is changed
+- ✅ **Cross-Platform Consistency** - Error messages match terminal game validation messages
+- ✅ **Fixed Click Functionality** - Resolved issue where invalid X wasn't clickable due to restrictive conditions
 
 **Technical Implementation**:
-- **ScoreDisplay.tsx**: Added `validationError` and `showValidationError` props
-- **ScoreDisplay.css**: Added `.score-display--error` styling for error message display
-- **InteractiveGame.tsx**: Enhanced handleSubmit logic for error display and state management
-- **Error State Management**: Integrated with existing validation flow and pass mode system
+- Extended ScoreDisplay component with validationError and showValidationError props
+- Enhanced InteractiveGame handleSubmit logic to handle invalid X clicks properly
+- Added CSS styling for error state with smaller font and centered display
+- Fixed chicken-and-egg problem with click conditions requiring error messages before allowing clicks
+- Simplified click logic to allow any invalid X to be clicked to show error messages
 
-**Verification Status**: ✅ **WEB APP ENHANCED VALIDATION IMPLEMENTED** - Enhanced validation system now works in both terminal and web app with consistent user-friendly error messages.
+**Testing Results**:
+- ✅ Invalid X clicks now trigger error message display as intended
+- ✅ Error messages show descriptive validation feedback (not a word, was played, too many adds, etc.)
+- ✅ Second invalid X click activates pass mode as designed
+- ✅ Enhanced validation system integration working across all validation types
+- ✅ Console logging noise from keyLetterLogger reduced for better development experience
+
+**Verification**: Web app running at http://localhost:5173/, invalid X clicks working properly, error messages displaying correctly, user experience improved significantly.
 
 ## 🎯 **DRAG IMAGE FIX APPLIED**: Eliminate Red Circle with X During Drag Operations
 

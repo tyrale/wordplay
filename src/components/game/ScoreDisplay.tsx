@@ -53,18 +53,25 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
 
   const isEmpty = actionIcons.length === 0;
 
-  // Build left side content (actions)
-  const leftContent = isEmpty ? '' : actionIcons.join(' ');
+  // Build left side content (actions or validation error)
+  let leftContent = '';
+  if (showValidationError) {
+    // Show validation error on the left, or default message if no specific error
+            leftContent = validationError || 'current word';
+  } else if (!isEmpty) {
+    // Show action icons when there are actions
+    leftContent = actionIcons.join(' ');
+  }
   
   // Build center content (checkmark/pass/error)
   let centerContent = isPassMode ? 'pass turn' : (isValid && !isEmpty) ? '✓' : '✗';
   
-  // Build right side content (scores or error message)
+  // Build right side content (scores or pass instruction)
   let rightContent = '';
   
-  // Show validation error message if requested
-  if (showValidationError && validationError) {
-    rightContent = validationError;
+  if (showValidationError) {
+    // Show pass instruction on the right when showing validation error
+    rightContent = 'tap to pass';
   } else if (!isEmpty && !isPassMode) {
     // Show normal score
     if (score.base > 0) {
@@ -78,16 +85,13 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
     }
   }
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
-      // Allow clicking on valid checkmarks, pass mode, or any invalid X (even without initial error message)
-      if ((isValid && !isEmpty) || isPassMode || (!isValid && !isEmpty)) {
-        onClick();
-      }
+      onClick();
     }
   };
 
-  const isClickable = onClick && (((isValid && !isEmpty) || isPassMode) || (!isValid && !isEmpty));
+  const isClickable = !!onClick; // Always clickable if onClick handler provided
 
   if (isPassConfirming) {
     return (

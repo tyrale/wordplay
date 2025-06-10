@@ -145,7 +145,7 @@ describe('Word Validation Service', () => {
         const result = validateWordWithDependencies(word, wordData, { checkLength: true });
         expect(result.isValid).toBe(false);
         expect(result.reason).toBe('TOO_SHORT');
-        expect(result.userMessage).toBe('word too short');
+        expect(result.userMessage).toBe('too short');
       });
     });
 
@@ -186,7 +186,7 @@ describe('Word Validation Service', () => {
       const result = validateWordWithDependencies('ELEPHANT', wordData, { previousWord: 'CAT', checkLength: true });
       expect(result.isValid).toBe(false);
       expect(result.reason).toBe('LENGTH_CHANGE_TOO_LARGE');
-      expect(result.userMessage).toBe('can only change word length by 1 letter');
+      expect(result.userMessage).toBe('illegal action');
     });
   });
 

@@ -457,7 +457,7 @@ export function createTestDependencies(config: {
         isValid: false,
         word: normalizedWord,
         reason: 'TOO_SHORT',
-        userMessage: 'word too short'
+        userMessage: 'too short'
       };
     }
 

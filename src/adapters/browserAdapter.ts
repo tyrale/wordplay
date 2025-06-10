@@ -172,14 +172,9 @@ const browserWordData = new BrowserWordData();
  * Browser dictionary dependencies implementation
  */
 const browserDictionaryDependencies: GameStateDictionaryDependencies = {
-  validateWord: (word: string): ValidationResult => {
-    if (word.length < 3) {
-      return { isValid: false, reason: 'TOO_SHORT', word };
-    }
-    if (browserWordData.hasWord(word)) {
-      return { isValid: true, word };
-    }
-    return { isValid: false, reason: 'NOT_IN_DICTIONARY', word };
+  validateWord: (word: string, options?: any): ValidationResult => {
+    // Use the enhanced validation function with user-friendly messages
+    return validateWordWithDependencies(word, browserWordData, options);
   },
 
   getRandomWordByLength: (length: number): string | null => {

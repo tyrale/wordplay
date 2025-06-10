@@ -56,30 +56,40 @@ export class KeyLetterLogger {
     }
   }
 
+
+
   private static async sendToEndpoint(letter: string): Promise<void> {
+    // In development, disable logging server requests entirely to avoid console errors
+    if (this.isDevelopmentEnvironment()) {
+      // Skip server entirely in development, just log locally
+      console.log('Key Letter:', letter);
+      return;
+    }
+
+    // Only attempt server communication in production
     try {
-      // Try to send to local logging endpoint
+      // Try to send to local logging endpoint with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1000); // 1 second timeout
+      
       const response = await fetch('http://localhost:3001/log-key-letter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ letter }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
     } catch (error) {
-      // In development, only log the key letter without the error message to reduce console noise
-      if (this.isDevelopmentEnvironment()) {
-        console.log('Key Letter Count:', letter);
-        // Suppress the error message in development
-      } else {
-        // In production, log the error for debugging
-        console.log('Key Letter Count:', letter);
-        console.warn('Failed to send to logging endpoint, logged to console instead:', error);
-      }
+      // In production, log the error for debugging
+      console.log('Key Letter Count:', letter);
+      console.warn('Failed to send to logging endpoint, logged to console instead:', error);
     }
   }
 

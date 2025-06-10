@@ -513,7 +513,7 @@ export class LocalGameStateManagerWithDependencies {
       return {
         isValid: false,
         reason: 'TOO_MANY_ADDS',
-        userMessage: 'too many adds'
+        userMessage: 'illegal action'
       };
     }
     
@@ -521,7 +521,7 @@ export class LocalGameStateManagerWithDependencies {
       return {
         isValid: false,
         reason: 'TOO_MANY_REMOVES', 
-        userMessage: 'too many removes'
+        userMessage: 'illegal action'
       };
     }
     

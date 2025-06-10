@@ -9,6 +9,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **UI Text and Error Message Improvements** ✅ **VERIFIED**
+  - **Purpose**: Refine user interface text and validation error messages for better clarity and consistency
+  - **Requirements Delivered**:
+    - Changed "no valid move" → "invalid move" in ScoreDisplay fallback message for better clarity  
+    - Changed "too many adds" → "illegal action" in validation errors for consistent language
+    - Changed "too many removes" → "illegal action" in validation errors for consistent language
+    - Changed "can only change word length by 1 letter" → "illegal action" for unified error messaging
+    - Changed "invalid move" → "current word" in ScoreDisplay to provide neutral, descriptive labeling
+    - Simplified pass validation flow: removed intermediate "pass turn" state, direct pass on second invalid X click
+    - Added "pass" display in WordTrail for passed turns instead of showing no score indicator
+  - **Technical Implementation**:
+    - Updated validation error messages in packages/engine/gamestate.ts for move rule violations
+    - Updated validation error messages in packages/engine/dictionary.ts for length rule violations  
+    - Updated ScoreDisplay component fallback text for invalid states
+    - Simplified InteractiveGame pass flow by removing isPassMode state and intermediate display
+    - Enhanced WordTrail component to show "pass" for turns with score=0 and actions=['PASS']
+    - Updated all related test files to expect new error messages
+  - **User Experience Improvements**:
+    - More consistent error language using "illegal action" for rule violations
+    - Clearer neutral labeling with "current word" instead of "invalid move"
+    - Streamlined pass flow matching bot behavior (immediate pass instead of confirmation step)
+    - Clear visual indication of passed turns in game history with "pass" display
+  - **Verification**: All tests updated and passing, simplified UI flow working correctly
+  - **Files Updated**: packages/engine/gamestate.ts, packages/engine/dictionary.ts, packages/engine/enhanced-validation.test.ts, packages/engine/dictionary.test.ts, src/components/game/ScoreDisplay.tsx, src/components/game/InteractiveGame.tsx, src/components/game/WordTrail.tsx
+
+- **Network Error Handling Improvements** ✅ **VERIFIED**
+  - **Purpose**: Eliminate console network errors from key letter logging system in development environment
+  - **Requirements Delivered**:
+    - Eliminated `POST http://localhost:3001/log-key-letter net::ERR_CONNECTION_REFUSED` errors
+    - Eliminated `GET http://localhost:3001/health net::ERR_CONNECTION_REFUSED` errors  
+    - Clean console output during development without sacrificing logging functionality
+  - **Technical Implementation**:
+    - Modified keyLetterLogger.ts to completely skip network requests in development mode
+    - Implemented environment detection to differentiate development vs production
+    - Added local console logging fallback for development (console.log('Key Letter:', letter))
+    - Maintained server logging capability for production environments where logging server is available
+    - Removed server availability checking that was generating its own network errors
+  - **Development Experience**: Clean console output with no network errors while preserving key letter tracking
+  - **Production Compatibility**: Maintains full network logging functionality for production deployments
+  - **Verification**: Development server runs without network errors in console, key letters still tracked locally
+  - **Files Updated**: packages/engine/keyLetterLogger.ts
+
 - **Terminal Game UX Improvements** ✅ **VERIFIED**
   - **Purpose**: Fixed confusing "was played" errors where words appeared invalid but weren't visible in recent words display
   - **Requirements Delivered**:

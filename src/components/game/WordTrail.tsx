@@ -105,9 +105,9 @@ export const WordTrail: React.FC<WordTrailProps> = ({
               {renderWordWithHighlights(item.word, item.keyLetters)}
             </span>
             
-            {showScores && item.score > 0 && (
-              <span className="word-trail__score" aria-label={`${item.score} points`}>
-                +{item.score}
+            {showScores && (item.score > 0 || (item.score === 0 && item.actions.includes('PASS'))) && (
+              <span className="word-trail__score" aria-label={item.score === 0 && item.actions.includes('PASS') ? 'passed turn' : `${item.score} points`}>
+                {item.score === 0 && item.actions.includes('PASS') ? 'pass' : `+${item.score}`}
               </span>
             )}
           </div>

@@ -12,10 +12,10 @@
 .score-display__left {
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: 64px;
+  font-size: 24px;
   color: var(--theme-accent);
   white-space: nowrap;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   text-align: right;
   justify-self: end;
 }
@@ -38,10 +38,10 @@
 .score-display__right {
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: 64px;
+  font-size: 24px;
   color: var(--theme-accent);
   white-space: nowrap;
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   text-align: left;
   justify-self: start;
 }
@@ -128,31 +128,40 @@
 
 /* NEW: Error state when showing validation messages */
 .score-display--error .score-display__right {
-  font-size: 32px; /* Smaller font for error messages */
+  font-size: 24px; /* Match the consistent sizing */
   color: var(--theme-accent);
-  opacity: 0.8;
-  text-align: center;
-  justify-self: center;
+  opacity: 1; /* Full accent color for "tap to pass" */
+  text-align: left;
+  justify-self: start;
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: 0; /* No letter spacing */
 }
 
 .score-display--error .score-display__left {
-  opacity: 0.3; /* Dim the action icons when showing error */
+  opacity: 0.5; /* Same opacity as invalid X */
 }
 
 .score-display--error .score-display__center {
-  opacity: 0.8;
+  opacity: 0.5; /* Same opacity as left content */
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .score-display__left,
-  .score-display__center,
   .score-display__right {
+    font-size: 24px; /* Keep consistent sizing */
+  }
+  
+  .score-display__center {
     font-size: 48px;
+  }
+  
+  /* Maintain 24px for error state too */
+  .score-display--error .score-display__right {
+    font-size: 24px !important;
   }
 }
 
@@ -163,9 +172,17 @@
   }
   
   .score-display__left,
-  .score-display__center,
   .score-display__right {
+    font-size: 24px; /* Keep consistent sizing */
+  }
+  
+  .score-display__center {
     font-size: 36px;
+  }
+  
+  /* Maintain 24px for error state too */
+  .score-display--error .score-display__right {
+    font-size: 24px !important;
   }
 }
 
