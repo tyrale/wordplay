@@ -22,7 +22,7 @@
 
 .menu-content {
   width: 100%;
-  max-height: 100vh;
+  min-height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   padding: var(--spacing-md, 20px);
@@ -72,26 +72,30 @@
 }
 
 .menu-tier2-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 0fr;
   align-items: flex-end;
-  gap: var(--spacing-xs, 6px);
   margin-top: var(--spacing-xs, 6px);
   padding-left: var(--spacing-md, 20px);
   width: 100%;
   
-  /* Accordion animation */
-  max-height: 0;
-  overflow: hidden;
+  /* Accordion animation using CSS Grid */
+  transition: grid-template-rows 0.3s ease-in-out, opacity 0.3s ease-in-out;
   opacity: 0;
-  transform: translateY(-10px);
-  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
 .menu-tier2-list--expanded {
-  max-height: 500px; /* Large enough for content */
+  grid-template-rows: 1fr;
   opacity: 1;
-  transform: translateY(0);
+}
+
+.menu-tier2-list > div {
+  /* Container for the flex content inside grid */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-xs, 6px);
 }
 
 .menu-tier2-item {
@@ -193,9 +197,5 @@
   .menu-tier2-item,
   .menu-tier2-list {
     transition: none;
-  }
-  
-  .menu-tier2-list {
-    transform: none;
   }
 } 
