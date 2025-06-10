@@ -123,26 +123,38 @@ export const Menu: React.FC<MenuProps> = ({
   }, [onClose]);
 
   const handleTier1Click = useCallback((itemId: string) => {
-    setExpandedItem(prevExpanded => 
-      prevExpanded === itemId ? null : itemId
-    );
+    console.log(`[DEBUG] Tier 1 clicked: ${itemId}`);
+    setExpandedItem(prevExpanded => {
+      const newExpanded = prevExpanded === itemId ? null : itemId;
+      console.log(`[DEBUG] Expanded item changing from ${prevExpanded} to ${newExpanded}`);
+      return newExpanded;
+    });
   }, []);
 
   const handleTier2Click = useCallback((tier1Id: string, tier2Id: string) => {
+    console.log(`[DEBUG] Tier 2 clicked: ${tier1Id} -> ${tier2Id}`);
+    
     // Handle specific actions that should close the menu
     if (tier1Id === 'themes') {
+      console.log(`[DEBUG] Theme click detected, looking for theme: ${tier2Id}`);
       // Find and set the selected theme
       const selectedTheme = availableThemes.find(theme => 
         theme.name.toLowerCase().replace(/\s+/g, '-') === tier2Id
       );
+      console.log(`[DEBUG] Found theme:`, selectedTheme);
       if (selectedTheme) {
         setTheme(selectedTheme);
         onClose(); // Close menu after theme change
+        console.log(`[DEBUG] Theme changed and menu closed`);
       }
     } else if (tier1Id === 'about' && tier2Id === 'debug') {
+      console.log(`[DEBUG] Debug click detected`);
       // Open debug dialog
       onDebugOpen?.();
       onClose(); // Close menu after opening debug
+      console.log(`[DEBUG] Debug opened and menu closed`);
+    } else {
+      console.log(`[DEBUG] Placeholder item clicked: ${tier1Id} -> ${tier2Id} (no action taken)`);
     }
     
     // For other items (challenge, mechanics, bots, other about items), keep menu open
@@ -184,7 +196,11 @@ export const Menu: React.FC<MenuProps> = ({
                       <button
                         key={tier2Item.id}
                         className={`menu-tier2-item ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''}`}
-                        onClick={() => handleTier2Click(tier1Item.id, tier2Item.id)}
+                        onClick={(e) => {
+                          console.log(`[DEBUG] Raw button click event:`, e);
+                          handleTier2Click(tier1Item.id, tier2Item.id);
+                        }}
+                        style={{ pointerEvents: 'all', zIndex: 100 }}
                       >
                         {tier2Item.title}
                       </button>
