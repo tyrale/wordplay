@@ -310,12 +310,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     if (!isPlayerTurn || isProcessingMove) return;
     
     // Handle clicking invalid X to show/hide error message
-    if (!pendingMoveAttempt?.canApply && !isPassMode && pendingMoveAttempt?.validationResult?.userMessage) {
-      // First click on invalid X shows the error message
-      if (!showValidationError) {
+    if (!pendingMoveAttempt?.canApply && !isPassMode) {
+      // First click on invalid X shows the error message (if we have a validation error)
+      if (!showValidationError && pendingMoveAttempt?.validationResult?.userMessage) {
         setShowValidationError(true);
         return;
-      } else {
+      } else if (showValidationError) {
         // Second click on invalid X (with error showing) activates pass mode
         setShowValidationError(false);
         setIsPassMode(true);

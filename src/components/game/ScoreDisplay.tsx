@@ -80,14 +80,14 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
 
   const handleClick = () => {
     if (onClick) {
-      // Allow clicking on invalid X to show error message, or valid checkmarks/pass mode
+      // Allow clicking on valid checkmarks, pass mode, or any invalid X (even without initial error message)
       if ((isValid && !isEmpty) || isPassMode || (!isValid && !isEmpty)) {
         onClick();
       }
     }
   };
 
-  const isClickable = onClick && (((isValid && !isEmpty) || isPassMode) || (!isValid && !isEmpty && validationError));
+  const isClickable = onClick && (((isValid && !isEmpty) || isPassMode) || (!isValid && !isEmpty));
 
   if (isPassConfirming) {
     return (
