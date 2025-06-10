@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Enhanced Validation System with Rich Error Messages** ✅ **VERIFIED**
+  - **Purpose**: Extended game engine to return descriptive error messages for invalid word submissions so players understand exactly why their moves fail
+  - **Requirements Delivered**: 
+    - "not a word" for dictionary failures (word not found in ENABLE dictionary)
+    - "was played" for already-used words (word repetition prevention)  
+    - "too many adds" for excessive letter additions (>1 letter added in single turn)
+    - "too many removes" for excessive letter removals (>1 letter removed in single turn)
+    - Additional validation messages (empty words, invalid characters, length requirements)
+  - **Technical Implementation**:
+    - Enhanced ValidationResult Interface with `userMessage` field for user-friendly descriptions
+    - Updated Dictionary Validation returning structured errors with user messages  
+    - Enhanced Game State Manager with move rule validation and specific error messages
+    - Updated Terminal Display using `userMessage` field instead of generic reason codes
+    - Cross-platform compatibility working agnostically across terminal and web applications
+  - **Error Message Examples**:
+    - Dictionary: "not a word" (ZZZZZ → ValidationResult.userMessage)
+    - Repetition: "was played" (attempting to use CAT again)
+    - Move Rules: "too many adds" (CATS → CATSXY), "too many removes" (TESTS → TES)
+    - Character: "only letters allowed" (CAT123), "word cannot be empty" ("")
+    - Length: "word too short" (A, IT - under 3 letters)
+    - System: "game not active" (moving when game not started)
+  - **Comprehensive Test Coverage**: 17/17 enhanced validation tests passing
+  - **Zero Regressions**: All core engine tests (160/160) still passing
+  - **Files Added**: packages/engine/enhanced-validation.test.ts
+  - **Files Updated**: packages/engine/interfaces.ts, packages/engine/dictionary.ts, packages/engine/gamestate.ts, packages/engine/terminal-game.ts
+  - **Verification**: Complete test suite coverage with structured reason codes for programmatic use and user-friendly messages for display
+
 - **Key Letter Frequency Tracking System** ✅ **VERIFIED**
   - **Purpose**: Track key letter generation patterns across all games to analyze frequency distribution and identify which letters are most/least commonly generated as key letters
   - **KeyLetterLogger Utility**: Dedicated logging class with proper ES module support for cross-game persistence

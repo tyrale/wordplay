@@ -54,7 +54,8 @@ describe('Word Validation Service', () => {
       invalidWords.forEach(word => {
         const result = validateWordWithDependencies(word, wordData, { allowSlang: false });
         expect(result.isValid).toBe(false);
-        expect(result.reason).toBe('Word not found in dictionary');
+        expect(result.reason).toBe('NOT_IN_DICTIONARY');
+        expect(result.userMessage).toBe('not a word');
       });
     });
 
@@ -91,7 +92,8 @@ describe('Word Validation Service', () => {
     it('should reject slang words when not allowed', () => {
       const result = validateWordWithDependencies('BRUH', wordData, { allowSlang: false });
       expect(result.isValid).toBe(false);
-      expect(result.reason).toBe('Word not found in dictionary');
+      expect(result.reason).toBe('NOT_IN_DICTIONARY');
+      expect(result.userMessage).toBe('not a word');
     });
 
     it('should identify slang words correctly', () => {
@@ -105,13 +107,15 @@ describe('Word Validation Service', () => {
     it('should reject numbers for human players', () => {
       const result = validateWordWithDependencies('HELLO123', wordData, { isBot: false });
       expect(result.isValid).toBe(false);
-      expect(result.reason).toBe('Word must contain only alphabetic characters');
+      expect(result.reason).toBe('INVALID_CHARACTERS');
+      expect(result.userMessage).toBe('only letters allowed');
     });
 
     it('should reject symbols for human players', () => {
       const result = validateWordWithDependencies('HELLO!', wordData, { isBot: false });
       expect(result.isValid).toBe(false);
-      expect(result.reason).toBe('Word must contain only alphabetic characters');
+      expect(result.reason).toBe('INVALID_CHARACTERS');
+      expect(result.userMessage).toBe('only letters allowed');
     });
 
     it('should allow mixed characters for bots', () => {
@@ -122,7 +126,8 @@ describe('Word Validation Service', () => {
     it('should reject empty words', () => {
       const result = validateWordWithDependencies('', wordData);
       expect(result.isValid).toBe(false);
-      expect(result.reason).toBe('Word cannot be empty');
+      expect(result.reason).toBe('EMPTY_WORD');
+      expect(result.userMessage).toBe('word cannot be empty');
     });
 
     it('should handle whitespace properly', () => {
@@ -139,7 +144,8 @@ describe('Word Validation Service', () => {
       shortWords.forEach(word => {
         const result = validateWordWithDependencies(word, wordData, { checkLength: true });
         expect(result.isValid).toBe(false);
-        expect(result.reason).toBe('Word must be at least 3 letters long');
+        expect(result.reason).toBe('TOO_SHORT');
+        expect(result.userMessage).toBe('word too short');
       });
     });
 
@@ -179,7 +185,8 @@ describe('Word Validation Service', () => {
     it('should reject changes >1 letter difference', () => {
       const result = validateWordWithDependencies('ELEPHANT', wordData, { previousWord: 'CAT', checkLength: true });
       expect(result.isValid).toBe(false);
-      expect(result.reason).toBe('Word length can only change by 1 letter (was 3, now 8)');
+      expect(result.reason).toBe('LENGTH_CHANGE_TOO_LARGE');
+      expect(result.userMessage).toBe('can only change word length by 1 letter');
     });
   });
 

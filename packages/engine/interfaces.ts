@@ -13,11 +13,13 @@
 export type GameStatus = 'ready' | 'playing' | 'finished';
 
 export type ValidationResult = 
-  | { isValid: true; word: string; }
-  | { isValid: false; reason: 'NOT_IN_DICTIONARY'; word: string; }
-  | { isValid: false; reason: 'ALREADY_PLAYED'; word: string; }
-  | { isValid: false; reason: 'INVALID_ACTION'; word: string; }
-  | { isValid: false; reason: 'TOO_SHORT'; word: string; };
+  | { isValid: true; word: string; censored?: string; }
+  | { 
+    isValid: false; 
+    reason: 'NOT_IN_DICTIONARY' | 'ALREADY_PLAYED' | 'TOO_MANY_ADDS' | 'TOO_MANY_REMOVES' | 'INVALID_CHARACTERS' | 'TOO_SHORT' | 'EMPTY_WORD' | 'GAME_NOT_PLAYING' | 'NO_PLAYER' | 'LENGTH_CHANGE_TOO_LARGE';
+    word: string; 
+    userMessage: string;
+  };
 
 export interface ScoringResult {
   score: number;
@@ -410,27 +412,134 @@ export function createDefaultUtilityDependencies(
 /**
  * Create deterministic dependencies for testing
  * @param config - Test configuration
- * @returns Deterministic dependencies for tests
+ * @returns Complete test dependencies for game state manager
  */
 export function createTestDependencies(config: {
   timestamp?: number;
   randomSeed?: number;
   validWords?: string[];
-}): Partial<GameEngineDependencies> {
+}): any {
   const { timestamp = 1000, randomSeed = 0.5, validWords = ['CAT', 'CATS', 'DOG', 'DOGS'] } = config;
   
+  // Enhanced validation function that checks both dictionary and character validation
+  const validateWord = (word: string, options: ValidationOptions = {}): ValidationResult => {
+    const normalizedWord = word.trim().toUpperCase();
+    const { isBot = false, previousWord } = options;
+
+    // Bots can bypass all validation
+    if (isBot) {
+      return { isValid: true, word: normalizedWord };
+    }
+
+    // Empty word check
+    if (!normalizedWord) {
+      return {
+        isValid: false,
+        word: normalizedWord,
+        reason: 'EMPTY_WORD',
+        userMessage: 'word cannot be empty'
+      };
+    }
+
+    // Character validation - only letters allowed for humans
+    if (!/^[A-Z]+$/.test(normalizedWord)) {
+      return {
+        isValid: false,
+        word: normalizedWord,
+        reason: 'INVALID_CHARACTERS',
+        userMessage: 'only letters allowed'
+      };
+    }
+
+    // Length validation - minimum 3 letters
+    if (normalizedWord.length < 3) {
+      return {
+        isValid: false,
+        word: normalizedWord,
+        reason: 'TOO_SHORT',
+        userMessage: 'word too short'
+      };
+    }
+
+    // Length change validation is now handled by move action validation in gamestate.ts
+    // so we skip it here to avoid conflicts
+
+    // Dictionary check
+    const isValid = validWords.includes(normalizedWord);
+    return isValid 
+      ? { isValid: true, word: normalizedWord }
+      : { 
+        isValid: false, 
+        word: normalizedWord, 
+        reason: 'NOT_IN_DICTIONARY',
+        userMessage: 'not a word'
+      };
+  };
+
   return {
-    getTimestamp: () => timestamp,
-    random: () => randomSeed,
-    log: () => {}, // Silent in tests
-    validateWord: (word) => ({
-      isValid: validWords.includes(word.toUpperCase()),
-      word: word.toUpperCase(),
-      reason: validWords.includes(word.toUpperCase()) ? 'Valid word' : 'Not in test dictionary'
-    }),
-    isValidDictionaryWord: (word) => validWords.includes(word.toUpperCase()),
-    getRandomWordByLength: (length) => validWords.find(w => w.length === length) || null,
-    getWordCount: () => validWords.length
+    // Dictionary dependencies (flat structure)
+    validateWord,
+    getRandomWordByLength: (length: number) => validWords.find(w => w.length === length) || null,
+    
+    // Scoring dependencies (flat structure)
+    calculateScore: (fromWord: string, toWord: string, options: any = {}) => {
+      // Simple scoring for tests - return ScoringResult format from gamestate.ts
+      const { keyLetters = [] } = options;
+      let score = 1; // Base score for any move
+      
+      // Add key letter bonus
+      const keyLetterBonus = keyLetters.filter((letter: string) => 
+        toWord.toUpperCase().includes(letter.toUpperCase())
+      ).length;
+      
+      return {
+        totalScore: score + keyLetterBonus,
+        breakdown: {
+          addLetterPoints: fromWord.length < toWord.length ? 1 : 0,
+          removeLetterPoints: fromWord.length > toWord.length ? 1 : 0,
+          movePoints: fromWord.length === toWord.length ? 1 : 0,
+          keyLetterUsagePoints: keyLetterBonus
+        },
+        actions: ['test-action'],
+        keyLettersUsed: keyLetters.filter((letter: string) => 
+          toWord.toUpperCase().includes(letter.toUpperCase())
+        )
+      };
+    },
+    getScoreForMove: (fromWord: string, toWord: string, keyLetters: string[] = []) => {
+      return 1 + keyLetters.filter(letter => 
+        toWord.toUpperCase().includes(letter.toUpperCase())
+      ).length;
+    },
+    isValidMove: (fromWord: string, toWord: string) => {
+      // Simple move validation for tests
+      return Math.abs(fromWord.length - toWord.length) <= 1;
+    },
+
+    // Bot dependencies (flat structure)
+    generateBotMove: async (currentWord: string, options: any = {}) => {
+      // Simple bot that just adds an 'S' if possible
+      const candidate = currentWord + 'S';
+      if (validWords.includes(candidate)) {
+        return {
+          move: {
+            word: candidate,
+            score: 1,
+            confidence: 0.8,
+            reasoning: ['Adding S']
+          },
+          candidates: [],
+          processingTime: 10,
+          totalCandidatesGenerated: 1
+        };
+      }
+      return {
+        move: null,
+        candidates: [],
+        processingTime: 10,
+        totalCandidatesGenerated: 0
+      };
+    }
   };
 }
 

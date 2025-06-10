@@ -25,6 +25,7 @@ export interface ValidationResult {
   reason?: string;
   word: string;
   censored?: string;
+  userMessage?: string;
 }
 
 // Dependency interface for word data
@@ -177,8 +178,9 @@ export function validateWordWithDependencies(
   if (word == null) {
     return {
       isValid: false,
-      reason: 'Word cannot be empty',
-      word: ''
+      reason: 'EMPTY_WORD',
+      word: '',
+      userMessage: 'word cannot be empty'
     };
   }
 
@@ -196,8 +198,9 @@ export function validateWordWithDependencies(
   if (!normalizedWord) {
     return {
       isValid: false,
-      reason: 'Word cannot be empty',
-      word: normalizedWord
+      reason: 'EMPTY_WORD',
+      word: normalizedWord,
+      userMessage: 'word cannot be empty'
     };
   }
 
@@ -205,8 +208,9 @@ export function validateWordWithDependencies(
   if (!/^[A-Z]+$/.test(normalizedWord)) {
     return {
       isValid: false,
-      reason: 'Word must contain only alphabetic characters',
-      word: normalizedWord
+      reason: 'INVALID_CHARACTERS',
+      word: normalizedWord,
+      userMessage: 'only letters allowed'
     };
   }
 
@@ -214,8 +218,9 @@ export function validateWordWithDependencies(
   if (checkLength && normalizedWord.length < 3) {
     return {
       isValid: false,
-      reason: 'Word must be at least 3 letters long',
-      word: normalizedWord
+      reason: 'TOO_SHORT',
+      word: normalizedWord,
+      userMessage: 'word too short'
     };
   }
 
@@ -225,8 +230,9 @@ export function validateWordWithDependencies(
     if (lengthDiff > 1) {
       return {
         isValid: false,
-        reason: `Word length can only change by 1 letter (was ${previousWord.length}, now ${normalizedWord.length})`,
-        word: normalizedWord
+        reason: 'LENGTH_CHANGE_TOO_LARGE',
+        word: normalizedWord,
+        userMessage: `can only change word length by 1 letter`
       };
     }
   }
@@ -240,8 +246,9 @@ export function validateWordWithDependencies(
   if (!isInEnable && !(allowSlang && isSlang)) {
     return {
       isValid: false,
-      reason: 'Word not found in dictionary',
-      word: normalizedWord
+      reason: 'NOT_IN_DICTIONARY',
+      word: normalizedWord,
+      userMessage: 'not a word'
     };
   }
 
@@ -297,7 +304,8 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
     return {
       isValid: false,
       reason: 'Word cannot be empty',
-      word: ''
+      word: '',
+      userMessage: 'word cannot be empty'
     };
   }
 
@@ -316,7 +324,8 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
     return {
       isValid: false,
       reason: 'Word cannot be empty',
-      word: normalizedWord
+      word: normalizedWord,
+      userMessage: 'word cannot be empty'
     };
   }
 
@@ -325,7 +334,8 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
     return {
       isValid: false,
       reason: 'Word must contain only alphabetic characters',
-      word: normalizedWord
+      word: normalizedWord,
+      userMessage: 'only letters allowed'
     };
   }
 
@@ -334,7 +344,8 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
     return {
       isValid: false,
       reason: 'Word must be at least 3 letters long',
-      word: normalizedWord
+      word: normalizedWord,
+      userMessage: 'word too short'
     };
   }
 
@@ -345,7 +356,8 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
       return {
         isValid: false,
         reason: `Word length can only change by 1 letter (was ${previousWord.length}, now ${normalizedWord.length})`,
-        word: normalizedWord
+        word: normalizedWord,
+        userMessage: 'can only change word length by 1 letter'
       };
     }
   }
@@ -360,7 +372,8 @@ export function validateWord(word: string, options: ValidationOptions = {}): Val
     return {
       isValid: false,
       reason: 'Word not found in dictionary',
-      word: normalizedWord
+      word: normalizedWord,
+      userMessage: 'not a word'
     };
   }
 

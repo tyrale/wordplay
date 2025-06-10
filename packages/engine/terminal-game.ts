@@ -231,7 +231,9 @@ export class TerminalGame {
         console.log(`${colors.red}Failed to apply move${colors.reset}`);
       }
     } else {
-      console.log(`${colors.red}Invalid move: ${moveAttempt.reason}${colors.reset}`);
+      // Use the user-friendly message if available, otherwise fall back to the reason
+      const errorMessage = moveAttempt.validationResult.userMessage || moveAttempt.reason;
+      console.log(`${colors.red}Invalid word: ${errorMessage}${colors.reset}`);
     }
   }
 

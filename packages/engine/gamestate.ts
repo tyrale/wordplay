@@ -73,6 +73,7 @@ export interface ValidationResult {
   reason?: string;
   word: string;
   censored?: string;
+  userMessage?: string;
 }
 
 export interface ScoringResult {
@@ -368,7 +369,8 @@ export class LocalGameStateManagerWithDependencies {
         validationResult: {
           isValid: false,
           reason: 'No current player',
-          word: normalizedNewWord
+          word: normalizedNewWord,
+          userMessage: 'no player found'
         },
         scoringResult: null,
         canApply: false,
@@ -384,7 +386,8 @@ export class LocalGameStateManagerWithDependencies {
         validationResult: {
           isValid: false,
           reason: 'Game is not in playing state',
-          word: normalizedNewWord
+          word: normalizedNewWord,
+          userMessage: 'game not active'
         },
         scoringResult: null,
         canApply: false,
@@ -400,7 +403,8 @@ export class LocalGameStateManagerWithDependencies {
         validationResult: {
           isValid: false,
           reason: 'Word has already been used in this game',
-          word: normalizedNewWord
+          word: normalizedNewWord,
+          userMessage: 'was played'
         },
         scoringResult: null,
         canApply: false,
@@ -421,24 +425,25 @@ export class LocalGameStateManagerWithDependencies {
         validationResult,
         scoringResult: null,
         canApply: false,
-        reason: validationResult.reason
+        reason: validationResult.reason || validationResult.userMessage
       };
     }
 
-    // Additional move validation using dependency injection
-    const isMoveValid = this.dependencies.isValidMove(this.state.currentWord, normalizedNewWord);
-    if (!isMoveValid) {
+    // Enhanced move validation with specific error messages
+    const moveValidation = this.validateMoveActions(this.state.currentWord, normalizedNewWord);
+    if (!moveValidation.isValid) {
       return {
         newWord: normalizedNewWord,
         isValid: false,
         validationResult: {
           isValid: false,
-          reason: 'Invalid move pattern',
-          word: normalizedNewWord
+          reason: moveValidation.reason,
+          word: normalizedNewWord,
+          userMessage: moveValidation.userMessage
         },
         scoringResult: null,
         canApply: false,
-        reason: 'Move does not follow game rules'
+        reason: moveValidation.userMessage
       };
     }
 
@@ -456,6 +461,71 @@ export class LocalGameStateManagerWithDependencies {
       scoringResult,
       canApply: true
     };
+  }
+
+  /**
+   * Validate move actions (adds, removes) for specific error messages
+   */
+  private validateMoveActions(previousWord: string, currentWord: string): {
+    isValid: boolean;
+    reason?: string;
+    userMessage?: string;
+  } {
+    // Import analyzeWordChange for detailed analysis
+    // This is a simple analysis without importing the scoring module
+    const prevLetters = previousWord.split('');
+    const currLetters = currentWord.split('');
+    
+    // Count letter differences
+    const prevMap = new Map<string, number>();
+    const currMap = new Map<string, number>();
+    
+    prevLetters.forEach(letter => {
+      prevMap.set(letter, (prevMap.get(letter) || 0) + 1);
+    });
+    
+    currLetters.forEach(letter => {
+      currMap.set(letter, (currMap.get(letter) || 0) + 1);
+    });
+    
+    // Calculate added and removed letters
+    let addedCount = 0;
+    let removedCount = 0;
+    
+    // Count added letters (letters in current but not in previous, or more in current)
+    for (const [letter, currCount] of currMap) {
+      const prevCount = prevMap.get(letter) || 0;
+      if (currCount > prevCount) {
+        addedCount += (currCount - prevCount);
+      }
+    }
+    
+    // Count removed letters (letters in previous but not in current, or more in previous)
+    for (const [letter, prevCount] of prevMap) {
+      const currCount = currMap.get(letter) || 0;
+      if (prevCount > currCount) {
+        removedCount += (prevCount - currCount);
+      }
+    }
+    
+    // Validate game rules: max 1 add, max 1 remove per turn
+    if (addedCount > 1) {
+      return {
+        isValid: false,
+        reason: 'TOO_MANY_ADDS',
+        userMessage: 'too many adds'
+      };
+    }
+    
+    if (removedCount > 1) {
+      return {
+        isValid: false,
+        reason: 'TOO_MANY_REMOVES', 
+        userMessage: 'too many removes'
+      };
+    }
+    
+    return { isValid: true };
   }
 
   /**
