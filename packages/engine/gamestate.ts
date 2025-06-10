@@ -25,6 +25,8 @@
 // import { generateBotMove, type BotMove, type BotResult } from './bot';
 // import { getRandomWordByLength } from './dictionary';
 
+import { KeyLetterLogger } from './keyLetterLogger.js';
+
 // =============================================================================
 // DEPENDENCY INTERFACES
 // =============================================================================
@@ -920,6 +922,13 @@ export class LocalGameStateManagerWithDependencies {
   }
 
   /**
+   * Log key letter statistics to persistent file for cross-game analysis
+   */
+  private logKeyLetterStats(letter: string): void {
+    KeyLetterLogger.logKeyLetter(letter, this.state.gameStartTime, this.state.currentTurn);
+  }
+
+  /**
    * Generate a random key letter that hasn't been used before in this game
    * and is not already present in the current word
    */
@@ -949,6 +958,9 @@ export class LocalGameStateManagerWithDependencies {
       console.log('[DEBUG] generateRandomKeyLetter: Generated new key letter:', newKeyLetter);
       this.state.keyLetters.push(newKeyLetter);
       // Note: We'll track this letter as used when the next move is made
+      
+              // Log key letter statistics across all games
+        this.logKeyLetterStats(newKeyLetter);
       
       this.notifyListeners({
         type: 'letters_updated',
