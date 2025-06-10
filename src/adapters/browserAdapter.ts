@@ -174,12 +174,12 @@ const browserWordData = new BrowserWordData();
 const browserDictionaryDependencies: GameStateDictionaryDependencies = {
   validateWord: (word: string): ValidationResult => {
     if (word.length < 3) {
-      return { isValid: false, reason: 'TOO_SHORT' };
+      return { isValid: false, reason: 'TOO_SHORT', word };
     }
     if (browserWordData.hasWord(word)) {
-      return { isValid: true };
+      return { isValid: true, word };
     }
-    return { isValid: false, reason: 'NOT_IN_DICTIONARY' };
+    return { isValid: false, reason: 'NOT_IN_DICTIONARY', word };
   },
 
   getRandomWordByLength: (length: number): string | null => {
