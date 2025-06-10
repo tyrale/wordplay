@@ -939,3 +939,39 @@ private generateRandomKeyLetter(): void {
 - No breaking changes to bot logic or game engine architecture
 
 **Verification**: ✅ **VERIFIED** (Bot now respects locked letters and cannot remove them, all bot tests pass 35/35, all game state tests pass 9/9, new locked letter tests confirm compliance)
+
+## 📊 **NEW FEATURE**: Key Letter Frequency Tracking System
+
+**Purpose**: Track key letter generation patterns across all games to analyze frequency distribution and identify which letters are most/least commonly generated as key letters.
+
+**Implementation**:
+- ✅ **KeyLetterLogger Utility** (Created dedicated logging class with proper ES module support)
+- ✅ **Cross-Game Persistence** (Logs to `key-letter-stats.log` with timestamp, letter, game ID, and turn number)
+- ✅ **Comprehensive Analysis Script** (`analyze-key-letters.cjs` with frequency charts, percentages, and game tracking)
+- ✅ **Real-Time Logging** (Every key letter generation is automatically logged during gameplay)
+- ✅ **Statistical Analysis** (Shows most/least common letters, unused letters, and recent game history)
+
+**Features**:
+- **Frequency Charts**: Visual bar charts showing letter distribution
+- **Percentage Breakdown**: Precise percentage calculations for each letter
+- **Game-by-Game Tracking**: Individual game analysis with timestamps
+- **Unused Letter Detection**: Identifies letters that have never been generated as key letters
+- **Cross-Platform Support**: Works in Node.js environment (terminal games, tests)
+
+**Usage**:
+- Key letters are automatically logged during any game session
+- Run `node analyze-key-letters.cjs` to view comprehensive statistics
+- Log file: `key-letter-stats.log` (CSV format with headers)
+
+**Sample Output**:
+```
+📊 Key Letter Frequency Analysis
+📈 Total Key Letters Generated: 10
+🎮 Games Analyzed: 10
+🔤 Letter Frequency (Most to Least Common):
+   P   |    2  |   20.0%   | ████████████████████
+   M   |    2  |   20.0%   | ████████████████████
+   Q   |    1  |   10.0%   | ██████████░░░░░░░░░░
+```
+
+**Verification**: ✅ **VERIFIED** (System successfully logs key letter generation across multiple games and provides detailed frequency analysis. Tested with 10+ games showing proper data collection and analysis.)

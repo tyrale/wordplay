@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- **Key Letter Frequency Tracking System** ✅ **VERIFIED**
+  - **Purpose**: Track key letter generation patterns across all games to analyze frequency distribution and identify which letters are most/least commonly generated as key letters
+  - **KeyLetterLogger Utility**: Dedicated logging class with proper ES module support for cross-game persistence
+  - **Cross-Game Data Collection**: Logs to `key-letter-stats.log` with timestamp, letter, game ID, and turn number for comprehensive tracking
+  - **Comprehensive Analysis Script**: `analyze-key-letters.cjs` provides frequency charts, percentage breakdowns, and game-by-game tracking
+  - **Real-Time Logging**: Every key letter generation is automatically logged during gameplay across all platforms
+  - **Statistical Analysis Features**:
+    - Visual bar charts showing letter distribution patterns
+    - Precise percentage calculations for each letter frequency
+    - Game-by-game tracking with individual game analysis and timestamps
+    - Unused letter detection to identify letters never generated as key letters
+    - Recent games history with chronological tracking
+  - **Cross-Platform Support**: Works in Node.js environment (terminal games, tests) with automatic platform detection
+  - **Usage**: Key letters automatically logged during any game session, run `node analyze-key-letters.cjs` for comprehensive statistics
+  - **Data Format**: CSV format log file with headers for easy data analysis and external tool integration
+  - **Verification**: System successfully logs key letter generation across multiple games and provides detailed frequency analysis (tested with 10+ games)
+  - **Files Added**: packages/engine/keyLetterLogger.ts, analyze-key-letters.cjs
+  - **Integration**: Seamlessly integrated into game state manager with zero performance impact
+
 - **Architectural Foundation**: Complete dependency injection architecture with comprehensive interfaces
 - **Documentation**: ARCHITECTURE.md, ADR-001-DEPENDENCY-INJECTION.md, updated dev-plan.md with mandatory rules
 - **Interface Contracts**: packages/engine/interfaces.ts with complete dependency contracts for platform adapters
