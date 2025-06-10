@@ -920,3 +920,22 @@ private generateRandomKeyLetter(): void {
 - ✅ **Smooth Transitions** (Uses requestAnimationFrame for smooth updates during scroll/resize)
 
 **Verification**: Implementation complete with comprehensive event handling for mobile browsers. Requires visual confirmation on mobile devices.
+
+## 🐛 **CRITICAL BOT FIX APPLIED**: Bot Locked Letter Rule Compliance
+
+**Issue Identified**: The bot was not respecting locked letter rules and could remove key letters that should be locked for the next player, violating core game rules.
+
+**Root Cause**: In the `makeBotMove()` function in `gamestate.ts`, the bot was only receiving `keyLetters` but not `lockedLetters` or `lockedKeyLetters`, allowing it to generate moves that remove protected letters.
+
+**Solution Implemented**:
+- ✅ **Fixed Bot Move Generation** (Updated `makeBotMove()` to pass both `lockedLetters` and `lockedKeyLetters` to the bot)
+- ✅ **Combined Locked Letter Constraints** (Created `allLockedLetters` array combining regular and key locked letters)
+- ✅ **Enhanced Debug Logging** (Added comprehensive logging to track locked letter state during bot moves)
+- ✅ **Comprehensive Test Coverage** (Added tests for single and multiple locked letter scenarios)
+
+**Technical Details**:
+- Bot's `generateRemoveMoves()` and `generateSubstituteMoves()` already supported `protectedLetters` parameter
+- Fix was ensuring the game state manager passes the correct locked letters to the bot
+- No breaking changes to bot logic or game engine architecture
+
+**Verification**: ✅ **VERIFIED** (Bot now respects locked letters and cannot remove them, all bot tests pass 35/35, all game state tests pass 9/9, new locked letter tests confirm compliance)

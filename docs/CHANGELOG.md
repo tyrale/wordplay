@@ -41,6 +41,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **CRITICAL: Bot Locked Letter Rule Compliance** ✅ **VERIFIED**
+  - **Issue**: Bot was not respecting locked letter rules and could remove key letters that should be locked for the next player, violating core game rules
+  - **Root Cause**: In `makeBotMove()` function, bot was only receiving `keyLetters` but not `lockedLetters` or `lockedKeyLetters`, allowing it to generate moves that remove protected letters
+  - **Solution**: Updated `makeBotMove()` to pass both `lockedLetters` and `lockedKeyLetters` to bot as combined `allLockedLetters` array
+  - **Technical Details**: Bot's `generateRemoveMoves()` and `generateSubstituteMoves()` already supported `protectedLetters` parameter, fix was ensuring game state manager passes correct locked letters
+  - **Enhanced Debugging**: Added comprehensive logging to track locked letter state during bot moves
+  - **Test Coverage**: Added tests for single and multiple locked letter scenarios to prevent regression
+  - **Verification**: Bot now respects locked letters and cannot remove them (35/35 bot tests pass, 9/9 game state tests pass)
+  - **Architecture**: No breaking changes to bot logic or game engine, maintains fair gameplay where bot follows same rules as human players
+  - **Files Updated**: packages/engine/gamestate.ts, packages/engine/bot.test.ts
+  - **Commit**: ShipHip: Fix bot locked letter rule violation
+
 - **UI Fixes: Score Display, Drag Functionality, Scrolling Control, Debug Dialog** ✅ **VERIFIED**
   - **Issue**: Multiple UI issues affecting user experience and functionality
     1. Double "X" symbols showing in score line (ScoreDisplay + SubmitButton both displaying invalid state)
