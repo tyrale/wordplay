@@ -7,6 +7,9 @@ export { defaultTheme, darkTheme, greenTheme, availableThemes } from '../types/t
 export { GridCell } from './ui/GridCell';
 export type { GridCellProps, GridCellState, GridCellType } from './ui/GridCell';
 
+export { Menu } from './ui/Menu';
+export { MenuButton } from './ui/MenuButton';
+
 // Game Components
 export { AlphabetGrid } from './game/AlphabetGrid';
 export type { AlphabetGridProps, LetterState } from './game/AlphabetGrid';

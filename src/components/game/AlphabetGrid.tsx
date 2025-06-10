@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { GridCell } from '../ui/GridCell';
+import { MenuButton } from '../ui/MenuButton';
 import type { GridCellState } from '../ui/GridCell';
 import './AlphabetGrid.css';
 
@@ -16,6 +17,7 @@ export interface AlphabetGridProps {
   onLetterDragEnd?: () => void;
   disabled?: boolean;
   enableDrag?: boolean;
+  isMenuOpen?: boolean;
 }
 
 // Default alphabet layout
@@ -37,7 +39,8 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   onLetterDragStart,
   onLetterDragEnd,
   disabled = false,
-  enableDrag = true
+  enableDrag = true,
+  isMenuOpen = false
 }) => {
   // Create a map for quick lookup of letter states
   const stateMap = letterStates.reduce((acc, { letter, state }) => {
@@ -174,6 +177,18 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
             const isAction = ACTION_BUTTONS.includes(content);
             const state = stateMap[content] || 'normal';
             const canDrag = enableDrag && !disabled && !isAction && state !== 'disabled';
+            
+            // Special handling for menu button
+            if (content === '≡') {
+              return (
+                <div key={content} className="alphabet-grid__cell alphabet-grid__cell--menu">
+                  <MenuButton
+                    isMenuOpen={isMenuOpen}
+                    onClick={() => handleCellClick(content)}
+                  />
+                </div>
+              );
+            }
             
             return (
               <GridCell

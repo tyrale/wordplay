@@ -6,6 +6,7 @@ import { WordTrail } from './WordTrail';
 import { ScoreDisplay } from './ScoreDisplay';
 import { WordBuilder } from './WordBuilder';
 import { DebugDialog } from './DebugDialog';
+import { Menu } from '../ui/Menu';
 
 
 // Temporary placeholder types until dependency injection implemented - TODO: Replace in Step 3
@@ -79,6 +80,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const [showGameEnd, setShowGameEnd] = useState(false);
   const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [showValidationError, setShowValidationError] = useState(false);
 
@@ -379,22 +381,17 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, []);
 
   const handleSettings = useCallback(() => {
-    // Show settings modal or navigate to settings
+    setIsMenuOpen(true);
+  }, []);
+
+  const handleMenuClose = useCallback(() => {
+    setIsMenuOpen(false);
   }, []);
 
 
 
   return (
     <div className="interactive-game">
-      {/* Debug button in top left */}
-      <button
-        className="interactive-game__debug-btn"
-        onClick={() => setIsDebugDialogOpen(true)}
-        aria-label="Open debug information"
-        type="button"
-      >
-        🐛
-      </button>
 
 
 
@@ -504,6 +501,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 onLetterDragEnd={handleLetterDragEnd}
                 disabled={!isPlayerTurn || isProcessingMove}
                 enableDrag={true} // Enable drag for mobile and desktop
+                isMenuOpen={isMenuOpen}
               />
             </div>
           </div>
@@ -526,6 +524,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         isProcessingMove={isProcessingMove}
       />
 
+      {/* Menu */}
+      <Menu
+        isOpen={isMenuOpen}
+        onClose={handleMenuClose}
+        onDebugOpen={() => setIsDebugDialogOpen(true)}
+      />
 
     </div>
   );

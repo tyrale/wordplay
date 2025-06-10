@@ -12,6 +12,27 @@
   justify-content: center;
 }
 
+.alphabet-grid__cell {
+  /* Basic cell styling for custom cells */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alphabet-grid__cell--menu {
+  /* Menu button cell - match GridCell dimensions */
+  width: 40px;
+  height: 40px;
+  background: var(--theme-surface, #f1f5f9);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: all 0.2s ease-in-out;
+}
+
+.alphabet-grid__cell--menu:hover {
+  background: var(--theme-surface-hover, #e2e8f0);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .alphabet-grid {
