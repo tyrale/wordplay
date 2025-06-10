@@ -457,9 +457,29 @@ export class LocalGameStateManagerWithDependencies {
   }
 
   /**
+   * Validate a move (convenience method for tests)
+   */
+  public validateMove(newWord: string): ValidationResult {
+    const moveAttempt = this.attemptMove(newWord);
+    return moveAttempt.validationResult;
+  }
+
+  /**
+   * Apply a move directly from a word (convenience method for tests)
+   */
+  public applyMove(wordOrAttempt: string | MoveAttempt): boolean {
+    if (typeof wordOrAttempt === 'string') {
+      const moveAttempt = this.attemptMove(wordOrAttempt);
+      return this.applyMoveAttempt(moveAttempt);
+    } else {
+      return this.applyMoveAttempt(wordOrAttempt);
+    }
+  }
+
+  /**
    * Apply a move attempt to the game state
    */
-  public applyMove(moveAttempt: MoveAttempt): boolean {
+  private applyMoveAttempt(moveAttempt: MoveAttempt): boolean {
     console.log('[DEBUG] applyMove: Called with word:', moveAttempt.newWord);
     
     if (!moveAttempt.canApply || !moveAttempt.scoringResult) {
@@ -607,9 +627,9 @@ export class LocalGameStateManagerWithDependencies {
       const moveAttempt = this.attemptMove(botResult.move.word);
       
       if (moveAttempt.canApply) {
-        console.log('[DEBUG] Bot move can be applied, calling applyMove');
-        const success = this.applyMove(moveAttempt);
-        console.log('[DEBUG] applyMove result:', success);
+        console.log('[DEBUG] Bot move can be applied, calling applyMoveAttempt');
+        const success = this.applyMoveAttempt(moveAttempt);
+        console.log('[DEBUG] applyMoveAttempt result:', success);
         if (success) {
           console.log('[DEBUG] Bot move successfully applied, returning botResult.move');
           return botResult.move;
@@ -786,9 +806,10 @@ export class LocalGameStateManagerWithDependencies {
   /**
    * Reset game to initial state
    */
-  public resetGame(): void {
+  public resetGame(newConfig?: GameConfig): void {
     console.log('[DEBUG] resetGame: Called');
-    this.state = this.initializeGameState(this.state.config);
+    const configToUse = newConfig ? { ...this.state.config, ...newConfig } : this.state.config;
+    this.state = this.initializeGameState(configToUse);
     this.botMoveInProgress = false; // Reset bot move flag
 
     this.notifyListeners({

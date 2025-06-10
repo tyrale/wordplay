@@ -258,7 +258,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
       if (!gameManager || !isInitialized) return;
       
       try {
-        await gameManager.startGame();
+        gameManager.startGame();
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to start game';
         setLastError(errorMsg);

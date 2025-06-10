@@ -228,21 +228,22 @@ const testWordData = new TestWordData();
  */
 const testDictionaryDependencies: GameStateDictionaryDependencies = {
   validateWord: (word: string): ValidationResult => {
-    if (word.length < 3) {
-      return { valid: false, reason: 'TOO_SHORT' };
+    const normalizedWord = word.trim().toUpperCase();
+    if (normalizedWord.length < 3) {
+      return { isValid: false, reason: 'TOO_SHORT', word: normalizedWord };
     }
-    if (testWordData.hasWord(word)) {
-      return { valid: true };
+    if (testWordData.hasWord(normalizedWord)) {
+      return { isValid: true, word: normalizedWord };
     }
-    return { valid: false, reason: 'NOT_IN_DICTIONARY' };
+    return { isValid: false, reason: 'NOT_IN_DICTIONARY', word: normalizedWord };
   },
 
-  getRandomWordByLength: (length: number): string | undefined => {
+  getRandomWordByLength: (length: number): string | null => {
     const words = Array.from(testWordData.enableWords).filter(w => w.length === length);
     if (words.length > 0) {
       return words[Math.floor(Math.random() * words.length)];
     }
-    return undefined;
+    return null;
   }
 };
 
@@ -454,21 +455,22 @@ export function createCustomTestDependencies(words: string[]): GameStateDependen
 
   const customDictionaryDependencies: GameStateDictionaryDependencies = {
     validateWord: (word: string): ValidationResult => {
-      if (word.length < 3) {
-        return { valid: false, reason: 'TOO_SHORT' };
+      const normalizedWord = word.trim().toUpperCase();
+      if (normalizedWord.length < 3) {
+        return { isValid: false, reason: 'TOO_SHORT', word: normalizedWord };
       }
-      if (customWordData.hasWord(word)) {
-        return { valid: true };
+      if (customWordData.hasWord(normalizedWord)) {
+        return { isValid: true, word: normalizedWord };
       }
-      return { valid: false, reason: 'NOT_IN_DICTIONARY' };
+      return { isValid: false, reason: 'NOT_IN_DICTIONARY', word: normalizedWord };
     },
 
-    getRandomWordByLength: (length: number): string | undefined => {
+    getRandomWordByLength: (length: number): string | null => {
       const words = Array.from(customWordData.enableWords).filter(w => w.length === length);
       if (words.length > 0) {
         return words[Math.floor(Math.random() * words.length)];
       }
-      return undefined;
+      return null;
     }
   };
 

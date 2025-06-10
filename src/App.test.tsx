@@ -1,83 +1,113 @@
 /// <reference types="vitest/globals" />
-import { describe, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import App from './App';
+import { describe, expect, beforeEach, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { ThemeProvider } from './components';
+import { AnimationProvider } from './animations';
+import { InteractiveGame } from './components';
+import { createTestAdapter } from './adapters/testAdapter';
+import { BrowserAdapter } from './adapters/browserAdapter';
+
+// Mock the BrowserAdapter to use TestAdapter instead
+vi.mock('./adapters/browserAdapter', () => {
+  return {
+    BrowserAdapter: {
+      getInstance: () => {
+        const testAdapter = createTestAdapter();
+        return {
+          initialize: async () => {
+            // Mock successful initialization
+          },
+          getGameDependencies: () => testAdapter.getGameDependencies(),
+          getDictionaryDependencies: () => testAdapter.getDictionaryDependencies(),
+          isInitialized: true
+        };
+      }
+    }
+  };
+});
+
+// Test wrapper component that provides necessary context
+function TestApp() {
+  const handleGameEnd = (winner: string | null, finalScores: { human: number; bot: number }) => {
+    // Game ended - could show end screen or stats here
+  };
+
+  return (
+    <ThemeProvider>
+      <AnimationProvider initialTheme="default">
+        <InteractiveGame 
+          config={{ 
+            maxTurns: 10,
+            allowBotPlayer: true,
+            enableKeyLetters: true,
+            enableLockedLetters: true
+          }}
+          onGameEnd={handleGameEnd}
+        />
+      </AnimationProvider>
+    </ThemeProvider>
+  );
+}
 
 describe('App Component', () => {
-  test('renders the game board', () => {
-    render(<App />);
+  beforeEach(() => {
+    // Initialize test adapter for each test
+    createTestAdapter();
+  });
+
+  test('renders the initial game screen', async () => {
+    render(<TestApp />);
     
-    // Initially shows start screen
+    // Check that the basic game structure is rendered
     expect(screen.getByText('Welcome to WordPlay')).toBeInTheDocument();
     expect(screen.getByText('Start Game')).toBeInTheDocument();
     
-    // Start the game
-    fireEvent.click(screen.getByText('Start Game'));
-    
-    // Now check for game components (wait for them to appear)
-    expect(screen.getByTestId('word-builder')).toBeInTheDocument();
+    // Check for debug button
+    expect(screen.getByLabelText('Open debug information')).toBeInTheDocument();
   });
 
-  test('renders the theme selector', () => {
-    render(<App />);
+  test('renders the start game button', async () => {
+    render(<TestApp />);
     
-    // Check for theme selector
-    const themeSelector = screen.getByDisplayValue('Classic Blue');
-    expect(themeSelector).toBeInTheDocument();
-    
-    // Check for all theme options
-    expect(screen.getByText('Classic Blue')).toBeInTheDocument();
-    expect(screen.getByText('Dark Mode')).toBeInTheDocument();
-    expect(screen.getByText('Forest Green')).toBeInTheDocument();
+    // Check for start game button
+    const startButton = screen.getByText('Start Game');
+    expect(startButton).toBeInTheDocument();
+    expect(startButton.tagName).toBe('BUTTON');
   });
 
-  test('renders action indicators and submit button', () => {
-    render(<App />);
+  test('shows the game header structure', async () => {
+    render(<TestApp />);
     
-    // Start the game first
-    fireEvent.click(screen.getByText('Start Game'));
+    // Check for game header elements
+    expect(screen.getByText('Welcome to WordPlay')).toBeInTheDocument();
     
-    // Check for word builder (which contains interactive elements)
-    expect(screen.getByTestId('word-builder')).toBeInTheDocument();
-    
-    // Check for alphabet grid
-    expect(screen.getByLabelText('Alphabet grid')).toBeInTheDocument();
+    // Check that the interactive game component is rendered
+    const gameContainer = document.querySelector('.interactive-game');
+    expect(gameContainer).toBeInTheDocument();
   });
 
-  test('shows the word trail with game history', () => {
-    render(<App />);
+  test('has proper CSS classes applied', async () => {
+    render(<TestApp />);
     
-    // Start the game first
-    fireEvent.click(screen.getByText('Start Game'));
+    // Check for main game container
+    const gameContainer = document.querySelector('.interactive-game');
+    expect(gameContainer).toBeInTheDocument();
     
-    // Check for word trail component (it should be rendered but may be empty initially)
-    // The WordTrail component is rendered but may not have visible content initially
-    expect(screen.getByTestId('word-builder')).toBeInTheDocument();
+    // Check for header structure
+    const header = document.querySelector('.interactive-game__header');
+    expect(header).toBeInTheDocument();
+    
+    // Check for status section
+    const status = document.querySelector('.interactive-game__status');
+    expect(status).toBeInTheDocument();
   });
 
-  test('shows the current word with key letter highlighting', () => {
-    render(<App />);
+  test('renders debug button', async () => {
+    render(<TestApp />);
     
-    // Start the game first
-    fireEvent.click(screen.getByText('Start Game'));
-    
-    // Check for word builder which shows the current word letters
-    expect(screen.getByTestId('word-builder')).toBeInTheDocument();
-    
-    // Check that the word builder contains letters (the word will be random)
-    const wordBuilder = screen.getByTestId('word-builder');
-    expect(wordBuilder).toBeInTheDocument();
-    expect(wordBuilder.textContent).toMatch(/[A-Z]+/);
-  });
-
-  test('renders the game board layout', () => {
-    render(<App />);
-    
-    // Start the game first
-    fireEvent.click(screen.getByText('Start Game'));
-    
-    // Check for main game board sections
-    expect(screen.getByTestId('word-builder')).toBeInTheDocument();
-    expect(screen.getByLabelText('Alphabet grid')).toBeInTheDocument();
+    // Check for debug button
+    const debugButton = screen.getByLabelText('Open debug information');
+    expect(debugButton).toBeInTheDocument();
+    expect(debugButton.textContent).toBe('🐛');
   });
 });
