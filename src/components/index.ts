@@ -8,7 +8,6 @@ export { GridCell } from './ui/GridCell';
 export type { GridCellProps, GridCellState, GridCellType } from './ui/GridCell';
 
 export { Menu } from './ui/Menu';
-export { MenuButton } from './ui/MenuButton';
 
 // Game Components
 export { AlphabetGrid } from './game/AlphabetGrid';

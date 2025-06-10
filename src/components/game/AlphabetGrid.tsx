@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
 import { GridCell } from '../ui/GridCell';
-import { MenuButton } from '../ui/MenuButton';
 import type { GridCellState } from '../ui/GridCell';
 import './AlphabetGrid.css';
 
@@ -178,14 +177,21 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
             const state = stateMap[content] || 'normal';
             const canDrag = enableDrag && !disabled && !isAction && state !== 'disabled';
             
-            // Special handling for menu button
+            // Special handling for menu button - add close icon overlay when menu is open
             if (content === '≡') {
               return (
                 <div key={content} className="alphabet-grid__cell alphabet-grid__cell--menu">
-                  <MenuButton
-                    isMenuOpen={isMenuOpen}
+                  <GridCell
+                    content={content}
+                    state={state}
+                    type="action"
                     onClick={() => handleCellClick(content)}
+                    disabled={disabled}
+                    aria-label={getDragAriaLabel(content, state)}
                   />
+                  {isMenuOpen && (
+                    <div className="alphabet-grid__close-icon">×</div>
+                  )}
                 </div>
               );
             }

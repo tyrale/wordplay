@@ -20,17 +20,49 @@
 }
 
 .alphabet-grid__cell--menu {
-  /* Menu button cell - match GridCell dimensions */
-  width: 40px;
-  height: 40px;
+  /* Menu button cell - positioned relative for close icon overlay */
+  position: relative;
+}
+
+.alphabet-grid__close-icon {
+  /* Close icon positioned over the menu cell */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--theme-surface, #f1f5f9);
   border: 1px solid transparent;
   border-radius: 8px;
-  transition: all 0.2s ease-in-out;
+  
+  /* Typography */
+  font-family: var(--theme-font-family, 'Inter, system-ui, sans-serif');
+  font-weight: var(--theme-font-weight, 900);
+  font-size: var(--theme-font-size-md, 16px);
+  color: var(--theme-text);
+  
+  /* Animation */
+  opacity: 0;
+  transform: scale(0.8);
+  animation: closeIconAppear 0.3s ease-out forwards;
+  
+  /* Interaction */
+  cursor: pointer;
+  pointer-events: all;
 }
 
-.alphabet-grid__cell--menu:hover {
+.alphabet-grid__close-icon:hover {
   background: var(--theme-surface-hover, #e2e8f0);
+}
+
+@keyframes closeIconAppear {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Responsive adjustments */
