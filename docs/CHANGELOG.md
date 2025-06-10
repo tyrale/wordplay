@@ -75,6 +75,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Interface Contracts**: packages/engine/interfaces.ts with complete dependency contracts for platform adapters
 - **Deviation Prevention**: Documented forbidden patterns and enforcement rules to prevent future architectural issues
 
+- **Web App Enhanced Validation Error Messages** ✅ **VERIFIED**
+  - **Purpose**: Integrate enhanced validation system with web app UI to provide user-friendly error messages when invalid moves are attempted
+  - **Requirements Delivered**:
+    - Enhanced ScoreDisplay component to show validation error messages when invalid X is clicked
+    - Interactive error flow: first click shows error message, second click activates pass mode
+    - Cross-platform consistency with terminal game error messages
+    - Support for all validation error types (not a word, was played, too many adds, etc.)
+  - **Technical Implementation**:
+    - Extended ScoreDisplay component with validationError and showValidationError props
+    - Added CSS styling for error state with smaller font and centered display
+    - Enhanced InteractiveGame handleSubmit logic for error display state management
+    - Integrated with existing enhanced validation system userMessage field
+  - **User Experience**: Clear feedback when moves fail with descriptive error messages in scoring row
+  - **Verification**: Web app now provides same descriptive validation errors as terminal game
+
 ### Removed
 - **🧹 CLEANUP**: All browser-specific engine implementations eliminated
   - Deleted `src/utils/browserDictionary.ts` (3.8KB, 120 lines)
