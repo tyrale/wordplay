@@ -31,12 +31,13 @@
   left: 0;
   width: 100%;
   height: 100%;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   background: var(--theme-surface, #f1f5f9);
   border: 1px solid transparent;
   border-radius: 8px;
+  z-index: 10;
   
   /* Typography */
   font-family: var(--theme-font-family, 'Inter, system-ui, sans-serif');
@@ -45,9 +46,8 @@
   color: var(--theme-text);
   
   /* Animation */
-  opacity: 0;
-  transform: scale(0.8);
-  animation: closeIconAppear 0.3s ease-out forwards;
+  opacity: 1 !important;
+  transform: scale(1) !important;
   
   /* Interaction */
   cursor: pointer;
