@@ -202,6 +202,29 @@ export class TerminalGame {
       return;
     }
     
+    if (command === 'DEBUG') {
+      console.log(`${colors.yellow}[DEBUG] Testing LOCK and CLOCK validation...${colors.reset}`);
+      
+      // Test the exact words from the bug report
+      const testWords = ['LOCK', 'CLOCK'];
+      const currentState = this.gameManager.getState();
+      
+      console.log(`${colors.yellow}[DEBUG] Current state:${colors.reset}`);
+      console.log(`${colors.yellow}[DEBUG] - Current word: ${currentState.currentWord}${colors.reset}`);
+      console.log(`${colors.yellow}[DEBUG] - All used words: [${currentState.usedWords.join(', ')}]${colors.reset}`);
+      console.log(`${colors.yellow}[DEBUG] - Recent words (last 5): [${currentState.usedWords.slice(-5).join(', ')}]${colors.reset}`);
+      
+      testWords.forEach(word => {
+        console.log(`${colors.yellow}[DEBUG] Testing: ${word}${colors.reset}`);
+        const attempt = this.gameManager.attemptMove(word);
+        console.log(`${colors.yellow}[DEBUG] - Valid: ${attempt.isValid}${colors.reset}`);
+        console.log(`${colors.yellow}[DEBUG] - Reason: ${attempt.validationResult.reason}${colors.reset}`);
+        console.log(`${colors.yellow}[DEBUG] - User message: ${attempt.validationResult.userMessage}${colors.reset}`);
+        console.log(`${colors.yellow}[DEBUG] - In used words: ${currentState.usedWords.includes(word)}${colors.reset}`);
+      });
+      return;
+    }
+    
     if (command === 'PASS') {
       const success = this.gameManager.passTurn();
       if (success) {
@@ -220,6 +243,17 @@ export class TerminalGame {
     
     const moveAttempt = this.gameManager.attemptMove(command);
     
+    // DEBUG: Add detailed validation debugging for the reported issue
+    if (!moveAttempt.isValid) {
+      const currentState = this.gameManager.getState();
+      console.log(`${colors.yellow}[DEBUG] Validation failed for: ${command}${colors.reset}`);
+      console.log(`${colors.yellow}[DEBUG] Current word: ${currentState.currentWord}${colors.reset}`);
+      console.log(`${colors.yellow}[DEBUG] All used words: [${currentState.usedWords.join(', ')}]${colors.reset}`);
+      console.log(`${colors.yellow}[DEBUG] Is '${command}' in used words? ${currentState.usedWords.includes(command)}${colors.reset}`);
+      console.log(`${colors.yellow}[DEBUG] Validation reason: ${moveAttempt.validationResult.reason}${colors.reset}`);
+      console.log(`${colors.yellow}[DEBUG] User message: ${moveAttempt.validationResult.userMessage}${colors.reset}`);
+    }
+    
     if (moveAttempt.canApply) {
       const success = this.gameManager.applyMove(moveAttempt);
       if (success) {
@@ -233,7 +267,20 @@ export class TerminalGame {
     } else {
       // Use the user-friendly message if available, otherwise fall back to the reason
       const errorMessage = moveAttempt.validationResult.userMessage || moveAttempt.reason;
-      console.log(`${colors.red}Invalid word: ${errorMessage}${colors.reset}`);
+      
+      // Special handling for "was played" errors to make them more helpful
+      if (moveAttempt.validationResult.userMessage === 'was played') {
+        const currentState = this.gameManager.getState();
+        const hiddenCount = Math.max(0, currentState.usedWords.length - 5);
+        if (hiddenCount > 0) {
+          console.log(`${colors.red}Invalid word: was played${colors.reset}`);
+          console.log(`${colors.yellow}💡 "${command}" was used earlier (${hiddenCount} words not shown). Use 'state' to see all words.${colors.reset}`);
+        } else {
+          console.log(`${colors.red}Invalid word: ${errorMessage}${colors.reset}`);
+        }
+      } else {
+        console.log(`${colors.red}Invalid word: ${errorMessage}${colors.reset}`);
+      }
     }
   }
 
@@ -268,7 +315,14 @@ export class TerminalGame {
     // Show recently used words
     if (state.usedWords.length > 1) {
       const recentWords = state.usedWords.slice(-5).join(' → ');
-      console.log(`${theme.light}Recent words: ${recentWords}${colors.reset}`);
+      const hiddenCount = Math.max(0, state.usedWords.length - 5);
+      
+      if (hiddenCount > 0) {
+        console.log(`${theme.light}Recent words (+${hiddenCount} more): ${recentWords}${colors.reset}`);
+        console.log(`${theme.accent}💡 Use 'state' command to see all ${state.usedWords.length} used words${colors.reset}`);
+      } else {
+        console.log(`${theme.light}Recent words: ${recentWords}${colors.reset}`);
+      }
     }
     
     // Player scores
@@ -479,6 +533,7 @@ export class TerminalGame {
     console.log(colors.bright + 'COMMANDS:' + colors.reset);
     console.log('• [word]        - Make a move with the word');
     console.log('• state         - Show detailed game state');
+    console.log('• debug         - Test LOCK and CLOCK validation (for bug investigation)');
     console.log('• pass          - Skip your turn (clears locked letters)');
     console.log('• help          - Show this help message');
     console.log('• quit          - Exit the game');
