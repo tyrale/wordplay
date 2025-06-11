@@ -1,15 +1,41 @@
 /* Menu Component Styles */
 
+/* Keyframe animations */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+}
+
 .menu-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: white;
+  background-color: var(--theme-background);
   opacity: 1;
   z-index: 10000;
   overflow: hidden;
+}
+
+.menu-overlay--closing {
+  animation: slideOutToRight 0.3s ease-in forwards;
 }
 
 .menu-container {
@@ -17,18 +43,80 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  overflow: hidden;
 }
 
 .menu-content {
   width: 100%;
-  min-height: 100%;
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   padding: var(--spacing-md, 20px);
+  padding-bottom: var(--spacing-lg, 32px);
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.menu-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.menu-footer {
+  position: fixed;
+  bottom: var(--spacing-md, 20px);
+  right: var(--spacing-md, 20px);
+  z-index: 10001;
+  pointer-events: none;
+}
+
+.menu-close-button {
+  background: none;
+  border: none;
+  padding: var(--spacing-sm, 8px);
+  cursor: pointer;
+  pointer-events: all;
+  
+  /* Typography - Same size as tier 1 items */
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 32px;
+  color: var(--theme-text);
+  line-height: 1;
+  
+  /* Animation - slide in from right */
+  transform: translateX(80px);
+  opacity: 0;
+  animation: slideInFromRight 0.3s ease-out 0.2s forwards;
+  
+  /* Interaction */
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  
+  /* Touch target */
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-close-button:active {
+  opacity: 0.5;
+}
+
+.menu-close-button--closing {
+  animation: slideOutToRight 0.2s ease-in forwards;
+}
+
+.menu-spacer {
+  flex: 0.3;
+  min-height: 0;
 }
 
 .menu-list {
@@ -37,6 +125,9 @@
   align-items: flex-end;
   gap: var(--spacing-sm, 8px);
   width: 100%;
+  flex-shrink: 0;
+  margin-top: 60px;
+  padding-bottom: 80px; /* Added padding to allow scrolling past close button */
 }
 
 .menu-tier1-section {
@@ -61,6 +152,11 @@
   font-size: 24px;
   color: var(--theme-text);
   
+  /* Animation - slide in from right */
+  transform: translateX(100px);
+  opacity: 0;
+  animation: slideInFromRight 0.4s ease-out forwards;
+  
   /* Interaction */
   transition: opacity 0.2s ease;
   -webkit-tap-highlight-color: transparent;
@@ -71,38 +167,30 @@
   opacity: 0.5;
 }
 
+.menu-tier1-item--closing {
+  animation: slideOutToRight 0.3s ease-in forwards;
+}
+
 .menu-tier2-list {
-  display: grid;
-  grid-template-rows: 0fr;
-  align-items: flex-end;
+  display: none;
   margin-top: var(--spacing-xs, 6px);
   padding-left: var(--spacing-md, 20px);
   width: 100%;
-  
-  /* Accordion animation using CSS Grid */
-  transition: grid-template-rows 0.3s ease-in-out, opacity 0.3s ease-in-out;
-  opacity: 0;
 }
 
 .menu-tier2-list--expanded {
-  grid-template-rows: 1fr;
-  opacity: 1;
-}
-
-.menu-tier2-list > div {
-  /* Container for the flex content inside grid */
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: var(--spacing-xs, 6px);
-  pointer-events: auto;
+  gap: var(--spacing-xs, 4px); /* Reduced from 6px to 4px for closer spacing */
 }
+
+/* Removed obsolete grid container styles */
 
 .menu-tier2-item {
   background: none;
   border: none;
-  padding: var(--spacing-xs, 6px) 0;
+  padding: var(--spacing-xs, 4px) 0; /* Reduced padding for smaller items */
   cursor: pointer;
   text-align: right;
   width: auto;
@@ -110,8 +198,13 @@
   /* Typography - Tier 2: 18px, accent color */
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: 18px;
+  font-size: 18px; /* Updated to 18px */
   color: var(--theme-accent);
+  
+  /* Animation - slide in from right with delay */
+  transform: translateX(60px);
+  opacity: 0;
+  animation: slideInFromRight 0.3s ease-out forwards;
   
   /* Interaction */
   transition: opacity 0.2s ease;
@@ -121,6 +214,10 @@
 
 .menu-tier2-item:active {
   opacity: 0.5;
+}
+
+.menu-tier2-item--closing {
+  animation: slideOutToRight 0.25s ease-in forwards;
 }
 
 /* Touch targets - ensure minimum 44px height */
@@ -134,13 +231,11 @@
 
 /* Selected state for tier 2 items (themes) */
 .menu-tier2-item--selected {
-  color: var(--theme-text) !important;
   opacity: 1 !important;
   position: relative;
 }
 
-.menu-tier2-item--selected::after {
-  content: '✓';
+.menu-tier2-item__checkmark {
   margin-left: var(--spacing-xs, 6px);
   font-size: 16px;
   color: var(--theme-accent);
@@ -160,6 +255,7 @@
 @media (max-width: 768px) {
   .menu-content {
     padding: var(--spacing-sm, 8px);
+    padding-bottom: var(--spacing-md, 20px);
   }
   
   .menu-tier1-item {
@@ -167,7 +263,12 @@
   }
   
   .menu-tier2-item {
-    font-size: 16px;
+    font-size: 16px; /* Responsive sizing */
+  }
+  
+  .menu-footer {
+    bottom: var(--spacing-sm, 8px);
+    right: var(--spacing-sm, 8px);
   }
 }
 
@@ -177,7 +278,11 @@
   }
   
   .menu-tier2-item {
-    font-size: 14px;
+    font-size: 14px; /* Smaller on mobile */
+  }
+  
+  .menu-close-button {
+    font-size: 28px;
   }
 }
 
@@ -196,7 +301,11 @@
 @media (prefers-reduced-motion: reduce) {
   .menu-tier1-item,
   .menu-tier2-item,
+  .menu-close-button,
   .menu-tier2-list {
+    animation: none !important;
+    transform: translateX(0) !important;
+    opacity: 1 !important;
     transition: none;
   }
 } 

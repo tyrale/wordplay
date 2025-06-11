@@ -1,0 +1,216 @@
+/* Menu button positioned to match alphabet grid menu icon location */
+.main-screen-menu-button {
+  position: fixed;
+  /* Position in bottom-right corner to match where menu icon appears in game */
+  bottom: var(--spacing-md, 20px);
+  right: var(--spacing-md, 20px);
+  
+  /* Match GridCell action button styling exactly */
+  width: 112px;
+  height: 112px;
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  
+  /* Typography - match GridCell action button */
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: calc(var(--theme-font-size-lg) * 2);
+  color: var(--theme-accent); /* Accent color like alphabet grid */
+  
+  /* Layout */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Transitions */
+  transition: all 0.2s ease;
+  z-index: 100;
+  
+  /* Touch target and accessibility */
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.main-screen-menu-button:active {
+  transform: translateY(0);
+  opacity: 0.7;
+}
+
+.main-screen {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--theme-background);
+  position: relative;
+}
+
+.main-screen__content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg, 32px);
+}
+
+.main-screen__game-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg, 32px);
+}
+
+.main-screen__game-option {
+  background: none;
+  border: none;
+  padding: var(--spacing-md, 20px);
+  cursor: pointer;
+  
+  /* Typography */
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 48px;
+  color: var(--theme-text);
+  text-align: center;
+  
+  /* Interaction */
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  
+  /* Touch target */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-screen__game-option:active {
+  opacity: 0.5;
+}
+
+.main-screen__bot-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg, 32px);
+  width: 100%;
+  max-width: 400px;
+}
+
+.main-screen__back-button {
+  background: none;
+  border: none;
+  padding: var(--spacing-sm, 8px);
+  cursor: pointer;
+  align-self: flex-start;
+  
+  /* Typography */
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 24px;
+  color: var(--theme-accent);
+  
+  /* Interaction */
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  
+  /* Touch target */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-screen__back-button:active {
+  opacity: 0.5;
+}
+
+.main-screen__bot-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm, 12px); /* Closer together as requested */
+  width: 100%;
+}
+
+.main-screen__bot-option {
+  background: none;
+  border: none;
+  padding: 0; /* Updated to 0 padding */
+  cursor: pointer;
+  width: 100%;
+  
+  /* Typography - updated font size */
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 20px; /* Updated to 20px */
+  color: var(--theme-text);
+  text-align: center;
+  
+  /* Interaction */
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  
+  /* Touch target */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-screen__bot-option:active {
+  opacity: 0.5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-screen-menu-button {
+    /* Match GridCell responsive sizing */
+    width: 96px;
+    height: 96px;
+    font-size: calc(var(--theme-font-size-md) * 2);
+    /* Keep same position - bottom-right corner */
+    bottom: var(--spacing-sm, 8px);
+    right: var(--spacing-sm, 8px);
+  }
+  
+  .main-screen__game-option {
+    font-size: 36px;
+  }
+  
+  .main-screen__bot-option {
+    font-size: 18px; /* Smaller on tablet */
+  }
+  
+  .main-screen__back-button {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-screen-menu-button {
+    /* Match GridCell mobile sizing */
+    width: 60px;
+    height: 60px;
+    /* Keep same position - bottom-right corner */
+    bottom: var(--spacing-sm, 8px);
+    right: var(--spacing-sm, 8px);
+  }
+  
+  .main-screen__content {
+    padding: var(--spacing-md, 20px);
+  }
+  
+  .main-screen__game-option {
+    font-size: 28px;
+  }
+  
+  .main-screen__bot-option {
+    font-size: 16px; /* Smaller on mobile */
+  }
+} 

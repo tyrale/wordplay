@@ -32,10 +32,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.interactive-game__debug-btn:hover {
-  background-color: var(--theme-accent);
-  transform: scale(1.1);
-}
+/* Removed hover styles */
 
 
 
@@ -73,7 +70,6 @@
   margin-bottom: var(--spacing-md);
 }
 
-.interactive-game__start,
 .interactive-game__end {
   padding: var(--spacing-lg);
   background-color: var(--theme-surface);
@@ -81,7 +77,6 @@
   margin-bottom: var(--spacing-md);
 }
 
-.interactive-game__start h2,
 .interactive-game__end h2 {
   margin: 0 0 var(--spacing-md) 0;
   font-family: var(--theme-font-family);
@@ -90,7 +85,6 @@
   color: var(--theme-primary);
 }
 
-.interactive-game__start-btn,
 .interactive-game__reset-btn {
   background-color: var(--theme-accent);
   color: var(--theme-accent-text);
@@ -104,11 +98,7 @@
   transition: all 0.2s ease;
 }
 
-.interactive-game__start-btn:hover,
-.interactive-game__reset-btn:hover {
-  background-color: var(--theme-surface-hover);
-  transform: translateY(-1px);
-}
+/* Removed hover styles */
 
 .interactive-game__turn-info {
   display: flex;
@@ -318,10 +308,7 @@
   transition: all 0.2s ease;
 }
 
-.interactive-game__pass-btn:hover:not(:disabled) {
-  background-color: var(--theme-surface-hover);
-  border-color: var(--theme-accent);
-}
+/* Removed hover styles */
 
 .interactive-game__pass-btn:disabled {
   opacity: 0.5;
@@ -396,10 +383,7 @@
   transition: all 0.2s ease;
 }
 
-.interactive-game__suggestion-btn:hover:not(:disabled) {
-  background-color: var(--theme-surface-hover);
-  transform: translateY(-1px);
-}
+/* Removed hover styles */
 
 .interactive-game__suggestion-btn:disabled {
   opacity: 0.5;

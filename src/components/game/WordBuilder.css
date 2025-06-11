@@ -20,12 +20,12 @@
 }
 
 .word-builder__letter--locked {
-  color: var(--theme-locked);
+  color: var(--theme-text);
   position: relative;
 }
 
 .word-builder__letter--lockedKey {
-  color: var(--theme-accent);
+  color: var(--theme-text);
   font-weight: bold;
   position: relative;
 }
@@ -36,11 +36,9 @@
 
 .word-builder__lock-badge {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 70%;
+  left: 73%;
   transform: translate(-50%, -50%);
-  font-size: 12px;
-  color: var(--theme-text);
   pointer-events: none;
   z-index: 1;
 }

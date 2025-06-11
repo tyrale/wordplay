@@ -1,0 +1,30 @@
+import React from 'react';
+
+export interface LockIconProps {
+  className?: string;
+  size?: number;
+  'aria-hidden'?: boolean;
+}
+
+export const LockIcon: React.FC<LockIconProps> = ({ 
+  className = '', 
+  size = 12,
+  'aria-hidden': ariaHidden = true 
+}) => {
+  return (
+    <svg 
+      width={size} 
+      height={size} 
+      viewBox="0 0 72 109" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden={ariaHidden}
+    >
+      <path 
+        d="M53 0C58.5228 0 63 4.47715 63 10V49.1846C68.12 50.1253 72 54.6081 72 60V98C72 104.075 67.0751 109 61 109H11C4.92487 109 1.28855e-07 104.075 0 98V60C1.21704e-07 54.262 4.39359 49.5522 10 49.0469V10C10 4.47715 14.4772 8.05322e-08 20 0H53ZM33.46 18C27.9373 18.0002 23.46 22.4773 23.46 28V49H49.54V28C49.54 22.4773 45.0627 18.0002 39.54 18H33.46Z" 
+        fill="var(--theme-accent)"
+      />
+    </svg>
+  );
+}; 

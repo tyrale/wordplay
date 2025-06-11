@@ -1,5 +1,6 @@
 import React from 'react';
 import './CurrentWord.css';
+import { LockIcon } from '../ui/LockIcon';
 
 export interface LetterHighlight {
   index: number;
@@ -43,11 +44,11 @@ export const CurrentWord: React.FC<CurrentWordProps> = ({
             }
           >
             {letter}
-            {(highlightType === 'locked' || highlightType === 'lockedKey') && (
-              <span className="current-word__lock" aria-hidden="true">
-                🔒
-              </span>
-            )}
+                    {(highlightType === 'locked' || highlightType === 'lockedKey') && (
+          <span className="current-word__lock" aria-hidden="true">
+            <LockIcon size={10} />
+          </span>
+        )}
           </span>
         );
       })}

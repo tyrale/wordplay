@@ -66,11 +66,16 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             score={score} 
             actions={actions}
             isValid={isValidWord}
+            isPassConfirming={false}
+            passReason={null}
+            onClick={onSubmit}
           />
           <SubmitButton 
             isValid={isValidWord} 
             onClick={onSubmit} 
             disabled={disabled}
+            isInvalid={!isValidWord}
+            isPassConfirming={false}
           />
         </div>
       </div>

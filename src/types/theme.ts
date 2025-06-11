@@ -105,10 +105,12 @@ export const greenTheme: GameTheme = {
   }
 };
 
-export const availableThemes = [defaultTheme, darkTheme, greenTheme];
+export const availableThemes = [defaultTheme, greenTheme];
 
 export type ThemeContextType = {
   currentTheme: GameTheme;
   setTheme: (theme: GameTheme) => void;
   availableThemes: GameTheme[];
+  isInverted: boolean;
+  toggleInverted: () => void;
 }; 

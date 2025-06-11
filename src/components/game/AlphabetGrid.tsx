@@ -16,7 +16,6 @@ export interface AlphabetGridProps {
   onLetterDragEnd?: () => void;
   disabled?: boolean;
   enableDrag?: boolean;
-  isMenuOpen?: boolean;
 }
 
 // Default alphabet layout
@@ -38,8 +37,7 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   onLetterDragStart,
   onLetterDragEnd,
   disabled = false,
-  enableDrag = true,
-  isMenuOpen = false
+  enableDrag = true
 }) => {
   // Create a map for quick lookup of letter states
   const stateMap = letterStates.reduce((acc, { letter, state }) => {
@@ -177,22 +175,18 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
             const state = stateMap[content] || 'normal';
             const canDrag = enableDrag && !disabled && !isAction && state !== 'disabled';
             
-            // Special handling for menu button - add close icon overlay when menu is open
+            // Menu button - no special handling needed since close icon is now in menu
             if (content === '≡') {
               return (
-                <div key={content} className="alphabet-grid__cell alphabet-grid__cell--menu">
-                  <GridCell
-                    content={content}
-                    state={state}
-                    type="action"
-                    onClick={() => handleCellClick(content)}
-                    disabled={disabled}
-                    aria-label={getDragAriaLabel(content, state)}
-                  />
-                  {isMenuOpen && (
-                    <div className="alphabet-grid__close-icon" style={{ backgroundColor: 'red', zIndex: 9999 }}>×</div>
-                  )}
-                </div>
+                <GridCell
+                  key={content}
+                  content={content}
+                  state={state}
+                  type="action"
+                  onClick={() => handleCellClick(content)}
+                  disabled={disabled}
+                  aria-label={getDragAriaLabel(content, state)}
+                />
               );
             }
             

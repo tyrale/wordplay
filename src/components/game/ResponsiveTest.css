@@ -25,10 +25,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.responsive-test__toggle:hover {
-  background-color: rgba(59, 130, 246, 1);
-  transform: scale(1.05);
-}
+/* Removed hover styles */
 
 .responsive-test__toggle:active {
   transform: scale(0.95);
@@ -194,9 +191,7 @@
     transition: none;
   }
   
-  .responsive-test__toggle:hover {
-    transform: none;
-  }
+  /* Removed hover styles */
   
   .responsive-test__toggle:active {
     transform: none;

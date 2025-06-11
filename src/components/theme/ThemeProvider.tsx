@@ -34,27 +34,46 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     return defaultTheme;
   });
 
+  const [isInverted, setIsInverted] = useState<boolean>(() => {
+    // Try to load inverted setting from localStorage
+    const savedInverted = localStorage.getItem('wordplay-inverted');
+    return savedInverted === 'true';
+  });
+
   const setTheme = (theme: GameTheme) => {
     setCurrentTheme(theme);
     // Save theme to localStorage
     localStorage.setItem('wordplay-theme', JSON.stringify({ name: theme.name }));
   };
 
+  const toggleInverted = () => {
+    const newInverted = !isInverted;
+    setIsInverted(newInverted);
+    // Save inverted setting to localStorage
+    localStorage.setItem('wordplay-inverted', newInverted.toString());
+  };
+
   // Apply theme CSS custom properties
   useEffect(() => {
     const root = document.documentElement;
     
-    // Apply color variables
-    root.style.setProperty('--theme-primary', currentTheme.colors.primary);
-    root.style.setProperty('--theme-text', currentTheme.colors.text);
-    root.style.setProperty('--theme-text-secondary', currentTheme.colors.textSecondary);
-    root.style.setProperty('--theme-background', currentTheme.colors.background);
-    root.style.setProperty('--theme-surface', currentTheme.colors.surface);
-    root.style.setProperty('--theme-surface-hover', currentTheme.colors.surfaceHover);
-    root.style.setProperty('--theme-accent', currentTheme.colors.accent);
-    root.style.setProperty('--theme-accent-text', currentTheme.colors.accentText);
-    root.style.setProperty('--theme-locked', currentTheme.colors.locked);
-    root.style.setProperty('--theme-disabled', currentTheme.colors.disabled);
+    // Apply color variables with inversion if enabled
+    const colors = isInverted ? {
+      ...currentTheme.colors,
+      background: currentTheme.colors.text,
+      text: currentTheme.colors.background
+    } : currentTheme.colors;
+    
+    root.style.setProperty('--theme-primary', colors.primary);
+    root.style.setProperty('--theme-text', colors.text);
+    root.style.setProperty('--theme-text-secondary', colors.textSecondary);
+    root.style.setProperty('--theme-background', colors.background);
+    root.style.setProperty('--theme-surface', colors.surface);
+    root.style.setProperty('--theme-surface-hover', colors.surfaceHover);
+    root.style.setProperty('--theme-accent', colors.accent);
+    root.style.setProperty('--theme-accent-text', colors.accentText);
+    root.style.setProperty('--theme-locked', colors.locked);
+    root.style.setProperty('--theme-disabled', colors.disabled);
     
     // Apply typography variables
     root.style.setProperty('--theme-font-family', currentTheme.typography.fontFamily);
@@ -63,12 +82,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     root.style.setProperty('--theme-font-size-lg', currentTheme.typography.fontSizeLG);
     root.style.setProperty('--theme-font-size-md', currentTheme.typography.fontSizeMD);
     root.style.setProperty('--theme-font-size-sm', currentTheme.typography.fontSizeSM);
-  }, [currentTheme]);
+  }, [currentTheme, isInverted]);
 
   const value: ThemeContextType = {
     currentTheme,
     setTheme,
     availableThemes,
+    isInverted,
+    toggleInverted,
   };
 
   return (

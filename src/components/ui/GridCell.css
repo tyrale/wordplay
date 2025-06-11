@@ -82,22 +82,16 @@
   pointer-events: none;
 }
 
-/* Lock icon positioning - centered over letter */
+/* Lock icon positioning - top right corner */
 .grid-cell__lock {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 14px;
-  color: var(--theme-text);
+  top: 32px;
+  right: 8px;
   pointer-events: none;
   z-index: 1;
 }
 
-/* Focus styles removed per design requirements */
-.grid-cell:focus {
-  outline: none;
-}
+/* Removed focus styles */
 
 /* Responsive sizing */
 @media (max-width: 768px) {

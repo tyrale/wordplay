@@ -26,9 +26,7 @@
   color: var(--theme-accent);
 }
 
-.submit-button--valid:hover {
-  opacity: 0.8;
-}
+/* Removed hover styles */
 
 .submit-button--valid:active {
   transform: scale(0.95);
@@ -48,9 +46,7 @@
   cursor: pointer;
 }
 
-.submit-button--pass:hover {
-  opacity: 0.8;
-}
+/* Removed hover styles */
 
 .submit-button--pass:active {
   transform: scale(0.95);
@@ -61,8 +57,4 @@
   cursor: not-allowed;
 }
 
-/* Focus styles for accessibility */
-.submit-button:focus {
-  outline: 2px solid var(--theme-accent);
-  outline-offset: 2px;
-} 
+/* Removed focus styles */ 

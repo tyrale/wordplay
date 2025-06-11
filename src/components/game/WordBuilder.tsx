@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { LetterHighlight } from './CurrentWord';
 import './WordBuilder.css';
+import { LockIcon } from '../ui/LockIcon';
 
 export interface WordBuilderProps {
   currentWord: string;
@@ -295,9 +296,11 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
               }}
             >
               {letter}
-              {(isLocked || isLockedKey) && (
-                <span className="word-builder__lock-badge">🔒</span>
-              )}
+                          {(isLocked || isLockedKey) && (
+              <span className="word-builder__lock-badge">
+                <LockIcon size={20} />
+              </span>
+            )}
             </span>
             
             {/* Drop indicator after the last letter */}

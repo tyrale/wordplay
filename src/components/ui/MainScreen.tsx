@@ -1,0 +1,143 @@
+import React, { useState, useCallback } from 'react';
+import { Menu } from './Menu';
+import './MainScreen.css';
+
+interface Bot {
+  id: string;
+  name: string;
+}
+
+interface MainScreenProps {
+  onStartGame: (gameType: 'bot', botId?: string) => void;
+}
+
+const availableBots: Bot[] = [
+  { id: 'tester', name: 'tester' },
+  { id: 'easy-bot', name: 'easy bot' },
+  { id: 'medium-bot', name: 'medium bot' },
+  { id: 'hard-bot', name: 'hard bot' },
+  { id: 'expert-bot', name: 'expert bot' },
+  { id: 'adaptive-bot', name: 'adaptive bot' },
+  { id: 'puzzle-bot', name: 'puzzle bot' },
+  { id: 'speed-bot', name: 'speed bot' },
+  { id: 'strategic-bot', name: 'strategic bot' },
+  { id: 'creative-bot', name: 'creative bot' },
+  { id: 'aggressive-bot', name: 'aggressive bot' },
+  { id: 'defensive-bot', name: 'defensive bot' },
+  { id: 'learning-bot', name: 'learning bot' },
+  { id: 'memory-bot', name: 'memory bot' },
+  { id: 'pattern-bot', name: 'pattern bot' },
+  { id: 'chaos-bot', name: 'chaos bot' },
+  { id: 'minimalist-bot', name: 'minimalist bot' },
+  { id: 'maximalist-bot', name: 'maximalist bot' },
+  { id: 'vowel-bot', name: 'vowel bot' },
+  { id: 'consonant-bot', name: 'consonant bot' },
+  { id: 'rhyme-bot', name: 'rhyme bot' },
+  { id: 'alliteration-bot', name: 'alliteration bot' },
+  { id: 'length-bot', name: 'length bot' },
+  { id: 'suffix-bot', name: 'suffix bot' },
+  { id: 'prefix-bot', name: 'prefix bot' },
+  { id: 'compound-bot', name: 'compound bot' },
+  { id: 'analytical-bot', name: 'analytical bot' },
+  { id: 'intuitive-bot', name: 'intuitive bot' },
+  { id: 'experimental-bot', name: 'experimental bot' },
+  { id: 'classic-bot', name: 'classic bot' },
+  { id: 'modern-bot', name: 'modern bot' },
+];
+
+export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
+  const [currentView, setCurrentView] = useState<'main' | 'bots'>('main');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleGameTypeSelect = useCallback((gameType: string) => {
+    if (gameType === 'vs-bot') {
+      setCurrentView('bots');
+    } else if (gameType === 'challenge' || gameType === 'vs-human') {
+      // These modes not implemented yet
+      console.log(`${gameType} mode not implemented yet`);
+    }
+  }, []);
+
+  const handleBotSelect = useCallback((botId: string) => {
+    onStartGame('bot', botId);
+  }, [onStartGame]);
+
+  const handleBackToMain = useCallback(() => {
+    setCurrentView('main');
+  }, []);
+
+  const handleMenuOpen = useCallback(() => {
+    setIsMenuOpen(true);
+  }, []);
+
+  const handleMenuClose = useCallback(() => {
+    setIsMenuOpen(false);
+  }, []);
+
+  return (
+    <div className="main-screen">
+      {/* Menu icon - positioned to match alphabet grid menu icon */}
+      <button 
+        className="main-screen-menu-button"
+        onClick={handleMenuOpen}
+        aria-label="Open menu"
+      >
+        ≡
+      </button>
+
+      {/* Main content */}
+      <div className="main-screen__content">
+        {currentView === 'main' && (
+          <div className="main-screen__game-selection">
+            <button 
+              className="main-screen__game-option"
+              onClick={() => handleGameTypeSelect('challenge')}
+            >
+              challenge
+            </button>
+            <button 
+              className="main-screen__game-option"
+              onClick={() => handleGameTypeSelect('vs-human')}
+            >
+              vs human
+            </button>
+            <button 
+              className="main-screen__game-option"
+              onClick={() => handleGameTypeSelect('vs-bot')}
+            >
+              vs bot
+            </button>
+          </div>
+        )}
+
+        {currentView === 'bots' && (
+          <div className="main-screen__bot-selection">
+            <button 
+              className="main-screen__back-button"
+              onClick={handleBackToMain}
+            >
+              ← back
+            </button>
+            <div className="main-screen__bot-list">
+              {availableBots.map((bot) => (
+                <button
+                  key={bot.id}
+                  className="main-screen__bot-option"
+                  onClick={() => handleBotSelect(bot.id)}
+                >
+                  {bot.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Menu */}
+      <Menu
+        isOpen={isMenuOpen}
+        onClose={handleMenuClose}
+      />
+    </div>
+  );
+}; 

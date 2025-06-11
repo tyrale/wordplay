@@ -1,0 +1,148 @@
+/* QuitterOverlay Component Styles */
+
+.quitter-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--theme-background);
+  z-index: 20000; /* Higher than menu overlay */
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Fade out animation - starts at 2.4s and fades out over 0.3s */
+  animation: overlayFadeOut 0.3s ease-out 2.4s forwards;
+}
+
+.quitter-text {
+  /* Huge font size */
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 800px;
+  color: var(--theme-accent);
+  white-space: nowrap;
+  
+  /* Start off-screen to the right */
+  transform: translateX(150vw);
+  
+  /* Billboard animation - smooth movement from right to far left, slowed by 15% */
+  animation: billboardMove 1.15s linear forwards;
+}
+
+.quitter-cough {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  
+  /* Small font size */
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 12px;
+  color: var(--theme-text);
+  white-space: nowrap;
+  
+  /* Start invisible */
+  opacity: 0;
+  
+  /* Subtle fade in and out animation - delayed until after quitter completes */
+  animation: coughFade 0.85s ease-in-out 1.15s forwards;
+}
+
+@keyframes coughFade {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  75% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.quitter-cough-second {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, 20%); /* Position lower in the view */
+  
+  /* Small font size */
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 12px;
+  color: var(--theme-text);
+  white-space: nowrap;
+  
+  /* Start invisible */
+  opacity: 0;
+  
+  /* Subtle fade in and out animation - starts before first cough completes */
+  animation: coughFade 0.85s ease-in-out 1.85s forwards;
+}
+
+@keyframes billboardMove {
+  0% {
+    transform: translateX(200vw); /* Start much farther off-screen right */
+  }
+  100% {
+    transform: translateX(-210vw); /* End 5% more to the left */
+  }
+}
+
+@keyframes overlayFadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Responsive font sizes */
+@media (max-width: 768px) {
+  .quitter-text {
+    font-size: 500px; /* Smaller on tablets */
+  }
+}
+
+@media (max-width: 480px) {
+  .quitter-text {
+    font-size: 360px; /* Even smaller on mobile */
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .quitter-text {
+    animation: billboardMoveFade 1.5s linear forwards;
+  }
+  
+  @keyframes billboardMoveFade {
+    0% {
+      opacity: 0;
+      transform: translateX(75vw);
+    }
+    20% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    80% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(-50vw);
+    }
+  }
+} 

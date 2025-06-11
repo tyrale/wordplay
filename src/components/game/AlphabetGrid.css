@@ -19,51 +19,7 @@
   justify-content: center;
 }
 
-.alphabet-grid__cell--menu {
-  /* Menu button cell - positioned relative for close icon overlay */
-  position: relative;
-}
 
-.alphabet-grid__close-icon {
-  /* Close icon positioned over the menu cell */
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  background: var(--theme-surface, #f1f5f9);
-  border: 1px solid transparent;
-  border-radius: 8px;
-  z-index: 10;
-  
-  /* Typography */
-  font-family: var(--theme-font-family, 'Inter, system-ui, sans-serif');
-  font-weight: var(--theme-font-weight, 900);
-  font-size: var(--theme-font-size-md, 16px);
-  color: var(--theme-text);
-  
-  /* Animation */
-  opacity: 1 !important;
-  transform: scale(1) !important;
-  
-  /* Interaction */
-  cursor: pointer;
-  pointer-events: all;
-}
-
-.alphabet-grid__close-icon:hover {
-  background: var(--theme-surface-hover, #e2e8f0);
-}
-
-@keyframes closeIconAppear {
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {

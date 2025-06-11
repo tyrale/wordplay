@@ -1,13 +1,37 @@
-import React from 'react';
-import { ThemeProvider, InteractiveGame } from './components';
+import React, { useState } from 'react';
+import { ThemeProvider, InteractiveGame, MainScreen } from './components';
 import { AnimationProvider } from './animations';
 import ResponsiveTest from './components/game/ResponsiveTest';
+import { QuitterOverlay } from './components/ui/QuitterOverlay';
 import { initViewportHeight } from './utils/viewportHeight';
 import './App.css';
 
+type AppState = 'main' | 'game' | 'quitter';
+
 function App() {
-  const handleGameEnd = (winner: string | null, finalScores: { human: number; bot: number }) => {
-    // Game ended - could show end screen or stats here
+  const [appState, setAppState] = useState<AppState>('main');
+  const [selectedBotId, setSelectedBotId] = useState<string>('tester');
+
+  const handleStartGame = (gameType: 'bot', botId?: string) => {
+    if (gameType === 'bot' && botId) {
+      setSelectedBotId(botId);
+      setAppState('game');
+    }
+  };
+
+  const handleGameEnd = (_winner: string | null, _finalScores: { human: number; bot: number }) => {
+    // Return to main screen after game ends
+    setAppState('main');
+  };
+
+  const handleResign = () => {
+    // Show the quitter overlay animation
+    setAppState('quitter');
+  };
+
+  const handleQuitterComplete = () => {
+    // Return to main screen after quitter animation completes
+    setAppState('main');
   };
 
   // Initialize viewport height handling
@@ -19,14 +43,25 @@ function App() {
     <ThemeProvider>
       <AnimationProvider initialTheme="default">
         <ResponsiveTest>
-          <InteractiveGame 
-            config={{ 
-              maxTurns: 10,
-              allowBotPlayer: true,
-              enableKeyLetters: true,
-              enableLockedLetters: true
-            }}
-            onGameEnd={handleGameEnd}
+          {appState === 'main' && (
+            <MainScreen onStartGame={handleStartGame} />
+          )}
+          {appState === 'game' && (
+            <InteractiveGame 
+              config={{ 
+                maxTurns: 10,
+                allowBotPlayer: true,
+                enableKeyLetters: true,
+                enableLockedLetters: true,
+                botId: selectedBotId
+              }}
+              onGameEnd={handleGameEnd}
+              onResign={handleResign}
+            />
+          )}
+          <QuitterOverlay 
+            isVisible={appState === 'quitter'}
+            onComplete={handleQuitterComplete}
           />
         </ResponsiveTest>
       </AnimationProvider>

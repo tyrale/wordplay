@@ -1,5 +1,6 @@
 import React from 'react';
 import './GridCell.css';
+import { LockIcon } from './LockIcon';
 
 export type GridCellState = 'normal' | 'key' | 'locked' | 'lockedKey' | 'disabled';
 export type GridCellType = 'letter' | 'action';
@@ -88,7 +89,7 @@ export const GridCell: React.FC<GridCellProps> = ({
       </span>
       {(state === 'locked' || state === 'lockedKey') && (
         <span className="grid-cell__lock" aria-hidden="true">
-          🔒
+          <LockIcon size={12} />
         </span>
       )}
     </div>

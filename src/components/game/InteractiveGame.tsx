@@ -7,6 +7,7 @@ import { ScoreDisplay } from './ScoreDisplay';
 import { WordBuilder } from './WordBuilder';
 import { DebugDialog } from './DebugDialog';
 import { Menu } from '../ui/Menu';
+import { createWebAdapter } from '../../adapters/webAdapter';
 
 
 // Temporary placeholder types until dependency injection implemented - TODO: Replace in Step 3
@@ -25,7 +26,29 @@ interface MoveAttempt {
   reason?: string;
 }
 
-const isValidDictionaryWord = (word: string): boolean => false; // TODO: Replace with dependency injection in Step 3
+// Initialize web adapter for dictionary validation
+let webAdapter: any = null;
+
+const initializeWebAdapter = async () => {
+  if (!webAdapter) {
+    webAdapter = await createWebAdapter();
+  }
+  return webAdapter;
+};
+
+const isValidDictionaryWord = (word: string): boolean => {
+  if (!webAdapter) {
+    console.warn('Web adapter not initialized, using fallback validation');
+    return false;
+  }
+  
+  const deps = webAdapter.getDictionaryDependencies();
+  const result = deps.validateWord(word, { 
+    allowSlang: true, 
+    checkLength: false 
+  });
+  return result.isValid;
+};
 
 import type { LetterState, ScoreBreakdown, LetterHighlight, WordMove } from '../index';
 import type { ActionState } from './ScoreDisplay';
@@ -34,11 +57,13 @@ import './InteractiveGame.css';
 export interface InteractiveGameProps {
   config?: GameConfig;
   onGameEnd?: (winner: string | null, finalScores: { human: number; bot: number }) => void;
+  onResign?: () => void;
 }
 
 export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   config,
-  onGameEnd
+  onGameEnd,
+  onResign
 }) => {
 
   
@@ -84,7 +109,16 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   const [showValidationError, setShowValidationError] = useState(false);
 
-  // Dictionary is automatically initialized with the real engine
+  // Initialize web adapter for dictionary validation
+  useEffect(() => {
+    initializeWebAdapter().then(() => {
+      console.log('Web adapter initialized successfully');
+    }).catch((error) => {
+      console.error('Failed to initialize web adapter:', error);
+    });
+  }, []);
+
+
 
   // Initialize pending word with current word
   useEffect(() => {
@@ -327,6 +361,13 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     setShowGameEnd(false);
   }, [actions]);
 
+  // Auto-start the game when component mounts (skip welcome screen)
+  useEffect(() => {
+    if (!isGameActive && !isGameFinished) {
+      handleStartGame();
+    }
+  }, [isGameActive, isGameFinished, handleStartGame]);
+
   const handleResetGame = useCallback(() => {
     actions.resetGame();
     setPendingWord('');
@@ -388,12 +429,17 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     setIsMenuOpen(false);
   }, []);
 
+  const handleResign = useCallback(() => {
+    // Call the parent's resign handler to show quitter overlay
+    if (onResign) {
+      onResign();
+    }
+  }, [onResign]);
+
 
 
   return (
     <div className="interactive-game">
-
-
 
       {/* Error display */}
       {lastError && (
@@ -403,23 +449,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         </div>
       )}
 
-      {/* Game header */}
-      <div className="interactive-game__header">
-        <div className="interactive-game__status">
-          {!isGameActive && !isGameFinished && (
-            <div className="interactive-game__start">
-              <h2>Welcome to WordPlay</h2>
-              <button 
-                className="interactive-game__start-btn"
-                onClick={handleStartGame}
-                type="button"
-              >
-                Start Game
-              </button>
-            </div>
-          )}
-          
-          {isGameFinished && showGameEnd && (
+      {/* Game header - only show when game is finished */}
+      {isGameFinished && showGameEnd && (
+        <div className="interactive-game__header">
+          <div className="interactive-game__status">
             <div className="interactive-game__end">
               <h2>Game Over!</h2>
               <div className="interactive-game__winner">
@@ -437,9 +470,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 New Game
               </button>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main game area */}
       {isGameActive && (
@@ -501,7 +534,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 onLetterDragEnd={handleLetterDragEnd}
                 disabled={!isPlayerTurn || isProcessingMove}
                 enableDrag={true} // Enable drag for mobile and desktop
-                isMenuOpen={isMenuOpen}
               />
             </div>
           </div>
@@ -529,6 +561,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         isOpen={isMenuOpen}
         onClose={handleMenuClose}
         onDebugOpen={() => setIsDebugDialogOpen(true)}
+        onResign={handleResign}
+        isInGame={true}
       />
 
     </div>

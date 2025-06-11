@@ -81,15 +81,7 @@
   padding: var(--spacing-xs) var(--spacing-sm);
 }
 
-.word-trail__line--clickable .word-trail__word:hover {
-  background-color: var(--theme-surface-hover);
-  color: var(--theme-accent);
-}
-
-.word-trail__line--clickable .word-trail__word:focus {
-  outline: 2px solid var(--theme-accent);
-  outline-offset: 2px;
-}
+/* Removed hover and focus styles */
 
 .word-trail__score {
   position: absolute;
@@ -131,9 +123,7 @@
     border: 1px solid var(--theme-accent);
   }
   
-  .word-trail__line--clickable .word-trail__word:hover {
-    border: 2px solid var(--theme-accent);
-  }
+  /* Removed hover styles */
   
   .word-trail__letter--key {
     text-shadow: 0 0 1px var(--theme-accent);

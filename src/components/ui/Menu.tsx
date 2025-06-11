@@ -7,12 +7,13 @@ interface MenuTier2Item {
   title: string;
   isSelected?: boolean;
   onClick?: () => void;
+  theme?: any; // For theme items, store the theme object
 }
 
 interface MenuTier1Item {
   id: string;
   title: string;
-  children: MenuTier2Item[];
+  children?: MenuTier2Item[]; // Made optional for standalone tier 1 items
   onClick?: () => void;
 }
 
@@ -20,11 +21,19 @@ interface MenuProps {
   isOpen: boolean;
   onClose: () => void;
   onDebugOpen?: () => void;
+  onResign?: () => void;
   className?: string;
+  isInGame?: boolean; // Whether user is currently in an active game
 }
 
 // Updated menu structure based on requirements
-const getMenuItems = (availableThemes: any[], currentTheme: any): MenuTier1Item[] => [
+const getMenuItems = (availableThemes: any[], currentTheme: any, isInverted: boolean, isInGame: boolean = false): MenuTier1Item[] => [
+  // Only include resign if user is in an active game
+  ...(isInGame ? [{
+    id: 'resign',
+    title: 'resign'
+    // No children - this is a standalone tier 1 action item
+  }] : []),
   {
     id: 'challenge',
     title: 'challenge',
@@ -36,11 +45,15 @@ const getMenuItems = (availableThemes: any[], currentTheme: any): MenuTier1Item[
   {
     id: 'themes',
     title: 'themes', 
-    children: availableThemes.map(theme => ({
-      id: theme.name.toLowerCase().replace(/\s+/g, '-'),
-      title: theme.name.toLowerCase(),
-      isSelected: theme.name === currentTheme.name
-    }))
+    children: [
+      { id: 'inverted', title: 'dark mode', isSelected: isInverted },
+      ...availableThemes.map(theme => ({
+        id: theme.name.toLowerCase().replace(/\s+/g, '-'),
+        title: theme.name.toLowerCase(),
+        isSelected: theme.name === currentTheme.name,
+        theme: theme
+      }))
+    ]
   },
   {
     id: 'mechanics',
@@ -58,6 +71,7 @@ const getMenuItems = (availableThemes: any[], currentTheme: any): MenuTier1Item[
     id: 'bots',
     title: 'bots',
     children: [
+      { id: 'tester', title: 'tester' },
       { id: 'easy-bot', title: 'easy bot' },
       { id: 'medium-bot', title: 'medium bot' },
       { id: 'hard-bot', title: 'hard bot' },
@@ -109,63 +123,118 @@ export const Menu: React.FC<MenuProps> = ({
   isOpen,
   onClose,
   onDebugOpen,
-  className = ''
+  onResign,
+  className = '',
+  isInGame = false
 }) => {
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
-  const { currentTheme, setTheme, availableThemes } = useTheme();
+  const [isClosing, setIsClosing] = useState(false);
+  const { currentTheme, setTheme, availableThemes, isInverted, toggleInverted } = useTheme();
 
-  const menuItems = getMenuItems(availableThemes, currentTheme);
+  const menuItems = getMenuItems(availableThemes, currentTheme, isInverted, isInGame);
+
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    // Wait for animation to complete before actually closing
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, 300); // Match the longest animation duration
+  }, [onClose]);
 
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
-      onClose();
+      handleClose();
     }
-  }, [onClose]);
+  }, [handleClose]);
 
   const handleTier1Click = useCallback((itemId: string) => {
-    console.log(`[DEBUG] Tier 1 clicked: ${itemId}`);
-    setExpandedItem(prevExpanded => {
-      const newExpanded = prevExpanded === itemId ? null : itemId;
-      console.log(`[DEBUG] Expanded item changing from ${prevExpanded} to ${newExpanded}`);
-      return newExpanded;
-    });
-  }, []);
+    // Handle standalone tier 1 items that perform actions directly
+    if (itemId === 'resign') {
+      onResign?.();
+      handleClose(); // Close menu after resign
+      return;
+    }
+    
+    // For items with children, toggle expansion
+    setExpandedItem(prevExpanded => 
+      prevExpanded === itemId ? null : itemId
+    );
+  }, [onResign, handleClose]);
+
+  // Helper function to render theme name with color preview
+  const renderThemeName = useCallback((item: MenuTier2Item) => {
+    if (!item.theme) {
+      return item.title;
+    }
+
+    const theme = item.theme;
+    const title = item.title;
+    
+    // Pick a deterministic letter to highlight based on theme name hash
+    const hash = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const accentIndex = hash % title.length;
+    
+    // Apply dark mode inversion if toggled
+    const displayColors = isInverted ? {
+      text: theme.colors.background,
+      accent: theme.colors.accent
+    } : {
+      text: theme.colors.text,
+      accent: theme.colors.accent
+    };
+    
+    return (
+      <span style={{ color: displayColors.text }}>
+        {title.split('').map((char, index) => (
+          <span
+            key={index}
+            style={{
+              color: index === accentIndex ? displayColors.accent : displayColors.text
+            }}
+          >
+            {char}
+          </span>
+        ))}
+      </span>
+    );
+  }, [isInverted]);
 
   const handleTier2Click = useCallback((tier1Id: string, tier2Id: string) => {
-    console.log(`[DEBUG] Tier 2 clicked: ${tier1Id} -> ${tier2Id}`);
-    
     // Handle specific actions that should close the menu
     if (tier1Id === 'themes') {
-      console.log(`[DEBUG] Theme click detected, looking for theme: ${tier2Id}`);
-      // Find and set the selected theme
-      const selectedTheme = availableThemes.find(theme => 
-        theme.name.toLowerCase().replace(/\s+/g, '-') === tier2Id
-      );
-      console.log(`[DEBUG] Found theme:`, selectedTheme);
-      if (selectedTheme) {
-        setTheme(selectedTheme);
-        onClose(); // Close menu after theme change
-        console.log(`[DEBUG] Theme changed and menu closed`);
+      if (tier2Id === 'inverted') {
+        // Toggle inverted theme
+        toggleInverted();
+        // Don't close menu after toggle
+      } else {
+        // Find and set the selected theme
+        const selectedTheme = availableThemes.find(theme => 
+          theme.name.toLowerCase().replace(/\s+/g, '-') === tier2Id
+        );
+        if (selectedTheme) {
+          setTheme(selectedTheme);
+          // Don't close menu after theme change
+        }
       }
     } else if (tier1Id === 'about' && tier2Id === 'debug') {
-      console.log(`[DEBUG] Debug click detected`);
       // Open debug dialog
       onDebugOpen?.();
-      onClose(); // Close menu after opening debug
-      console.log(`[DEBUG] Debug opened and menu closed`);
-    } else {
-      console.log(`[DEBUG] Placeholder item clicked: ${tier1Id} -> ${tier2Id} (no action taken)`);
+      handleClose(); // Close menu after opening debug
+    } else if (tier1Id === 'bots') {
+      // Bot selection no longer handled here - bots are selected from main screen
+      // Keep menu open for bot items
     }
     
     // For other items (challenge, mechanics, bots, other about items), keep menu open
     // These are placeholder items that don't have functionality yet
-  }, [onClose, onDebugOpen, availableThemes, setTheme]);
+  }, [handleClose, onDebugOpen, onResign, availableThemes, setTheme, toggleInverted]);
 
   if (!isOpen) return null;
 
   return (
     <div 
-      className={`menu-overlay ${className}`.trim()}
+      className={`menu-overlay ${isClosing ? 'menu-overlay--closing' : ''} ${className}`.trim()}
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
@@ -173,42 +242,80 @@ export const Menu: React.FC<MenuProps> = ({
     >
       <div className="menu-container">
         <div className="menu-content">
-          <div className="menu-list">
-            {menuItems.map((tier1Item: MenuTier1Item) => (
+          <div className="menu-main">
+            <div className="menu-spacer"></div>
+            <div className="menu-list">
+            {menuItems.map((tier1Item: MenuTier1Item, tier1Index: number) => (
               <div key={tier1Item.id} className="menu-tier1-section">
                 <button
-                  className="menu-tier1-item"
-                  onClick={() => handleTier1Click(tier1Item.id)}
+                  className={`menu-tier1-item ${isClosing ? 'menu-tier1-item--closing' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleTier1Click(tier1Item.id);
+                  }}
                   aria-expanded={expandedItem === tier1Item.id}
                   aria-controls={`menu-${tier1Item.id}-submenu`}
+                  style={{ 
+                    position: 'relative', 
+                    zIndex: 200,
+                    animationDelay: isClosing ? `${(menuItems.length - tier1Index - 1) * 0.05}s` : `${tier1Index * 0.1}s`,
+                    color: tier1Item.id === 'resign' ? 'var(--theme-accent)' : undefined
+                  }}
                 >
                   {tier1Item.title}
                 </button>
                 
-                <div 
-                  className={`menu-tier2-list ${expandedItem === tier1Item.id ? 'menu-tier2-list--expanded' : ''}`}
-                  id={`menu-${tier1Item.id}-submenu`}
-                  role="region"
-                  aria-labelledby={`menu-${tier1Item.id}-button`}
-                >
-                  <div>
-                    {tier1Item.children.map((tier2Item: MenuTier2Item) => (
-                      <button
-                        key={tier2Item.id}
-                        className={`menu-tier2-item ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''}`}
-                        onClick={(e) => {
-                          console.log(`[DEBUG] Raw button click event:`, e);
-                          handleTier2Click(tier1Item.id, tier2Item.id);
-                        }}
-                        style={{ pointerEvents: 'all', zIndex: 100 }}
-                      >
-                        {tier2Item.title}
-                      </button>
+                {tier1Item.children && (
+                  <div 
+                    className={`menu-tier2-list ${expandedItem === tier1Item.id ? 'menu-tier2-list--expanded' : ''}`}
+                    id={`menu-${tier1Item.id}-submenu`}
+                    role="region"
+                    aria-labelledby={`menu-${tier1Item.id}-button`}
+                  >
+                    {tier1Item.children.map((tier2Item: MenuTier2Item, tier2Index: number) => (
+                    <button
+                      key={tier2Item.id}
+                      className={`menu-tier2-item ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTier2Click(tier1Item.id, tier2Item.id);
+                      }}
+                      style={{
+                        animationDelay: isClosing 
+                          ? `${(menuItems.length - tier1Index - 1) * 0.05 + (tier1Item.children!.length - tier2Index - 1) * 0.02}s`
+                          : `${(tier1Index * 0.1) + 0.05 + (tier2Index * 0.02)}s`
+                      }}
+                    >
+                      {tier1Item.id === 'themes' ? renderThemeName(tier2Item) : tier2Item.title}
+                      {tier2Item.isSelected && tier2Item.theme && (
+                        <span 
+                          className="menu-tier2-item__checkmark"
+                          style={{ color: tier2Item.theme.colors.accent }}
+                        >
+                          ✓
+                        </span>
+                      )}
+                      {tier2Item.isSelected && !tier2Item.theme && (
+                        <span className="menu-tier2-item__checkmark">
+                          ✓
+                        </span>
+                      )}
+                    </button>
                     ))}
                   </div>
-                </div>
+                )}
               </div>
             ))}
+          </div>
+          </div>
+          <div className="menu-footer">
+            <button
+              className={`menu-close-button ${isClosing ? 'menu-close-button--closing' : ''}`}
+              onClick={handleClose}
+              aria-label="Close menu"
+            >
+              ×
+            </button>
           </div>
         </div>
       </div>

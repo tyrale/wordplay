@@ -58,9 +58,7 @@
   transition: background-color 0.2s ease;
 }
 
-.debug-dialog__close:hover {
-  background-color: var(--theme-surface-hover);
-}
+/* Removed hover styles */
 
 .debug-dialog__content {
   flex: 1;
@@ -113,10 +111,7 @@
   transition: all 0.2s ease;
 }
 
-.debug-dialog__suggestion-btn:hover:not(:disabled) {
-  background-color: var(--theme-surface-hover);
-  transform: translateY(-1px);
-}
+/* Removed hover styles */
 
 .debug-dialog__suggestion-btn:disabled {
   opacity: 0.5;
