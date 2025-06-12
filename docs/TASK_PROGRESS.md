@@ -57,7 +57,7 @@ This document tracks the progress of tasks from the development plan. Each task 
 | 4.2 | ✅ | **Theme Provider + Brown Theme** - Theme system (81 themes implemented) |
 | 4.3 | ⏳ | **Six‑Letter Attribute** - Game difficulty variations |
 
-**Phase 4 Status**: 🔄 **IN PROGRESS** - Unlock framework and theme system complete with web integration, mechanics pending
+**Phase 4 Status**: 🔄 **IN PROGRESS** - Unlock framework and theme system complete with web integration, mechanics pending implementation
 
 ## Phase 5 – Web Polish & Accessibility
 
