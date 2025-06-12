@@ -43,8 +43,8 @@ function App() {
 
   return (
     <ThemeProvider>
-      <UnlockProvider>
-        <ToastProvider>
+      <ToastProvider>
+        <UnlockProvider>
           <AnimationProvider initialTheme="default">
             <ResponsiveTest>
               {appState === 'main' && (
@@ -69,8 +69,8 @@ function App() {
               />
             </ResponsiveTest>
           </AnimationProvider>
-        </ToastProvider>
-      </UnlockProvider>
+        </UnlockProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }
