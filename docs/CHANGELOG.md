@@ -275,6 +275,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **User Experience**: Clear feedback when moves fail with descriptive error messages in scoring row
   - **Verification**: Web app now provides same descriptive validation errors as terminal game
 
+- **ShipHip: Temporary Reset Button** - Added testing tool to reset unlocks to fresh user state
+  - Reset button available in menu under "about" → "reset unlocks (testing)"
+  - Allows easy testing of fresh user experience and unlock progression
+  - Resets all unlocks back to default state (Classic Blue theme + Tester bot only)
+  - Useful for development and testing unlock system functionality
+
 ### Removed
 - **🧹 CLEANUP**: All browser-specific engine implementations eliminated
   - Deleted `src/utils/browserDictionary.ts` (3.8KB, 120 lines)

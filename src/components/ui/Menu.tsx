@@ -118,6 +118,7 @@ const getMenuItems = (
       { id: 'contact-support', title: 'contact support' },
       { id: 'feedback', title: 'feedback' },
       { id: 'debug', title: 'debug' },
+      { id: 'reset-unlocks', title: 'reset unlocks (testing)' },
     ]
   },
 ];
@@ -135,7 +136,7 @@ export const Menu: React.FC<MenuProps> = ({
   const { currentTheme, setTheme, isInverted, toggleInverted } = useTheme();
   
   // Get unlock state
-  const { getUnlockedItems } = useUnlockSystem();
+  const { getUnlockedItems, resetUnlocksToFresh } = useUnlockSystem();
   const unlockedThemeIds = getUnlockedItems('theme');
   const unlockedMechanics = getUnlockedItems('mechanic');
   const unlockedBots = getUnlockedItems('bot');
@@ -233,6 +234,10 @@ export const Menu: React.FC<MenuProps> = ({
       // Open debug dialog
       onDebugOpen?.();
       handleClose(); // Close menu after opening debug
+    } else if (tier1Id === 'about' && tier2Id === 'reset-unlocks') {
+      // Reset unlocks to fresh user state
+      resetUnlocksToFresh();
+      handleClose(); // Close menu after reset
     } else if (tier1Id === 'bots') {
       // Bot selection no longer handled here - bots are selected from main screen
       // Keep menu open for bot items
@@ -240,7 +245,7 @@ export const Menu: React.FC<MenuProps> = ({
     
     // For other items (challenge, mechanics, bots, other about items), keep menu open
     // These are placeholder items that don't have functionality yet
-  }, [handleClose, onDebugOpen, onResign, unlockedThemes, setTheme, toggleInverted]);
+  }, [handleClose, onDebugOpen, onResign, unlockedThemes, setTheme, toggleInverted, resetUnlocksToFresh]);
 
   if (!isOpen) return null;
 

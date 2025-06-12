@@ -17,6 +17,9 @@ export interface UnlockContextType extends UseUnlocksReturn {
   handleWordSubmission: (word: string) => Promise<UnlockResult[]>;
   handleGameCompletion: (winner: string, botId?: string) => Promise<UnlockResult[]>;
   showUnlockNotification: (results: UnlockResult[]) => void;
+  
+  // Testing/Debug functions
+  resetUnlocksToFresh: () => Promise<void>;
 }
 
 const UnlockContext = createContext<UnlockContextType | undefined>(undefined);
@@ -95,11 +98,19 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
     }
   }, []);
 
+  // Reset unlocks to fresh user state (for testing)
+  const resetUnlocksToFresh = useCallback(async (): Promise<void> => {
+    console.log('[Unlock] Resetting to fresh user state...');
+    await unlocks.resetUnlocks();
+    console.log('[Unlock] Reset complete - back to fresh user experience');
+  }, [unlocks.resetUnlocks]);
+
   const contextValue: UnlockContextType = {
     ...unlocks,
     handleWordSubmission,
     handleGameCompletion,
-    showUnlockNotification
+    showUnlockNotification,
+    resetUnlocksToFresh
   };
 
   return (
