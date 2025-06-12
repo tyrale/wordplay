@@ -83,6 +83,9 @@ export {
   midnightTheme
 } from '../types/theme';
 
+// Unlock System
+export { UnlockProvider, useUnlockSystem } from './unlock/UnlockProvider';
+
 // UI Components
 export { GridCell } from './ui/GridCell';
 export type { GridCellProps, GridCellState, GridCellType } from './ui/GridCell';

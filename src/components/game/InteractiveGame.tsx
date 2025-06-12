@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useGameState, useGameStats, useWordState } from '../../hooks/useGameState';
+import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { AlphabetGrid } from './AlphabetGrid';
 import { WordTrail } from './WordTrail';
 
@@ -65,7 +66,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   onGameEnd,
   onResign
 }) => {
-
+  // Unlock system integration
+  const { handleWordSubmission, handleGameCompletion } = useUnlockSystem();
   
   // Game state management
   const {
@@ -81,10 +83,14 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     clearError
   } = useGameState({
     config,
-    onGameStateChange: (state) => {
+    onGameStateChange: async (state) => {
       if (state.gameStatus === 'finished' && onGameEnd) {
         const humanScore = state.players.find(p => p.id === 'human')?.score || 0;
         const botScore = state.players.find(p => p.id === 'bot')?.score || 0;
+        
+        // Check for unlock triggers on game completion
+        await handleGameCompletion(state.winner?.id || null, config?.botId);
+        
         onGameEnd(state.winner?.id || null, { human: humanScore, bot: botScore });
       }
     }
@@ -325,7 +331,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     handleWordChange(newWord);
   }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     
     if (!isPlayerTurn || isProcessingMove) return;
     
@@ -349,12 +355,15 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     if (pendingMoveAttempt?.canApply) {
       const success = actions.applyMove(pendingMoveAttempt);
       if (success) {
+        // Check for unlock triggers when word is successfully submitted
+        await handleWordSubmission(pendingMoveAttempt.newWord);
+        
         setPendingWord(pendingMoveAttempt.newWord);
         setPendingMoveAttempt(null);
         setShowValidationError(false);
       }
     }
-  }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, wordState.currentWord, showValidationError]);
+  }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission]);
 
   const handleStartGame = useCallback(async () => {
     await actions.startGame();

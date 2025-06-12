@@ -638,4 +638,61 @@ export interface IGameStateManager {
   removeKeyLetter(letter: string): void;
   addLockedLetter(letter: string): void;
   removeLockedLetter(letter: string): void;
+}
+
+/**
+ * Unlock System Interfaces
+ * 
+ * Platform-agnostic unlock system that tracks user progress
+ * and manages feature unlocks across themes, mechanics, and bots.
+ */
+
+export interface UnlockState {
+  themes: string[];        // Theme names that are unlocked (e.g., ['red', 'blue'])
+  mechanics: string[];     // Mechanic IDs that are unlocked (e.g., ['5-letter-start'])
+  bots: string[];         // Bot IDs that are unlocked (e.g., ['easy-bot', 'pirate-bot'])
+  achievements: string[]; // Achievement IDs that are earned (e.g., ['beat-tester'])
+}
+
+export interface UnlockTrigger {
+  type: 'word' | 'achievement';
+  value: string;           // Word to play OR achievement to earn
+  timing: 'word_submission' | 'game_completion';
+}
+
+export interface UnlockDefinition {
+  id: string;              // Unique identifier for this unlock
+  category: 'theme' | 'mechanic' | 'bot';
+  trigger: UnlockTrigger;
+  target: string;          // Theme name, mechanic ID, or bot ID to unlock
+  immediate_effect?: {
+    type: 'apply_theme';
+    value: string;         // Theme name to apply immediately
+  };
+}
+
+export interface UnlockResult {
+  unlockId: string;
+  category: 'theme' | 'mechanic' | 'bot';
+  target: string;
+  wasAlreadyUnlocked: boolean;
+  immediateEffect?: {
+    type: 'apply_theme';
+    value: string;
+  };
+}
+
+export interface UnlockDependencies {
+  loadState(): Promise<UnlockState>;
+  saveState(state: UnlockState): Promise<void>;
+  getTimestamp(): number;
+}
+
+export interface UnlockEngine {
+  checkWordTriggers(word: string): Promise<UnlockResult[]>;
+  checkAchievementTriggers(achievement: string): Promise<UnlockResult[]>;
+  getUnlockedItems(category: 'theme' | 'mechanic' | 'bot'): string[];
+  isUnlocked(category: 'theme' | 'mechanic' | 'bot', itemId: string): boolean;
+  getCurrentState(): UnlockState;
+  resetState(): Promise<void>; // For testing/debugging
 } 

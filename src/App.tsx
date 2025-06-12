@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ThemeProvider, InteractiveGame, MainScreen } from './components';
 import { AnimationProvider } from './animations';
+import { UnlockProvider } from './components/unlock/UnlockProvider';
 import ResponsiveTest from './components/game/ResponsiveTest';
 import { QuitterOverlay } from './components/ui/QuitterOverlay';
 import { initViewportHeight } from './utils/viewportHeight';
@@ -41,30 +42,32 @@ function App() {
 
   return (
     <ThemeProvider>
-      <AnimationProvider initialTheme="default">
-        <ResponsiveTest>
-          {appState === 'main' && (
-            <MainScreen onStartGame={handleStartGame} />
-          )}
-          {appState === 'game' && (
-            <InteractiveGame 
-              config={{ 
-                maxTurns: 10,
-                allowBotPlayer: true,
-                enableKeyLetters: true,
-                enableLockedLetters: true,
-                botId: selectedBotId
-              }}
-              onGameEnd={handleGameEnd}
-              onResign={handleResign}
+      <UnlockProvider>
+        <AnimationProvider initialTheme="default">
+          <ResponsiveTest>
+            {appState === 'main' && (
+              <MainScreen onStartGame={handleStartGame} />
+            )}
+            {appState === 'game' && (
+              <InteractiveGame 
+                config={{ 
+                  maxTurns: 10,
+                  allowBotPlayer: true,
+                  enableKeyLetters: true,
+                  enableLockedLetters: true,
+                  botId: selectedBotId
+                }}
+                onGameEnd={handleGameEnd}
+                onResign={handleResign}
+              />
+            )}
+            <QuitterOverlay 
+              isVisible={appState === 'quitter'}
+              onComplete={handleQuitterComplete}
             />
-          )}
-          <QuitterOverlay 
-            isVisible={appState === 'quitter'}
-            onComplete={handleQuitterComplete}
-          />
-        </ResponsiveTest>
-      </AnimationProvider>
+          </ResponsiveTest>
+        </AnimationProvider>
+      </UnlockProvider>
     </ThemeProvider>
   );
 }

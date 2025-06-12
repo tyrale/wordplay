@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useTheme } from '../theme/ThemeProvider';
+import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
 import './Menu.css';
 
 interface MenuTier2Item {
@@ -26,8 +28,40 @@ interface MenuProps {
   isInGame?: boolean; // Whether user is currently in an active game
 }
 
-// Updated menu structure based on requirements
-const getMenuItems = (availableThemes: any[], currentTheme: any, isInverted: boolean, isInGame: boolean = false): MenuTier1Item[] => [
+// Map mechanic IDs to display names
+const mechanicDisplayNames: Record<string, string> = {
+  '5-letter-start': '5 letter starting word',
+  '6-letter-start': '6 letter starting word',
+  'time-pressure': 'time pressure mode',
+  'double-key-letters': 'double key letters',
+  'reverse-scoring': 'reverse scoring',
+  'challenge-dictionary': 'challenge dictionary'
+};
+
+// Map bot IDs to display names
+const botDisplayNames: Record<string, string> = {
+  'tester': 'tester',
+  'easy-bot': 'easy bot',
+  'medium-bot': 'medium bot',
+  'hard-bot': 'hard bot',
+  'expert-bot': 'expert bot',
+  'pirate-bot': 'pirate bot',
+  'chaos-bot': 'chaos bot',
+  'puzzle-bot': 'puzzle bot',
+  'speed-bot': 'speed bot',
+  'strategic-bot': 'strategic bot',
+  'creative-bot': 'creative bot'
+};
+
+// Updated menu structure based on requirements and unlock state
+const getMenuItems = (
+  availableThemes: any[], 
+  currentTheme: any, 
+  isInverted: boolean, 
+  isInGame: boolean = false,
+  unlockedMechanics: string[] = [],
+  unlockedBots: string[] = []
+): MenuTier1Item[] => [
   // Only include resign if user is in an active game
   ...(isInGame ? [{
     id: 'resign',
@@ -55,55 +89,24 @@ const getMenuItems = (availableThemes: any[], currentTheme: any, isInverted: boo
       }))
     ]
   },
-  {
+  // Only show mechanics section if there are unlocked mechanics
+  ...(unlockedMechanics.length > 0 ? [{
     id: 'mechanics',
     title: 'mechanics',
-    children: [
-      { id: '5-letter-start', title: '5 letter starting word' },
-      { id: 'longer-words', title: 'longer word limits' },
-      { id: 'time-pressure', title: 'time pressure mode' },
-      { id: 'double-key-letters', title: 'double key letters' },
-      { id: 'reverse-scoring', title: 'reverse scoring' },
-      { id: 'challenge-dictionary', title: 'challenge dictionary' },
-    ]
-  },
-  {
+    children: unlockedMechanics.map(mechanicId => ({
+      id: mechanicId,
+      title: mechanicDisplayNames[mechanicId] || mechanicId
+    }))
+  }] : []),
+  // Only show bots section if there are unlocked bots beyond the default tester
+  ...(unlockedBots.length > 0 ? [{
     id: 'bots',
     title: 'bots',
-    children: [
-      { id: 'tester', title: 'tester' },
-      { id: 'easy-bot', title: 'easy bot' },
-      { id: 'medium-bot', title: 'medium bot' },
-      { id: 'hard-bot', title: 'hard bot' },
-      { id: 'expert-bot', title: 'expert bot' },
-      { id: 'adaptive-bot', title: 'adaptive bot' },
-      { id: 'puzzle-bot', title: 'puzzle bot' },
-      { id: 'speed-bot', title: 'speed bot' },
-      { id: 'strategic-bot', title: 'strategic bot' },
-      { id: 'creative-bot', title: 'creative bot' },
-      { id: 'aggressive-bot', title: 'aggressive bot' },
-      { id: 'defensive-bot', title: 'defensive bot' },
-      { id: 'learning-bot', title: 'learning bot' },
-      { id: 'memory-bot', title: 'memory bot' },
-      { id: 'pattern-bot', title: 'pattern bot' },
-      { id: 'chaos-bot', title: 'chaos bot' },
-      { id: 'minimalist-bot', title: 'minimalist bot' },
-      { id: 'maximalist-bot', title: 'maximalist bot' },
-      { id: 'vowel-bot', title: 'vowel bot' },
-      { id: 'consonant-bot', title: 'consonant bot' },
-      { id: 'rhyme-bot', title: 'rhyme bot' },
-      { id: 'alliteration-bot', title: 'alliteration bot' },
-      { id: 'length-bot', title: 'length bot' },
-      { id: 'suffix-bot', title: 'suffix bot' },
-      { id: 'prefix-bot', title: 'prefix bot' },
-      { id: 'compound-bot', title: 'compound bot' },
-      { id: 'analytical-bot', title: 'analytical bot' },
-      { id: 'intuitive-bot', title: 'intuitive bot' },
-      { id: 'experimental-bot', title: 'experimental bot' },
-      { id: 'classic-bot', title: 'classic bot' },
-      { id: 'modern-bot', title: 'modern bot' },
-    ]
-  },
+    children: unlockedBots.map(botId => ({
+      id: botId,
+      title: botDisplayNames[botId] || botId
+    }))
+  }] : []),
   {
     id: 'about',
     title: 'about',
@@ -129,9 +132,18 @@ export const Menu: React.FC<MenuProps> = ({
 }) => {
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
-  const { currentTheme, setTheme, availableThemes, isInverted, toggleInverted } = useTheme();
+  const { currentTheme, setTheme, isInverted, toggleInverted } = useTheme();
+  
+  // Get unlock state
+  const { getUnlockedItems } = useUnlockSystem();
+  const unlockedThemeIds = getUnlockedItems('theme');
+  const unlockedMechanics = getUnlockedItems('mechanic');
+  const unlockedBots = getUnlockedItems('bot');
+  
+  // Filter themes based on unlock state
+  const unlockedThemes = useUnlockedThemes({ unlockedThemes: unlockedThemeIds });
 
-  const menuItems = getMenuItems(availableThemes, currentTheme, isInverted, isInGame);
+  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, unlockedBots);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -209,7 +221,7 @@ export const Menu: React.FC<MenuProps> = ({
         // Don't close menu after toggle
       } else {
         // Find and set the selected theme
-        const selectedTheme = availableThemes.find(theme => 
+        const selectedTheme = unlockedThemes.find(theme => 
           theme.name.toLowerCase().replace(/\s+/g, '-') === tier2Id
         );
         if (selectedTheme) {
@@ -228,7 +240,7 @@ export const Menu: React.FC<MenuProps> = ({
     
     // For other items (challenge, mechanics, bots, other about items), keep menu open
     // These are placeholder items that don't have functionality yet
-  }, [handleClose, onDebugOpen, onResign, availableThemes, setTheme, toggleInverted]);
+  }, [handleClose, onDebugOpen, onResign, unlockedThemes, setTheme, toggleInverted]);
 
   if (!isOpen) return null;
 
