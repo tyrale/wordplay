@@ -17,25 +17,38 @@ export function useUnlockedThemes({ unlockedThemes }: UseUnlockedThemesProps) {
   const filteredThemes = useMemo(() => {
     return availableThemes.filter(theme => {
       // Map theme names to unlock IDs
-      // Most themes use their name directly, but some have special mappings
       const unlockId = getThemeUnlockId(theme.name);
       return unlockedThemes.includes(unlockId);
     });
   }, [unlockedThemes]);
 
-  return filteredThemes;
+  // Ensure classic blue is always first in the list
+  const sortedThemes = useMemo(() => {
+    const classicBlue = filteredThemes.find(theme => 
+      theme.name.toLowerCase() === 'classic blue'
+    );
+    const otherThemes = filteredThemes.filter(theme => 
+      theme.name.toLowerCase() !== 'classic blue'
+    );
+    
+    return classicBlue ? [classicBlue, ...otherThemes] : filteredThemes;
+  }, [filteredThemes]);
+
+  return sortedThemes;
 }
 
 /**
  * Map theme names to their unlock IDs
- * Most themes use their name directly, but some have special cases
+ * Handles case-insensitive matching and special mappings
  */
 function getThemeUnlockId(themeName: string): string {
+  // Convert to lowercase for consistent matching
+  const lowerName = themeName.toLowerCase();
+  
   // Handle special theme name mappings
   const specialMappings: Record<string, string> = {
     'classic blue': 'classic blue', // Default theme, always unlocked
-    // Add any other special mappings here if needed
   };
 
-  return specialMappings[themeName] || themeName;
+  return specialMappings[lowerName] || lowerName;
 } 
