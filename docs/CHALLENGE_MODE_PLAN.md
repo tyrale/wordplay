@@ -228,6 +228,8 @@ FISH → REAMS
 ## Future Enhancements
 
 ### Potential Features
+- update the main menu to 'vsworld' from 'challenge' ('vs' will be in the accent color like the other options)
+- Leaderboard shows the # of players that have solved it at each value. (7 turns: 982 players)
 - Path validation to ensure solvable challenges
 - Hint system for stuck players
 - Challenge difficulty variations

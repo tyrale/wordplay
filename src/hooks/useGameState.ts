@@ -174,27 +174,35 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
   useEffect(() => {
     if (!gameManager || !isInitialized) return;
     
+    console.log('[DEBUG] useGameState: Subscribing to game state changes');
     const unsubscribe = gameManager.subscribe(() => {
       const newState = gameManager.getState();
+      console.log('[DEBUG] useGameState: Game state updated', newState);
       setGameState(newState);
       onGameStateChangeRef.current?.(newState);
     });
     
     // Initialize state when game manager is ready
     const initialState = gameManager.getState();
+    console.log('[DEBUG] useGameState: Initial game state', initialState);
     setGameState(initialState);
     
-    return unsubscribe;
+    return () => {
+      console.log('[DEBUG] useGameState: Unsubscribing from game state changes');
+      unsubscribe();
+    };
   }, [gameManager, isInitialized]);
   
   // Clear errors when state changes
   useEffect(() => {
+    console.log('[DEBUG] useGameState: Clearing errors on state change');
     setLastError(null);
   }, [gameState.currentTurn, gameState.currentWord]);
   
   // Game actions
   const actions: GameStateActions = {
     attemptMove: useCallback((newWord: string) => {
+      console.log('[DEBUG] useGameState: Attempting move', newWord);
       if (!gameManager || !isInitialized) {
         return {
           newWord,
@@ -209,10 +217,12 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
       try {
         setIsProcessingMove(true);
         const attempt = gameManager.attemptMove(newWord);
+        console.log('[DEBUG] useGameState: Move attempt result', attempt);
         onMoveAttemptRef.current?.(attempt);
         return attempt;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';
+        console.log('[DEBUG] useGameState: Error during move attempt', errorMsg);
         setLastError(errorMsg);
         return {
           newWord,
@@ -223,11 +233,13 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
           reason: errorMsg
         };
       } finally {
+        console.log('[DEBUG] useGameState: Finished processing move');
         setIsProcessingMove(false);
       }
     }, [gameManager, isInitialized]),
     
     applyMove: useCallback((attempt: MoveAttempt) => {
+      console.log('[DEBUG] useGameState: Applying move', attempt);
       if (!gameManager || !isInitialized) return false;
       
       try {
@@ -235,37 +247,44 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
         return gameManager.applyMove(attempt);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to apply move';
+        console.log('[DEBUG] useGameState: Error during apply move', errorMsg);
         setLastError(errorMsg);
         return false;
       } finally {
+        console.log('[DEBUG] useGameState: Finished applying move');
         setIsProcessingMove(false);
       }
     }, [gameManager, isInitialized]),
     
     setCurrentWord: useCallback((word: string) => {
+      console.log('[DEBUG] useGameState: Setting current word', word);
       if (!gameManager || !isInitialized) return false;
       
       try {
         return gameManager.setWord(word);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to set word';
+        console.log('[DEBUG] useGameState: Error during set current word', errorMsg);
         setLastError(errorMsg);
         return false;
       }
     }, [gameManager, isInitialized]),
     
     startGame: useCallback(async () => {
+      console.log('[DEBUG] useGameState: Starting game');
       if (!gameManager || !isInitialized) return;
       
       try {
         gameManager.startGame();
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to start game';
+        console.log('[DEBUG] useGameState: Error during start game', errorMsg);
         setLastError(errorMsg);
       }
     }, [gameManager, isInitialized]),
     
     resetGame: useCallback(() => {
+      console.log('[DEBUG] useGameState: Resetting game');
       if (!gameManager || !isInitialized) return;
       
       try {
@@ -275,89 +294,96 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
         setLastError(null);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to reset game';
+        console.log('[DEBUG] useGameState: Error during reset game', errorMsg);
         setLastError(errorMsg);
       }
     }, [gameManager, isInitialized]),
     
     passTurn: useCallback(() => {
+      console.log('[DEBUG] useGameState: Passing turn');
       if (!gameManager || !isInitialized) return false;
       
       try {
         return gameManager.passTurn();
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to pass turn';
+        console.log('[DEBUG] useGameState: Error during pass turn', errorMsg);
         setLastError(errorMsg);
         return false;
       }
     }, [gameManager, isInitialized]),
     
     makeBotMove: useCallback(async () => {
-      console.log('[DEBUG] useGameState makeBotMove: Called');
-      
+      console.log('[DEBUG] useGameState: Making bot move');
       if (!gameManager || !isInitialized) {
-        console.log('[DEBUG] useGameState makeBotMove: Not initialized, returning null');
+        console.log('[DEBUG] useGameState: Not initialized, returning null');
         return null;
       }
 
       try {
-        console.log('[DEBUG] useGameState makeBotMove: Setting bot thinking to true');
         setIsBotThinking(true);
-        console.log('[DEBUG] useGameState makeBotMove: Calling gameManager.makeBotMove()');
         const botMove = await gameManager.makeBotMove();
-        console.log('[DEBUG] useGameState makeBotMove: gameManager.makeBotMove() returned:', botMove);
+        console.log('[DEBUG] useGameState: Bot move result', botMove);
         onBotMoveRef.current?.(botMove);
         return botMove;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Bot move failed';
-        console.log('[DEBUG] useGameState makeBotMove: Error occurred:', errorMsg);
+        console.log('[DEBUG] useGameState: Error during bot move', errorMsg);
         setLastError(errorMsg);
         return null;
       } finally {
-        console.log('[DEBUG] useGameState makeBotMove: Setting bot thinking to false');
         setIsBotThinking(false);
       }
     }, [gameManager, isInitialized]),
     
     addKeyLetter: useCallback((letter: string) => {
+      console.log('[DEBUG] useGameState: Adding key letter', letter);
       if (!gameManager || !isInitialized) return;
       
       try {
         gameManager.addKeyLetter(letter);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to add key letter';
+        console.log('[DEBUG] useGameState: Error during add key letter', errorMsg);
         setLastError(errorMsg);
       }
     }, [gameManager, isInitialized]),
     
     removeKeyLetter: useCallback((letter: string) => {
+      console.log('[DEBUG] useGameState: Removing key letter', letter);
       if (!gameManager || !isInitialized) return;
       
       try {
         gameManager.removeKeyLetter(letter);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to remove key letter';
+        console.log('[DEBUG] useGameState: Error during remove key letter', errorMsg);
         setLastError(errorMsg);
       }
     }, [gameManager, isInitialized]),
     
     addLockedLetter: useCallback((letter: string) => {
+      console.log('[DEBUG] useGameState: Adding locked letter', letter);
       if (!gameManager || !isInitialized) return;
       
       try {
         gameManager.addLockedLetter(letter);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to add locked letter';
+        console.log('[DEBUG] useGameState: Error during add locked letter', errorMsg);
         setLastError(errorMsg);
       }
     }, [gameManager, isInitialized]),
     
     removeLockedLetter: useCallback((letter: string) => {
+      console.log('[DEBUG] useGameState: Removing locked letter', letter);
       if (!gameManager || !isInitialized) return;
       
       try {
         gameManager.removeLockedLetter(letter);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to remove locked letter';
+        console.log('[DEBUG] useGameState: Error during remove locked letter', errorMsg);
         setLastError(errorMsg);
       }
     }, [gameManager, isInitialized])
@@ -371,6 +397,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
   const isGameFinished = gameState.gameStatus === 'finished';
   
   const clearError = useCallback(() => {
+    console.log('[DEBUG] useGameState: Clearing last error');
     setLastError(null);
   }, []);
   
