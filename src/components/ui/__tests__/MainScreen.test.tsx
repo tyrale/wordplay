@@ -8,15 +8,18 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { UnlockProvider } from '../../unlock/UnlockProvider';
+import { ToastProvider } from '../ToastManager';
 import { MainScreen } from '../MainScreen';
 
 // Test wrapper with required providers
 function TestWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <UnlockProvider>
-        {children}
-      </UnlockProvider>
+      <ToastProvider>
+        <UnlockProvider>
+          {children}
+        </UnlockProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

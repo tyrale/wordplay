@@ -8,6 +8,7 @@
 import React, { createContext, useContext, useCallback } from 'react';
 import { useUnlocks } from '../../hooks/useUnlocks';
 import { useTheme } from '../theme/ThemeProvider';
+import { useToast } from '../ui/ToastManager';
 import { availableThemes } from '../../types/theme';
 import type { UseUnlocksReturn } from '../../hooks/useUnlocks';
 import type { UnlockResult } from '../../../packages/engine/interfaces';
@@ -39,6 +40,38 @@ interface UnlockProviderProps {
 export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
   const unlocks = useUnlocks();
   const { setTheme } = useTheme();
+  const { showUnlockToast } = useToast();
+
+  // Show unlock notification using toast system
+  const showUnlockNotification = useCallback((results: UnlockResult[]) => {
+    for (const result of results) {
+      // Get user-friendly name for the unlocked item
+      let itemName = result.target;
+      
+      // Format theme names nicely
+      if (result.category === 'theme') {
+        itemName = result.target.split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+      }
+      
+      // Format bot names nicely
+      if (result.category === 'bot') {
+        itemName = result.target.replace('-bot', '').split('-').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ') + ' Bot';
+      }
+      
+      // Format mechanic names nicely
+      if (result.category === 'mechanic') {
+        itemName = result.target.replace('-', ' ').split(' ').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+      }
+      
+      showUnlockToast(result.category, itemName);
+    }
+  }, [showUnlockToast]);
 
   // Handle immediate effects from unlock results
   const handleImmediateEffects = useCallback((results: UnlockResult[]) => {
@@ -65,7 +98,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
     }
     
     return results;
-  }, [unlocks.checkWordTriggers, handleImmediateEffects]);
+  }, [unlocks.checkWordTriggers, handleImmediateEffects, showUnlockNotification]);
 
   // Enhanced game completion handler
   const handleGameCompletion = useCallback(async (winner: string, botId?: string): Promise<UnlockResult[]> => {
@@ -85,18 +118,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
     }
     
     return results;
-  }, [unlocks.checkAchievementTriggers, handleImmediateEffects]);
-
-  // Show unlock notification (placeholder for now)
-  const showUnlockNotification = useCallback((results: UnlockResult[]) => {
-    // For now, just log to console
-    // TODO: Implement proper notification UI
-    for (const result of results) {
-      const categoryName = result.category === 'theme' ? 'Theme' : 
-                          result.category === 'mechanic' ? 'Mechanic' : 'Bot';
-      console.log(`🎉 Unlocked ${categoryName}: ${result.target}`);
-    }
-  }, []);
+  }, [unlocks.checkAchievementTriggers, handleImmediateEffects, showUnlockNotification]);
 
   // Reset unlocks to fresh user state (for testing)
   const resetUnlocksToFresh = useCallback(async (): Promise<void> => {

@@ -290,9 +290,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Integrated unlock system with MainScreen component bot list
   - Fresh users now see only tester bot in main menu bot selection
   - Bot list dynamically updates as new bots are unlocked through gameplay
-  - Consistent behavior between main menu and settings menu bot lists
+  - Consistent behavior between main menu and settings menu bot filtering
   - Added comprehensive test coverage for bot filtering functionality
-  - Maintains same bot display names and ordering as settings menu
+  - Updated bot list to include all themed bots with proper display names
+- **ShipHip: Toast Notification System for Unlocks** - Added dynamic banner announcements for unlock events
+  - Created Toast component with slide-in animations and auto-dismiss functionality
+  - Implemented ToastManager with context provider for app-wide toast notifications
+  - Integrated toast system with unlock provider to show unlock notifications
+  - Added user-friendly formatting for theme, bot, and mechanic names in notifications
+  - Toast notifications appear when players unlock new content through gameplay
+  - Responsive design with mobile-optimized layout and accessibility features
+  - Added comprehensive test coverage with 4 test cases for toast functionality
+  - Notifications include celebration emoji and clear messaging about unlocked content
+  - Auto-dismiss after 5 seconds with manual close option for better UX
 
 ### Removed
 - **🧹 CLEANUP**: All browser-specific engine implementations eliminated

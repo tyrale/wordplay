@@ -5,6 +5,7 @@ import { UnlockProvider } from './components/unlock/UnlockProvider';
 import ResponsiveTest from './components/game/ResponsiveTest';
 import { QuitterOverlay } from './components/ui/QuitterOverlay';
 import { initViewportHeight } from './utils/viewportHeight';
+import { ToastProvider } from './components/ui/ToastManager';
 import './App.css';
 
 type AppState = 'main' | 'game' | 'quitter';
@@ -43,30 +44,32 @@ function App() {
   return (
     <ThemeProvider>
       <UnlockProvider>
-        <AnimationProvider initialTheme="default">
-          <ResponsiveTest>
-            {appState === 'main' && (
-              <MainScreen onStartGame={handleStartGame} />
-            )}
-            {appState === 'game' && (
-              <InteractiveGame 
-                config={{ 
-                  maxTurns: 10,
-                  allowBotPlayer: true,
-                  enableKeyLetters: true,
-                  enableLockedLetters: true,
-                  botId: selectedBotId
-                }}
-                onGameEnd={handleGameEnd}
-                onResign={handleResign}
+        <ToastProvider>
+          <AnimationProvider initialTheme="default">
+            <ResponsiveTest>
+              {appState === 'main' && (
+                <MainScreen onStartGame={handleStartGame} />
+              )}
+              {appState === 'game' && (
+                <InteractiveGame 
+                  config={{ 
+                    maxTurns: 10,
+                    allowBotPlayer: true,
+                    enableKeyLetters: true,
+                    enableLockedLetters: true,
+                    botId: selectedBotId
+                  }}
+                  onGameEnd={handleGameEnd}
+                  onResign={handleResign}
+                />
+              )}
+              <QuitterOverlay 
+                isVisible={appState === 'quitter'}
+                onComplete={handleQuitterComplete}
               />
-            )}
-            <QuitterOverlay 
-              isVisible={appState === 'quitter'}
-              onComplete={handleQuitterComplete}
-            />
-          </ResponsiveTest>
-        </AnimationProvider>
+            </ResponsiveTest>
+          </AnimationProvider>
+        </ToastProvider>
       </UnlockProvider>
     </ThemeProvider>
   );
