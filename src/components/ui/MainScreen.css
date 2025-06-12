@@ -91,6 +91,10 @@
   opacity: 0.5;
 }
 
+.main-screen__vs-text {
+  color: var(--theme-accent);
+}
+
 .main-screen__bot-selection {
   display: flex;
   flex-direction: column;

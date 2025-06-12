@@ -272,36 +272,104 @@ export const Menu: React.FC<MenuProps> = ({
                     role="region"
                     aria-labelledby={`menu-${tier1Item.id}-button`}
                   >
-                    {tier1Item.children.map((tier2Item: MenuTier2Item, tier2Index: number) => (
-                    <button
-                      key={tier2Item.id}
-                      className={`menu-tier2-item ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTier2Click(tier1Item.id, tier2Item.id);
-                      }}
-                      style={{
-                        animationDelay: isClosing 
-                          ? `${(menuItems.length - tier1Index - 1) * 0.05 + (tier1Item.children!.length - tier2Index - 1) * 0.02}s`
-                          : `${(tier1Index * 0.1) + 0.05 + (tier2Index * 0.02)}s`
-                      }}
-                    >
-                      {tier1Item.id === 'themes' ? renderThemeName(tier2Item) : tier2Item.title}
-                      {tier2Item.isSelected && tier2Item.theme && (
-                        <span 
-                          className="menu-tier2-item__checkmark"
-                          style={{ color: tier2Item.theme.colors.accent }}
+                    {tier1Item.id === 'themes' ? (
+                      // Special handling for themes menu
+                      <>
+                        {/* Dark mode toggle on its own row */}
+                        <div className="menu-tier2-darkmode-row">
+                          {tier1Item.children
+                            .filter((item: MenuTier2Item) => item.id === 'inverted')
+                            .map((tier2Item: MenuTier2Item, tier2Index: number) => {
+                              const isDarkModeToggle = true;
+                              
+                              return (
+                                <button
+                                  key={tier2Item.id}
+                                  className={`menu-tier2-item menu-tier2-item--toggle ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleTier2Click(tier1Item.id, tier2Item.id);
+                                  }}
+                                  style={{
+                                    animationDelay: isClosing 
+                                      ? `${(menuItems.length - tier1Index - 1) * 0.05 + (tier1Item.children!.length - tier2Index - 1) * 0.02}s`
+                                      : `${(tier1Index * 0.1) + 0.05 + (tier2Index * 0.02)}s`
+                                  }}
+                                >
+                                  {tier2Item.title}
+                                  <div className={`dark-mode-toggle ${tier2Item.isSelected ? 'dark-mode-toggle--active' : ''}`}>
+                                    <div className="dark-mode-toggle__slider"></div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                        </div>
+                        
+                        {/* Theme items in wrapped rows */}
+                        <div className="menu-tier2-themes-grid">
+                          {tier1Item.children
+                            .filter((item: MenuTier2Item) => item.id !== 'inverted')
+                            .map((tier2Item: MenuTier2Item, tier2Index: number) => {
+                              const isThemeItem = true;
+                              
+                              // For theme items, use the theme's colors for styling
+                              const themeStyles = {
+                                borderColor: isInverted ? tier2Item.theme.colors.background : tier2Item.theme.colors.text,
+                                backgroundColor: isInverted ? tier2Item.theme.colors.text : tier2Item.theme.colors.background,
+                                color: isInverted ? tier2Item.theme.colors.background : tier2Item.theme.colors.text
+                              };
+
+                              return (
+                                <button
+                                  key={tier2Item.id}
+                                  className={`menu-tier2-item menu-tier2-item--theme ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleTier2Click(tier1Item.id, tier2Item.id);
+                                  }}
+                                  style={{
+                                    animationDelay: isClosing 
+                                      ? `${(menuItems.length - tier1Index - 1) * 0.05 + (tier1Item.children!.length - tier2Index - 1) * 0.02}s`
+                                      : `${(tier1Index * 0.1) + 0.05 + (tier2Index * 0.02)}s`,
+                                    ...themeStyles
+                                  }}
+                                >
+                                  {renderThemeName(tier2Item)}
+                                  
+                                  {/* Checkmark for selected theme items */}
+                                  {tier2Item.isSelected && (
+                                    <span 
+                                      className="menu-tier2-item__checkmark"
+                                      style={{ color: tier2Item.theme.colors.accent }}
+                                    >
+                                      ✓
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                        </div>
+                      </>
+                    ) : (
+                      // Regular handling for non-themes menus
+                      tier1Item.children.map((tier2Item: MenuTier2Item, tier2Index: number) => (
+                        <button
+                          key={tier2Item.id}
+                          className={`menu-tier2-item ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTier2Click(tier1Item.id, tier2Item.id);
+                          }}
+                          style={{
+                            animationDelay: isClosing 
+                              ? `${(menuItems.length - tier1Index - 1) * 0.05 + (tier1Item.children!.length - tier2Index - 1) * 0.02}s`
+                              : `${(tier1Index * 0.1) + 0.05 + (tier2Index * 0.02)}s`
+                          }}
                         >
-                          ✓
-                        </span>
-                      )}
-                      {tier2Item.isSelected && !tier2Item.theme && (
-                        <span className="menu-tier2-item__checkmark">
-                          ✓
-                        </span>
-                      )}
-                    </button>
-                    ))}
+                          {tier2Item.title}
+                        </button>
+                      ))
+                    )}
                   </div>
                 )}
               </div>

@@ -128,6 +128,7 @@
   flex-shrink: 0;
   margin-top: 60px;
   padding-bottom: 80px; /* Added padding to allow scrolling past close button */
+  padding-right: 15px;
 }
 
 .menu-tier1-section {
@@ -173,7 +174,7 @@
 
 .menu-tier2-list {
   display: none;
-  margin-top: var(--spacing-xs, 6px);
+  margin-top: var(--spacing-xs, 2px);
   padding-left: var(--spacing-md, 20px);
   width: 100%;
 }
@@ -182,7 +183,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: var(--spacing-xs, 4px); /* Reduced from 6px to 4px for closer spacing */
+  gap: var(--spacing-xs, 4px);
 }
 
 /* Removed obsolete grid container styles */
@@ -235,6 +236,74 @@
   position: relative;
 }
 
+/* Special styling for theme items */
+.menu-tier2-item--theme {
+  border: 1px solid var(--theme-text);
+  border-radius: 4px;
+  padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+  background-color: var(--theme-background);
+  margin-bottom: 0; /* Remove bottom margin since we're using gap */
+  flex-shrink: 0; /* Prevent items from shrinking */
+  white-space: nowrap; /* Keep theme names on one line */
+}
+
+/* Dark mode toggle styling */
+.menu-tier2-item--toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm, 8px);
+}
+
+/* Dark mode row - separate container for dark mode toggle */
+.menu-tier2-darkmode-row {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-bottom: var(--spacing-sm, 8px);
+}
+
+/* Themes grid - wrapping container for theme items */
+.menu-tier2-themes-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: var(--spacing-xs, 4px);
+}
+
+.dark-mode-toggle {
+  width: 40px;
+  height: 20px;
+  background-color: var(--theme-surface);
+  border: 1px solid var(--theme-text);
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dark-mode-toggle--active {
+  background-color: var(--theme-accent);
+}
+
+.dark-mode-toggle__slider {
+  width: 16px;
+  height: 16px;
+  background-color: var(--theme-text);
+  border-radius: 50%;
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  transition: transform 0.3s ease;
+}
+
+.dark-mode-toggle--active .dark-mode-toggle__slider {
+  transform: translateX(18px);
+  background-color: var(--theme-background);
+}
+
 .menu-tier2-item__checkmark {
   margin-left: var(--spacing-xs, 6px);
   font-size: 16px;
@@ -278,7 +347,7 @@
   }
   
   .menu-tier2-item {
-    font-size: 14px; /* Smaller on mobile */
+    font-size: 18px; /* Updated from 14px to 18px */
   }
   
   .menu-close-button {

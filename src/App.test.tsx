@@ -40,8 +40,12 @@ describe('App Component', () => {
     
     // Check that the main screen is rendered with game options
     expect(screen.getByText('challenge')).toBeInTheDocument();
-    expect(screen.getByText('vs human')).toBeInTheDocument();
-    expect(screen.getByText('vs bot')).toBeInTheDocument();
+    expect(screen.getByText((content, element) => {
+      return element?.textContent === 'vs human';
+    })).toBeInTheDocument();
+    expect(screen.getByText((content, element) => {
+      return element?.textContent === 'vs bot';
+    })).toBeInTheDocument();
     
     // Check for menu button
     expect(screen.getByLabelText('Open menu')).toBeInTheDocument();
@@ -51,7 +55,9 @@ describe('App Component', () => {
     render(<TestApp />);
     
     // Check for game selection buttons
-    const botButton = screen.getByText('vs bot');
+    const botButton = screen.getByText((content, element) => {
+      return element?.textContent === 'vs bot';
+    });
     expect(botButton).toBeInTheDocument();
     expect(botButton.tagName).toBe('BUTTON');
     
@@ -59,7 +65,9 @@ describe('App Component', () => {
     expect(challengeButton).toBeInTheDocument();
     expect(challengeButton.tagName).toBe('BUTTON');
     
-    const humanButton = screen.getByText('vs human');
+    const humanButton = screen.getByText((content, element) => {
+      return element?.textContent === 'vs human';
+    });
     expect(humanButton).toBeInTheDocument();
     expect(humanButton.tagName).toBe('BUTTON');
   });
@@ -69,8 +77,12 @@ describe('App Component', () => {
     
     // Check for main screen elements
     expect(screen.getByText('challenge')).toBeInTheDocument();
-    expect(screen.getByText('vs human')).toBeInTheDocument();
-    expect(screen.getByText('vs bot')).toBeInTheDocument();
+    expect(screen.getByText((content, element) => {
+      return element?.textContent === 'vs human';
+    })).toBeInTheDocument();
+    expect(screen.getByText((content, element) => {
+      return element?.textContent === 'vs bot';
+    })).toBeInTheDocument();
     
     // Check that the main screen component is rendered
     const mainContainer = document.querySelector('.main-screen');

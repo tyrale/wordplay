@@ -99,13 +99,13 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
               className="main-screen__game-option"
               onClick={() => handleGameTypeSelect('vs-human')}
             >
-              vs human
+              <span className="main-screen__vs-text">vs</span> human
             </button>
             <button 
               className="main-screen__game-option"
               onClick={() => handleGameTypeSelect('vs-bot')}
             >
-              vs bot
+              <span className="main-screen__vs-text">vs</span> bot
             </button>
           </div>
         )}
