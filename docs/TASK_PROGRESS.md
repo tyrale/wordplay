@@ -38,68 +38,114 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 **Phase 2 Status**: ✅ **COMPLETE** - Web application fully functional
 
-## Phase 3 – Online Multiplayer (Web)
+## Phase 3 – Challenge Mode (Daily Puzzles)
 
 | Task | Status | Description |
 |------|--------|-------------|
-| 3.1 | ⏳ | **Auth Flow (Supabase EmailLink)** - User authentication |
-| 3.2 | ⏳ | **Game CRUD API** - Game creation and management |
-| 3.3 | ⏳ | **Realtime Turn Sync** - Live multiplayer functionality |
-| 3.4 | ⏳ | **Avatar & Score HUD** - User profiles and scoring |
+| 3.1 | ✅ | **Challenge Engine (Cross-Platform)** - Daily puzzle generation with consistent seeds |
+| 3.2 | ✅ | **Challenge Storage System** - IndexedDB persistence matching unlock system |
+| 3.3 | 🔄 | **Challenge UI Components** - React components for challenge gameplay |
+| 3.4 | ⏳ | **Menu Integration** - Challenge menu items and navigation |
 
-**Phase 3 Status**: ⏳ **PENDING** - Awaiting development
+**Phase 3 Status**: 🔄 **IN PROGRESS** - Core engine complete, UI integration pending
 
-## Phase 4 – Themes & Unlocks (Web)
-
-| Task | Status | Description |
-|------|--------|-------------|
-| 4.1 | ✅ | **Unlock Framework** - Achievement system |
-| 4.2 | ✅ | **Theme Provider + Brown Theme** - Theme system (81 themes implemented) |
-| 4.3 | ⏳ | **Six‑Letter Attribute** - Game difficulty variations |
-
-**Phase 4 Status**: 🔄 **IN PROGRESS** - Unlock framework and theme system complete with web integration, mechanics pending implementation
-
-## Phase 5 – Web Polish & Accessibility
+## Phase 4 – Online Multiplayer (Web)
 
 | Task | Status | Description |
 |------|--------|-------------|
-| 5.1 | ⏳ | **Colour‑blind Palettes** - Accessibility improvements |
-| 5.2 | ⏳ | **Web Audio & Haptics** - Sound and vibration |
-| 5.3 | ⏳ | **E2E Web Testing** - Playwright test suite |
+| 4.1 | ⏳ | **Auth Flow (Supabase EmailLink)** - User authentication |
+| 4.2 | ⏳ | **Game CRUD API** - Game creation and management |
+| 4.3 | ⏳ | **Realtime Turn Sync** - Live multiplayer functionality |
+| 4.4 | ⏳ | **Avatar & Score HUD** - User profiles and scoring |
 
-**Phase 5 Status**: ⏳ **PENDING** - Awaiting development
+**Phase 4 Status**: ⏳ **PENDING** - Awaiting development
 
-## Phase 6 – Web Release Prep
+## Phase 5 – Themes & Unlocks (Web)
 
 | Task | Status | Description |
 |------|--------|-------------|
-| 6.1 | ⏳ | **PWA Features** - Progressive web app capabilities |
-| 6.2 | ⏳ | **Web Performance Optimization** - Bundle size and speed |
-| 6.3 | ⏳ | **Analytics Integration** - User behavior tracking |
-| 6.4 | ⏳ | **Production Launch** - Live deployment |
+| 5.1 | ✅ | **Unlock Framework** - Achievement system |
+| 5.2 | ✅ | **Theme Provider + Brown Theme** - Theme system (81 themes implemented) |
+| 5.3 | ⏳ | **Six‑Letter Attribute** - Game difficulty variations |
+
+**Phase 5 Status**: 🔄 **IN PROGRESS** - Unlock framework and theme system complete with web integration, mechanics pending implementation
+
+## Phase 6 – Web Polish & Accessibility
+
+| Task | Status | Description |
+|------|--------|-------------|
+| 6.1 | ⏳ | **Colour‑blind Palettes** - Accessibility improvements |
+| 6.2 | ⏳ | **Web Audio & Haptics** - Sound and vibration |
+| 6.3 | ⏳ | **E2E Web Testing** - Playwright test suite |
 
 **Phase 6 Status**: ⏳ **PENDING** - Awaiting development
 
-## Phase 7 – Monetization & Live‑Ops (Web)
+## Phase 7 – Web Release Prep
 
 | Task | Status | Description |
 |------|--------|-------------|
-| 7.1 | ⏳ | **Web Payment Integration** - Theme purchases |
-| 7.2 | ⏳ | **Global Leaderboard** - Competitive ranking |
-| 7.3 | ⏳ | **Admin Dashboard** - Content management |
+| 7.1 | ⏳ | **PWA Features** - Progressive web app capabilities |
+| 7.2 | ⏳ | **Web Performance Optimization** - Bundle size and speed |
+| 7.3 | ⏳ | **Analytics Integration** - User behavior tracking |
+| 7.4 | ⏳ | **Production Launch** - Live deployment |
 
 **Phase 7 Status**: ⏳ **PENDING** - Awaiting development
 
-## Phase 8 – Native Mobile Expansion
+## Phase 8 – Monetization & Live‑Ops (Web)
 
 | Task | Status | Description |
 |------|--------|-------------|
-| 8.1 | ⏳ | **React Native Setup** - Mobile app foundation |
-| 8.2 | ⏳ | **Native UI Adaptation** - Platform-specific components |
-| 8.3 | ⏳ | **App Store Optimization** - Store listings and assets |
-| 8.4 | ⏳ | **Native-Specific Features** - Push notifications, sharing |
+| 8.1 | ⏳ | **Web Payment Integration** - Theme purchases |
+| 8.2 | ⏳ | **Global Leaderboard** - Competitive ranking |
+| 8.3 | ⏳ | **Admin Dashboard** - Content management |
 
-**Phase 8 Status**: ⏳ **PENDING** - Future expansion after web success
+**Phase 8 Status**: ⏳ **PENDING** - Awaiting development
+
+## Phase 9 – Native Mobile Expansion
+
+| Task | Status | Description |
+|------|--------|-------------|
+| 9.1 | ⏳ | **React Native Setup** - Mobile app foundation |
+| 9.2 | ⏳ | **Native UI Adaptation** - Platform-specific components |
+| 9.3 | ⏳ | **App Store Optimization** - Store listings and assets |
+| 9.4 | ⏳ | **Native-Specific Features** - Push notifications, sharing |
+
+**Phase 9 Status**: ⏳ **PENDING** - Future expansion after web success
+
+## Challenge Mode Implementation ✅ **CORE COMPLETE**
+
+### Challenge Engine ✅ **COMPLETE**
+
+- ✅ **Cross-Platform Architecture** - Challenge engine in `packages/engine/challenge.ts` with dependency injection
+- ✅ **Daily Challenge Generation** - Deterministic seed-based word pairs ensuring global consistency
+- ✅ **Persistent Storage** - IndexedDB storage adapter following unlock system patterns
+- ✅ **Word Validation** - Integrates with existing dictionary and game rules (±1 length change)
+- ✅ **Sharing System** - Visual pattern generation using `···*` format based on word analysis
+- ✅ **Comprehensive Testing** - 14 test cases covering all core functionality
+- ✅ **Game State Management** - Challenge progression, completion, and forfeit handling
+
+### Challenge Features ✅ **IMPLEMENTED**
+
+- ✅ **Daily Consistency** - Same start→target word pairs for all players worldwide
+- ✅ **Progress Tracking** - Step counting and word sequence recording
+- ✅ **Give Up Functionality** - Challenge forfeit with sharing support for failed attempts
+- ✅ **Random Testing Mode** - Debug functionality for generating test challenges
+- ✅ **Storage Persistence** - Challenges survive browser cache clears and restarts
+
+### Integration Status 🔄 **IN PROGRESS**
+
+- ✅ **React Hook** - `useChallenge` hook for state management (type issues pending)
+- 🔄 **UI Components** - Challenge game screen started but needs type fixes
+- ⏳ **Menu Integration** - Challenge menu items and navigation pending
+- ⏳ **Word Trail Adaptation** - Start/target word accent colors pending
+- ⏳ **Pass System Integration** - Give-up confirmation workflow pending
+
+### Next Steps
+
+1. **Complete UI Integration** - Fix TypeScript interface mismatches
+2. **Menu System Updates** - Add challenge navigation and status display
+3. **Debug Menu Items** - Reset daily challenge functionality for testing
+4. **End-to-End Testing** - Verify complete challenge flow in browser
 
 ## Critical Fixes and Enhancements Applied
 

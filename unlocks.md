@@ -164,10 +164,6 @@ All themes unlock by playing the theme name and immediately apply:
 |--------------|-------------|--------------|-------------------|----------------------|
 | "five" | `5-letter-start` | "5 letter starting word" | Start games with 5-letter words | ❌ Not implemented |
 | "six" | `6-letter-start` | "6 letter starting word" | Start games with 6-letter words | ❌ Not implemented |
-| "time" | `time-pressure` | "time pressure mode" | Add turn time limits | ❌ Not implemented |
-| "double" | `double-key-letters` | "double key letters" | Generate 2 key letters per turn | ❌ Not implemented |
-| "reverse" | `reverse-scoring` | "reverse scoring" | Lower scores win | ❌ Not implemented |
-| "longer" | `longer-words` | "longer words" | Allow bigger word length changes | ❌ Not implemented |
 
 ## Technical Architecture
 
@@ -270,40 +266,12 @@ export interface GameConfig {
 #### **Word Length Mechanics**
 - [ ] **`3-letter-start`** - Start with 3-letter words (trigger: "three")
 - [ ] **`7-letter-start`** - Start with 7-letter words (trigger: "seven")
-- [ ] **`random-length`** - Random starting word length (trigger: "random")
-
-#### **Scoring Mechanics**
-- [ ] **`double-points`** - All scores doubled (trigger: "double")
-- [ ] **`bonus-vowels`** - Extra points for vowels (trigger: "vowels")
-- [ ] **`consonant-bonus`** - Extra points for consonants (trigger: "consonants")
-- [ ] **`length-bonus`** - Bonus for longer words (trigger: "length")
-
-#### **Key Letter Mechanics**
-- [ ] **`triple-key`** - 3 key letters per turn (trigger: "triple")
-- [ ] **`no-key-letters`** - Disable key letters (trigger: "nokey")
-- [ ] **`vowel-keys`** - Only vowel key letters (trigger: "vowelkey")
-- [ ] **`rare-keys`** - Only rare letter keys (trigger: "rarekey")
-
-#### **Time Mechanics**
-- [ ] **`speed-mode`** - 30 second turns (trigger: "speed")
-- [ ] **`blitz-mode`** - 15 second turns (trigger: "blitz")
-- [ ] **`marathon-mode`** - No time limit (trigger: "marathon")
-
-#### **Dictionary Mechanics**
-- [ ] **`hard-words`** - Obscure dictionary only (trigger: "hard")
-- [ ] **`common-words`** - Common words only (trigger: "common")
-- [ ] **`slang-only`** - Slang dictionary only (trigger: "slang")
-- [ ] **`no-slang`** - No slang allowed (trigger: "noslang")
+- [ ] **`random-length`** - Random starting word length (trigger: "starts")
 
 #### **Turn Mechanics**
 - [ ] **`extra-turns`** - 15 turns instead of 10 (trigger: "extra")
 - [ ] **`quick-game`** - 5 turns only (trigger: "quick")
 - [ ] **`endless-mode`** - No turn limit (trigger: "endless")
-
-#### **Letter Mechanics**
-- [ ] **`locked-vowels`** - Vowels become locked (trigger: "lockvowels")
-- [ ] **`no-locked`** - Disable locked letters (trigger: "nolocked")
-- [ ] **`super-locked`** - More letters get locked (trigger: "superlocked")
 
 ### **New Bot Ideas**
 
@@ -329,18 +297,6 @@ export interface GameConfig {
 - [ ] **`legendary-bot`** - Final boss bot (achievement: `beat_grandmaster_bot`)
 
 ### **New Theme Ideas**
-
-#### **Seasonal Themes**
-- [ ] **`spring`** - Fresh green theme (trigger: "spring")
-- [ ] **`summer`** - Bright yellow theme (trigger: "summer")
-- [ ] **`autumn`** - Orange/brown theme (trigger: "autumn")
-- [ ] **`winter`** - Cool blue/white theme (trigger: "winter")
-
-#### **Holiday Themes**
-- [ ] **`halloween`** - Orange/black theme (trigger: "halloween")
-- [ ] **`christmas`** - Red/green theme (trigger: "christmas")
-- [ ] **`valentine`** - Pink/red theme (trigger: "valentine")
-- [ ] **`easter`** - Pastel theme (trigger: "easter")
 
 #### **Achievement-Based Themes**
 - [ ] **`champion`** - Gold theme (achievement: `beat_all_bots`)
