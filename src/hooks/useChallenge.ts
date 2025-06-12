@@ -2,22 +2,13 @@
  * React Hook for Challenge Management
  * 
  * Provides a React interface to the challenge engine for daily word puzzles.
- * Simplified implementation to avoid TypeScript interface conflicts.
+ * Integrates with the real challenge engine using compatible interfaces.
  */
 
-import { useState, useCallback } from 'react';
-
-export interface ChallengeState {
-  date: string;
-  startWord: string;
-  targetWord: string;
-  currentWord: string;
-  wordSequence: string[];
-  stepCount: number;
-  completed: boolean;
-  failed: boolean;
-  failedAtWord?: string;
-}
+import { useState, useEffect, useCallback } from 'react';
+import type { ChallengeEngine, ChallengeState } from '../../packages/engine/challenge';
+import { createChallengeEngine } from '../../packages/engine/challenge';
+import { createBrowserAdapter } from '../adapters/browserAdapter';
 
 export interface ChallengeHookState {
   // Current challenge state
@@ -40,44 +31,132 @@ export interface ChallengeHookState {
   generateRandomChallenge: () => Promise<void>;
 }
 
-// Mock implementation for now - will be replaced with actual engine integration
 export function useChallenge(): ChallengeHookState {
   const [challengeState, setChallengeState] = useState<ChallengeState | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialized] = useState(true); // Always initialized for mock
+  const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [challengeEngine, setChallengeEngine] = useState<ChallengeEngine | null>(null);
 
-  // Mock challenge data
-  const generateMockChallenge = (): ChallengeState => {
-    const words = ['GAME', 'NAME', 'SAME', 'CAME', 'MAKE', 'TAKE', 'FAKE', 'LAKE', 'CAKE'];
-    const startWord = words[Math.floor(Math.random() * words.length)];
-    let targetWord = words[Math.floor(Math.random() * words.length)];
-    
-    // Ensure different words
-    while (targetWord === startWord) {
-      targetWord = words[Math.floor(Math.random() * words.length)];
-    }
+  // Initialize the challenge engine
+  useEffect(() => {
+    const initializeEngine = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-    return {
-      date: new Date().toISOString().split('T')[0],
-      startWord,
-      targetWord,
-      currentWord: startWord,
-      wordSequence: [startWord],
-      stepCount: 0,
-      completed: false,
-      failed: false
+        // Create the browser adapter
+        const gameAdapter = await createBrowserAdapter();
+        
+        // Wait for dictionary to load
+        const dictStatus = gameAdapter.getDictionaryStatus();
+        if (!dictStatus.loaded) {
+          console.log('Waiting for dictionary to load...');
+          // Wait a bit for dictionary loading
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        // Create compatible dictionary engine interface
+        const dictionaryEngine = {
+          validateWord: (word: string, options?: any) => {
+            // Convert gamestate ValidationResult to interfaces ValidationResult
+            const result = gameAdapter.getDictionaryDependencies().validateWord(word, options);
+            
+            // Convert to the discriminated union format expected by challenge engine
+            if (result.isValid) {
+              return {
+                isValid: true as const,
+                word: result.word,
+                censored: result.censored
+              };
+            } else {
+              return {
+                isValid: false as const,
+                reason: (result.reason || 'UNKNOWN') as any,
+                word: result.word,
+                userMessage: result.userMessage || 'Invalid word'
+              };
+            }
+          },
+          
+          isValidDictionaryWord: (word: string) => {
+            const result = gameAdapter.getDictionaryDependencies().validateWord(word);
+            return result.isValid;
+          },
+          
+          getRandomWordByLength: (length: number) => {
+            return gameAdapter.getDictionaryDependencies().getRandomWordByLength(length);
+          },
+          
+          getDictionaryInfo: () => {
+            const status = gameAdapter.getDictionaryStatus();
+            return {
+              wordCount: status.wordCount,
+              isLoaded: status.loaded,
+              loadTime: undefined
+            };
+          }
+        };
+
+        // Create utility dependencies
+        const utilityDependencies = {
+          getTimestamp: () => Date.now(),
+          random: Math.random,
+          log: console.log
+        };
+
+        // Create challenge dependencies using the createBestBrowserChallengeDependencies approach
+        const challengeDependencies = {
+          dictionary: dictionaryEngine,
+          utilities: utilityDependencies,
+          loadState: async (date: string) => {
+            try {
+              const stored = localStorage.getItem(`wordplay-challenge-${date}`);
+              return stored ? JSON.parse(stored) : null;
+            } catch {
+              return null;
+            }
+          },
+          
+          saveState: async (state: ChallengeState) => {
+            try {
+              localStorage.setItem(`wordplay-challenge-${state.date}`, JSON.stringify(state));
+            } catch (err) {
+              console.warn('Failed to save challenge state:', err);
+            }
+          }
+        };
+
+        // Create challenge engine
+        const engine = createChallengeEngine(challengeDependencies);
+        await engine.initialize();
+
+        setChallengeEngine(engine);
+        setIsInitialized(true);
+      } catch (err) {
+        console.error('Failed to initialize challenge engine:', err);
+        setError('Failed to initialize challenge system');
+      } finally {
+        setIsLoading(false);
+      }
     };
-  };
+
+    initializeEngine();
+  }, []);
 
   // Start today's challenge
   const startChallenge = useCallback(async () => {
+    if (!challengeEngine) {
+      setError('Challenge engine not initialized');
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
 
-      // For now, generate a mock challenge
-      const state = generateMockChallenge();
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      const state = await challengeEngine.getDailyChallengeState(today);
       setChallengeState(state);
     } catch (err) {
       console.error('Failed to start challenge:', err);
@@ -85,119 +164,98 @@ export function useChallenge(): ChallengeHookState {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [challengeEngine]);
 
   // Submit a word
   const submitWord = useCallback(async (word: string): Promise<{ success: boolean; error?: string }> => {
-    if (!challengeState) {
+    if (!challengeEngine || !challengeState) {
       return { success: false, error: 'Challenge not available' };
     }
 
     try {
-      const wordUpper = word.toUpperCase().trim();
+      const result = await challengeEngine.submitWord(word, challengeState);
       
-      // Basic validation
-      if (wordUpper === challengeState.currentWord) {
-        return { success: false, error: 'Same word' };
+      if (result.isValid) {
+        setChallengeState(result.newState);
+        return { success: true };
+      } else {
+        return { success: false, error: result.error || 'Invalid word' };
       }
-      
-      if (challengeState.wordSequence.includes(wordUpper)) {
-        return { success: false, error: 'Word already used' };
-      }
-
-      // Check length difference
-      const lengthDiff = Math.abs(wordUpper.length - challengeState.currentWord.length);
-      if (lengthDiff > 1) {
-        return { success: false, error: 'Invalid word transformation' };
-      }
-
-      // Create new state
-      const newWordSequence = [...challengeState.wordSequence, wordUpper];
-      const isComplete = wordUpper === challengeState.targetWord;
-      
-      const newState: ChallengeState = {
-        ...challengeState,
-        currentWord: wordUpper,
-        wordSequence: newWordSequence,
-        stepCount: challengeState.stepCount + 1,
-        completed: isComplete
-      };
-
-      setChallengeState(newState);
-      return { success: true };
     } catch (err) {
       console.error('Failed to submit word:', err);
       return { success: false, error: 'Failed to submit word' };
     }
-  }, [challengeState]);
+  }, [challengeEngine, challengeState]);
 
   // Forfeit the challenge
   const forfeitChallenge = useCallback(async () => {
-    if (!challengeState) {
+    if (!challengeEngine || !challengeState) {
       setError('Challenge not available');
       return;
     }
 
     try {
-      const newState: ChallengeState = {
-        ...challengeState,
-        failed: true,
-        failedAtWord: challengeState.currentWord
-      };
-      
-      setChallengeState(newState);
+      const result = await challengeEngine.forfeitChallenge(challengeState);
+      setChallengeState(result);
     } catch (err) {
       console.error('Failed to forfeit challenge:', err);
       setError('Failed to forfeit challenge');
     }
-  }, [challengeState]);
+  }, [challengeEngine, challengeState]);
 
   // Generate sharing text
   const generateSharingText = useCallback((): string => {
-    if (!challengeState) {
+    if (!challengeEngine || !challengeState) {
       return 'Challenge not available';
     }
 
-    const header = `WordPlay Challenge ${challengeState.date}\n${challengeState.startWord} → ${challengeState.targetWord}\n`;
-    
-    if (challengeState.failed) {
-      return header + `❌ Gave up after ${challengeState.stepCount} steps`;
-    } else if (challengeState.completed) {
-      return header + `✅ Solved in ${challengeState.stepCount} steps!`;
-    } else {
-      return header + `🔄 In progress: ${challengeState.stepCount} steps`;
-    }
-  }, [challengeState]);
+    return challengeEngine.generateSharingText(challengeState);
+  }, [challengeEngine, challengeState]);
 
-  // Check if a move is valid (basic implementation)
+  // Check if a move is valid
   const isValidMove = useCallback((fromWord: string, toWord: string): boolean => {
-    if (fromWord === toWord) return false;
-    
-    const lengthDiff = Math.abs(toWord.length - fromWord.length);
-    return lengthDiff <= 1;
-  }, []);
+    if (!challengeEngine) {
+      return false;
+    }
+
+    return challengeEngine.isValidMove(fromWord, toWord);
+  }, [challengeEngine]);
 
   // Reset daily challenge (for testing)
   const resetDailyChallenge = useCallback(async () => {
+    if (!challengeEngine) {
+      setError('Challenge engine not initialized');
+      return;
+    }
+
     try {
-      const state = generateMockChallenge();
+      const today = new Date().toISOString().split('T')[0];
+      await challengeEngine.resetDailyChallenge(today);
+      
+      // Reload the challenge state
+      const state = await challengeEngine.getDailyChallengeState(today);
       setChallengeState(state);
     } catch (err) {
       console.error('Failed to reset challenge:', err);
       setError('Failed to reset challenge');
     }
-  }, []);
+  }, [challengeEngine]);
 
   // Generate random challenge (for testing)
   const generateRandomChallenge = useCallback(async () => {
+    if (!challengeEngine) {
+      setError('Challenge engine not initialized');
+      return;
+    }
+
     try {
-      const state = generateMockChallenge();
+      const state = await challengeEngine.generateRandomChallenge();
       setChallengeState(state);
     } catch (err) {
       console.error('Failed to generate random challenge:', err);
       setError('Failed to generate random challenge');
     }
-  }, []);
+  }, [challengeEngine]);
 
   return {
     challengeState,

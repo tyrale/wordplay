@@ -57,6 +57,9 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
   const { getUnlockedItems } = useUnlockSystem();
   const unlockedBotIds = getUnlockedItems('bot');
   
+  // Get challenge functionality for menu integration
+  const { resetDailyChallenge } = useChallenge();
+  
   // Filter bots based on unlock state
   const availableBots = allBots.filter(bot => unlockedBotIds.includes(bot.id));
 
