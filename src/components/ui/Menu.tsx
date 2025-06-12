@@ -24,6 +24,8 @@ interface MenuProps {
   onClose: () => void;
   onDebugOpen?: () => void;
   onResign?: () => void;
+  onChallengeStart?: () => void;
+  onChallengeReset?: () => void;
   className?: string;
   isInGame?: boolean; // Whether user is currently in an active game
 }
@@ -69,11 +71,12 @@ const getMenuItems = (
     // No children - this is a standalone tier 1 action item
   }] : []),
   {
-    id: 'challenge',
-    title: 'challenge',
+    id: 'vsworld',
+    title: 'vs world',
     children: [
-      { id: 'challenge-mode', title: 'challenge mode' },
+      { id: 'challenge-mode', title: 'daily challenge' },
       { id: 'leaderboard', title: 'leaderboard' },
+      { id: 'reset-challenge', title: 'reset daily challenge (testing)' },
     ]
   },
   {
@@ -128,6 +131,8 @@ export const Menu: React.FC<MenuProps> = ({
   onClose,
   onDebugOpen,
   onResign,
+  onChallengeStart,
+  onChallengeReset,
   className = '',
   isInGame = false
 }) => {
@@ -238,6 +243,14 @@ export const Menu: React.FC<MenuProps> = ({
       // Reset unlocks to fresh user state
       resetUnlocksToFresh();
       handleClose(); // Close menu after reset
+    } else if (tier1Id === 'vsworld' && tier2Id === 'challenge-mode') {
+      // Start daily challenge
+      onChallengeStart?.();
+      handleClose(); // Close menu after starting challenge
+    } else if (tier1Id === 'vsworld' && tier2Id === 'reset-challenge') {
+      // Reset daily challenge for testing
+      onChallengeReset?.();
+      // Keep menu open for testing workflow
     } else if (tier1Id === 'bots') {
       // Bot selection no longer handled here - bots are selected from main screen
       // Keep menu open for bot items
@@ -245,7 +258,7 @@ export const Menu: React.FC<MenuProps> = ({
     
     // For other items (challenge, mechanics, bots, other about items), keep menu open
     // These are placeholder items that don't have functionality yet
-  }, [handleClose, onDebugOpen, onResign, unlockedThemes, setTheme, toggleInverted, resetUnlocksToFresh]);
+  }, [handleClose, onDebugOpen, onResign, onChallengeStart, onChallengeReset, unlockedThemes, setTheme, toggleInverted, resetUnlocksToFresh]);
 
   if (!isOpen) return null;
 

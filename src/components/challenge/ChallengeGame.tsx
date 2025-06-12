@@ -12,7 +12,7 @@ import { AlphabetGrid } from '../game/AlphabetGrid';
 import { WordBuilder } from '../game/WordBuilder';
 import { ScoreDisplay } from '../game/ScoreDisplay';
 import type { LetterState } from '../game/AlphabetGrid';
-import type { WordTrailMove } from '../game/WordTrail';
+import type { WordMove } from '../game/WordTrail';
 import './ChallengeGame.css';
 
 export interface ChallengeGameProps {
@@ -139,25 +139,21 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     return alphabet.split('').map(letter => ({
       letter,
-      state: 'available' as const,
-      isKeyLetter: false,
-      isLocked: false
+      state: 'normal' as const
     }));
   }, []);
 
   // Generate word trail moves
-  const wordTrailMoves = React.useMemo((): WordTrailMove[] => {
+  const wordTrailMoves = React.useMemo((): WordMove[] => {
     if (!challengeState) return [];
 
-    const moves: WordTrailMove[] = [];
+    const moves: WordMove[] = [];
     
     // Add start word (accent color)
     moves.push({
       word: challengeState.startWord,
       score: 0,
-      turnNumber: 0,
-      isCurrentWord: false,
-      isAccent: true
+      turnNumber: 0
     });
 
     // Add player moves
@@ -165,9 +161,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       moves.push({
         word,
         score: 0, // No scoring in challenge mode
-        turnNumber: index + 1,
-        isCurrentWord: word === challengeState.currentWord,
-        isAccent: false
+        turnNumber: index + 1
       });
     });
 
@@ -175,10 +169,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     moves.push({
       word: challengeState.targetWord,
       score: 0,
-      turnNumber: -1, // Special marker for target
-      isCurrentWord: false,
-      isAccent: true,
-      isTarget: true
+      turnNumber: -1 // Special marker for target
     });
 
     return moves;
@@ -315,8 +306,8 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
           {/* Submit button - center anchor */}
           <div className="challenge-game__submit-anchor">
             <ScoreDisplay
-              score={{ total: 0, breakdown: { addLetterPoints: 0, removeLetterPoints: 0, movePoints: 0, keyLetterBonus: 0, total: 0 } }}
-              actions={[]}
+              score={{ base: 0, keyBonus: 0, total: 0 }}
+              actions={{ add: false, remove: false, move: false }}
               isValid={isValidSubmit}
               isPassConfirming={isGiveUpConfirming}
               passReason={isGiveUpConfirming ? "Give Up" : null}

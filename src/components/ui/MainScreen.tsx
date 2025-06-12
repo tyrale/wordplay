@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Menu } from './Menu';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { useChallenge } from '../../hooks/useChallenge';
 import './MainScreen.css';
 
 interface Bot {
@@ -9,7 +10,7 @@ interface Bot {
 }
 
 interface MainScreenProps {
-  onStartGame: (gameType: 'bot', botId?: string) => void;
+  onStartGame: (gameType: 'bot' | 'challenge', botId?: string) => void;
 }
 
 // Complete bot list with display names (same as Menu.tsx)
@@ -62,11 +63,13 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
   const handleGameTypeSelect = useCallback((gameType: string) => {
     if (gameType === 'vs-bot') {
       setCurrentView('bots');
-    } else if (gameType === 'challenge' || gameType === 'vs-human') {
-      // These modes not implemented yet
+    } else if (gameType === 'challenge') {
+      onStartGame('challenge');
+    } else if (gameType === 'vs-human') {
+      // This mode not implemented yet
       console.log(`${gameType} mode not implemented yet`);
     }
-  }, []);
+  }, [onStartGame]);
 
   const handleBotSelect = useCallback((botId: string) => {
     onStartGame('bot', botId);
@@ -103,7 +106,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
               className="main-screen__game-option"
               onClick={() => handleGameTypeSelect('challenge')}
             >
-              challenge
+              <span className="main-screen__vs-text">vs</span> world
             </button>
             <button 
               className="main-screen__game-option"
