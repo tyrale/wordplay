@@ -286,6 +286,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed race condition where initial state was displayed before persisted state loaded
   - Unlocks now properly persist across browser sessions and page refreshes
   - Verified fix works with IndexedDB storage and localStorage fallback
+- **ShipHip: Main Menu Bot Filtering** - Updated main menu bot selection to only show unlocked bots
+  - Integrated unlock system with MainScreen component bot list
+  - Fresh users now see only tester bot in main menu bot selection
+  - Bot list dynamically updates as new bots are unlocked through gameplay
+  - Consistent behavior between main menu and settings menu bot lists
+  - Added comprehensive test coverage for bot filtering functionality
+  - Maintains same bot display names and ordering as settings menu
 
 ### Removed
 - **🧹 CLEANUP**: All browser-specific engine implementations eliminated

@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Menu } from './Menu';
+import { useUnlockSystem } from '../unlock/UnlockProvider';
 import './MainScreen.css';
 
 interface Bot {
@@ -11,7 +12,8 @@ interface MainScreenProps {
   onStartGame: (gameType: 'bot', botId?: string) => void;
 }
 
-const availableBots: Bot[] = [
+// Complete bot list with display names (same as Menu.tsx)
+const allBots: Bot[] = [
   { id: 'tester', name: 'tester' },
   { id: 'easy-bot', name: 'easy bot' },
   { id: 'medium-bot', name: 'medium bot' },
@@ -43,11 +45,19 @@ const availableBots: Bot[] = [
   { id: 'experimental-bot', name: 'experimental bot' },
   { id: 'classic-bot', name: 'classic bot' },
   { id: 'modern-bot', name: 'modern bot' },
+  { id: 'pirate-bot', name: 'pirate bot' }, // Added missing themed bots
 ];
 
 export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
   const [currentView, setCurrentView] = useState<'main' | 'bots'>('main');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // Get unlock state
+  const { getUnlockedItems } = useUnlockSystem();
+  const unlockedBotIds = getUnlockedItems('bot');
+  
+  // Filter bots based on unlock state
+  const availableBots = allBots.filter(bot => unlockedBotIds.includes(bot.id));
 
   const handleGameTypeSelect = useCallback((gameType: string) => {
     if (gameType === 'vs-bot') {
