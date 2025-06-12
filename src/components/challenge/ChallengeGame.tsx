@@ -16,7 +16,6 @@ import type { LetterState } from '../game/AlphabetGrid';
 import type { LetterHighlight } from '../game/CurrentWord';
 import type { WordMove } from '../game/WordTrail';
 import type { ScoreBreakdown, ActionState } from '../game/ScoreDisplay';
-import './ChallengeGame.css';
 
 export interface ChallengeGameProps {
   onComplete?: (completed: boolean, stepCount: number) => void;
