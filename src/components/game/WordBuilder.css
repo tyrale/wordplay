@@ -26,7 +26,6 @@
 
 .word-builder__letter--lockedKey {
   color: var(--theme-text);
-  font-weight: bold;
   position: relative;
 }
 
