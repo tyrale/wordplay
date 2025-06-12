@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useTheme } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
+import { useChallenge } from '../../hooks/useChallenge';
 import './Menu.css';
 
 interface MenuTier2Item {
@@ -24,8 +25,7 @@ interface MenuProps {
   onClose: () => void;
   onDebugOpen?: () => void;
   onResign?: () => void;
-  onChallengeStart?: () => void;
-  onChallengeReset?: () => void;
+  onStartGame?: (gameType: 'bot' | 'challenge', botId?: string) => void;
   className?: string;
   isInGame?: boolean; // Whether user is currently in an active game
 }
@@ -131,8 +131,7 @@ export const Menu: React.FC<MenuProps> = ({
   onClose,
   onDebugOpen,
   onResign,
-  onChallengeStart,
-  onChallengeReset,
+  onStartGame,
   className = '',
   isInGame = false
 }) => {
@@ -145,6 +144,9 @@ export const Menu: React.FC<MenuProps> = ({
   const unlockedThemeIds = getUnlockedItems('theme');
   const unlockedMechanics = getUnlockedItems('mechanic');
   const unlockedBots = getUnlockedItems('bot');
+  
+  // Get challenge functionality
+  const { resetDailyChallenge } = useChallenge();
   
   // Filter themes based on unlock state
   const unlockedThemes = useUnlockedThemes({ unlockedThemes: unlockedThemeIds });
@@ -245,11 +247,11 @@ export const Menu: React.FC<MenuProps> = ({
       handleClose(); // Close menu after reset
     } else if (tier1Id === 'vsworld' && tier2Id === 'challenge-mode') {
       // Start daily challenge
-      onChallengeStart?.();
+      onStartGame?.('challenge');
       handleClose(); // Close menu after starting challenge
     } else if (tier1Id === 'vsworld' && tier2Id === 'reset-challenge') {
       // Reset daily challenge for testing
-      onChallengeReset?.();
+      resetDailyChallenge();
       // Keep menu open for testing workflow
     } else if (tier1Id === 'bots') {
       // Bot selection no longer handled here - bots are selected from main screen
@@ -258,7 +260,7 @@ export const Menu: React.FC<MenuProps> = ({
     
     // For other items (challenge, mechanics, bots, other about items), keep menu open
     // These are placeholder items that don't have functionality yet
-  }, [handleClose, onDebugOpen, onResign, onChallengeStart, onChallengeReset, unlockedThemes, setTheme, toggleInverted, resetUnlocksToFresh]);
+  }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, resetUnlocksToFresh, resetDailyChallenge]);
 
   if (!isOpen) return null;
 

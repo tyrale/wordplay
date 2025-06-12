@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Menu } from './Menu';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
-import { useChallenge } from '../../hooks/useChallenge';
 import './MainScreen.css';
 
 interface Bot {
@@ -56,9 +55,6 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
   // Get unlock state
   const { getUnlockedItems } = useUnlockSystem();
   const unlockedBotIds = getUnlockedItems('bot');
-  
-  // Get challenge functionality for menu integration
-  const { resetDailyChallenge } = useChallenge();
   
   // Filter bots based on unlock state
   const availableBots = allBots.filter(bot => unlockedBotIds.includes(bot.id));
@@ -153,6 +149,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
       <Menu
         isOpen={isMenuOpen}
         onClose={handleMenuClose}
+        onStartGame={onStartGame}
       />
     </div>
   );
