@@ -1,32 +1,22 @@
 /**
  * Challenge Game Component
  * 
- * Main game screen for daily word transformation challenges.
- * Uses identical interface to vs bot game for consistency.
+ * Uses the exact same components and logic as vs bot mode for consistency.
+ * Wraps the game engine to provide challenge-specific state management.
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useChallenge } from '../../hooks/useChallenge';
-import { WordTrail } from '../game/WordTrail';
 import { AlphabetGrid } from '../game/AlphabetGrid';
+import { WordTrail } from '../game/WordTrail';
 import { WordBuilder } from '../game/WordBuilder';
 import { ScoreDisplay } from '../game/ScoreDisplay';
-import { createWebAdapter } from '../../adapters/webAdapter';
+import { Menu } from '../ui/Menu';
 import type { LetterState } from '../game/AlphabetGrid';
 import type { LetterHighlight } from '../game/CurrentWord';
 import type { WordMove } from '../game/WordTrail';
 import type { ScoreBreakdown, ActionState } from '../game/ScoreDisplay';
 import './ChallengeGame.css';
-
-// Initialize web adapter for proper game validation
-let webAdapter: any = null;
-
-const initializeWebAdapter = async () => {
-  if (!webAdapter) {
-    webAdapter = await createWebAdapter();
-  }
-  return webAdapter;
-};
 
 export interface ChallengeGameProps {
   onComplete?: (completed: boolean, stepCount: number) => void;
@@ -36,8 +26,6 @@ export interface ChallengeGameProps {
 interface MoveAttempt {
   newWord: string;
   isValid: boolean;
-  validationResult: any;
-  scoringResult: any;
   canApply: boolean;
   reason?: string;
 }
@@ -46,6 +34,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   onComplete,
   onBack
 }) => {
+  // Challenge state from hook
   const {
     challengeState,
     isLoading,
@@ -54,142 +43,134 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     startChallenge,
     submitWord,
     forfeitChallenge,
-    generateSharingText
+    isValidMove
   } = useChallenge();
 
+  // Local UI state (identical to InteractiveGame)
   const [pendingWord, setPendingWord] = useState('');
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
   const [isProcessingMove, setIsProcessingMove] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
   const [isGiveUpConfirming, setIsGiveUpConfirming] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
 
-  // Initialize web adapter and challenge
+  // Initialize challenge on mount
   useEffect(() => {
-    const initialize = async () => {
-      await initializeWebAdapter();
-      if (isInitialized && !challengeState) {
-        startChallenge();
-      }
-    };
-    initialize();
-  }, [isInitialized, challengeState, startChallenge]);
+    if (isInitialized && !challengeState && !isLoading) {
+      startChallenge();
+    }
+  }, [isInitialized, challengeState, isLoading, startChallenge]);
 
-  // Initialize pending word with current word
+  // Update pending word when challenge state changes
   useEffect(() => {
-    if (challengeState) {
+    if (challengeState?.currentWord) {
       setPendingWord(challengeState.currentWord);
     }
   }, [challengeState?.currentWord]);
 
-  // Handle completion
+  // Validate moves (simplified validation using challenge engine)
   useEffect(() => {
-    if (challengeState && (challengeState.completed || challengeState.failed)) {
-      onComplete?.(challengeState.completed, challengeState.stepCount);
-    }
-  }, [challengeState, onComplete]);
-
-  // Validate pending word using real game engine logic
-  useEffect(() => {
-    if (!challengeState || !webAdapter || !pendingWord.trim()) {
+    if (!challengeState || !pendingWord) {
       setPendingMoveAttempt(null);
       return;
     }
 
-    const validateMove = async () => {
-      const wordToTest = pendingWord.trim().toUpperCase();
-      
-      // Skip validation if it's the same as current word
-      if (wordToTest === challengeState.currentWord) {
-        setPendingMoveAttempt(null);
-        return;
-      }
+    // Skip validation if it's the same as current word
+    if (pendingWord === challengeState.currentWord) {
+      setPendingMoveAttempt(null);
+      return;
+    }
 
-      try {
-        // Use the real game engine validation logic
-        const gameManager = webAdapter.createGameStateManager({
-          maxTurns: 999,
-          initialWord: challengeState.currentWord
-        });
-        
-        // Set up the used words from challenge state
-        const usedWords = new Set(challengeState.wordSequence);
-        
-        // Create a mock game state for validation
-        const moveAttempt = gameManager.attemptMove(wordToTest);
-        
-        // Additional check: word must not be already used in challenge
-        if (usedWords.has(wordToTest)) {
-          setPendingMoveAttempt({
-            newWord: wordToTest,
-            isValid: false,
-            validationResult: { 
-              isValid: false, 
-              reason: 'ALREADY_PLAYED',
-              userMessage: 'was played',
-              word: wordToTest 
-            },
-            scoringResult: null,
-            canApply: false,
-            reason: 'Word already used'
-          });
-          return;
-        }
+    // Check if word was already used
+    if (challengeState.wordSequence.includes(pendingWord)) {
+      setPendingMoveAttempt({
+        newWord: pendingWord,
+        isValid: false,
+        canApply: false,
+        reason: 'Word already used'
+      });
+      return;
+    }
 
-        setPendingMoveAttempt(moveAttempt);
-      } catch (err) {
-        console.error('Validation error:', err);
-        setPendingMoveAttempt({
-          newWord: wordToTest,
-          isValid: false,
-          validationResult: { 
-            isValid: false, 
-            reason: 'VALIDATION_ERROR',
-            userMessage: 'validation failed',
-            word: wordToTest 
-          },
-          scoringResult: null,
-          canApply: false,
-          reason: 'Validation failed'
-        });
-      }
-    };
+    // Use challenge engine validation
+    const isValid = isValidMove(challengeState.currentWord, pendingWord);
+    setPendingMoveAttempt({
+      newWord: pendingWord,
+      isValid,
+      canApply: isValid,
+      reason: isValid ? undefined : 'Invalid word transformation'
+    });
+  }, [pendingWord, challengeState, isValidMove]);
 
-    validateMove();
-  }, [pendingWord, challengeState, webAdapter]);
-
-  // Handle word changes from WordBuilder
+  // Event handlers (identical to InteractiveGame)
   const handleWordChange = useCallback((newWord: string) => {
     setPendingWord(newWord.toUpperCase());
     setShowValidationError(false);
   }, []);
 
-  // Handle letter clicks from alphabet grid
   const handleLetterClick = useCallback((letter: string) => {
     if (isProcessingMove || !challengeState) return;
     
     const newWord = pendingWord + letter;
-    setPendingWord(newWord.toUpperCase());
-  }, [pendingWord, isProcessingMove, challengeState]);
+    if (newWord.length <= 10) {
+      handleWordChange(newWord);
+    }
+  }, [pendingWord, isProcessingMove, challengeState, handleWordChange]);
 
-  // Handle letter removal from word builder
   const handleLetterRemove = useCallback((index: number) => {
     if (isProcessingMove) return;
     
     const newWord = pendingWord.slice(0, index) + pendingWord.slice(index + 1);
-    setPendingWord(newWord);
-  }, [pendingWord, isProcessingMove]);
+    handleWordChange(newWord);
+  }, [pendingWord, isProcessingMove, handleWordChange]);
 
-  // Handle action clicks (no special actions in challenge mode)
-  const handleActionClick = useCallback(() => {
-    // No special actions needed
+  const handleLetterDragStart = useCallback((letter: string) => {
+    if (isProcessingMove) return;
+    setDraggedLetter(letter);
+  }, [isProcessingMove]);
+
+  const handleLetterDragEnd = useCallback(() => {
+    setDraggedLetter(null);
   }, []);
 
-  // Handle word submission
+  const handleWordBuilderMouseUp = useCallback((_e: React.MouseEvent) => {
+    if (draggedLetter && pendingWord.length < 10) {
+      handleWordChange(pendingWord + draggedLetter);
+    }
+    setDraggedLetter(null);
+  }, [draggedLetter, pendingWord, handleWordChange]);
+
+  const handleWordBuilderTouchEnd = useCallback((_e: React.TouchEvent) => {
+    if (draggedLetter && pendingWord.length < 10) {
+      handleWordChange(pendingWord + draggedLetter);
+    }
+    setDraggedLetter(null);
+  }, [draggedLetter, pendingWord, handleWordChange]);
+
+  const handleActionClick = useCallback((action: string) => {
+    if (isProcessingMove) return;
+    
+    switch (action) {
+      case '←': // Return to current word
+      case '↻': // Reset word
+        setPendingWord(challengeState?.currentWord || '');
+        setPendingMoveAttempt(null);
+        break;
+      case '≡': // Settings
+        setIsMenuOpen(true);
+        break;
+    }
+  }, [isProcessingMove, challengeState?.currentWord]);
+
   const handleSubmit = useCallback(async () => {
-    if (!challengeState || isProcessingMove || !pendingMoveAttempt?.canApply) {
-      // If no valid move, handle give up
+    if (isProcessingMove) return;
+
+    // Handle give up if no valid move
+    if (!pendingMoveAttempt?.canApply) {
       if (!isGiveUpConfirming) {
         setIsGiveUpConfirming(true);
+        setShowValidationError(true);
         return;
       }
 
@@ -197,25 +178,31 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       setIsProcessingMove(true);
       try {
         await forfeitChallenge();
-        setIsGiveUpConfirming(false);
+        onComplete?.(false, challengeState?.wordSequence.length || 0);
       } catch (err) {
         console.error('Failed to forfeit challenge:', err);
       } finally {
         setIsProcessingMove(false);
+        setIsGiveUpConfirming(false);
       }
       return;
     }
 
-    const wordToSubmit = pendingMoveAttempt.newWord;
+    // Submit valid move
     setIsProcessingMove(true);
-
     try {
-      const result = await submitWord(wordToSubmit);
+      const result = await submitWord(pendingMoveAttempt.newWord);
       
       if (result.success) {
-        setPendingWord(wordToSubmit);
+        setPendingWord(pendingMoveAttempt.newWord);
         setPendingMoveAttempt(null);
         setShowValidationError(false);
+        setIsGiveUpConfirming(false);
+        
+        // Check if challenge is complete
+        if (challengeState && challengeState.completed) {
+          onComplete?.(true, challengeState.wordSequence.length);
+        }
       } else {
         setShowValidationError(true);
       }
@@ -224,10 +211,14 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     } finally {
       setIsProcessingMove(false);
     }
-  }, [challengeState, pendingMoveAttempt, isProcessingMove, isGiveUpConfirming, submitWord, forfeitChallenge]);
+  }, [isProcessingMove, pendingMoveAttempt, isGiveUpConfirming, submitWord, forfeitChallenge, onComplete, challengeState]);
 
-  // Generate letter states for alphabet grid (identical to vs bot)
-  const letterStates = useMemo((): LetterState[] => {
+  const handleMenuClose = useCallback(() => {
+    setIsMenuOpen(false);
+  }, []);
+
+  // Generate letter states (identical to InteractiveGame)
+  const letterStates: LetterState[] = useMemo(() => {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     return alphabet.split('').map(letter => ({
       letter,
@@ -235,122 +226,101 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     }));
   }, []);
 
-  // Generate word trail moves (identical to vs bot but no scores)
-  const wordTrailMoves = useMemo((): WordMove[] => {
+  // Generate word trail moves (identical to InteractiveGame structure)
+  const wordTrailMoves: WordMove[] = useMemo(() => {
     if (!challengeState) return [];
 
     const moves: WordMove[] = [];
     
-    // Add all played words with step numbers
+    // Add all played words
     challengeState.wordSequence.forEach((word, index) => {
       moves.push({
         word,
         score: 0, // No scoring in challenge mode
-        turnNumber: index
+        turnNumber: index + 1
       });
     });
+
+    // Add target word if available
+    if (challengeState.targetWord && !challengeState.wordSequence.includes(challengeState.targetWord)) {
+      moves.push({
+        word: challengeState.targetWord,
+        score: 0,
+        turnNumber: challengeState.wordSequence.length + 1
+      });
+    }
 
     return moves;
   }, [challengeState]);
 
-  // Pending word highlights (identical to vs bot)
-  const pendingWordHighlights = useMemo((): LetterHighlight[] => {
-    // No key letters or locked letters in challenge mode
+  // Pending word highlights (no special highlighting in challenge mode)
+  const pendingWordHighlights: LetterHighlight[] = useMemo(() => {
     return [];
   }, []);
 
-  // Score breakdown for display (identical to vs bot)
-  const scoreBreakdown = useMemo((): ScoreBreakdown => {
-    if (!pendingMoveAttempt?.scoringResult) {
-      return { base: 0, keyBonus: 0, total: 0 };
-    }
-    
-    const result = pendingMoveAttempt.scoringResult;
-    return {
-      base: result.totalScore || 0,
-      keyBonus: 0, // No key letters in challenge mode
-      total: result.totalScore || 0
-    };
-  }, [pendingMoveAttempt]);
+  // Score breakdown (simplified for challenge mode)
+  const scoreBreakdown: ScoreBreakdown = useMemo(() => {
+    return { base: 0, keyBonus: 0, total: 0 };
+  }, []);
 
-  // Action state for display (identical to vs bot)
-  const actionState = useMemo((): ActionState => {
-    if (!pendingMoveAttempt?.scoringResult) {
-      return { add: false, remove: false, move: false };
-    }
-    
-    const actions = pendingMoveAttempt.scoringResult.actions || [];
-    return {
-      add: actions.includes('add'),
-      remove: actions.includes('remove'),
-      move: actions.includes('rearrange')
-    };
-  }, [pendingMoveAttempt]);
+  // Action state (simplified for challenge mode)
+  const actionState: ActionState = useMemo(() => {
+    return { add: false, remove: false, move: false };
+  }, []);
 
   // Determine if submit is valid
   const isValidSubmit = pendingMoveAttempt?.canApply || false;
-  
-  // Show invalid X when no valid move available
   const showInvalidX = !isValidSubmit;
 
+  // Loading state
   if (!isInitialized || isLoading) {
     return (
       <div className="interactive-game">
         <div className="interactive-game__loading">
-          <h2>Loading Challenge...</h2>
-          <div className="interactive-game__spinner"></div>
+          Loading challenge...
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div className="interactive-game">
         <div className="interactive-game__error">
-          <h2>Error</h2>
-          <p>{error}</p>
-          <button onClick={onBack} className="interactive-game__reset-btn">
-            Back to Menu
-          </button>
+          {error}
         </div>
       </div>
     );
   }
 
+  // No challenge state
   if (!challengeState) {
     return (
       <div className="interactive-game">
         <div className="interactive-game__loading">
-          <h2>No Challenge Available</h2>
-          <button onClick={startChallenge} className="interactive-game__reset-btn">
-            Start Today's Challenge
-          </button>
+          Starting challenge...
         </div>
       </div>
     );
   }
 
+  // Game completed
   if (challengeState.completed) {
     return (
       <div className="interactive-game">
         <div className="interactive-game__header">
           <div className="interactive-game__status">
             <div className="interactive-game__end">
-              <h2>🎉 Challenge Complete!</h2>
+              <h2>Challenge Complete!</h2>
               <div className="interactive-game__winner">
-                Solved in {challengeState.stepCount} steps!
-              </div>
-              <div className="interactive-game__final-scores">
-                <div>{challengeState.startWord} → {challengeState.targetWord}</div>
+                Completed in {challengeState.wordSequence.length} steps
               </div>
               <button 
-                onClick={() => navigator.clipboard.writeText(generateSharingText())}
                 className="interactive-game__reset-btn"
+                onClick={() => onBack?.()}
+                type="button"
               >
-                Share Results
-              </button>
-              <button onClick={onBack} className="interactive-game__reset-btn">
                 Back to Menu
               </button>
             </div>
@@ -360,26 +330,22 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     );
   }
 
+  // Game failed
   if (challengeState.failed) {
     return (
       <div className="interactive-game">
         <div className="interactive-game__header">
           <div className="interactive-game__status">
             <div className="interactive-game__end">
-              <h2>Challenge Ended</h2>
+              <h2>Challenge Failed</h2>
               <div className="interactive-game__winner">
-                Gave up after {challengeState.stepCount} steps
-              </div>
-              <div className="interactive-game__final-scores">
-                <div>{challengeState.startWord} → {challengeState.targetWord}</div>
+                Better luck next time!
               </div>
               <button 
-                onClick={() => navigator.clipboard.writeText(generateSharingText())}
                 className="interactive-game__reset-btn"
+                onClick={() => onBack?.()}
+                type="button"
               >
-                Share Attempt
-              </button>
-              <button onClick={onBack} className="interactive-game__reset-btn">
                 Back to Menu
               </button>
             </div>
@@ -389,36 +355,29 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     );
   }
 
+  // Active game (identical structure to InteractiveGame)
   return (
     <div className="interactive-game">
-      {/* Error display (identical to vs bot) */}
-      {pendingMoveAttempt?.validationResult && showValidationError && (
-        <div className="interactive-game__error" role="alert">
-          <span>{pendingMoveAttempt.validationResult.userMessage}</span>
-          <button onClick={() => setShowValidationError(false)} aria-label="Dismiss error">×</button>
-        </div>
-      )}
-
-      {/* Main game area (identical to vs bot) */}
+      {/* Main game area */}
       <div className="interactive-game__board">
         <div className="interactive-game__centered-container">
-          {/* Submit anchor - the absolute center point (identical to vs bot) */}
+          {/* Submit anchor - the absolute center point */}
           <div className="interactive-game__submit-anchor">
             <ScoreDisplay
               score={scoreBreakdown}
               actions={actionState}
               isValid={!showInvalidX}
               isPassConfirming={isGiveUpConfirming}
-              passReason={isGiveUpConfirming ? "Give Up" : null}
-              onClick={!isProcessingMove ? handleSubmit : undefined}
+              passReason={isGiveUpConfirming ? 'Give up?' : null}
+              onClick={handleSubmit}
               className="interactive-game__score"
-              isPassMode={showInvalidX}
-              validationError={pendingMoveAttempt?.validationResult?.userMessage || null}
+              isPassMode={false}
+              validationError={pendingMoveAttempt?.reason || null}
               showValidationError={showValidationError}
             />
           </div>
 
-          {/* Word trail positioned above submit anchor (identical to vs bot) */}
+          {/* Word trail positioned above submit anchor */}
           <div className="interactive-game__word-trail-positioned">
             <WordTrail
               moves={wordTrailMoves}
@@ -428,31 +387,45 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
             />
           </div>
           
-          {/* Word builder positioned below submit anchor (identical to vs bot) */}
+          {/* Word builder positioned below submit anchor */}
           <div className="interactive-game__word-builder-positioned">
-            <WordBuilder
-              currentWord={pendingWord}
-              wordHighlights={pendingWordHighlights}
-              onWordChange={handleWordChange}
-              onLetterClick={handleLetterRemove}
-              disabled={isProcessingMove}
-              maxLength={10}
-              minLength={3}
-            />
+            <div
+              onMouseUp={handleWordBuilderMouseUp}
+              onTouchEnd={handleWordBuilderTouchEnd}
+            >
+              <WordBuilder
+                currentWord={pendingWord}
+                wordHighlights={pendingWordHighlights}
+                onWordChange={handleWordChange}
+                onLetterClick={handleLetterRemove}
+                disabled={isProcessingMove}
+                maxLength={10}
+                minLength={3}
+              />
+            </div>
           </div>
 
-          {/* Alphabet grid positioned below word builder (identical to vs bot) */}
+          {/* Alphabet grid positioned below word builder */}
           <div className="interactive-game__grid-positioned">
             <AlphabetGrid
               letterStates={letterStates}
               onLetterClick={handleLetterClick}
               onActionClick={handleActionClick}
+              onLetterDragStart={handleLetterDragStart}
+              onLetterDragEnd={handleLetterDragEnd}
               disabled={isProcessingMove}
-              enableDrag={true} // Enable drag like vs bot
+              enableDrag={true}
             />
           </div>
         </div>
       </div>
+
+      {/* Menu */}
+      <Menu
+        isOpen={isMenuOpen}
+        onClose={handleMenuClose}
+        isInGame={true}
+      />
     </div>
   );
 }; 
