@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import { useTheme } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
-import { useChallenge } from '../../hooks/useChallenge';
 import './Menu.css';
 
 interface MenuTier2Item {
@@ -145,11 +144,19 @@ export const Menu: React.FC<MenuProps> = ({
   const unlockedMechanics = getUnlockedItems('mechanic');
   const unlockedBots = getUnlockedItems('bot');
   
-  // Get challenge functionality
-  const { resetDailyChallenge } = useChallenge();
-  
   // Filter themes based on unlock state
   const unlockedThemes = useUnlockedThemes({ unlockedThemes: unlockedThemeIds });
+
+  // Simple reset function that doesn't require the challenge hook
+  const resetDailyChallenge = useCallback(() => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      localStorage.removeItem(`wordplay-challenge-${today}`);
+      console.log('Daily challenge reset for', today);
+    } catch (err) {
+      console.warn('Failed to reset daily challenge:', err);
+    }
+  }, []);
 
   const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, unlockedBots);
 
