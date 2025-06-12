@@ -12,6 +12,8 @@ import { WordTrail } from '../game/WordTrail';
 import { WordBuilder } from '../game/WordBuilder';
 import { ScoreDisplay } from '../game/ScoreDisplay';
 import { Menu } from '../ui/Menu';
+import { BrowserAdapter } from '../../adapters/browserAdapter';
+import { createGameStateManagerWithDependencies } from '../../../packages/engine/gamestate';
 import type { LetterState } from '../game/AlphabetGrid';
 import type { LetterHighlight } from '../game/CurrentWord';
 import type { WordMove } from '../game/WordTrail';
@@ -53,6 +55,29 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const [isGiveUpConfirming, setIsGiveUpConfirming] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
+  const [gameManager, setGameManager] = useState<any>(null);
+
+  // Initialize game manager for proper validation (like vs bot mode)
+  useEffect(() => {
+    const initializeGameManager = async () => {
+      try {
+        const browserAdapter = BrowserAdapter.getInstance();
+        await browserAdapter.initialize();
+        
+        const dependencies = browserAdapter.getGameDependencies();
+        const manager = createGameStateManagerWithDependencies(dependencies, {
+          maxTurns: 999,
+          initialWord: 'TEMP' // Will be updated when challenge loads
+        });
+        
+        setGameManager(manager);
+      } catch (error) {
+        console.error('Failed to initialize game manager for validation:', error);
+      }
+    };
+
+    initializeGameManager();
+  }, []);
 
   // Initialize challenge on mount
   useEffect(() => {
@@ -68,9 +93,9 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     }
   }, [challengeState?.currentWord]);
 
-  // Validate moves (simplified validation using challenge engine)
+  // Validate moves (using real game engine validation like vs bot mode)
   useEffect(() => {
-    if (!challengeState || !pendingWord) {
+    if (!challengeState || !pendingWord || !gameManager) {
       setPendingMoveAttempt(null);
       return;
     }
@@ -81,26 +106,39 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       return;
     }
 
-    // Check if word was already used
-    if (challengeState.wordSequence.includes(pendingWord)) {
+    try {
+      // Set the current word in the game manager to match challenge state
+      gameManager.setWord(challengeState.currentWord);
+      
+      // Set up used words to prevent re-use
+      const currentState = gameManager.getState();
+      currentState.usedWords = [...challengeState.wordSequence];
+      
+      // Use the real game engine validation (same as vs bot mode)
+      const attempt = gameManager.attemptMove(pendingWord);
+      
+      // Additional check: word must not be already used in challenge
+      if (challengeState.wordSequence.includes(pendingWord)) {
+        setPendingMoveAttempt({
+          newWord: pendingWord,
+          isValid: false,
+          canApply: false,
+          reason: 'Word already used'
+        });
+        return;
+      }
+
+      setPendingMoveAttempt(attempt);
+    } catch (error) {
+      console.error('Validation error:', error);
       setPendingMoveAttempt({
         newWord: pendingWord,
         isValid: false,
         canApply: false,
-        reason: 'Word already used'
+        reason: 'Validation failed'
       });
-      return;
     }
-
-    // Use challenge engine validation
-    const isValid = isValidMove(challengeState.currentWord, pendingWord);
-    setPendingMoveAttempt({
-      newWord: pendingWord,
-      isValid,
-      canApply: isValid,
-      reason: isValid ? undefined : 'Invalid word transformation'
-    });
-  }, [pendingWord, challengeState, isValidMove]);
+  }, [pendingWord, challengeState, gameManager]);
 
   // Event handlers (identical to InteractiveGame)
   const handleWordChange = useCallback((newWord: string) => {
