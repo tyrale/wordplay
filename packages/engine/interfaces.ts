@@ -689,10 +689,18 @@ export interface UnlockDependencies {
 }
 
 export interface UnlockEngine {
+  // Initialization
+  initialize(): Promise<void>;
+  
+  // Trigger checking
   checkWordTriggers(word: string): Promise<UnlockResult[]>;
   checkAchievementTriggers(achievement: string): Promise<UnlockResult[]>;
+  
+  // State queries
   getUnlockedItems(category: 'theme' | 'mechanic' | 'bot'): string[];
   isUnlocked(category: 'theme' | 'mechanic' | 'bot', itemId: string): boolean;
   getCurrentState(): UnlockState;
-  resetState(): Promise<void>; // For testing/debugging
+  
+  // Admin/Debug
+  resetState(): Promise<void>;
 } 

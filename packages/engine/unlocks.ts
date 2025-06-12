@@ -25,6 +25,14 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
   let currentState: UnlockState | null = null;
 
   /**
+   * Initialize the unlock engine by loading state
+   * This is optional - state will be loaded lazily when needed
+   */
+  async function initialize(): Promise<void> {
+    await ensureStateLoaded();
+  }
+
+  /**
    * Lazy load the unlock state from dependencies
    */
   async function ensureStateLoaded(): Promise<UnlockState> {
@@ -213,6 +221,7 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
   }
 
   return {
+    initialize,
     checkWordTriggers,
     checkAchievementTriggers,
     getUnlockedItems,

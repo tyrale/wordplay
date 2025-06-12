@@ -51,6 +51,10 @@ export function useUnlocks(): UseUnlocksReturn {
         
         if (mounted) {
           engineRef.current = engine;
+          
+          // Initialize the engine to load persisted state from IndexedDB
+          await engine.initialize();
+          
           const currentState = engine.getCurrentState();
           setUnlockState(currentState);
           setIsLoading(false);

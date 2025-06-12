@@ -280,6 +280,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Allows easy testing of fresh user experience and unlock progression
   - Resets all unlocks back to default state (Classic Blue theme + Tester bot only)
   - Useful for development and testing unlock system functionality
+- **ShipHip: Fix Unlock Persistence After Browser Refresh** - Fixed critical bug where unlocks disappeared after page refresh
+  - Added proper initialization method to unlock engine for explicit state loading
+  - Updated React hook to wait for IndexedDB state loading before setting component state
+  - Fixed race condition where initial state was displayed before persisted state loaded
+  - Unlocks now properly persist across browser sessions and page refreshes
+  - Verified fix works with IndexedDB storage and localStorage fallback
 
 ### Removed
 - **🧹 CLEANUP**: All browser-specific engine implementations eliminated
