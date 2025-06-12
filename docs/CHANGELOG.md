@@ -9,6 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Menu System Enhancements** ✅ **VERIFIED**
+  - **Purpose**: Comprehensive menu system improvements for better visual hierarchy, theme preview, and user experience
+  - **Requirements Delivered**:
+    - **Accent Color "vs" Text**: Updated "vs human" and "vs bot" buttons to highlight "vs" with theme accent color for better visual emphasis
+    - **Font Size Standardization**: Set `.menu-tier2-item` to 18px across all screen sizes including mobile for consistent typography
+    - **Duplicate Theme Removal**: Eliminated duplicate "dark mode" entry from theme list, keeping only the functional toggle
+    - **Menu List Padding**: Added 15px right padding to `.menu-list` for improved spacing and visual balance
+    - **Unique Theme Item Display**: Each theme displays in bordered container using its own background, text, and border colors for accurate preview
+    - **Dark Mode Toggle Switch**: Replaced checkmark with animated sliding toggle that moves left/right with smooth transitions
+    - **Inline Theme Layout**: Themes flow horizontally and wrap to new rows like inline-block elements for efficient space usage
+    - **Visual Hierarchy Separation**: Dark mode toggle appears on separate top row, themes display in grid below for clear organization
+    - **Dark Mode Theme Inversion**: When dark mode toggled, all theme previews automatically invert colors for accurate dark mode preview
+    - **Improved Visual Hierarchy**: Reduced spacing between tier 1 items and their submenus from 6px to 2px for tighter association
+  - **Technical Implementation**:
+    - **MainScreen Component**: Added `<span className="main-screen__vs-text">vs</span>` wrapper with accent color styling
+    - **Theme System**: Removed `darkTheme` from available themes array to eliminate duplication while preserving toggle functionality
+    - **Menu Layout**: Special handling for themes menu with separate containers (`.menu-tier2-darkmode-row`, `.menu-tier2-themes-grid`)
+    - **CSS Enhancements**: Added specialized classes for theme items (`.menu-tier2-item--theme`) with border, background, and color styling
+    - **Toggle Component**: Created animated toggle switch with `.dark-mode-toggle` and `.dark-mode-toggle__slider` for smooth interaction
+    - **Color Inversion Logic**: Dynamic theme color application with conditional inversion based on dark mode state
+    - **Responsive Design**: Maintained mobile compatibility with proper font scaling and touch-friendly interactions
+  - **Visual Features**:
+    - **Theme Previews**: Each theme shows in bordered container with its own background, text, and border colors for accurate representation
+    - **Animated Toggle**: Smooth sliding toggle for dark mode with color transitions and visual feedback
+    - **Wrapping Grid**: Theme items flow horizontally and wrap naturally to new rows for optimal space utilization
+    - **Color Inversion**: Dark mode toggle inverts all theme preview colors providing accurate preview of dark mode appearance
+    - **Consistent Spacing**: Improved visual hierarchy with proper spacing between menu levels and clear parent-child relationships
+  - **Code Quality**: Updated App tests to handle split text elements with flexible matching, maintained TypeScript compatibility, efficient React patterns
+  - **Verification**: All 5 App tests passing, development server running successfully, menu improvements working across all 81 themes, toggle animation smooth, theme previews accurate, visual hierarchy improved
+  - **Files Updated**: src/components/ui/MainScreen.tsx, src/components/ui/MainScreen.css, src/components/ui/Menu.tsx, src/components/ui/Menu.css, src/types/theme.ts, src/components/index.ts, src/App.test.tsx
+
 - **UI Text and Error Message Improvements** ✅ **VERIFIED**
   - **Purpose**: Refine user interface text and validation error messages for better clarity and consistency
   - **Requirements Delivered**:

@@ -1095,3 +1095,43 @@ private generateRandomKeyLetter(): void {
 ```
 
 **Verification**: ✅ **VERIFIED** (System successfully logs key letter generation across multiple games and provides detailed frequency analysis. Tested with 10+ games showing proper data collection and analysis.)
+
+## 🎨 **MENU SYSTEM ENHANCEMENTS COMPLETED**: Advanced Theme Display & Dark Mode Toggle
+
+**User Request**: Comprehensive menu system improvements for better visual hierarchy, theme preview, and user experience.
+
+**Requirements Delivered**:
+- ✅ **Accent Color "vs" Text** (Updated "vs human" and "vs bot" buttons to highlight "vs" with theme accent color)
+- ✅ **Font Size Standardization** (Set `.menu-tier2-item` to 18px across all screen sizes including mobile)
+- ✅ **Duplicate Theme Removal** (Eliminated duplicate "dark mode" entry, keeping only the toggle functionality)
+- ✅ **Menu List Padding** (Added 15px right padding to `.menu-list` for better spacing)
+- ✅ **Unique Theme Item Display** (Each theme displays in bordered container using its own colors)
+- ✅ **Dark Mode Toggle Switch** (Replaced checkmark with animated toggle that slides left/right)
+- ✅ **Inline Theme Layout** (Themes flow horizontally and wrap to new rows like inline-block)
+- ✅ **Visual Hierarchy Separation** (Dark mode toggle on separate top row, themes in grid below)
+- ✅ **Dark Mode Theme Inversion** (When dark mode toggled, all theme previews invert colors)
+- ✅ **Improved Visual Hierarchy** (Reduced spacing between tier 1 items and their submenus)
+
+**Technical Implementation**:
+- **MainScreen Component**: Added `<span className="main-screen__vs-text">vs</span>` wrapper with accent color styling
+- **Theme System**: Removed `darkTheme` from available themes array to eliminate duplication
+- **Menu Layout**: Special handling for themes menu with separate containers for dark mode and theme grid
+- **CSS Enhancements**: Added `.menu-tier2-item--theme`, `.menu-tier2-darkmode-row`, `.menu-tier2-themes-grid` classes
+- **Toggle Component**: Created animated toggle switch with `.dark-mode-toggle` and `.dark-mode-toggle__slider`
+- **Color Inversion**: Dynamic theme color application with dark mode inversion logic
+- **Responsive Design**: Maintained mobile compatibility with proper font scaling
+
+**Visual Features**:
+- **Theme Previews**: Each theme shows in bordered container with its own background, text, and border colors
+- **Animated Toggle**: Smooth sliding toggle for dark mode with color transitions
+- **Wrapping Grid**: Theme items flow horizontally and wrap naturally to new rows
+- **Color Inversion**: Dark mode toggle inverts all theme preview colors for accurate preview
+- **Consistent Spacing**: Improved visual hierarchy with proper spacing between menu levels
+
+**Code Quality**:
+- **Test Compatibility**: Updated App tests to handle split text elements with flexible matching
+- **Type Safety**: All changes maintain TypeScript compatibility
+- **Performance**: Efficient rendering with proper React patterns
+- **Accessibility**: Maintained ARIA labels and semantic structure
+
+**Verification**: ✅ **VERIFIED** (All 5 App tests passing, development server running successfully, menu improvements working across all themes, toggle animation smooth, theme previews accurate, visual hierarchy improved)
