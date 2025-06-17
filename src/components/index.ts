@@ -93,6 +93,9 @@ export type { GridCellProps, GridCellState, GridCellType } from './ui/GridCell';
 export { Menu } from './ui/Menu';
 export { MainScreen } from './ui/MainScreen';
 
+export { ChallengeCompletionOverlay } from './ui/ChallengeCompletionOverlay';
+export type { ChallengeCompletionOverlayProps } from './ui/ChallengeCompletionOverlay';
+
 // Game Components
 export { AlphabetGrid } from './game/AlphabetGrid';
 export type { AlphabetGridProps, LetterState } from './game/AlphabetGrid';

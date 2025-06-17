@@ -12,8 +12,11 @@ import { WordBuilder } from '../game/WordBuilder';
 import { type LetterHighlight } from '../game/CurrentWord';
 import { ScoreDisplay, type ScoreBreakdown, type ActionState } from '../game/ScoreDisplay';
 import { Menu } from '../ui/Menu';
+import { ChallengeCompletionOverlay } from '../ui/ChallengeCompletionOverlay';
 import { useChallenge } from '../../hooks/useChallenge';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
+import { shareChallengeResult, getShareResultMessage } from '../../utils/shareUtils';
+import { useToast } from '../ui/ToastManager';
 import type { GameStateDependencies } from '../../../packages/engine/gamestate';
 
 export interface ChallengeGameProps {
@@ -43,8 +46,12 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     startChallenge,
     submitWord,
     forfeitChallenge,
+    generateSharingText,
     error: challengeError
   } = useChallenge();
+
+  // Toast notifications
+  const { showToast } = useToast();
 
   // Local UI state
   const [pendingWord, setPendingWord] = useState('');
@@ -54,6 +61,13 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   const [isProcessingMove, setIsProcessingMove] = useState(false);
   const [gameDependencies, setGameDependencies] = useState<GameStateDependencies | null>(null);
+  
+  // Overlay state
+  const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
+  const [overlayData, setOverlayData] = useState<{
+    isWinner: boolean;
+    shareText: string;
+  } | null>(null);
 
   // Initialize agnostic game engine dependencies
   useEffect(() => {
@@ -281,12 +295,47 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     setIsMenuOpen(false);
   }, []);
 
-  // Check for challenge completion
-  useEffect(() => {
-    if (challengeState?.completed) {
-      onComplete?.(true, challengeState.wordSequence.length);
+  // Overlay handlers
+  const handleOverlayHome = useCallback(() => {
+    setShowCompletionOverlay(false);
+    setOverlayData(null);
+    onComplete?.(challengeState?.completed || false, challengeState?.wordSequence.length || 0);
+  }, [onComplete, challengeState?.completed, challengeState?.wordSequence.length]);
+
+  const handleOverlayShare = useCallback(async (shareText: string) => {
+    try {
+      const result = await shareChallengeResult(shareText);
+      const message = getShareResultMessage(result);
+      
+      showToast({
+        type: result.success ? 'success' : 'error',
+        title: result.success ? 'Shared!' : 'Share Failed',
+        message,
+        duration: 3000
+      });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        title: 'Share Failed',
+        message: 'Unable to share challenge result. Please try again.',
+        duration: 3000
+      });
     }
-  }, [challengeState?.completed, challengeState?.wordSequence.length, onComplete]);
+  }, [showToast]);
+
+  // Check for challenge completion or failure
+  useEffect(() => {
+    if (challengeState?.completed || challengeState?.failed) {
+      const isWinner = challengeState.completed;
+      const shareText = generateSharingText();
+      
+      setOverlayData({
+        isWinner,
+        shareText
+      });
+      setShowCompletionOverlay(true);
+    }
+  }, [challengeState?.completed, challengeState?.failed, generateSharingText]);
 
   // Generate letter states (no special states in challenge mode)
   const letterStates: LetterState[] = useMemo(() => {
@@ -373,29 +422,8 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         </div>
       )}
 
-      {/* Challenge completed */}
-      {challengeState.completed && (
-        <div className="interactive-game__header">
-          <div className="interactive-game__status">
-            <div className="interactive-game__end">
-              <h2>Challenge Complete!</h2>
-              <div className="interactive-game__winner">
-                Solved in {challengeState.wordSequence.length} steps!
-              </div>
-              <button 
-                className="interactive-game__reset-btn"
-                onClick={() => onComplete?.(true, challengeState.wordSequence.length)}
-                type="button"
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Main game area */}
-      {!challengeState.completed && (
+      {!challengeState.completed && !challengeState.failed && (
         <div className="interactive-game__board">
           <div className="interactive-game__centered-container">
             {/* Submit anchor - the absolute center point */}
@@ -466,6 +494,15 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         onDebugOpen={() => {}} // No debug in challenge mode
         onResign={() => handleSubmit()} // Forfeit challenge
         isInGame={true}
+      />
+
+      {/* Challenge Completion Overlay */}
+      <ChallengeCompletionOverlay
+        isVisible={showCompletionOverlay}
+        isWinner={overlayData?.isWinner || false}
+        shareText={overlayData?.shareText || ''}
+        onHome={handleOverlayHome}
+        onShare={handleOverlayShare}
       />
 
     </div>
