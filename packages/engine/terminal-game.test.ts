@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TerminalGame, startTerminalGame, quickGame } from './terminal-game';
-import { LocalGameStateManager } from './gamestate';
+import { LocalGameStateManagerWithDependencies } from './gamestate';
 
 // Mock readline to avoid actual terminal interaction during tests
 vi.mock('readline', () => ({
@@ -61,7 +61,7 @@ describe('Terminal Game Interface', () => {
       expect(terminalGame).toBeDefined();
       
       // Access private gameManager for testing
-      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManager }).gameManager;
+      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManagerWithDependencies }).gameManager;
       expect(gameManager).toBeDefined();
       
       const state = gameManager.getState();
@@ -70,7 +70,7 @@ describe('Terminal Game Interface', () => {
     });
 
     it('should handle game state changes', () => {
-      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManager }).gameManager;
+      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManagerWithDependencies }).gameManager;
       
       // Start the game
       gameManager.startGame();
@@ -123,7 +123,7 @@ describe('Terminal Game Interface', () => {
     });
 
     it('should handle game operations efficiently', () => {
-      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManager }).gameManager;
+      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManagerWithDependencies }).gameManager;
       gameManager.startGame();
       
       const startTime = performance.now();
@@ -153,7 +153,7 @@ describe('Terminal Game Interface', () => {
     });
 
     it('should handle game state errors gracefully', () => {
-      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManager }).gameManager;
+      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManagerWithDependencies }).gameManager;
       
       // Try operations before starting game
       expect(() => {
@@ -165,7 +165,7 @@ describe('Terminal Game Interface', () => {
 
   describe('Game Flow Simulation', () => {
     it('should simulate a complete game flow', async () => {
-      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManager }).gameManager;
+      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManagerWithDependencies }).gameManager;
       
       // Start game
       gameManager.startGame();
@@ -187,7 +187,7 @@ describe('Terminal Game Interface', () => {
     });
 
     it('should handle key letter management', () => {
-      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManager }).gameManager;
+      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManagerWithDependencies }).gameManager;
       
       // Add key letters
       gameManager.addKeyLetter('S');
@@ -208,7 +208,7 @@ describe('Terminal Game Interface', () => {
 
   describe('Statistics and Tracking', () => {
     it('should track game statistics correctly', () => {
-      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManager }).gameManager;
+      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManagerWithDependencies }).gameManager;
       gameManager.startGame();
       
       // Make some moves
@@ -222,7 +222,7 @@ describe('Terminal Game Interface', () => {
     });
 
     it('should provide detailed game state information', () => {
-      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManager }).gameManager;
+      const gameManager = (terminalGame as unknown as { gameManager: LocalGameStateManagerWithDependencies }).gameManager;
       gameManager.startGame();
       
       const state = gameManager.getState();

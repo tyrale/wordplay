@@ -27,6 +27,12 @@
 
 import { KeyLetterLogger } from './keyLetterLogger.js';
 
+import type { ValidationResult } from './dictionary';
+import type { ScoringResult } from './scoring';
+
+// Re-export imported types for compatibility
+export type { ValidationResult, ScoringResult };
+
 // =============================================================================
 // DEPENDENCY INTERFACES
 // =============================================================================
@@ -56,7 +62,7 @@ export interface GameStateBotDependencies {
 }
 
 /**
- * Combined dependencies for complete game state management
+ * Complete dependencies interface combining all sub-dependencies
  */
 export interface GameStateDependencies extends 
   GameStateDictionaryDependencies, 
@@ -67,26 +73,6 @@ export interface GameStateDependencies extends
 // =============================================================================
 // RESULT TYPES (IMPORTED FROM ENGINE INTERFACES)
 // =============================================================================
-
-export interface ValidationResult {
-  isValid: boolean;
-  reason?: string;
-  word: string;
-  censored?: string;
-  userMessage?: string;
-}
-
-export interface ScoringResult {
-  totalScore: number;
-  breakdown: {
-    addLetterPoints: number;
-    removeLetterPoints: number;
-    movePoints: number;
-    keyLetterUsagePoints: number;
-  };
-  actions: string[];
-  keyLettersUsed: string[];
-}
 
 export interface BotMove {
   word: string;
@@ -429,21 +415,21 @@ export class LocalGameStateManagerWithDependencies {
       };
     }
 
-    // Enhanced move validation with specific error messages
-    const moveValidation = this.validateMoveActions(this.state.currentWord, normalizedNewWord);
-    if (!moveValidation.isValid) {
+    // Use agnostic engine move validation for consistency across all game modes
+    const isMoveValid = this.dependencies.isValidMove(this.state.currentWord, normalizedNewWord);
+    if (!isMoveValid) {
       return {
         newWord: normalizedNewWord,
         isValid: false,
         validationResult: {
           isValid: false,
-          reason: moveValidation.reason,
+          reason: 'INVALID_MOVE',
           word: normalizedNewWord,
-          userMessage: moveValidation.userMessage
+          userMessage: 'illegal action'
         },
         scoringResult: null,
         canApply: false,
-        reason: moveValidation.userMessage
+        reason: 'illegal action'
       };
     }
 
@@ -461,71 +447,6 @@ export class LocalGameStateManagerWithDependencies {
       scoringResult,
       canApply: true
     };
-  }
-
-  /**
-   * Validate move actions (adds, removes) for specific error messages
-   */
-  private validateMoveActions(previousWord: string, currentWord: string): {
-    isValid: boolean;
-    reason?: string;
-    userMessage?: string;
-  } {
-    // Import analyzeWordChange for detailed analysis
-    // This is a simple analysis without importing the scoring module
-    const prevLetters = previousWord.split('');
-    const currLetters = currentWord.split('');
-    
-    // Count letter differences
-    const prevMap = new Map<string, number>();
-    const currMap = new Map<string, number>();
-    
-    prevLetters.forEach(letter => {
-      prevMap.set(letter, (prevMap.get(letter) || 0) + 1);
-    });
-    
-    currLetters.forEach(letter => {
-      currMap.set(letter, (currMap.get(letter) || 0) + 1);
-    });
-    
-    // Calculate added and removed letters
-    let addedCount = 0;
-    let removedCount = 0;
-    
-    // Count added letters (letters in current but not in previous, or more in current)
-    for (const [letter, currCount] of currMap) {
-      const prevCount = prevMap.get(letter) || 0;
-      if (currCount > prevCount) {
-        addedCount += (currCount - prevCount);
-      }
-    }
-    
-    // Count removed letters (letters in previous but not in current, or more in previous)
-    for (const [letter, prevCount] of prevMap) {
-      const currCount = currMap.get(letter) || 0;
-      if (prevCount > currCount) {
-        removedCount += (prevCount - currCount);
-      }
-    }
-    
-    // Validate game rules: max 1 add, max 1 remove per turn
-    if (addedCount > 1) {
-      return {
-        isValid: false,
-        reason: 'TOO_MANY_ADDS',
-        userMessage: 'illegal action'
-      };
-    }
-    
-    if (removedCount > 1) {
-      return {
-        isValid: false,
-        reason: 'TOO_MANY_REMOVES', 
-        userMessage: 'illegal action'
-      };
-    }
-    
-    return { isValid: true };
   }
 
   /**
@@ -1114,70 +1035,6 @@ export class LocalGameStateManagerWithDependencies {
 
     return true;
   }
-}
-
-// =============================================================================
-// LEGACY COMPATIBILITY & DEPRECATED FUNCTIONS
-// =============================================================================
-
-/**
- * DEPRECATED: Legacy LocalGameStateManager for backward compatibility
- * 
- * @deprecated Use LocalGameStateManagerWithDependencies instead
- * This class maintains the old interface but requires external dependencies to be set up.
- * It will be removed in a future version.
- */
-export class LocalGameStateManager extends LocalGameStateManagerWithDependencies {
-  constructor(config: GameConfig = {}) {
-    // Requires dependencies to be provided externally - this is a compatibility shim
-    // Platform adapters should provide proper dependencies
-    const placeholderDependencies: GameStateDependencies = {
-      validateWord: () => ({ isValid: false, reason: 'No dependencies provided', word: '' }),
-      getRandomWordByLength: () => null,
-              calculateScore: () => ({ totalScore: 0, breakdown: { addLetterPoints: 0, removeLetterPoints: 0, movePoints: 0, keyLetterUsagePoints: 0 }, actions: [], keyLettersUsed: [] }),
-      getScoreForMove: () => 0,
-      isValidMove: () => false,
-      generateBotMove: async () => ({ move: null, candidates: [], processingTime: 0, totalCandidatesGenerated: 0 })
-    };
-    
-    super(placeholderDependencies, config);
-    console.warn('LocalGameStateManager is deprecated. Use LocalGameStateManagerWithDependencies with proper dependency injection.');
-  }
-}
-
-/**
- * DEPRECATED: Factory function for creating game state managers
- * 
- * @deprecated Use `new LocalGameStateManagerWithDependencies(dependencies, config)` instead
- * This function requires dependencies to be set up externally and will be removed in a future version.
- */
-export function createGameStateManager(config?: GameConfig): LocalGameStateManager {
-  console.warn('createGameStateManager is deprecated. Use LocalGameStateManagerWithDependencies constructor with proper dependencies.');
-  return new LocalGameStateManager(config);
-}
-
-/**
- * DEPRECATED: Helper function for quick move scoring
- * 
- * @deprecated This function uses direct imports which violate dependency injection architecture.
- * Use platform-specific scoring functions or create adapter functions instead.
- */
-export function quickScoreMove(fromWord: string, toWord: string, keyLetters: string[] = []): number {
-  console.warn('quickScoreMove is deprecated due to direct import usage. Use dependency-injected scoring functions.');
-  // Return 0 as placeholder - platform adapters should provide proper scoring
-  return 0;
-}
-
-/**
- * DEPRECATED: Helper function for move validation
- * 
- * @deprecated This function uses direct imports which violate dependency injection architecture.
- * Use platform-specific validation functions or create adapter functions instead.
- */
-export function quickValidateMove(word: string, isBot = false, previousWord?: string): boolean {
-  console.warn('quickValidateMove is deprecated due to direct import usage. Use dependency-injected validation functions.');
-  // Return false as placeholder - platform adapters should provide proper validation
-  return false;
 }
 
 // =============================================================================

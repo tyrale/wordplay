@@ -244,6 +244,10 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
 
   /**
    * Check if a word transformation is valid according to game rules
+   * 
+   * NOTE: This is a simplified validation for internal challenge engine use.
+   * For UI validation, use the agnostic game engine's validation system
+   * (GameStateDependencies.isValidMove) to ensure consistency across all game modes.
    */
   function isValidMove(fromWord: string, toWord: string): boolean {
     if (!fromWord || !toWord) return false;
