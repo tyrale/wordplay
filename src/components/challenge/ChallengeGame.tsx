@@ -31,6 +31,8 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     canApply: boolean;
     userMessage?: string;
     reason?: string;
+    actionState?: ActionState; // Add action state to validation result
+    scoreBreakdown?: ScoreBreakdown; // Add score breakdown for action analysis
   }
 
   // Challenge state management (agnostic engine only)
@@ -125,9 +127,33 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       };
     }
 
+    // Calculate action states using agnostic engine's scoring system
+    // Even though we don't show scores in challenge mode, we need action analysis for UI feedback
+    const scoringResult = gameDependencies.calculateScore(
+      challengeState.currentWord,
+      word,
+      { keyLetters: [] } // No key letters in challenge mode
+    );
+
+    // Extract action states from scoring result
+    const actionState: ActionState = {
+      add: scoringResult.actions.some((action: string) => action.startsWith('Added letter')),
+      remove: scoringResult.actions.some((action: string) => action.startsWith('Removed letter')),
+      move: scoringResult.actions.some((action: string) => action === 'Moved letters')
+    };
+
+    // Create score breakdown (not displayed but needed for consistency)
+    const scoreBreakdown: ScoreBreakdown = {
+      base: scoringResult.breakdown.addLetterPoints + scoringResult.breakdown.removeLetterPoints + scoringResult.breakdown.movePoints,
+      keyBonus: 0, // No key letter bonus in challenge mode
+      total: 0 // Don't show total score in challenge mode
+    };
+
     return {
       isValid: true,
-      canApply: true
+      canApply: true,
+      actionState,
+      scoreBreakdown
     };
   }, [challengeState, gameDependencies]);
 
@@ -303,15 +329,15 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     return [];
   }, []);
 
-  // No scoring in challenge mode
+  // Score breakdown from validation result (not displayed but needed for action analysis)
   const scoreBreakdown: ScoreBreakdown = useMemo(() => {
-    return { base: 0, keyBonus: 0, total: 0 };
-  }, []);
+    return validationResult?.scoreBreakdown || { base: 0, keyBonus: 0, total: 0 };
+  }, [validationResult]);
 
-  // No action states in challenge mode (no add/remove/move scoring)
+  // Action states from validation result (needed for checkmark/X display)
   const actionState: ActionState = useMemo(() => {
-    return { add: false, remove: false, move: false };
-  }, []);
+    return validationResult?.actionState || { add: false, remove: false, move: false };
+  }, [validationResult]);
 
   // Determine if submit is valid
   const isValidSubmit = validationResult?.canApply || false;
