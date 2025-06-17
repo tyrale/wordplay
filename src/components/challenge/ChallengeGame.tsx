@@ -13,24 +13,26 @@ import { type LetterHighlight } from '../game/CurrentWord';
 import { ScoreDisplay, type ScoreBreakdown, type ActionState } from '../game/ScoreDisplay';
 import { Menu } from '../ui/Menu';
 import { useChallenge } from '../../hooks/useChallenge';
+import { createBrowserAdapter } from '../../adapters/browserAdapter';
+import type { GameStateDependencies } from '../../../packages/engine/gamestate';
 
 export interface ChallengeGameProps {
   onComplete?: (completed: boolean, stepCount: number) => void;
   onBack?: () => void;
 }
 
-// Interface for validation result (compatible with existing UI components)
-interface ValidationResult {
-  isValid: boolean;
-  canApply: boolean;
-  userMessage?: string;
-  reason?: string;
-}
-
 export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   onComplete,
   onBack: _onBack
 }) => {
+  // Interface for validation result (compatible with existing UI components)
+  interface ValidationResult {
+    isValid: boolean;
+    canApply: boolean;
+    userMessage?: string;
+    reason?: string;
+  }
+
   // Challenge state management (agnostic engine only)
   const {
     challengeState,
@@ -39,7 +41,6 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     startChallenge,
     submitWord,
     forfeitChallenge,
-    isValidMove,
     error: challengeError
   } = useChallenge();
 
@@ -50,6 +51,22 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   const [isProcessingMove, setIsProcessingMove] = useState(false);
+  const [gameDependencies, setGameDependencies] = useState<GameStateDependencies | null>(null);
+
+  // Initialize agnostic game engine dependencies
+  useEffect(() => {
+    const initializeGameDependencies = async () => {
+      try {
+        const adapter = await createBrowserAdapter();
+        const dependencies = adapter.getGameDependencies();
+        setGameDependencies(dependencies);
+      } catch (err) {
+        console.error('Failed to initialize game dependencies:', err);
+      }
+    };
+
+    initializeGameDependencies();
+  }, []);
 
   // Initialize challenge on mount
   useEffect(() => {
@@ -65,9 +82,9 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     }
   }, [challengeState?.currentWord]);
 
-  // Validate pending word using challenge engine
+  // Validate pending word using agnostic game engine
   const validatePendingWord = useCallback((word: string): ValidationResult => {
-    if (!challengeState || !word || word === challengeState.currentWord) {
+    if (!challengeState || !word || word === challengeState.currentWord || !gameDependencies) {
       return { isValid: false, canApply: false };
     }
 
@@ -81,15 +98,30 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       };
     }
 
-    // Use agnostic challenge engine validation
-    const isValid = isValidMove(challengeState.currentWord, word);
-    
-    if (!isValid) {
+    // Use agnostic game engine validation (same as vs-bot mode)
+    const validationResult = gameDependencies.validateWord(word, {
+      isBot: false,
+      previousWord: challengeState.currentWord
+    });
+
+    if (!validationResult.isValid) {
       return {
         isValid: false,
         canApply: false,
-        userMessage: 'invalid word',
-        reason: 'Invalid word transformation'
+        userMessage: validationResult.userMessage || 'invalid word',
+        reason: validationResult.reason || 'Invalid word'
+      };
+    }
+
+    // Additional validation: use agnostic engine's move validation
+    const isMoveValid = gameDependencies.isValidMove(challengeState.currentWord, word);
+    
+    if (!isMoveValid) {
+      return {
+        isValid: false,
+        canApply: false,
+        userMessage: 'illegal action',
+        reason: 'Invalid move transformation'
       };
     }
 
@@ -97,17 +129,17 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       isValid: true,
       canApply: true
     };
-  }, [challengeState, isValidMove]);
+  }, [challengeState, gameDependencies]);
 
   // Update validation when pending word changes
   useEffect(() => {
-    if (pendingWord && challengeState) {
+    if (pendingWord && challengeState && gameDependencies) {
       const result = validatePendingWord(pendingWord);
       setValidationResult(result);
     } else {
       setValidationResult(null);
     }
-  }, [pendingWord, challengeState, validatePendingWord]);
+  }, [pendingWord, challengeState, gameDependencies, validatePendingWord]);
 
   // Event handlers
   const handleWordChange = useCallback((newWord: string) => {
