@@ -177,6 +177,7 @@ This document tracks the progress of tasks from the development plan. Each task 
 - ✅ **UI Consistency** - Submit button behavior now identical between vs-bot and challenge modes (✓ for valid, ✗ for invalid)
 - ✅ **Architecture Compliance** - Uses existing agnostic engine scoring logic instead of duplicating action analysis
 - ✅ **Score Display Compatibility** - Fixed isEmpty check in ScoreDisplay by providing real action states (add/remove/move)
+- ✅ **Score Numbers Hidden** - Added isChallengeMode prop to ScoreDisplay to hide score numbers while keeping action icons and checkmark
 - ✅ **Performance Optimization** - Leverages existing scoring calculations without additional overhead
 - ✅ **Cross-Platform Reliability** - Identical UI feedback behavior across all platforms
 - ✅ **Comprehensive Testing** - Challenge engine tests pass, web app compiles successfully, UI feedback verified

@@ -81,6 +81,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Maintainability**: Changes to action analysis logic automatically apply to all game modes
   - **Verification**: Challenge engine tests pass (14/14), web app compiles successfully, checkmark appears correctly for valid moves
 
+- **Challenge Mode Score Display** ✅ **COMPLETED**
+  - **Purpose**: Hide score numbers in challenge mode while keeping action icons and checkmark for clean UI focused on word transformation rather than points
+  - **Problem**: Challenge mode showed score numbers (base score + key bonus) which are irrelevant since challenge mode doesn't use scoring system
+  - **Solution**: Added `isChallengeMode` prop to ScoreDisplay component to conditionally hide score numbers while preserving action icons and checkmark/X feedback
+  - **Technical Implementation**:
+    - **ScoreDisplay Enhancement**: Added optional `isChallengeMode` boolean prop to ScoreDisplayProps interface
+    - **Conditional Rendering**: Updated right content logic to skip score number display when `isChallengeMode: true`
+    - **ChallengeGame Integration**: Pass `isChallengeMode={true}` from ChallengeGame component to ScoreDisplay
+    - **Preserved Functionality**: Action icons (+ - ~) and checkmark/X feedback remain fully functional
+    - **Backward Compatibility**: Default `isChallengeMode: false` ensures existing InteractiveGame behavior unchanged
+  - **User Experience Benefits**:
+    - **Cleaner Interface**: Challenge mode now shows only relevant feedback (action icons, checkmark/X) without distracting score numbers
+    - **Focused Gameplay**: Players concentrate on word transformation without irrelevant point calculations
+    - **Consistent Visual Language**: Action icons and checkmark provide same feedback patterns as vs-bot mode
+    - **Reduced Cognitive Load**: Eliminates unnecessary numerical information in puzzle-focused mode
+  - **Architecture Benefits**:
+    - **Single Component**: Same ScoreDisplay component serves both game modes with conditional behavior
+    - **Minimal Code Change**: Simple prop addition with conditional logic, no duplication
+    - **Maintainable Design**: Future ScoreDisplay improvements automatically benefit both modes
+    - **Type Safety**: Full TypeScript support with optional prop typing
+  - **Verification**: Challenge engine tests pass (14/14), TypeScript compilation successful, UI displays correctly with action icons and checkmark but no score numbers
+
 ### Added
 
 - **Unlock System Documentation** ✅ **VERIFIED**

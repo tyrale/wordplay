@@ -411,6 +411,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
                 isPassMode={false}
                 validationError={validationResult?.userMessage || null}
                 showValidationError={showValidationError}
+                isChallengeMode={true}
               />
             </div>
 

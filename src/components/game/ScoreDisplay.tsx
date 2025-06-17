@@ -24,6 +24,7 @@ export interface ScoreDisplayProps {
   isPassMode?: boolean;
   validationError?: string | null;
   showValidationError?: boolean;
+  isChallengeMode?: boolean;
 }
 
 export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({ 
@@ -36,7 +37,8 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
   className = '',
   isPassMode = false,
   validationError = null,
-  showValidationError = false
+  showValidationError = false,
+  isChallengeMode = false
 }) => {
   // Build action icons based on what actions were taken (like image)
   const actionIcons = [];
@@ -72,8 +74,8 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
   if (showValidationError) {
     // Show pass instruction on the right when showing validation error
     rightContent = 'tap to pass';
-  } else if (!isEmpty && !isPassMode) {
-    // Show normal score
+  } else if (!isEmpty && !isPassMode && !isChallengeMode) {
+    // Show normal score only when NOT in challenge mode
     if (score.base > 0) {
       rightContent = `${score.base}`;
     } else {
@@ -84,6 +86,7 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
       rightContent += ` +${score.keyBonus}`;
     }
   }
+  // When isChallengeMode = true, rightContent stays empty (no scores shown)
 
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
