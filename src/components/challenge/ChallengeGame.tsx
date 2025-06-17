@@ -1,8 +1,8 @@
 /**
  * Challenge Game Component
  * 
- * Uses the exact same components and logic as vs bot mode for consistency.
- * Wraps the game engine to provide challenge-specific state management.
+ * Uses only the agnostic challenge engine for state management.
+ * Maintains architectural purity by avoiding web-specific useGameState hook.
  */
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
@@ -13,52 +13,43 @@ import { type LetterHighlight } from '../game/CurrentWord';
 import { ScoreDisplay, type ScoreBreakdown, type ActionState } from '../game/ScoreDisplay';
 import { Menu } from '../ui/Menu';
 import { useChallenge } from '../../hooks/useChallenge';
-import { useGameState } from '../../hooks/useGameState';
 
 export interface ChallengeGameProps {
   onComplete?: (completed: boolean, stepCount: number) => void;
   onBack?: () => void;
 }
 
+// Interface for validation result (compatible with existing UI components)
+interface ValidationResult {
+  isValid: boolean;
+  canApply: boolean;
+  userMessage?: string;
+  reason?: string;
+}
+
 export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   onComplete,
-  onBack
+  onBack: _onBack
 }) => {
-  // Challenge state management
+  // Challenge state management (agnostic engine only)
   const {
     challengeState,
     isLoading,
     isInitialized,
     startChallenge,
     submitWord,
-    forfeitChallenge
+    forfeitChallenge,
+    isValidMove,
+    error: challengeError
   } = useChallenge();
 
-  // Unified game state management (same as vs bot mode)
-  const {
-    gameState,
-    actions,
-    isPlayerTurn,
-    isGameActive,
-    isProcessingMove,
-    lastError,
-    clearError
-  } = useGameState({
-    config: {
-      maxTurns: 999,           // High limit for challenge mode
-      allowBotPlayer: false,   // No bot in challenge mode
-      enableKeyLetters: false, // No key letters in challenge mode
-      enableLockedLetters: false,
-      initialWord: challengeState?.currentWord || 'TEMP'
-    }
-  });
-
-  // Local UI state (identical to InteractiveGame)
+  // Local UI state
   const [pendingWord, setPendingWord] = useState('');
-  const [pendingMoveAttempt, setPendingMoveAttempt] = useState<any>(null);
+  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [showValidationError, setShowValidationError] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
+  const [isProcessingMove, setIsProcessingMove] = useState(false);
 
   // Initialize challenge on mount
   useEffect(() => {
@@ -71,55 +62,54 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   useEffect(() => {
     if (challengeState?.currentWord) {
       setPendingWord(challengeState.currentWord);
-      // Update game state to match challenge
-      actions.setCurrentWord(challengeState.currentWord);
     }
   }, [challengeState?.currentWord]);
 
-  // Start game when challenge is ready
-  useEffect(() => {
-    if (challengeState?.currentWord && isGameActive === false) {
-      actions.startGame();
-    }
-  }, [challengeState?.currentWord, isGameActive]);
-
-  // Validate moves using unified game state manager
-  useEffect(() => {
-    if (!challengeState || !pendingWord || !isGameActive) {
-      setPendingMoveAttempt(null);
-      return;
+  // Validate pending word using challenge engine
+  const validatePendingWord = useCallback((word: string): ValidationResult => {
+    if (!challengeState || !word || word === challengeState.currentWord) {
+      return { isValid: false, canApply: false };
     }
 
-    // Skip validation if it's the same as current word
-    if (pendingWord === challengeState.currentWord) {
-      setPendingMoveAttempt(null);
-      return;
-    }
-
-    // Use unified validation (same as vs bot mode)
-    const attempt = actions.attemptMove(pendingWord);
-    
-    // Additional challenge-specific check: word must not be already used in challenge
-    if (challengeState.wordSequence.includes(pendingWord)) {
-      setPendingMoveAttempt({
-        ...attempt,
+    // Check if word was already used in challenge
+    if (challengeState.wordSequence.includes(word)) {
+      return {
         isValid: false,
-        validationResult: { 
-          isValid: false, 
-          reason: 'Word already used in challenge', 
-          word: pendingWord,
-          userMessage: 'already used'
-        },
         canApply: false,
+        userMessage: 'already used',
         reason: 'Word already used in challenge'
-      });
-      return;
+      };
     }
 
-    setPendingMoveAttempt(attempt);
-  }, [pendingWord, challengeState, isGameActive, actions]);
+    // Use agnostic challenge engine validation
+    const isValid = isValidMove(challengeState.currentWord, word);
+    
+    if (!isValid) {
+      return {
+        isValid: false,
+        canApply: false,
+        userMessage: 'invalid word',
+        reason: 'Invalid word transformation'
+      };
+    }
 
-  // Event handlers (identical to InteractiveGame)
+    return {
+      isValid: true,
+      canApply: true
+    };
+  }, [challengeState, isValidMove]);
+
+  // Update validation when pending word changes
+  useEffect(() => {
+    if (pendingWord && challengeState) {
+      const result = validatePendingWord(pendingWord);
+      setValidationResult(result);
+    } else {
+      setValidationResult(null);
+    }
+  }, [pendingWord, challengeState, validatePendingWord]);
+
+  // Event handlers
   const handleWordChange = useCallback((newWord: string) => {
     setPendingWord(newWord.toUpperCase());
     setShowValidationError(false);
@@ -171,7 +161,8 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       case '←': // Return to current word
       case '↻': // Reset word
         setPendingWord(challengeState?.currentWord || '');
-        setPendingMoveAttempt(null);
+        setValidationResult(null);
+        setShowValidationError(false);
         break;
       case '≡': // Settings
         setIsMenuOpen(true);
@@ -182,8 +173,8 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const handleSubmit = useCallback(async () => {
     if (isProcessingMove) return;
 
-    // Handle clicking X to show validation error / forfeit (same as vs bot mode)
-    if (!pendingMoveAttempt?.canApply) {
+    // Handle clicking X to show validation error / forfeit
+    if (!validationResult?.canApply) {
       if (!showValidationError) {
         // First click on X shows validation error
         setShowValidationError(true);
@@ -191,43 +182,55 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       } else if (showValidationError) {
         // Second click on X (with validation error showing) forfeits the challenge
         try {
+          setIsProcessingMove(true);
           await forfeitChallenge();
           onComplete?.(false, challengeState?.wordSequence.length || 0);
         } catch (err) {
           console.error('Failed to forfeit challenge:', err);
+        } finally {
+          setIsProcessingMove(false);
         }
         return;
       }
     }
 
-    // Handle normal valid submission (challenge-specific logic)
-    if (pendingMoveAttempt?.canApply) {
+    // Handle normal valid submission using challenge engine
+    if (validationResult?.canApply) {
       try {
-        const result = await submitWord(pendingMoveAttempt.newWord);
+        setIsProcessingMove(true);
+        const result = await submitWord(pendingWord);
         
         if (result.success) {
-          setPendingWord(pendingMoveAttempt.newWord);
-          setPendingMoveAttempt(null);
+          // Word was successfully submitted, pending word becomes current word
+          setPendingWord(pendingWord); // Keep the word that was just submitted
+          setValidationResult(null);
           setShowValidationError(false);
           
-          // Check if challenge is complete
-          if (challengeState && challengeState.completed) {
-            onComplete?.(true, challengeState.wordSequence.length);
-          }
+          // Check if challenge is complete (challengeState will be updated by useChallenge)
+          // The completion check will happen in the next render cycle
         } else {
           setShowValidationError(true);
         }
       } catch (err) {
         setShowValidationError(true);
+      } finally {
+        setIsProcessingMove(false);
       }
     }
-  }, [isProcessingMove, pendingMoveAttempt, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord]);
+  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord]);
 
   const handleMenuClose = useCallback(() => {
     setIsMenuOpen(false);
   }, []);
 
-  // Generate letter states (identical to InteractiveGame)
+  // Check for challenge completion
+  useEffect(() => {
+    if (challengeState?.completed) {
+      onComplete?.(true, challengeState.wordSequence.length);
+    }
+  }, [challengeState?.completed, challengeState?.wordSequence.length, onComplete]);
+
+  // Generate letter states (no special states in challenge mode)
   const letterStates: LetterState[] = useMemo(() => {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     return alphabet.split('').map(letter => ({
@@ -236,7 +239,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     }));
   }, []);
 
-  // CHALLENGE-SPECIFIC: Word trail shows challenge sequence + target
+  // Word trail shows challenge sequence + target
   const wordTrailMoves: WordMove[] = useMemo(() => {
     if (!challengeState) return [];
 
@@ -263,32 +266,23 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     return moves;
   }, [challengeState]);
 
-  // Pending word highlights (no special highlighting in challenge mode)
+  // No highlighting in challenge mode
   const pendingWordHighlights: LetterHighlight[] = useMemo(() => {
     return [];
   }, []);
 
-  // CHALLENGE-SPECIFIC: No scoring, but use real validation data
+  // No scoring in challenge mode
   const scoreBreakdown: ScoreBreakdown = useMemo(() => {
-    return { base: 0, keyBonus: 0, total: 0 }; // Always zero for challenge mode
+    return { base: 0, keyBonus: 0, total: 0 };
   }, []);
 
-  // CHALLENGE-SPECIFIC: Show action state but not scores
+  // No action states in challenge mode (no add/remove/move scoring)
   const actionState: ActionState = useMemo(() => {
-    if (!pendingMoveAttempt?.scoringResult) {
-      return { add: false, remove: false, move: false };
-    }
-    
-    const actions = pendingMoveAttempt.scoringResult.actions;
-    return {
-      add: actions.some((action: string) => action.startsWith('Added letter')),
-      remove: actions.some((action: string) => action.startsWith('Removed letter')),
-      move: actions.some((action: string) => action === 'Moved letters')
-    };
-  }, [pendingMoveAttempt]);
+    return { add: false, remove: false, move: false };
+  }, []);
 
-  // Determine if submit is valid (same logic as vs bot mode)
-  const isValidSubmit = pendingMoveAttempt?.canApply || false;
+  // Determine if submit is valid
+  const isValidSubmit = validationResult?.canApply || false;
   const showInvalidX = !isValidSubmit;
 
   if (isLoading) {
@@ -305,7 +299,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     return (
       <div className="interactive-game">
         <div className="interactive-game__error">
-          Failed to load challenge. Please try again.
+          {challengeError || 'Failed to load challenge. Please try again.'}
         </div>
       </div>
     );
@@ -315,10 +309,9 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     <div className="interactive-game">
 
       {/* Error display */}
-      {lastError && (
+      {challengeError && (
         <div className="interactive-game__error" role="alert">
-          <span>{lastError}</span>
-          <button onClick={clearError} aria-label="Dismiss error">×</button>
+          <span>{challengeError}</span>
         </div>
       )}
 
@@ -358,7 +351,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
                 onClick={handleSubmit}
                 className="interactive-game__score"
                 isPassMode={false}
-                validationError={pendingMoveAttempt?.validationResult?.userMessage || null}
+                validationError={validationResult?.userMessage || null}
                 showValidationError={showValidationError}
               />
             </div>
@@ -367,7 +360,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
             <div className="interactive-game__word-trail-positioned">
               <WordTrail
                 moves={wordTrailMoves}
-                showScores={false} // CHALLENGE-SPECIFIC: No scores
+                showScores={false}
                 showTurnNumbers={true}
                 maxVisible={5}
               />
