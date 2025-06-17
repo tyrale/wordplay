@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Challenge Mode Infinite Loop** ✅ **RESOLVED**
+  - **Purpose**: Fixed critical infinite render loop in challenge mode that caused browser console spam and performance issues
+  - **Problem**: Challenge mode was using both the agnostic challenge engine and web-specific useGameState hook simultaneously, creating conflicting state management systems
+  - **Root Cause**: useEffect dependency on `actions` object that was recreated on every render, triggering infinite validation cycles
+  - **Solution**: Removed web-specific useGameState hook from ChallengeGame component, now uses only the agnostic challenge engine
+  - **Architecture Benefits**:
+    - **Single Source of Truth**: Challenge mode now uses only the platform-agnostic challenge engine for validation and state management
+    - **Cross-Platform Consistency**: Ensures identical behavior across all future platforms (iOS, Android, etc.)
+    - **Performance Improvement**: Eliminated continuous re-renders and console spam
+    - **Code Simplification**: Reduced complexity by removing duplicate validation systems
+    - **Architectural Purity**: Maintains design principle of using agnostic engine for all game logic
+  - **Technical Changes**:
+    - Replaced useGameState-based validation with direct challenge engine methods (`isValidMove`, `submitWord`)
+    - Removed problematic useEffect that depended on recreated actions object
+    - Simplified validation logic using platform-agnostic challenge engine methods
+    - Maintained UI component compatibility with existing ScoreDisplay interface
+    - Added proper TypeScript interfaces for validation results
+  - **Verification**: All 14 challenge engine tests continue to pass, web application builds successfully, development server runs without infinite loops, console remains clean during challenge gameplay
+  - **Files Updated**: src/components/challenge/ChallengeGame.tsx (complete refactor to use only agnostic engine)
+
 ### Added
 
 - **Unlock System Documentation** ✅ **VERIFIED**
