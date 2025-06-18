@@ -24,13 +24,15 @@ export interface ChallengeGameProps {
   onBack?: () => void;
   onNavigateHome?: () => void;
   onResetChallenge?: () => void;
+  onStartGame?: (gameType: 'bot' | 'challenge', botId?: string) => void;
 }
 
 export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   onComplete,
   onBack,
   onNavigateHome,
-  onResetChallenge
+  onResetChallenge,
+  onStartGame
 }) => {
   // Interface for validation result (compatible with existing UI components)
   interface ValidationResult {
@@ -523,7 +525,8 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
           if (gameType === 'challenge') {
             onResetChallenge?.();
           } else if (gameType === 'bot' && botId) {
-            // Bot selection will be handled by App.tsx with confirmation
+            // Forward bot selection to parent App.tsx for confirmation dialog
+            onStartGame?.(gameType, botId);
           }
         }}
         isInGame={true}

@@ -14,13 +14,15 @@ The WordPlay unlock system is a comprehensive feature progression system that al
 - Immediately applies theme when unlocked and persists across sessions
 - Shows toast notification: "🎉 Theme Unlocked! You've unlocked 'Red'. Check it out in the menu!"
 
-**Bots (11+ unlocks)**
-- Complete implementation with progressive difficulty
-- Achievement-based: Beat previous bot to unlock next (tester → easy → medium → hard → expert)
-- Word-based: Play specific words (e.g., "pirate" unlocks pirate-bot)
-- Shows toast notification: "🎉 Bot Unlocked! You've unlocked 'Easy Bot'. Check it out in the menu!"
+### 🟧 Unlock Triggers Only
 
-### 🚧 Partially Implemented
+**Bots (11+ unlocks)**
+- ✅ Unlock tracking works (achievement and word triggers)
+- ✅ Toast notifications and menu display work
+- ✅ Persistence across sessions works
+- ❌ **All bots use the same generic AI** - no unique behaviors
+- ❌ No difficulty differences between easy/medium/hard/expert
+- ❌ No themed behaviors for pirate/chaos/puzzle/etc bots
 
 **Mechanics (6 defined)**
 - ✅ Unlock tracking works (playing trigger words unlocks mechanics)
@@ -96,6 +98,12 @@ export interface GameConfig {
 - ✅ Test Environment: Fallback to initial state working
 - ✅ Error Handling: Graceful fallbacks implemented
 
+## Status Legend
+
+- **[x]** = Fully implemented and working
+- **🟧** = Unlock trigger works, but feature implementation incomplete
+- **[ ]** = Not yet implemented (future ideas)
+
 ## For Developers
 
 ### Adding New Unlocks
@@ -118,10 +126,10 @@ const mechanicDisplayNames: Record<string, string> = {
 };
 ```
 
-3. **Implement game logic (if mechanic):**
-- Update GameConfig interface
-- Add UI controls
-- Implement behavior in game state manager
+3. **Implement full functionality:**
+- **For themes**: Add theme data to availableThemes array
+- **For mechanics**: Update GameConfig interface, add UI controls, implement game logic
+- **For bots**: Create unique AI behaviors in bot engine
 
 ### File Locations
 - **Unlock Definitions**: `packages/engine/unlock-definitions.ts`
@@ -136,100 +144,100 @@ const mechanicDisplayNames: Record<string, string> = {
 ## Theme Unlocks Checklist
 
 ### Basic Colors
-- [ ] red - Red theme (✅ Implemented)
-- [ ] blue - Blue theme (✅ Implemented)
-- [ ] green - Green theme (✅ Implemented)
-- [ ] purple - Purple theme (✅ Implemented)
-- [ ] orange - Orange theme (✅ Implemented)
-- [ ] yellow - Yellow theme (✅ Implemented)
-- [ ] pink - Pink theme (✅ Implemented)
-- [ ] brown - Brown theme (✅ Implemented)
-- [ ] black - Black theme (✅ Implemented)
-- [ ] white - White theme (✅ Implemented)
-- [ ] gray - Gray theme (✅ Implemented)
+- [x] red - Red theme
+- [x] blue - Blue theme
+- [x] green - Green theme
+- [x] purple - Purple theme
+- [x] orange - Orange theme
+- [x] yellow - Yellow theme
+- [x] pink - Pink theme
+- [x] brown - Brown theme
+- [x] black - Black theme
+- [x] white - White theme
+- [x] gray - Gray theme
 
 ### Metallic Colors
-- [ ] silver - Silver theme (✅ Implemented)
-- [ ] gold - Gold theme (✅ Implemented)
-- [ ] bronze - Bronze theme (✅ Implemented)
-- [ ] copper - Copper theme (✅ Implemented)
+- [x] silver - Silver theme
+- [x] gold - Gold theme
+- [x] bronze - Bronze theme
+- [x] copper - Copper theme
 
 ### Specific Shades
-- [ ] crimson - Crimson theme (✅ Implemented)
-- [ ] scarlet - Scarlet theme (✅ Implemented)
-- [ ] maroon - Maroon theme (✅ Implemented)
-- [ ] navy - Navy theme (✅ Implemented)
-- [ ] teal - Teal theme (✅ Implemented)
-- [ ] cyan - Cyan theme (✅ Implemented)
-- [ ] lime - Lime theme (✅ Implemented)
-- [ ] olive - Olive theme (✅ Implemented)
-- [ ] forest - Forest theme (✅ Implemented)
-- [ ] mint - Mint theme (✅ Implemented)
-- [ ] sage - Sage theme (✅ Implemented)
-- [ ] lavender - Lavender theme (✅ Implemented)
-- [ ] violet - Violet theme (✅ Implemented)
-- [ ] indigo - Indigo theme (✅ Implemented)
-- [ ] magenta - Magenta theme (✅ Implemented)
-- [ ] rose - Rose theme (✅ Implemented)
-- [ ] coral - Coral theme (✅ Implemented)
-- [ ] salmon - Salmon theme (✅ Implemented)
-- [ ] peach - Peach theme (✅ Implemented)
-- [ ] cream - Cream theme (✅ Implemented)
-- [ ] beige - Beige theme (✅ Implemented)
-- [ ] tan - Tan theme (✅ Implemented)
-- [ ] khaki - Khaki theme (✅ Implemented)
-- [ ] rust - Rust theme (✅ Implemented)
-- [ ] amber - Amber theme (✅ Implemented)
-- [ ] honey - Honey theme (✅ Implemented)
-- [ ] lemon - Lemon theme (✅ Implemented)
-- [ ] canary - Canary theme (✅ Implemented)
-- [ ] mustard - Mustard theme (✅ Implemented)
-- [ ] chartreuse - Chartreuse theme (✅ Implemented)
-- [ ] emerald - Emerald theme (✅ Implemented)
-- [ ] jade - Jade theme (✅ Implemented)
-- [ ] turquoise - Turquoise theme (✅ Implemented)
-- [ ] aqua - Aqua theme (✅ Implemented)
-- [ ] sky - Sky theme (✅ Implemented)
-- [ ] azure - Azure theme (✅ Implemented)
-- [ ] cobalt - Cobalt theme (✅ Implemented)
-- [ ] royal - Royal theme (✅ Implemented)
-- [ ] sapphire - Sapphire theme (✅ Implemented)
-- [ ] periwinkle - Periwinkle theme (✅ Implemented)
-- [ ] lilac - Lilac theme (✅ Implemented)
-- [ ] plum - Plum theme (✅ Implemented)
-- [ ] grape - Grape theme (✅ Implemented)
-- [ ] wine - Wine theme (✅ Implemented)
-- [ ] burgundy - Burgundy theme (✅ Implemented)
-- [ ] mauve - Mauve theme (✅ Implemented)
-- [ ] fuchsia - Fuchsia theme (✅ Implemented)
+- [x] crimson - Crimson theme
+- [x] scarlet - Scarlet theme
+- [x] maroon - Maroon theme
+- [x] navy - Navy theme
+- [x] teal - Teal theme
+- [x] cyan - Cyan theme
+- [x] lime - Lime theme
+- [x] olive - Olive theme
+- [x] forest - Forest theme
+- [x] mint - Mint theme
+- [x] sage - Sage theme
+- [x] lavender - Lavender theme
+- [x] violet - Violet theme
+- [x] indigo - Indigo theme
+- [x] magenta - Magenta theme
+- [x] rose - Rose theme
+- [x] coral - Coral theme
+- [x] salmon - Salmon theme
+- [x] peach - Peach theme
+- [x] cream - Cream theme
+- [x] beige - Beige theme
+- [x] tan - Tan theme
+- [x] khaki - Khaki theme
+- [x] rust - Rust theme
+- [x] amber - Amber theme
+- [x] honey - Honey theme
+- [x] lemon - Lemon theme
+- [x] canary - Canary theme
+- [x] mustard - Mustard theme
+- [x] chartreuse - Chartreuse theme
+- [x] emerald - Emerald theme
+- [x] jade - Jade theme
+- [x] turquoise - Turquoise theme
+- [x] aqua - Aqua theme
+- [x] sky - Sky theme
+- [x] azure - Azure theme
+- [x] cobalt - Cobalt theme
+- [x] royal - Royal theme
+- [x] sapphire - Sapphire theme
+- [x] periwinkle - Periwinkle theme
+- [x] lilac - Lilac theme
+- [x] plum - Plum theme
+- [x] grape - Grape theme
+- [x] wine - Wine theme
+- [x] burgundy - Burgundy theme
+- [x] mauve - Mauve theme
+- [x] fuchsia - Fuchsia theme
 
 ### Color Descriptors
-- [ ] hot - Hot theme (✅ Implemented)
-- [ ] neon - Neon theme (✅ Implemented)
-- [ ] electric - Electric theme (✅ Implemented)
-- [ ] bright - Bright theme (✅ Implemented)
-- [ ] pastel - Pastel theme (✅ Implemented)
-- [ ] muted - Muted theme (✅ Implemented)
-- [ ] dark - Dark theme (✅ Implemented)
-- [ ] light - Light theme (✅ Implemented)
-- [ ] deep - Deep theme (✅ Implemented)
-- [ ] pale - Pale theme (✅ Implemented)
-- [ ] vivid - Vivid theme (✅ Implemented)
-- [ ] soft - Soft theme (✅ Implemented)
-- [ ] bold - Bold theme (✅ Implemented)
-- [ ] subtle - Subtle theme (✅ Implemented)
-- [ ] warm - Warm theme (✅ Implemented)
-- [ ] cool - Cool theme (✅ Implemented)
+- [x] hot - Hot theme
+- [x] neon - Neon theme
+- [x] electric - Electric theme
+- [x] bright - Bright theme
+- [x] pastel - Pastel theme
+- [x] muted - Muted theme
+- [x] dark - Dark theme
+- [x] light - Light theme
+- [x] deep - Deep theme
+- [x] pale - Pale theme
+- [x] vivid - Vivid theme
+- [x] soft - Soft theme
+- [x] bold - Bold theme
+- [x] subtle - Subtle theme
+- [x] warm - Warm theme
+- [x] cool - Cool theme
 
 ### Nature & Time Themes
-- [ ] earth - Earth theme (✅ Implemented)
-- [ ] ocean - Ocean theme (✅ Implemented)
-- [ ] sunset - Sunset theme (✅ Implemented)
-- [ ] sunrise - Sunrise theme (✅ Implemented)
-- [ ] twilight - Twilight theme (✅ Implemented)
-- [ ] dawn - Dawn theme (✅ Implemented)
-- [ ] dusk - Dusk theme (✅ Implemented)
-- [ ] midnight - Midnight theme (✅ Implemented)
+- [x] earth - Earth theme
+- [x] ocean - Ocean theme
+- [x] sunset - Sunset theme
+- [x] sunrise - Sunrise theme
+- [x] twilight - Twilight theme
+- [x] dawn - Dawn theme
+- [x] dusk - Dusk theme
+- [x] midnight - Midnight theme
 
 ### Future Theme Ideas
 - [ ] random - Random theme selector (trigger: "random")
@@ -242,19 +250,19 @@ const mechanicDisplayNames: Record<string, string> = {
 ## Bot Unlocks Checklist
 
 ### Achievement-Based Progression
-- [ ] beat_tester - Easy Bot (✅ Implemented)
-- [ ] beat_easy_bot - Medium Bot (✅ Implemented)
-- [ ] beat_medium_bot - Hard Bot (✅ Implemented)
-- [ ] beat_hard_bot - Expert Bot (✅ Implemented)
+- 🟧 beat_tester - Easy Bot
+- 🟧 beat_easy_bot - Medium Bot
+- 🟧 beat_medium_bot - Hard Bot
+- 🟧 beat_hard_bot - Expert Bot
 
 ### Word-Based Themed Bots
-- [ ] pirate - Pirate Bot (✅ Implemented)
-- [ ] chaos - Chaos Bot (✅ Implemented)
-- [ ] puzzle - Puzzle Bot (✅ Implemented)
-- [ ] speed - Speed Bot (✅ Implemented)
-- [ ] creative - Creative Bot (✅ Implemented)
-- [ ] vowel - Vowel Bot (✅ Implemented)
-- [ ] rhyme - Rhyme Bot (✅ Implemented)
+- 🟧 pirate - Pirate Bot
+- 🟧 chaos - Chaos Bot
+- 🟧 puzzle - Puzzle Bot
+- 🟧 speed - Speed Bot
+- 🟧 creative - Creative Bot
+- 🟧 vowel - Vowel Bot
+- 🟧 rhyme - Rhyme Bot
 
 ### Future Themed Bots
 - [ ] ninja - Ninja Bot (silent, strategic moves)
@@ -282,8 +290,8 @@ const mechanicDisplayNames: Record<string, string> = {
 ## Mechanic Unlocks Checklist
 
 ### Currently Defined (Unlocks Work, Game Logic Missing)
-- [ ] five - 5 Letter Start (❌ Game logic not implemented)
-- [ ] six - 6 Letter Start (❌ Game logic not implemented)
+- 🟧 five - 5 Letter Start
+- 🟧 six - 6 Letter Start
 
 ### Future Word Length Mechanics
 - [ ] three - 3 Letter Start

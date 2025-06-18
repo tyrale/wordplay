@@ -156,6 +156,7 @@ function App() {
                   onBack={handleChallengeBack}
                   onNavigateHome={handleNavigateHome}
                   onResetChallenge={handleResetChallenge}
+                  onStartGame={handleStartGame}
                 />
               )}
               
