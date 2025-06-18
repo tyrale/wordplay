@@ -407,8 +407,8 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
   function generateSharingText(state: ChallengeState): string {
     const dayNumber = Math.floor((new Date(state.date).getTime() - new Date('2024-01-01').getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
-    let result = `Challenge #${dayNumber}\n`;
-    result += `${state.startWord} → ${state.targetWord}`;
+    // Combine challenge number and start/target words on same line
+    let result = `Challenge #${dayNumber} ${state.startWord} → ${state.targetWord}`;
     
     if (state.completed) {
       result += `\n\n`;

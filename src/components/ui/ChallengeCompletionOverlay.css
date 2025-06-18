@@ -55,16 +55,16 @@
   text-transform: uppercase;
 }
 
-/* Third and subsequent share lines use smaller font size */
-.challenge-completion__share-line:nth-child(n+3) {
-  font-size: 24px;
+/* Second and subsequent share lines use larger font size */
+.challenge-completion__share-line:nth-child(n+2) {
+  font-size: var(--theme-font-size-xl);
 }
 
 /* Step count - separate element at bottom of share stack */
 .challenge-completion__step-count {
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: var(--theme-font-size-xl);
+  font-size: var(--theme-font-size-lg);
   color: var(--theme-text);
   text-align: center;
   margin-top: var(--spacing-md);
@@ -77,7 +77,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-sm);
 }
 
 .challenge-completion__action {
