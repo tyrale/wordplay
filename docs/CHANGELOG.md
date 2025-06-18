@@ -141,9 +141,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Problem**: Word trail showed target word at bottom instead of just above current word; completion overlay used modal design breaking game's flat 3-color aesthetic
   - **Solution**: Implemented proper word trail ordering with scrollable history and redesigned overlay with flat design principles
   - **Word Trail Fixes**:
-    - **Target Word Positioning**: Target word now appears just above current word as immediate next step
-    - **History Ordering**: Word history displayed in reverse chronological order (newest first, extending upward)
-    - **Scrollable Behavior**: Users can scroll up to see older words when history gets long
+    - **Start Word Positioning**: Start word appears at top of trail with accent color styling
+    - **Target Word Positioning**: Target word appears at bottom of trail with accent color styling  
+    - **Chronological Ordering**: Played words displayed in chronological order between start and target
+    - **Accent Color Styling**: Both start and target words use theme accent color for visual emphasis
     - **Turn Number Accuracy**: Proper turn numbering maintained throughout sequence
   - **Overlay Redesign**:
     - **Flat Design Integration**: Removed modal container, borders, backgrounds, and shadows
@@ -153,7 +154,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Action Button Stacking**: Home and share buttons stacked vertically instead of horizontal layout
     - **Color Consistency**: Uses only game's 3-color theme (background, text, accent) with no additional styling
   - **Technical Implementation**:
-    - **WordTrail Logic**: Modified wordTrailMoves calculation to reverse word history and unshift target word
+    - **WordTrail Logic**: Modified wordTrailMoves calculation to show start word first, then played words chronologically, then target word last
+    - **Accent Color Styling**: Added CSS classes for start/target words using special player types ('start', 'target') with accent color
     - **Share Text Parsing**: Added logic to separate step count from share content for independent display
     - **CSS Architecture**: Complete rewrite of overlay styles removing all modal patterns
     - **Responsive Design**: Maintained accessibility and responsive behavior with flat design

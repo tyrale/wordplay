@@ -179,7 +179,7 @@ This document tracks the progress of tasks from the development plan. Each task 
 - ✅ **Score Display Compatibility** - Fixed isEmpty check in ScoreDisplay by providing real action states (add/remove/move)
 - ✅ **Score Numbers Hidden** - Added isChallengeMode prop to ScoreDisplay to hide score numbers while keeping action icons and checkmark
 - ✅ **Challenge Completion Overlay** - Flat design overlay with winner/loser status, sharing functionality, and platform-agnostic design
-- ✅ **Word Trail Behavior Fix** - Target word now appears just above current word with scrollable history extending upward
+- ✅ **Word Trail Behavior Fix** - Start word at top, target word at bottom, with played words in chronological order between them - both start and target words styled with accent color
 - ✅ **Flat Design Integration** - Removed modal containers/borders/backgrounds to match game's 3-color visual language
 - ✅ **Cross-Platform Sharing** - Web Share API with clipboard fallback for maximum compatibility
 - ✅ **Performance Optimization** - Leverages existing scoring calculations without additional overhead

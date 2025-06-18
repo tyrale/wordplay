@@ -50,6 +50,14 @@
   color: var(--theme-text-secondary);
 }
 
+.word-trail__line--player-start {
+  color: var(--theme-accent);
+}
+
+.word-trail__line--player-target {
+  color: var(--theme-accent);
+}
+
 .word-trail__word {
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
