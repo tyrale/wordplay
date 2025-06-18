@@ -169,14 +169,15 @@
   height: 100%;
   max-height: inherit; /* Inherit from parent container */
   position: relative; /* For absolute positioning of start/target words */
-  padding: 0 160px 0 160px; /* Horizontal padding only, no vertical padding */
+  padding: 0 140px 0 140px; /* Reduced padding to provide more space for content */
   margin: 0; /* Ensure no margin */
+  box-sizing: border-box; /* Include padding in width calculation */
 }
 
 /* Start word positioned absolutely to the left of first played word */
 .word-trail__line--first .word-trail__start-word {
   position: absolute;
-  left: -140px; /* Move further left to ensure full visibility */
+  left: -120px; /* Adjusted to work with reduced padding */
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -184,7 +185,7 @@
   gap: var(--spacing-xs);
   white-space: nowrap;
   z-index: 10; /* Ensure visibility above other elements */
-  width: 120px; /* Fixed width to prevent clipping */
+  width: 100px; /* Reduced width to fit better */
 }
 
 /* Empty state: start word positioned at bottom left */
@@ -254,7 +255,7 @@
 /* Target word positioned absolutely to the right of last played word */
 .word-trail__line--last .word-trail__target-word {
   position: absolute;
-  right: -140px; /* Move further right to ensure full visibility */
+  right: -120px; /* Adjusted to work with reduced padding */
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -262,7 +263,7 @@
   gap: var(--spacing-xs);
   white-space: nowrap;
   z-index: 10; /* Ensure visibility above other elements */
-  width: 120px; /* Fixed width to prevent clipping */
+  width: 100px; /* Reduced width to fit better */
 }
 
 /* Empty state: target word positioned at bottom right */
@@ -317,17 +318,17 @@
 /* Responsive adjustments for challenge mode */
 @media (max-width: 768px) {
   .word-trail__challenge-container {
-    padding: 0 140px; /* Reduce padding on tablet */
+    padding: 0 120px; /* Match desktop padding for consistency */
   }
   
   .word-trail__line--first .word-trail__start-word {
-    left: -120px; /* Closer positioning on tablet */
-    width: 100px; /* Smaller width on tablet */
+    left: -100px; /* Match desktop positioning */
+    width: 80px; /* Smaller width on tablet */
   }
   
   .word-trail__line--last .word-trail__target-word {
-    right: -120px; /* Closer positioning on tablet */
-    width: 100px; /* Smaller width on tablet */
+    right: -100px; /* Match desktop positioning */
+    width: 80px; /* Smaller width on tablet */
   }
   
   .word-trail__arrow {

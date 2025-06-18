@@ -156,6 +156,7 @@
   position: relative;
   width: 100%;
   max-width: 600px;
+  overflow-x: visible; /* Allow positioned elements to extend beyond max-width */
 }
 
 /* Submit anchor - the absolute center point */
@@ -181,6 +182,7 @@
   text-align: center;
   display: flex;
   flex-direction: column;
+  overflow-x: visible; /* Allow start/target words to extend beyond container */
 }
 
 /* Apply same sizing to positioned word trail */
