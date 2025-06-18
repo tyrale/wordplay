@@ -56,15 +56,9 @@ function App() {
           }
         );
       } else if (appState === 'game') {
-        showConfirmation(
-          'Start New Game?',
-          `Do you want to end the current game and start a new game with ${botId}?`,
-          () => {
-            setSelectedBotId(botId);
-            setAppState('game');
-            hideConfirmation();
-          }
-        );
+        // Already in bot game - switch directly to new bot without confirmation
+        setSelectedBotId(botId);
+        setAppState('game');
       } else {
         // No current game, start directly
         setSelectedBotId(botId);
@@ -104,19 +98,8 @@ function App() {
   };
 
   const handleNavigateHome = () => {
-    // Navigate to main screen from any state
-    if (appState === 'game' || appState === 'challenge') {
-      showConfirmation(
-        'Return Home?',
-        'Do you want to end the current game and return to the main menu?',
-        () => {
-          setAppState('main');
-          hideConfirmation();
-        }
-      );
-    } else {
-      setAppState('main');
-    }
+    // Navigate directly to main screen without confirmation
+    setAppState('main');
   };
 
   const handleResign = () => {

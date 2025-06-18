@@ -70,6 +70,14 @@ This document tracks the progress of tasks from the development plan. Each task 
 
 **Phase 5 Status**: 🔄 **IN PROGRESS** - Unlock framework and theme system complete with web integration, mechanics pending implementation
 
+## Phase 5.5 - Tutorials
+| Task | Status | Description |
+|------|--------|-------------|
+| 5.5 | ⏳ | **Base Tutorial** - Simple step by step tutorial that builds the UI for each step | 
+| 5.6 | ⏳ | **Challenge Tutorial** - Simple tutorial that explains the challenge mode |
+
+
+
 ## Phase 6 – Web Polish & Accessibility
 
 | Task | Status | Description |

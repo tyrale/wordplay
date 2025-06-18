@@ -66,12 +66,6 @@ const getMenuItems = (
   unlockedBots: string[] = [],
   currentGameMode?: string
 ): MenuTier1Item[] => [
-  // Home item - always first
-  {
-    id: 'home',
-    title: 'home'
-    // No children - this is a standalone tier 1 action item
-  },
   // Only include resign if user is in an active game
   ...(isInGame ? [{
     id: 'resign',
@@ -131,6 +125,12 @@ const getMenuItems = (
       { id: 'debug', title: 'debug' },
       { id: 'reset-unlocks', title: 'reset unlocks (testing)' },
     ]
+  },
+  // Home item - moved to bottom
+  {
+    id: 'home',
+    title: 'home'
+    // No children - this is a standalone tier 1 action item
   },
 ];
 

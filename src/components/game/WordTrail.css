@@ -63,7 +63,6 @@
   font-weight: var(--theme-font-weight);
   font-size: var(--theme-font-size-lg);
   color: var(--theme-text);
-  letter-spacing: 0.05em;
   text-align: center;
   transition: color 0.2s ease;
 }
