@@ -182,11 +182,21 @@ describe('Challenge Engine', () => {
     test('should generate complete sharing text', async () => {
       const challenge = await challengeEngine.getDailyChallengeState('2024-01-15');
       
-      const sharingText = challengeEngine.generateSharingText(challenge);
+      // Complete a challenge to test step count format
+      const result = await challengeEngine.submitWord(challenge.targetWord, challenge);
+      const completedChallenge = result.isValid ? result.newState : challenge;
+      
+      const sharingText = challengeEngine.generateSharingText(completedChallenge);
       
       expect(sharingText).toContain('Challenge #');
       expect(sharingText).toContain(challenge.startWord);
       expect(sharingText).toContain(challenge.targetWord);
+      
+      // Verify step count format without parentheses for completed challenges
+      if (completedChallenge.completed) {
+        expect(sharingText).toMatch(/\d+ steps/);
+        expect(sharingText).not.toMatch(/\(\d+ steps\)/);
+      }
     });
   });
 

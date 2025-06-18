@@ -57,7 +57,7 @@
 .challenge-completion__step-count {
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: var(--theme-font-size-lg);
+  font-size: var(--theme-font-size-xl);
   color: var(--theme-text);
   text-align: center;
   margin-top: var(--spacing-md);
@@ -81,7 +81,7 @@
   /* Typography - match menu item styling */
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: 24px;
+  font-size: var(--theme-font-size-xl);
   color: var(--theme-accent);
   
   /* Interaction */
@@ -113,7 +113,7 @@
   }
   
   .challenge-completion__action {
-    font-size: 20px;
+    font-size: var(--theme-font-size-lg);
   }
 }
 
@@ -128,7 +128,7 @@
   }
   
   .challenge-completion__action {
-    font-size: 18px;
+    font-size: var(--theme-font-size-md);
   }
 }
 

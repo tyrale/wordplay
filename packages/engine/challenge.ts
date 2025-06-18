@@ -430,7 +430,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     
     // Add step count as separate line for completed challenges
     if (state.completed) {
-      result += `\n(${state.stepCount} steps)`;
+      result += `\n${state.stepCount} steps`;
     }
     
     return result;
