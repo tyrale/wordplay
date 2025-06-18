@@ -56,11 +56,9 @@ function App() {
           }
         );
       } else if (appState === 'game') {
-        // Already in bot game - switch to new bot
-        // Force component remount by briefly going to main then back to game
+        // Already in bot game - switch directly to new bot
         setSelectedBotId(botId);
-        setAppState('main');
-        setTimeout(() => setAppState('game'), 50);
+        setAppState('game');
       } else {
         // No current game, start directly
         setSelectedBotId(botId);
@@ -150,6 +148,7 @@ function App() {
                   onResign={handleResign}
                   onNavigateHome={handleNavigateHome}
                   currentGameMode="bot"
+                  onStartGame={handleStartGame}
                 />
               )}
               {appState === 'challenge' && (
