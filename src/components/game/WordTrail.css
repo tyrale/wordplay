@@ -216,17 +216,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-md); /* Larger gap to ensure scrolling */
+  gap: var(--spacing-xs); /* Match default word trail spacing */
   width: 100%;
-  padding-top: 80px; /* Extra space at top for fade effect and scrolling */
-  padding-bottom: var(--spacing-sm);
+  padding-top: var(--spacing-xs); /* Minimal top padding */
+  padding-bottom: var(--spacing-xs);
   min-height: calc(100% + 100px); /* Ensure content exceeds container height */
 }
 
-/* Spacing for individual words in challenge mode */
+/* Spacing for individual words in challenge mode - match default */
 .word-trail__played-words .word-trail__line {
-  margin: var(--spacing-sm) 0; /* Larger margin to help trigger scrolling */
-  padding: var(--spacing-xs) 0; /* Additional padding */
+  /* No additional margin/padding - use default spacing from container gap */
 }
 
 .word-trail__played-words::-webkit-scrollbar {
