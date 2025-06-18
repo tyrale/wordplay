@@ -109,20 +109,37 @@ export const WordTrail: React.FC<WordTrailProps> = ({
       }
     }, [playedMoves.length, hasPlayedWords]);
 
-    // Dynamic height calculation for adaptive container
+    // Dynamic height calculation - ensure we don't exceed parent container
     useEffect(() => {
       const updateHeight = () => {
         if (challengeContainerRef.current && playedWordsRef.current) {
-          const containerRect = challengeContainerRef.current.getBoundingClientRect();
-          const availableHeight = window.innerHeight - containerRect.top - 100; // 100px buffer for game controls
-          const maxHeight = Math.max(200, Math.min(availableHeight, window.innerHeight * 0.6));
-          playedWordsRef.current.style.maxHeight = `${maxHeight}px`;
+          // Get the parent container's computed max-height
+          const parentElement = challengeContainerRef.current.parentElement;
+          if (parentElement) {
+            const parentStyles = window.getComputedStyle(parentElement);
+            const parentMaxHeight = parentStyles.maxHeight;
+            
+            // If parent has a max-height constraint, respect it
+            if (parentMaxHeight && parentMaxHeight !== 'none') {
+              playedWordsRef.current.style.maxHeight = parentMaxHeight;
+            } else {
+              // Fallback calculation
+              const containerRect = challengeContainerRef.current.getBoundingClientRect();
+              const availableHeight = window.innerHeight - containerRect.top - 100;
+              const maxHeight = Math.max(200, Math.min(availableHeight, window.innerHeight * 0.4));
+              playedWordsRef.current.style.maxHeight = `${maxHeight}px`;
+            }
+          }
         }
       };
 
-      updateHeight();
+      // Delay the height calculation to ensure DOM is ready
+      const timer = setTimeout(updateHeight, 100);
       window.addEventListener('resize', updateHeight);
-      return () => window.removeEventListener('resize', updateHeight);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('resize', updateHeight);
+      };
     }, []);
 
           return (
