@@ -68,6 +68,15 @@
   transition: color 0.2s ease;
 }
 
+/* Start and target words should inherit accent color from parent line */
+.word-trail__line--player-start .word-trail__word {
+  color: inherit;
+}
+
+.word-trail__line--player-target .word-trail__word {
+  color: inherit;
+}
+
 .word-trail__word-container {
   display: inline-flex;
   gap: 0.02em;

@@ -386,7 +386,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
       
       if (isNewLetter) {
         // This is a new letter
-        pattern += '*';
+        pattern += '🀫';
         // Consume one instance of this letter from added letters
         const index = analysis.addedLetters.indexOf(char);
         if (index > -1) {
@@ -394,7 +394,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
         }
       } else {
         // This letter existed before (either unchanged or moved)
-        pattern += '🀫';
+        pattern += '*';
       }
     }
     
@@ -430,14 +430,9 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
       result += patterns.join('\n');
     }
     
-    if (state.failed && state.failedAtWord) {
-      // Add red X pattern for failed word
-      result += '\n' + '❌'.repeat(state.failedAtWord.length);
-    }
-    
     // Add step count as separate line for completed challenges
     if (state.completed) {
-      result += `\n${state.stepCount} steps`;
+      result += `\n${state.stepCount} turns`;
     }
     
     return result;

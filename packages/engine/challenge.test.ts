@@ -195,8 +195,8 @@ describe('Challenge Engine', () => {
       // Verify step count format without parentheses for completed challenges
       if (completedChallenge.completed) {
         expect(sharingText).toContain(' ✓ '); // Should have checkmark between challenge # and words
-        expect(sharingText).toMatch(/\d+ steps/);
-        expect(sharingText).not.toMatch(/\(\d+ steps\)/);
+        expect(sharingText).toMatch(/\d+ turns/);
+        expect(sharingText).not.toMatch(/\(\d+ turns\)/);
       }
     });
 
@@ -211,7 +211,7 @@ describe('Challenge Engine', () => {
       expect(sharingText).toContain(' ❌ '); // Should have red X between challenge # and words
       expect(sharingText).toContain(challenge.startWord);
       expect(sharingText).toContain(challenge.targetWord);
-      expect(sharingText).not.toContain('steps'); // Failed challenges don't show step count
+      expect(sharingText).not.toContain('turns'); // Failed challenges don't show turn count
     });
   });
 
