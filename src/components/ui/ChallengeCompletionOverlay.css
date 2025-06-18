@@ -31,6 +31,7 @@
   color: var(--theme-accent);
   line-height: 0.8;
   text-align: center;
+  text-transform: uppercase;
 }
 
 /* Share content - vertical stack, centered */
@@ -51,6 +52,7 @@
   line-height: 1.2;
   letter-spacing: 0.05em;
   white-space: pre;
+  text-transform: uppercase;
 }
 
 /* Third and subsequent share lines use smaller font size */
@@ -67,6 +69,7 @@
   text-align: center;
   margin-top: var(--spacing-md);
   letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 /* Action buttons - stacked vertically */
@@ -88,6 +91,7 @@
   font-weight: var(--theme-font-weight);
   font-size: var(--theme-font-size-xl);
   color: var(--theme-accent);
+  text-transform: uppercase;
   
   /* Interaction */
   transition: opacity 0.2s ease;

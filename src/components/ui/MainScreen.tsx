@@ -74,9 +74,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
     onStartGame('bot', botId);
   }, [onStartGame]);
 
-  const handleBackToMain = useCallback(() => {
-    setCurrentView('main');
-  }, []);
+
 
   const handleMenuOpen = useCallback(() => {
     setIsMenuOpen(true);
@@ -124,12 +122,6 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
 
         {currentView === 'bots' && (
           <div className="main-screen__bot-selection">
-            <button 
-              className="main-screen__back-button"
-              onClick={handleBackToMain}
-            >
-              ← back
-            </button>
             <div className="main-screen__bot-list">
               {availableBots.map((bot) => (
                 <button

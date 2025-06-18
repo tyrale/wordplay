@@ -104,34 +104,7 @@
   max-width: 400px;
 }
 
-.main-screen__back-button {
-  background: none;
-  border: none;
-  padding: var(--spacing-sm, 8px);
-  cursor: pointer;
-  align-self: flex-start;
-  
-  /* Typography */
-  font-family: var(--theme-font-family);
-  font-weight: var(--theme-font-weight);
-  font-size: 24px;
-  color: var(--theme-accent);
-  
-  /* Interaction */
-  transition: opacity 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-  outline: none;
-  
-  /* Touch target */
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
-.main-screen__back-button:active {
-  opacity: 0.5;
-}
 
 .main-screen__bot-list {
   display: flex;
@@ -191,9 +164,7 @@
     font-size: 18px; /* Smaller on tablet */
   }
   
-  .main-screen__back-button {
-    font-size: 20px;
-  }
+
 }
 
 @media (max-width: 480px) {
@@ -215,6 +186,6 @@
   }
   
   .main-screen__bot-option {
-    font-size: 16px; /* Smaller on mobile */
+    font-size: 26px;
   }
 } 
