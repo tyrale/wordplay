@@ -196,8 +196,9 @@
 
 .word-trail__played-words {
   grid-area: played;
-  height: 100%;
-  max-height: 40vh; /* Use viewport-based height for better mobile experience */
+  height: 30vh; /* Fixed viewport height to ensure scrolling */
+  max-height: 300px; /* Maximum height constraint */
+  min-height: 150px; /* Minimum height for usability */
   overflow-y: auto;
   position: relative;
   /* Restore fade effect at top */
@@ -215,16 +216,17 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md); /* Larger gap to ensure scrolling */
   width: 100%;
-  padding-top: 60px; /* Extra space at top for fade effect */
-  padding-bottom: var(--spacing-xs);
-  min-height: 100%; /* Ensure container fills available space */
+  padding-top: 80px; /* Extra space at top for fade effect and scrolling */
+  padding-bottom: var(--spacing-sm);
+  min-height: calc(100% + 100px); /* Ensure content exceeds container height */
 }
 
 /* Spacing for individual words in challenge mode */
 .word-trail__played-words .word-trail__line {
-  margin: var(--spacing-xs) 0;
+  margin: var(--spacing-sm) 0; /* Larger margin to help trigger scrolling */
+  padding: var(--spacing-xs) 0; /* Additional padding */
 }
 
 .word-trail__played-words::-webkit-scrollbar {
