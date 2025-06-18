@@ -47,6 +47,37 @@ export const ChallengeCompletionOverlay: React.FC<ChallengeCompletionOverlayProp
   const shareContent = lines.slice(0, -1); // All lines except the last
   const stepCount = lines[lines.length - 1]; // Last line contains step count
 
+  // Function to render line with styled checkmark or X
+  const renderShareLine = (line: string, index: number) => {
+    // Check if this is the first line with checkmark or X
+    if (index === 0 && (line.includes(' ✓ ') || line.includes(' ❌ '))) {
+      if (line.includes(' ✓ ')) {
+        // Split around checkmark and style it
+        const parts = line.split(' ✓ ');
+        return (
+          <div key={index} className="challenge-completion__share-line">
+            {parts[0]} <span className="challenge-completion__checkmark">✓</span> {parts[1]}
+          </div>
+        );
+      } else if (line.includes(' ❌ ')) {
+        // Split around red X and style it
+        const parts = line.split(' ❌ ');
+        return (
+          <div key={index} className="challenge-completion__share-line">
+            {parts[0]} <span className="challenge-completion__red-x">❌</span> {parts[1]}
+          </div>
+        );
+      }
+    }
+    
+    // Regular line rendering
+    return (
+      <div key={index} className="challenge-completion__share-line">
+        {line}
+      </div>
+    );
+  };
+
   return (
     <div 
       className="challenge-completion-overlay" 
@@ -65,11 +96,7 @@ export const ChallengeCompletionOverlay: React.FC<ChallengeCompletionOverlayProp
       
       {/* Share content stacked vertically */}
       <div className="challenge-completion__share-content">
-        {shareContent.map((line, index) => (
-          <div key={index} className="challenge-completion__share-line">
-            {line}
-          </div>
-        ))}
+        {shareContent.map((line, index) => renderShareLine(line, index))}
       </div>
       
       {/* Step count as separate element */}

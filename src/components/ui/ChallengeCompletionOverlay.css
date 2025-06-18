@@ -22,12 +22,12 @@
   gap: var(--spacing-xl);
 }
 
-/* Headline - 26px size */
+/* Headline - 26vw size for winner */
 .challenge-completion__title {
   margin: 0;
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: 26px;
+  font-size: 26vw;
   color: var(--theme-accent);
   line-height: 0.8;
   text-align: center;
@@ -58,6 +58,16 @@
 /* Second and subsequent share lines use larger font size */
 .challenge-completion__share-line:nth-child(n+2) {
   font-size: var(--theme-font-size-xl);
+}
+
+/* Checkmark styling - accent color */
+.challenge-completion__checkmark {
+  color: var(--theme-accent);
+}
+
+/* Red X styling - keep red color */
+.challenge-completion__red-x {
+  color: #ff4444;
 }
 
 /* Step count - separate element at bottom of share stack */

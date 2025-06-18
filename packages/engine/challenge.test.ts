@@ -179,7 +179,7 @@ describe('Challenge Engine', () => {
       expect(patterns[0]).toMatch(/[🀫*]+/); // Should contain emoji and asterisks
     });
 
-    test('should generate complete sharing text', async () => {
+    test('should generate complete sharing text with checkmark for completed challenges', async () => {
       const challenge = await challengeEngine.getDailyChallengeState('2024-01-15');
       
       // Complete a challenge to test step count format
@@ -194,9 +194,24 @@ describe('Challenge Engine', () => {
       
       // Verify step count format without parentheses for completed challenges
       if (completedChallenge.completed) {
+        expect(sharingText).toContain(' ✓ '); // Should have checkmark between challenge # and words
         expect(sharingText).toMatch(/\d+ steps/);
         expect(sharingText).not.toMatch(/\(\d+ steps\)/);
       }
+    });
+
+    test('should generate sharing text with red X for failed challenges', async () => {
+      const challenge = await challengeEngine.getDailyChallengeState('2024-01-15');
+      
+      // Forfeit the challenge
+      const failedChallenge = await challengeEngine.forfeitChallenge(challenge);
+      const sharingText = challengeEngine.generateSharingText(failedChallenge);
+      
+      expect(sharingText).toContain('Challenge #');
+      expect(sharingText).toContain(' ❌ '); // Should have red X between challenge # and words
+      expect(sharingText).toContain(challenge.startWord);
+      expect(sharingText).toContain(challenge.targetWord);
+      expect(sharingText).not.toContain('steps'); // Failed challenges don't show step count
     });
   });
 

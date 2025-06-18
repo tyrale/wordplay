@@ -407,13 +407,20 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
   function generateSharingText(state: ChallengeState): string {
     const dayNumber = Math.floor((new Date(state.date).getTime() - new Date('2024-01-01').getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
-    // Combine challenge number and start/target words on same line
-    let result = `Challenge #${dayNumber} ${state.startWord} → ${state.targetWord}`;
+    // Add checkmark for completed or red X for failed between challenge # and words
+    let result = `Challenge #${dayNumber}`;
+    if (state.completed) {
+      result += ` ✓ ${state.startWord} → ${state.targetWord}`;
+    } else if (state.failed) {
+      result += ` ❌ ${state.startWord} → ${state.targetWord}`;
+    } else {
+      result += ` ${state.startWord} → ${state.targetWord}`;
+    }
     
     if (state.completed) {
       result += `\n\n`;
     } else if (state.failed) {
-      result += ` (gave up)\n\n`;
+      result += `\n\n`;
     } else {
       result += ` (in progress)\n\n`;
     }
