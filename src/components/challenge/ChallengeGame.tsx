@@ -26,7 +26,7 @@ export interface ChallengeGameProps {
 
 export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   onComplete,
-  onBack: _onBack
+  onBack
 }) => {
   // Interface for validation result (compatible with existing UI components)
   interface ValidationResult {
@@ -299,8 +299,10 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const handleOverlayHome = useCallback(() => {
     setShowCompletionOverlay(false);
     setOverlayData(null);
+    // Call onBack to navigate to main menu, then onComplete for any cleanup
+    onBack?.();
     onComplete?.(challengeState?.completed || false, challengeState?.wordSequence.length || 0);
-  }, [onComplete, challengeState?.completed, challengeState?.wordSequence.length]);
+  }, [onBack, onComplete, challengeState?.completed, challengeState?.wordSequence.length]);
 
   const handleOverlayShare = useCallback(async (shareText: string) => {
     try {

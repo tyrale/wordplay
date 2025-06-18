@@ -53,6 +53,11 @@
   white-space: pre;
 }
 
+/* Third and subsequent share lines use smaller font size */
+.challenge-completion__share-line:nth-child(n+3) {
+  font-size: 24px;
+}
+
 /* Step count - separate element at bottom of share stack */
 .challenge-completion__step-count {
   font-family: var(--theme-font-family);
