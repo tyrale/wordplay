@@ -16,6 +16,9 @@ Challenge Mode is a daily puzzle game where all players worldwide receive the sa
 ### Word Selection
 - Start word: Generated randomly using daily seed
 - Target word: Generated within ±1 length of start word using same daily seed
+- **Target word constraints (IMPLEMENTED):**
+  - **Minimum 5 letters** - ensures adequate transformation complexity
+  - **Maximum 2 common letters** with start word - prevents trivial transformations
 - Both words from existing game dictionary
 - No path validation initially (simple implementation)
 

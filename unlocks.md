@@ -272,6 +272,7 @@ export interface GameConfig {
 - [ ] **`extra-turns`** - 15 turns instead of 10 (trigger: "extra")
 - [ ] **`quick-game`** - 5 turns only (trigger: "quick")
 - [ ] **`endless-mode`** - No turn limit (trigger: "endless")
+- define 'reset'
 
 ### **New Bot Ideas**
 

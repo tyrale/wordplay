@@ -13,20 +13,37 @@ let mockCallCounter = 0;
 const mockDictionary: DictionaryEngine = {
   validateWord: (word: string) => ({ isValid: true, word }),
   isValidDictionaryWord: (word: string) => {
-    const testWords = ['GAME', 'GAMES', 'GAMER', 'NAME', 'SAME', 'CAME', 'MAKE', 'TAKE', 'FAKE', 'TIME', 'LIME', 'LIFE', 'FILE', 'PILE', 'MILE'];
+    const testWords = [
+      // 4-letter words
+      'GAME', 'NAME', 'SAME', 'CAME', 'MAKE', 'TAKE', 'FAKE', 'TIME', 'LIME', 'LIFE', 'FILE', 'PILE', 'MILE',
+      // 5-letter words (expanded for new constraints)
+      'GAMES', 'GAMER', 'NAMES', 'MAKES', 'TAKES', 'TIMES', 'LIMES', 'FILES', 'PILES', 'MILES',
+      'QUICK', 'JUMPY', 'FRIZZ', 'BLITZ', 'WALTZ', 'QUIRK', 'ZINGY', 'PROXY', 'FUZZY', 'WHISK',
+      'JERKY', 'MIXED', 'VINYL', 'ZEBRA', 'HAPPY', 'WORLD', 'HOUSE', 'MOUSE', 'BROWN', 'CROWN',
+      // 6-letter words
+      'QUARTZ', 'FRIZZY', 'JOCKEY', 'WHISKY', 'ZEPHYR', 'OXYGEN', 'PYTHON', 'RHYTHM', 'SPHINX',
+      'FLYWAY', 'GIZMOS', 'HIJACK', 'JAUNTY', 'HOUSES', 'MOUSES', 'BROWNS', 'CROWNS',
+      // 7-letter words
+      'QUICKLY', 'FIZZING', 'JOCKEYS', 'WHISKEY', 'ZEPHYRS', 'PYTHONS', 'RHYTHMS', 'FLYWAYS'
+    ];
     return testWords.includes(word.toUpperCase());
   },
   getRandomWordByLength: (length: number) => {
     const words = {
       4: ['GAME', 'NAME', 'SAME', 'CAME', 'MAKE', 'TAKE', 'FAKE', 'TIME', 'LIME', 'LIFE', 'FILE', 'PILE', 'MILE'],
-      5: ['GAMES', 'GAMER', 'NAMES', 'MAKES', 'TAKES', 'TIMES', 'LIMES', 'FILES', 'PILES', 'MILES']
+      5: ['GAMES', 'GAMER', 'NAMES', 'MAKES', 'TAKES', 'TIMES', 'LIMES', 'FILES', 'PILES', 'MILES',
+          'QUICK', 'JUMPY', 'FRIZZ', 'BLITZ', 'WALTZ', 'QUIRK', 'ZINGY', 'PROXY', 'FUZZY', 'WHISK',
+          'JERKY', 'MIXED', 'VINYL', 'ZEBRA', 'HAPPY', 'WORLD', 'HOUSE', 'MOUSE', 'BROWN', 'CROWN'],
+      6: ['QUARTZ', 'FRIZZY', 'JOCKEY', 'WHISKY', 'ZEPHYR', 'OXYGEN', 'PYTHON', 'RHYTHM', 'SPHINX',
+          'FLYWAY', 'GIZMOS', 'HIJACK', 'JAUNTY', 'HOUSES', 'MOUSES', 'BROWNS', 'CROWNS'],
+      7: ['QUICKLY', 'FIZZING', 'JOCKEYS', 'WHISKEY', 'ZEPHYRS', 'PYTHONS', 'RHYTHMS', 'FLYWAYS']
     };
     const wordList = words[length as keyof typeof words] || [];
     // Use a counter to vary word selection
     mockCallCounter++;
     return wordList.length > 0 ? wordList[mockCallCounter % wordList.length] : null;
   },
-  getDictionaryInfo: () => ({ wordCount: 23, isLoaded: true, loadTime: 100 })
+  getDictionaryInfo: () => ({ wordCount: 50, isLoaded: true, loadTime: 100 })
 };
 
 // Mock utilities
@@ -104,6 +121,74 @@ describe('Challenge Engine', () => {
       expect(challenge.stepCount).toBe(0);
       expect(challenge.completed).toBe(false);
       expect(challenge.failed).toBe(false);
+    });
+
+    test('should enforce minimum target word length constraint (≥5 letters)', async () => {
+      // Test multiple dates to ensure constraint is consistently applied
+      const dates = ['2024-01-15', '2024-02-20', '2024-03-25', '2024-04-30'];
+      
+      for (const date of dates) {
+        const challenge = await challengeEngine.getDailyChallengeState(date);
+        expect(challenge.targetWord.length).toBeGreaterThanOrEqual(5);
+      }
+    });
+
+    test('should enforce maximum common letters constraint (≤2 letters)', async () => {
+      // Helper function to count common letters (same as in implementation)
+      const countCommonLetters = (word1: string, word2: string): number => {
+        const freq1 = new Map<string, number>();
+        const freq2 = new Map<string, number>();
+        
+        for (const char of word1.toUpperCase()) {
+          freq1.set(char, (freq1.get(char) || 0) + 1);
+        }
+        
+        for (const char of word2.toUpperCase()) {
+          freq2.set(char, (freq2.get(char) || 0) + 1);
+        }
+        
+        let commonCount = 0;
+        for (const [char, count1] of freq1) {
+          const count2 = freq2.get(char) || 0;
+          commonCount += Math.min(count1, count2);
+        }
+        
+        return commonCount;
+      };
+
+      // Test multiple dates to ensure constraint is consistently applied
+      const dates = ['2024-01-15', '2024-02-20', '2024-03-25', '2024-04-30'];
+      
+      for (const date of dates) {
+        const challenge = await challengeEngine.getDailyChallengeState(date);
+        const commonLetters = countCommonLetters(challenge.startWord, challenge.targetWord);
+        expect(commonLetters).toBeLessThanOrEqual(2);
+      }
+    });
+
+    test('should maintain deterministic generation with new constraints', async () => {
+      const date = '2024-05-01';
+      
+      // Reset mock counter to ensure consistent state
+      mockCallCounter = 0;
+      
+      // Generate the same challenge multiple times
+      const challenge1 = await challengeEngine.getDailyChallengeState(date);
+      
+      // Reset mock counter again to match the initial state
+      mockCallCounter = 0;
+      
+      // Reset and generate again
+      await challengeEngine.resetDailyChallenge(date);
+      const challenge2 = await challengeEngine.getDailyChallengeState(date);
+      
+      // Should be identical (same deterministic seed should produce same results)
+      expect(challenge1.startWord).toBe(challenge2.startWord);
+      expect(challenge1.targetWord).toBe(challenge2.targetWord);
+      
+      // Both should meet new constraints
+      expect(challenge1.targetWord.length).toBeGreaterThanOrEqual(5);
+      expect(challenge2.targetWord.length).toBeGreaterThanOrEqual(5);
     });
   });
 
@@ -246,6 +331,45 @@ describe('Challenge Engine', () => {
       expect(challenge.startWord).toBeTruthy();
       expect(challenge.targetWord).toBeTruthy();
       expect(challenge.date).toContain('random-');
+    });
+
+    test('should enforce constraints in random challenges', async () => {
+      // Helper function to count common letters
+      const countCommonLetters = (word1: string, word2: string): number => {
+        const freq1 = new Map<string, number>();
+        const freq2 = new Map<string, number>();
+        
+        for (const char of word1.toUpperCase()) {
+          freq1.set(char, (freq1.get(char) || 0) + 1);
+        }
+        
+        for (const char of word2.toUpperCase()) {
+          freq2.set(char, (freq2.get(char) || 0) + 1);
+        }
+        
+        let commonCount = 0;
+        for (const [char, count1] of freq1) {
+          const count2 = freq2.get(char) || 0;
+          commonCount += Math.min(count1, count2);
+        }
+        
+        return commonCount;
+      };
+
+      // Test multiple random challenges
+      for (let i = 0; i < 5; i++) {
+        const challenge = await challengeEngine.generateRandomChallenge();
+        
+        // Should meet minimum target word length
+        expect(challenge.targetWord.length).toBeGreaterThanOrEqual(5);
+        
+        // Should meet maximum common letters constraint
+        const commonLetters = countCommonLetters(challenge.startWord, challenge.targetWord);
+        expect(commonLetters).toBeLessThanOrEqual(2);
+        
+        // Should be different words
+        expect(challenge.startWord).not.toBe(challenge.targetWord);
+      }
     });
   });
 }); 

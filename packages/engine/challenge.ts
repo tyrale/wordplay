@@ -155,35 +155,36 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     
     if (!startWord) {
       // Fallback words if random generation fails
-      const fallbacks = ['GAME', 'WORD', 'PLAY', 'TIME', 'MAKE'];
+      const fallbacks = ['GAMES', 'WORDS', 'PLAYS', 'TIMES', 'MAKES'];
       startWord = fallbacks[rng.nextInt(0, fallbacks.length - 1)];
     }
     
-    // Generate target word within ±1 length
+    // Generate target word with new constraints:
+    // 1. Must be ≥5 letters
+    // 2. Must have ≤2 letters in common with start word
     const targetLength = startWord.length + rng.nextInt(-1, 1);
-    const minTargetLength = Math.max(3, targetLength);
+    const minTargetLength = Math.max(5, targetLength); // Enforce minimum 5 letters
     const maxTargetLength = Math.min(8, targetLength);
     const finalTargetLength = Math.max(minTargetLength, Math.min(maxTargetLength, targetLength));
     
     let targetWord: string | null = null;
     attempts = 0;
+    const maxTargetAttempts = 50; // Increased attempts for additional constraints
     
-    // Try to get a valid target word different from start word
-    while ((!targetWord || targetWord === startWord.toUpperCase()) && attempts < maxAttempts) {
+    // Try to get a valid target word with all constraints
+    while ((!targetWord || !isValidTargetWord(startWord, targetWord)) && attempts < maxTargetAttempts) {
       targetWord = dictionary.getRandomWordByLength(finalTargetLength);
       attempts++;
       
       // Use the RNG to vary selection
-      if (targetWord && targetWord !== startWord.toUpperCase() && rng.next() < 0.3 && attempts < maxAttempts) {
+      if (targetWord && isValidTargetWord(startWord, targetWord) && rng.next() < 0.3 && attempts < maxTargetAttempts) {
         targetWord = null; // Skip this word sometimes to get variation
       }
     }
     
-    if (!targetWord || targetWord === startWord.toUpperCase()) {
-      // Fallback logic - use different length or different word
-      const fallbacks = finalTargetLength === 4 ? ['CATS', 'DOGS', 'TIME'] : 
-                       finalTargetLength === 5 ? ['GAMES', 'WORDS', 'PLAYS'] :
-                       ['GAMING', 'PLAYED', 'WORLDS'];
+    if (!targetWord || !isValidTargetWord(startWord, targetWord)) {
+      // Enhanced fallback logic with words that meet new criteria
+      const fallbacks = getFallbackTargetWords(startWord, finalTargetLength);
       targetWord = fallbacks[rng.nextInt(0, fallbacks.length - 1)];
     }
 
@@ -191,6 +192,86 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
       startWord: startWord.toUpperCase(),
       targetWord: targetWord.toUpperCase()
     };
+  }
+
+  /**
+   * Count common letters between two words, including repeated letters
+   */
+  function countCommonLetters(word1: string, word2: string): number {
+    const freq1 = new Map<string, number>();
+    const freq2 = new Map<string, number>();
+    
+    for (const char of word1.toUpperCase()) {
+      freq1.set(char, (freq1.get(char) || 0) + 1);
+    }
+    
+    for (const char of word2.toUpperCase()) {
+      freq2.set(char, (freq2.get(char) || 0) + 1);
+    }
+    
+    let commonCount = 0;
+    for (const [char, count1] of freq1) {
+      const count2 = freq2.get(char) || 0;
+      commonCount += Math.min(count1, count2);
+    }
+    
+    return commonCount;
+  }
+
+  /**
+   * Check if a target word meets all constraints
+   */
+  function isValidTargetWord(startWord: string, targetWord: string): boolean {
+    if (!targetWord || targetWord === startWord.toUpperCase()) {
+      return false;
+    }
+    
+    // Must be ≥5 letters
+    if (targetWord.length < 5) {
+      return false;
+    }
+    
+    // Must have ≤2 letters in common
+    if (countCommonLetters(startWord, targetWord) > 2) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  /**
+   * Get fallback target words that meet the new constraints
+   */
+  function getFallbackTargetWords(startWord: string, targetLength: number): string[] {
+    // Pre-selected words that are likely to meet constraints for common start words
+    const allFallbacks = [
+      // 5-letter words with minimal overlap potential
+      'QUICK', 'JUMPY', 'FRIZZ', 'BLITZ', 'WALTZ', 'QUIRK', 'FJORD', 'BUMPH',
+      'ZINGY', 'PROXY', 'FUZZY', 'WHISK', 'JERKY', 'MIXED', 'VINYL', 'ZEBRA',
+      // 6-letter words
+      'QUARTZ', 'FRIZZY', 'JOCKEY', 'WHISKY', 'ZEPHYR', 'OXYGEN', 'PYTHON',
+      'RHYTHM', 'SPHINX', 'SYZYGY', 'FLYWAY', 'GIZMOS', 'HIJACK', 'JAUNTY',
+      // 7-letter words  
+      'QUICKLY', 'FIZZING', 'JOCKEYS', 'WHISKEY', 'ZEPHYRS', 'PYTHONS',
+      'RHYTHMS', 'FLYWAYS', 'HIJACKS', 'JAUNTED', 'QUIZZED', 'PUZZLED',
+      // 8-letter words
+      'QUIZZERS', 'PUZZLERS', 'JOCKEYED', 'WHISKEYS', 'RHYTHMIC', 'HIJACKED'
+    ];
+    
+    // Filter by length and constraint validation
+    const validFallbacks = allFallbacks.filter(word => 
+      word.length === targetLength && isValidTargetWord(startWord, word)
+    );
+    
+    // If no valid fallbacks for exact length, try other lengths ≥5
+    if (validFallbacks.length === 0) {
+      const anyLengthFallbacks = allFallbacks.filter(word => 
+        word.length >= 5 && isValidTargetWord(startWord, word)
+      );
+      return anyLengthFallbacks.length > 0 ? anyLengthFallbacks : ['QUICK', 'JUMPY', 'FRIZZ'];
+    }
+    
+    return validFallbacks;
   }
 
   /**
@@ -473,16 +554,35 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     
     let startWord = dictionary.getRandomWordByLength(startLength);
     if (!startWord) {
-      startWord = 'GAME'; // Fallback
+      // Updated fallback to ensure ≥5 letter words can be generated
+      startWord = 'GAMES';
     }
     
-    // Generate random target word
+    // Generate random target word with same constraints as daily challenges
     const targetLength = startWord.length + rng.nextInt(-1, 1);
-    const finalTargetLength = Math.max(3, Math.min(8, targetLength));
+    const minTargetLength = Math.max(5, targetLength); // Enforce minimum 5 letters
+    const maxTargetLength = Math.min(8, targetLength);
+    const finalTargetLength = Math.max(minTargetLength, Math.min(maxTargetLength, targetLength));
     
-    let targetWord = dictionary.getRandomWordByLength(finalTargetLength);
-    if (!targetWord || targetWord === startWord.toUpperCase()) {
-      targetWord = startWord.length === 4 ? 'PLAY' : 'GAMES'; // Fallback
+    let targetWord: string | null = null;
+    let attempts = 0;
+    const maxAttempts = 50;
+    
+    // Try to get a valid target word with all constraints
+    while ((!targetWord || !isValidTargetWord(startWord, targetWord)) && attempts < maxAttempts) {
+      targetWord = dictionary.getRandomWordByLength(finalTargetLength);
+      attempts++;
+      
+      // Use the RNG to vary selection
+      if (targetWord && isValidTargetWord(startWord, targetWord) && rng.next() < 0.3 && attempts < maxAttempts) {
+        targetWord = null; // Skip this word sometimes to get variation
+      }
+    }
+    
+    if (!targetWord || !isValidTargetWord(startWord, targetWord)) {
+      // Use same fallback logic as daily challenges
+      const fallbacks = getFallbackTargetWords(startWord, finalTargetLength);
+      targetWord = fallbacks[rng.nextInt(0, fallbacks.length - 1)];
     }
     
     const dateString = 'random-' + randomSeed;
