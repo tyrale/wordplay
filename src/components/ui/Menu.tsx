@@ -227,6 +227,18 @@ export const Menu: React.FC<MenuProps> = ({
     );
   }, [isInverted]);
 
+  // Helper function to render "vs world" with accent color for "vs"
+  const renderVsWorldTitle = useCallback((title: string) => {
+    if (title === 'vs world') {
+      return (
+        <>
+          <span style={{ color: 'var(--theme-accent)' }}>vs</span> world
+        </>
+      );
+    }
+    return title;
+  }, []);
+
   const handleTier2Click = useCallback((tier1Id: string, tier2Id: string) => {
     // Handle specific actions that should close the menu
     if (tier1Id === 'themes') {
@@ -301,7 +313,7 @@ export const Menu: React.FC<MenuProps> = ({
                     color: tier1Item.id === 'resign' ? 'var(--theme-accent)' : undefined
                   }}
                 >
-                  {tier1Item.title}
+                  {renderVsWorldTitle(tier1Item.title)}
                 </button>
                 
                 {tier1Item.children && (
