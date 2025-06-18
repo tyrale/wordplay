@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import './WordTrail.css';
 
 export interface WordMove {
@@ -97,10 +97,37 @@ export const WordTrail: React.FC<WordTrailProps> = ({
     );
 
     const hasPlayedWords = playedMoves.length > 0;
+    const playedWordsRef = useRef<HTMLDivElement>(null);
+    const challengeContainerRef = useRef<HTMLDivElement>(null);
 
-    return (
-      <div className={`word-trail word-trail--challenge ${className}`.trim()} role="region" aria-label="Challenge word trail">
-        <div className="word-trail__challenge-container">
+    // Auto-scroll to bottom when new words are added
+    useEffect(() => {
+      if (playedWordsRef.current && hasPlayedWords) {
+        const container = playedWordsRef.current;
+        // Scroll to bottom to show most recent word
+        container.scrollTop = container.scrollHeight;
+      }
+    }, [playedMoves.length, hasPlayedWords]);
+
+    // Dynamic height calculation for adaptive container
+    useEffect(() => {
+      const updateHeight = () => {
+        if (challengeContainerRef.current && playedWordsRef.current) {
+          const containerRect = challengeContainerRef.current.getBoundingClientRect();
+          const availableHeight = window.innerHeight - containerRect.top - 100; // 100px buffer for game controls
+          const maxHeight = Math.max(200, Math.min(availableHeight, window.innerHeight * 0.6));
+          playedWordsRef.current.style.maxHeight = `${maxHeight}px`;
+        }
+      };
+
+      updateHeight();
+      window.addEventListener('resize', updateHeight);
+      return () => window.removeEventListener('resize', updateHeight);
+    }, []);
+
+          return (
+        <div className={`word-trail word-trail--challenge ${className}`.trim()} role="region" aria-label="Challenge word trail">
+          <div className="word-trail__challenge-container" ref={challengeContainerRef}>
           {/* Start word with arrow - positioned to align with first played word */}
           <div className="word-trail__start-word" data-has-played={hasPlayedWords}>
             <span className="word-trail__word word-trail__word--start">
@@ -110,7 +137,7 @@ export const WordTrail: React.FC<WordTrailProps> = ({
           </div>
 
           {/* Played words trail (center) */}
-          <div className="word-trail__played-words">
+          <div className="word-trail__played-words" ref={playedWordsRef}>
             {hasPlayedWords ? (
               <div className="word-trail__container">
                 {playedMoves.map((item, index) => (
