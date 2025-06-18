@@ -153,91 +153,54 @@ const mechanicDisplayNames: Record<string, string> = {
 - [x] pink - Pink theme
 - [x] brown - Brown theme
 - [x] black - Black theme
-- [x] white - White theme
 - [x] gray - Gray theme
-
-### Metallic Colors
-- [x] silver - Silver theme
-- [x] gold - Gold theme
-- [x] bronze - Bronze theme
-- [x] copper - Copper theme
 
 ### Specific Shades
 - [x] crimson - Crimson theme
-- [x] scarlet - Scarlet theme
-- [x] maroon - Maroon theme
-- [x] navy - Navy theme
+- [x] indigo - Indigo theme
 - [x] teal - Teal theme
 - [x] cyan - Cyan theme
 - [x] lime - Lime theme
-- [x] olive - Olive theme
-- [x] forest - Forest theme
 - [x] mint - Mint theme
-- [x] sage - Sage theme
-- [x] lavender - Lavender theme
-- [x] violet - Violet theme
-- [x] indigo - Indigo theme
-- [x] magenta - Magenta theme
-- [x] rose - Rose theme
-- [x] coral - Coral theme
-- [x] salmon - Salmon theme
-- [x] peach - Peach theme
-- [x] cream - Cream theme
-- [x] beige - Beige theme
-- [x] tan - Tan theme
-- [x] khaki - Khaki theme
-- [x] rust - Rust theme
-- [x] amber - Amber theme
-- [x] honey - Honey theme
-- [x] lemon - Lemon theme
-- [x] canary - Canary theme
-- [x] mustard - Mustard theme
-- [x] chartreuse - Chartreuse theme
-- [x] emerald - Emerald theme
-- [x] jade - Jade theme
-- [x] turquoise - Turquoise theme
-- [x] aqua - Aqua theme
-- [x] sky - Sky theme
-- [x] azure - Azure theme
-- [x] cobalt - Cobalt theme
-- [x] royal - Royal theme
-- [x] sapphire - Sapphire theme
-- [x] periwinkle - Periwinkle theme
-- [x] lilac - Lilac theme
 - [x] plum - Plum theme
-- [x] grape - Grape theme
-- [x] wine - Wine theme
-- [x] burgundy - Burgundy theme
-- [x] mauve - Mauve theme
-- [x] fuchsia - Fuchsia theme
+- [x] coral - Coral theme
+- [x] amber - Amber theme
+- [x] denim - Denim theme
 
-### Color Descriptors
-- [x] hot - Hot theme
-- [x] neon - Neon theme
-- [x] electric - Electric theme
-- [x] bright - Bright theme
-- [x] pastel - Pastel theme
-- [x] muted - Muted theme
-- [x] dark - Dark theme
-- [x] light - Light theme
-- [x] deep - Deep theme
-- [x] pale - Pale theme
-- [x] vivid - Vivid theme
-- [x] soft - Soft theme
-- [x] bold - Bold theme
-- [x] subtle - Subtle theme
-- [x] warm - Warm theme
-- [x] cool - Cool theme
-
-### Nature & Time Themes
-- [x] earth - Earth theme
-- [x] ocean - Ocean theme
-- [x] sunset - Sunset theme
-- [x] sunrise - Sunrise theme
-- [x] twilight - Twilight theme
-- [x] dawn - Dawn theme
-- [x] dusk - Dusk theme
+### Named Themes
+- [x] grandma - Grandma theme
+- [x] grandpa - Grandpa theme
+- [x] contrast - Contrast theme
+- [x] july - July theme
+- [x] brand - Brand theme
+- [x] salmon - Salmon theme
+- [x] blues - Blues theme
+- [x] squash - Squash theme
+- [x] crimson - Crimson theme
+- [x] citrus - Citrus theme
+- [x] lagoon - Lagoon theme
+- [x] intense - Intense theme
+- [x] sky - Sky theme
+- [x] winter - Winter theme
+- [x] autumn - Autumn theme
+- [x] lavender - Lavender theme
+- [x] camping - Camping theme
+- [x] craft - Craft theme
+- [x] tomato - Tomato theme
+- [x] grass - Grass theme
+- [x] gear - Gear theme
+- [x] boots - Boots theme
+- [x] storm - Storm theme
+- [x] vibrant - Vibrant theme
+- [x] gentle - Gentle theme
+- [x] peaceful - Peaceful theme
+- [x] market - Market theme
+- [x] racing - Racing theme
+- [x] berry - Berry theme
+- [x] brick - Brick theme
+- [x] vintage - Vintage theme
 - [x] midnight - Midnight theme
+- [x] touch - Touch theme
 
 ### Future Theme Ideas
 - [ ] random - Random theme selector (trigger: "random")

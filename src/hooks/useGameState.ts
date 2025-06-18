@@ -103,6 +103,22 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
   const gameManagerRef = useRef<LocalGameStateManagerWithDependencies | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   
+  // Track config changes to force recreation when botId changes
+  const configRef = useRef(config);
+  const [gameManagerKey, setGameManagerKey] = useState(0);
+
+  // Detect botId changes and force game manager recreation
+  useEffect(() => {
+    // Force recreation if botId changed
+    if (config?.botId !== configRef.current?.botId) {
+      console.log('[DEBUG] useGameState: botId changed from', configRef.current?.botId, 'to', config?.botId, '- forcing recreation');
+      gameManagerRef.current = null;
+      setIsInitialized(false);
+      setGameManagerKey(prev => prev + 1); // Force effect re-run
+    }
+    configRef.current = config;
+  }, [config?.botId]);
+  
   // Initialize browser adapter and create game manager
   useEffect(() => {
     let isMounted = true;
@@ -116,6 +132,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
           const dependencies = browserAdapter.getGameDependencies();
           gameManagerRef.current = createGameStateManagerWithDependencies(dependencies, config);
           setIsInitialized(true);
+          console.log('[DEBUG] useGameState: Game manager created with config:', config);
         }
       } catch (error) {
         console.error('Failed to initialize game manager:', error);
@@ -129,7 +146,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
     return () => {
       isMounted = false;
     };
-  }, [config]);
+  }, [config, gameManagerKey]); // Add gameManagerKey as dependency to force re-run
   
   const gameManager = gameManagerRef.current;
   
