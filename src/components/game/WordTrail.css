@@ -159,13 +159,18 @@
 
 /* Challenge Mode Layout */
 .word-trail--challenge {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.word-trail__challenge-container {
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-areas: "start played target";
-  align-items: start;
-  gap: var(--spacing-sm);
   width: 100%;
   height: 100%;
+  gap: var(--spacing-sm);
 }
 
 .word-trail__start-word {
@@ -173,8 +178,19 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  position: sticky;
-  top: 0;
+  align-self: start;
+  justify-self: end;
+}
+
+/* When there are played words, align start word with first played word */
+.word-trail__start-word[data-has-played="true"] {
+  align-self: start;
+  margin-top: 0;
+}
+
+/* When no played words, center the start word */
+.word-trail__start-word[data-has-played="false"] {
+  align-self: center;
 }
 
 .word-trail__played-words {
@@ -184,6 +200,15 @@
   align-items: center;
   min-height: 100%;
   overflow-y: auto;
+  justify-content: flex-start;
+}
+
+.word-trail__played-words .word-trail__container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  width: 100%;
 }
 
 .word-trail__target-word {
@@ -191,8 +216,19 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  position: sticky;
-  bottom: 0;
+  align-self: end;
+  justify-self: start;
+}
+
+/* When there are played words, align target word with last played word */
+.word-trail__target-word[data-has-played="true"] {
+  align-self: end;
+  margin-bottom: 0;
+}
+
+/* When no played words, center the target word */
+.word-trail__target-word[data-has-played="false"] {
+  align-self: center;
 }
 
 .word-trail__empty-space {
