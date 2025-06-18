@@ -56,9 +56,11 @@ function App() {
           }
         );
       } else if (appState === 'game') {
-        // Already in bot game - switch directly to new bot without confirmation
+        // Already in bot game - switch to new bot
+        // Force component remount by briefly going to main then back to game
         setSelectedBotId(botId);
-        setAppState('game');
+        setAppState('main');
+        setTimeout(() => setAppState('game'), 50);
       } else {
         // No current game, start directly
         setSelectedBotId(botId);
