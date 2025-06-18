@@ -1,0 +1,142 @@
+.confirmation-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-md);
+}
+
+.confirmation-dialog {
+  background-color: var(--theme-background);
+  border: 2px solid var(--theme-accent);
+  border-radius: 8px;
+  max-width: 400px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.confirmation-dialog__content {
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  text-align: center;
+}
+
+.confirmation-dialog__title {
+  margin: 0;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-xl);
+  color: var(--theme-text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.confirmation-dialog__message {
+  margin: 0;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-lg);
+  color: var(--theme-text);
+  line-height: 1.4;
+}
+
+.confirmation-dialog__actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  width: 100%;
+  margin-top: var(--spacing-sm);
+}
+
+.confirmation-dialog__action {
+  background: none;
+  border: 2px solid var(--theme-accent);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  
+  /* Typography */
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-md);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  
+  /* Interaction */
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  
+  /* Touch target */
+  min-height: 44px;
+  min-width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmation-dialog__action--cancel {
+  color: var(--theme-text);
+  background-color: var(--theme-background);
+}
+
+.confirmation-dialog__action--confirm {
+  color: var(--theme-background);
+  background-color: var(--theme-accent);
+}
+
+.confirmation-dialog__action:active {
+  opacity: 0.7;
+  transform: scale(0.98);
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .confirmation-dialog-overlay {
+    padding: var(--spacing-sm);
+  }
+  
+  .confirmation-dialog__content {
+    padding: var(--spacing-md);
+    gap: var(--spacing-sm);
+  }
+  
+  .confirmation-dialog__title {
+    font-size: var(--theme-font-size-lg);
+  }
+  
+  .confirmation-dialog__message {
+    font-size: var(--theme-font-size-md);
+  }
+  
+  .confirmation-dialog__actions {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .confirmation-dialog__action {
+    width: 100%;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .confirmation-dialog__action {
+    transition: none;
+    transform: none;
+  }
+  
+  .confirmation-dialog__action:active {
+    transform: none;
+  }
+} 

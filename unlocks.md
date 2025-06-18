@@ -263,6 +263,11 @@ export interface GameConfig {
 
 ### **New Mechanic Ideas**
 
+#### **Unlock Mechanics**
+- [ ] **`reset-unlocks`** - Disable all progress on unlocked items. Player must re-earn all unlocks (trigger: "reset")
+- [ ] **`display-unlocks`** - Reveals all possible unlocks in the menu, but names and colors are redacted. Players can see the unlocks they have not achieved, but can not see what they are. (trigger: "unlock")
+- [ ] **`full-unlock`** - Unlocks all possible unlocked items (trigger: "revelation")
+
 #### **Word Length Mechanics**
 - [ ] **`3-letter-start`** - Start with 3-letter words (trigger: "three")
 - [ ] **`7-letter-start`** - Start with 7-letter words (trigger: "seven")
@@ -272,7 +277,6 @@ export interface GameConfig {
 - [ ] **`extra-turns`** - 15 turns instead of 10 (trigger: "extra")
 - [ ] **`quick-game`** - 5 turns only (trigger: "quick")
 - [ ] **`endless-mode`** - No turn limit (trigger: "endless")
-- define 'reset'
 
 ### **New Bot Ideas**
 
@@ -298,6 +302,9 @@ export interface GameConfig {
 - [ ] **`legendary-bot`** - Final boss bot (achievement: `beat_grandmaster_bot`)
 
 ### **New Theme Ideas**
+
+#### **Word-Based Themes**
+- [ ] **`random`** - selects a random them at the start of any game mode (trigger: "random")
 
 #### **Achievement-Based Themes**
 - [ ] **`champion`** - Gold theme (achievement: `beat_all_bots`)

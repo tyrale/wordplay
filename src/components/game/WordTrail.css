@@ -206,9 +206,6 @@
   overflow-x: visible; /* Allow start/target words to extend outside */
   position: relative;
   margin-bottom: 0; /* Ensure no extra margin at bottom */
-  /* Restore fade effect at top */
-  mask: linear-gradient(to bottom, transparent 0%, black 20%, black 100%);
-  -webkit-mask: linear-gradient(to bottom, transparent 0%, black 20%, black 100%);
   /* Enhanced scrolling for mobile */
   -webkit-overflow-scrolling: touch; /* Smooth momentum scrolling on iOS */
   scroll-behavior: smooth; /* Smooth scrolling behavior */
@@ -295,11 +292,11 @@
 }
 
 .word-trail__arrow--right {
-  margin-left: var(--spacing-xs);
+  /* Removed margin-left */
 }
 
 .word-trail__arrow--left {
-  margin-right: var(--spacing-xs);
+  /* Removed margin-right */
 }
 
 /* Challenge mode start and target word styling */

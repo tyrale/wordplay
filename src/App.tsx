@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ThemeProvider, InteractiveGame, MainScreen } from './components';
 import { ChallengeGame } from './components/challenge/ChallengeGame';
+import { ConfirmationDialog } from './components/ui/ConfirmationDialog';
 import { AnimationProvider } from './animations';
 import { UnlockProvider } from './components/unlock/UnlockProvider';
 import ResponsiveTest from './components/game/ResponsiveTest';
@@ -11,16 +12,78 @@ import './App.css';
 
 type AppState = 'main' | 'game' | 'challenge' | 'quitter';
 
+interface ConfirmationState {
+  isVisible: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+}
+
 function App() {
   const [appState, setAppState] = useState<AppState>('main');
   const [selectedBotId, setSelectedBotId] = useState<string>('tester');
+  const [confirmationState, setConfirmationState] = useState<ConfirmationState>({
+    isVisible: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
+
+  const showConfirmation = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmationState({
+      isVisible: true,
+      title,
+      message,
+      onConfirm
+    });
+  };
+
+  const hideConfirmation = () => {
+    setConfirmationState(prev => ({ ...prev, isVisible: false }));
+  };
 
   const handleStartGame = (gameType: 'bot' | 'challenge', botId?: string) => {
     if (gameType === 'bot' && botId) {
-      setSelectedBotId(botId);
-      setAppState('game');
+      // Check if we need confirmation for game transition
+      if (appState === 'challenge') {
+        showConfirmation(
+          'Start New Game?',
+          `Do you want to exit the current challenge and start a new game with ${botId}?`,
+          () => {
+            setSelectedBotId(botId);
+            setAppState('game');
+            hideConfirmation();
+          }
+        );
+      } else if (appState === 'game') {
+        showConfirmation(
+          'Start New Game?',
+          `Do you want to end the current game and start a new game with ${botId}?`,
+          () => {
+            setSelectedBotId(botId);
+            setAppState('game');
+            hideConfirmation();
+          }
+        );
+      } else {
+        // No current game, start directly
+        setSelectedBotId(botId);
+        setAppState('game');
+      }
     } else if (gameType === 'challenge') {
-      setAppState('challenge');
+      if (appState === 'game') {
+        showConfirmation(
+          'Start Challenge?',
+          'Do you want to end the current game and start today\'s challenge?',
+          () => {
+            setAppState('challenge');
+            hideConfirmation();
+          }
+        );
+      } else {
+        // No current game or already in challenge, start directly
+        setAppState('challenge');
+      }
     }
   };
 
@@ -40,14 +103,39 @@ function App() {
     setAppState('main');
   };
 
+  const handleNavigateHome = () => {
+    // Navigate to main screen from any state
+    if (appState === 'game' || appState === 'challenge') {
+      showConfirmation(
+        'Return Home?',
+        'Do you want to end the current game and return to the main menu?',
+        () => {
+          setAppState('main');
+          hideConfirmation();
+        }
+      );
+    } else {
+      setAppState('main');
+    }
+  };
+
   const handleResign = () => {
-    // Show the quitter overlay animation
+    // Show the quitter overlay animation (for bot games only)
     setAppState('quitter');
   };
 
   const handleQuitterComplete = () => {
     // Return to main screen after quitter animation completes
     setAppState('main');
+  };
+
+  const handleResetChallenge = () => {
+    // Reset challenge and reload if in challenge mode
+    if (appState === 'challenge') {
+      // Force re-render of challenge component by toggling state
+      setAppState('main');
+      setTimeout(() => setAppState('challenge'), 100);
+    }
   };
 
   // Initialize viewport height handling
@@ -75,14 +163,29 @@ function App() {
                   }}
                   onGameEnd={handleGameEnd}
                   onResign={handleResign}
+                  onNavigateHome={handleNavigateHome}
+                  currentGameMode="bot"
                 />
               )}
               {appState === 'challenge' && (
                 <ChallengeGame
                   onComplete={handleChallengeComplete}
                   onBack={handleChallengeBack}
+                  onNavigateHome={handleNavigateHome}
+                  onResetChallenge={handleResetChallenge}
                 />
               )}
+              
+              {/* Confirmation Dialog */}
+              <ConfirmationDialog
+                isVisible={confirmationState.isVisible}
+                title={confirmationState.title}
+                message={confirmationState.message}
+                onConfirm={confirmationState.onConfirm}
+                onCancel={hideConfirmation}
+              />
+              
+              {/* Quitter Overlay */}
               <QuitterOverlay 
                 isVisible={appState === 'quitter'}
                 onComplete={handleQuitterComplete}

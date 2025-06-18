@@ -25,8 +25,10 @@ interface MenuProps {
   onDebugOpen?: () => void;
   onResign?: () => void;
   onStartGame?: (gameType: 'bot' | 'challenge', botId?: string) => void;
+  onNavigateHome?: () => void;
   className?: string;
   isInGame?: boolean; // Whether user is currently in an active game
+  currentGameMode?: string; // 'bot', 'challenge', or undefined
 }
 
 // Map mechanic IDs to display names
@@ -61,8 +63,15 @@ const getMenuItems = (
   isInverted: boolean, 
   isInGame: boolean = false,
   unlockedMechanics: string[] = [],
-  unlockedBots: string[] = []
+  unlockedBots: string[] = [],
+  currentGameMode?: string
 ): MenuTier1Item[] => [
+  // Home item - always first
+  {
+    id: 'home',
+    title: 'home'
+    // No children - this is a standalone tier 1 action item
+  },
   // Only include resign if user is in an active game
   ...(isInGame ? [{
     id: 'resign',
@@ -131,8 +140,10 @@ export const Menu: React.FC<MenuProps> = ({
   onDebugOpen,
   onResign,
   onStartGame,
+  onNavigateHome,
   className = '',
-  isInGame = false
+  isInGame = false,
+  currentGameMode
 }) => {
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
@@ -158,7 +169,7 @@ export const Menu: React.FC<MenuProps> = ({
     }
   }, []);
 
-  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, unlockedBots);
+  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, unlockedBots, currentGameMode);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -177,6 +188,12 @@ export const Menu: React.FC<MenuProps> = ({
 
   const handleTier1Click = useCallback((itemId: string) => {
     // Handle standalone tier 1 items that perform actions directly
+    if (itemId === 'home') {
+      onNavigateHome?.();
+      handleClose(); // Close menu after home navigation
+      return;
+    }
+    
     if (itemId === 'resign') {
       onResign?.();
       handleClose(); // Close menu after resign
@@ -187,7 +204,7 @@ export const Menu: React.FC<MenuProps> = ({
     setExpandedItem(prevExpanded => 
       prevExpanded === itemId ? null : itemId
     );
-  }, [onResign, handleClose]);
+  }, [onNavigateHome, onResign, handleClose]);
 
   // Helper function to render theme name with color preview
   const renderThemeName = useCallback((item: MenuTier2Item) => {
@@ -273,11 +290,12 @@ export const Menu: React.FC<MenuProps> = ({
       resetDailyChallenge();
       // Keep menu open for testing workflow
     } else if (tier1Id === 'bots') {
-      // Bot selection no longer handled here - bots are selected from main screen
-      // Keep menu open for bot items
+      // Bot selection - this will trigger confirmation in App.tsx
+      onStartGame?.('bot', tier2Id);
+      handleClose(); // Close menu after bot selection (confirmation handled at app level)
     }
     
-    // For other items (challenge, mechanics, bots, other about items), keep menu open
+    // For other items (challenge, mechanics, other about items), keep menu open
     // These are placeholder items that don't have functionality yet
   }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, resetUnlocksToFresh, resetDailyChallenge]);
 

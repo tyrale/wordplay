@@ -59,12 +59,16 @@ export interface InteractiveGameProps {
   config?: GameConfig;
   onGameEnd?: (winner: string | null, finalScores: { human: number; bot: number }) => void;
   onResign?: () => void;
+  onNavigateHome?: () => void;
+  currentGameMode?: string;
 }
 
 export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   config,
   onGameEnd,
-  onResign
+  onResign,
+  onNavigateHome,
+  currentGameMode
 }) => {
   // Unlock system integration
   const { handleWordSubmission, handleGameCompletion } = useUnlockSystem();
@@ -571,7 +575,13 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         onClose={handleMenuClose}
         onDebugOpen={() => setIsDebugDialogOpen(true)}
         onResign={handleResign}
+        onNavigateHome={onNavigateHome}
+        onStartGame={(gameType, botId) => {
+          // Bot selection will be handled by App.tsx with confirmation
+          // No need to handle here as menu will close and App will handle
+        }}
         isInGame={true}
+        currentGameMode={currentGameMode}
       />
 
     </div>

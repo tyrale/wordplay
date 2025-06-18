@@ -22,11 +22,15 @@ import type { GameStateDependencies } from '../../../packages/engine/gamestate';
 export interface ChallengeGameProps {
   onComplete?: (completed: boolean, stepCount: number) => void;
   onBack?: () => void;
+  onNavigateHome?: () => void;
+  onResetChallenge?: () => void;
 }
 
 export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   onComplete,
-  onBack
+  onBack,
+  onNavigateHome,
+  onResetChallenge
 }) => {
   // Interface for validation result (compatible with existing UI components)
   interface ValidationResult {
@@ -295,6 +299,28 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     setIsMenuOpen(false);
   }, []);
 
+  // Handle resign - directly forfeit challenge and show completion overlay
+  const handleResign = useCallback(async () => {
+    try {
+      setIsProcessingMove(true);
+      await forfeitChallenge();
+      
+      // Generate sharing text for failed challenge
+      const shareText = generateSharingText();
+      
+      // Show completion overlay immediately
+      setOverlayData({
+        isWinner: false,
+        shareText
+      });
+      setShowCompletionOverlay(true);
+    } catch (err) {
+      console.error('Failed to forfeit challenge:', err);
+    } finally {
+      setIsProcessingMove(false);
+    }
+  }, [forfeitChallenge, generateSharingText]);
+
   // Overlay handlers
   const handleOverlayHome = useCallback(() => {
     setShowCompletionOverlay(false);
@@ -491,8 +517,17 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         isOpen={isMenuOpen}
         onClose={handleMenuClose}
         onDebugOpen={() => {}} // No debug in challenge mode
-        onResign={() => handleSubmit()} // Forfeit challenge
+        onResign={handleResign} // Use proper resign handler
+        onNavigateHome={onNavigateHome}
+        onStartGame={(gameType, botId) => {
+          if (gameType === 'challenge') {
+            onResetChallenge?.();
+          } else if (gameType === 'bot' && botId) {
+            // Bot selection will be handled by App.tsx with confirmation
+          }
+        }}
         isInGame={true}
+        currentGameMode="challenge"
       />
 
       {/* Challenge Completion Overlay */}

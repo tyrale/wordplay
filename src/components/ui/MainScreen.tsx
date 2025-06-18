@@ -142,6 +142,12 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
         isOpen={isMenuOpen}
         onClose={handleMenuClose}
         onStartGame={onStartGame}
+        onNavigateHome={() => {
+          // Already on main screen, just close menu
+          setIsMenuOpen(false);
+        }}
+        isInGame={false}
+        currentGameMode={undefined}
       />
     </div>
   );
