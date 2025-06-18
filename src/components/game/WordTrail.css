@@ -281,13 +281,14 @@
 }
 
 .word-trail__empty-space {
-  min-height: 40px;
+  min-height: 120px; /* Increased height for better visibility */
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-lg);
   position: relative;
+  padding: var(--spacing-md); /* Add padding for better spacing */
 }
 
 /* Challenge mode arrows */

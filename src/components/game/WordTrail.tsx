@@ -58,10 +58,6 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         keyLetters: []
       }));
 
-  if (displayData.length === 0) {
-    return null;
-  }
-
   const handleWordClick = (word: string, index: number) => {
     if (onWordClick) {
       onWordClick(word, index);
@@ -90,6 +86,7 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   };
 
   // Challenge mode uses new layout with positioned start/target words
+  // Handle challenge mode BEFORE early return to allow empty state rendering
   if (isChallengeMode && startWord && targetWord) {
     // Filter out start and target words from played moves
     const playedMoves = displayData.filter(item => 
@@ -189,6 +186,11 @@ export const WordTrail: React.FC<WordTrailProps> = ({
           </div>
         </div>
       );
+  }
+
+  // Early return for regular mode when no data
+  if (displayData.length === 0) {
+    return null;
   }
 
   // Regular mode - original layout
