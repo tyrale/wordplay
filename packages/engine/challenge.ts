@@ -394,7 +394,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
         }
       } else {
         // This letter existed before (either unchanged or moved)
-        pattern += '·';
+        pattern += '🀫';
       }
     }
     

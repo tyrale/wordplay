@@ -22,12 +22,12 @@
   gap: var(--spacing-xl);
 }
 
-/* Headline - 28vw size as requested */
+/* Headline - 26px size */
 .challenge-completion__title {
   margin: 0;
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: 28vw;
+  font-size: 26px;
   color: var(--theme-accent);
   line-height: 0.8;
   text-align: center;

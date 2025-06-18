@@ -176,7 +176,7 @@ describe('Challenge Engine', () => {
       const patterns = challengeEngine.generateSharingPattern(wordSequence);
       
       expect(patterns).toHaveLength(2); // Two transformations
-      expect(patterns[0]).toMatch(/[·*]+/); // Should contain dots and asterisks
+      expect(patterns[0]).toMatch(/[🀫*]+/); // Should contain emoji and asterisks
     });
 
     test('should generate complete sharing text', async () => {
