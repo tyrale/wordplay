@@ -104,43 +104,12 @@ export const WordTrail: React.FC<WordTrailProps> = ({
     useEffect(() => {
       if (playedWordsRef.current && hasPlayedWords) {
         const container = playedWordsRef.current;
-        // Scroll to bottom to show most recent word
-        container.scrollTop = container.scrollHeight;
+        // Use requestAnimationFrame for smooth scrolling
+        requestAnimationFrame(() => {
+          container.scrollTop = container.scrollHeight;
+        });
       }
     }, [playedMoves.length, hasPlayedWords]);
-
-    // Dynamic height calculation - ensure we don't exceed parent container
-    useEffect(() => {
-      const updateHeight = () => {
-        if (challengeContainerRef.current && playedWordsRef.current) {
-          // Get the parent container's computed max-height
-          const parentElement = challengeContainerRef.current.parentElement;
-          if (parentElement) {
-            const parentStyles = window.getComputedStyle(parentElement);
-            const parentMaxHeight = parentStyles.maxHeight;
-            
-            // If parent has a max-height constraint, respect it
-            if (parentMaxHeight && parentMaxHeight !== 'none') {
-              playedWordsRef.current.style.maxHeight = parentMaxHeight;
-            } else {
-              // Fallback calculation
-              const containerRect = challengeContainerRef.current.getBoundingClientRect();
-              const availableHeight = window.innerHeight - containerRect.top - 100;
-              const maxHeight = Math.max(200, Math.min(availableHeight, window.innerHeight * 0.4));
-              playedWordsRef.current.style.maxHeight = `${maxHeight}px`;
-            }
-          }
-        }
-      };
-
-      // Delay the height calculation to ensure DOM is ready
-      const timer = setTimeout(updateHeight, 100);
-      window.addEventListener('resize', updateHeight);
-      return () => {
-        clearTimeout(timer);
-        window.removeEventListener('resize', updateHeight);
-      };
-    }, []);
 
           return (
         <div className={`word-trail word-trail--challenge ${className}`.trim()} role="region" aria-label="Challenge word trail">
