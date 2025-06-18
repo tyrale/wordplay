@@ -185,7 +185,7 @@
 /* When there are played words, align start word with first played word */
 .word-trail__start-word[data-has-played="true"] {
   align-self: start;
-  margin-top: 0;
+  margin-top: 5px;
 }
 
 /* When no played words, center the start word */
@@ -223,7 +223,7 @@
 /* When there are played words, align target word with last played word */
 .word-trail__target-word[data-has-played="true"] {
   align-self: end;
-  margin-bottom: 0;
+  margin-bottom: 5px;
 }
 
 /* When no played words, center the target word */
@@ -259,6 +259,12 @@
   font-weight: var(--theme-font-weight);
 }
 
+/* Ensure letters within start and target words inherit accent color */
+.word-trail__word--start .word-trail__letter,
+.word-trail__word--target .word-trail__letter {
+  color: inherit;
+}
+
 /* Responsive adjustments for challenge mode */
 @media (max-width: 768px) {
   .word-trail--challenge {
@@ -267,7 +273,7 @@
   }
   
   .word-trail__arrow {
-    font-size: var(--theme-font-size-md);
+    font-size: var(--theme-font-size-lg);
   }
 }
 
