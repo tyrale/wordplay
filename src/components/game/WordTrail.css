@@ -374,7 +374,5 @@
   
   .word-trail__played-words {
     max-height: 40vh; /* Smaller on mobile */
-    padding-top: 50px; /* Extra space for start word */
-    padding-bottom: 50px; /* Extra space for target word */
   }
 } 
