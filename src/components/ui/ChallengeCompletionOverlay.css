@@ -22,12 +22,12 @@
   gap: var(--spacing-xl);
 }
 
-/* Headline - 26vw size as requested */
+/* Headline - 28vw size as requested */
 .challenge-completion__title {
   margin: 0;
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: 26vw;
+  font-size: 28vw;
   color: var(--theme-accent);
   line-height: 0.8;
   text-align: center;
@@ -43,11 +43,13 @@
 }
 
 .challenge-completion__share-line {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
   font-size: var(--theme-font-size-lg);
   color: var(--theme-text);
   text-align: center;
   line-height: 1.2;
+  letter-spacing: 0.05em;
   white-space: pre;
 }
 
@@ -55,10 +57,11 @@
 .challenge-completion__step-count {
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: var(--theme-font-size-md);
-  color: var(--theme-text-secondary);
+  font-size: var(--theme-font-size-lg);
+  color: var(--theme-text);
   text-align: center;
   margin-top: var(--spacing-md);
+  letter-spacing: 0.05em;
 }
 
 /* Action buttons - stacked vertically */
@@ -79,7 +82,7 @@
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
   font-size: 24px;
-  color: var(--theme-text);
+  color: var(--theme-accent);
   
   /* Interaction */
   transition: opacity 0.2s ease;

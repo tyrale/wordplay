@@ -148,10 +148,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Turn Number Accuracy**: Proper turn numbering maintained throughout sequence
   - **Overlay Redesign**:
     - **Flat Design Integration**: Removed modal container, borders, backgrounds, and shadows
-    - **Typography Enhancement**: Headline sized to 26vw for dramatic impact
+    - **Typography Enhancement**: Headline sized to 28vw for dramatic impact, all text uses game font family
+    - **Share Text Cleanup**: Removed "Wordplay" branding from share text, now shows "Challenge #X"
+    - **Font Consistency**: Share content and step count use same font size as word trail (theme-font-size-lg)
     - **Vertical Stack Layout**: Share content and action buttons arranged vertically for clean hierarchy
     - **Step Count Separation**: Step count moved from share text header to separate element below share content
-    - **Action Button Stacking**: Home and share buttons stacked vertically instead of horizontal layout
+    - **Action Button Styling**: Home and share buttons use accent color for consistency with game UI
     - **Color Consistency**: Uses only game's 3-color theme (background, text, accent) with no additional styling
   - **Technical Implementation**:
     - **WordTrail Logic**: Modified wordTrailMoves calculation to show start word first, then played words chronologically, then target word last

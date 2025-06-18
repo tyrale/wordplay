@@ -407,11 +407,11 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
   function generateSharingText(state: ChallengeState): string {
     const dayNumber = Math.floor((new Date(state.date).getTime() - new Date('2024-01-01').getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
-    let result = `WordPlay Challenge #${dayNumber}\n`;
+    let result = `Challenge #${dayNumber}\n`;
     result += `${state.startWord} → ${state.targetWord}`;
     
     if (state.completed) {
-      result += ` (${state.stepCount} steps)\n\n`;
+      result += `\n\n`;
     } else if (state.failed) {
       result += ` (gave up)\n\n`;
     } else {
@@ -426,6 +426,11 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     if (state.failed && state.failedAtWord) {
       // Add red X pattern for failed word
       result += '\n' + '❌'.repeat(state.failedAtWord.length);
+    }
+    
+    // Add step count as separate line for completed challenges
+    if (state.completed) {
+      result += `\n(${state.stepCount} steps)`;
     }
     
     return result;

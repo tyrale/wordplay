@@ -184,7 +184,7 @@ describe('Challenge Engine', () => {
       
       const sharingText = challengeEngine.generateSharingText(challenge);
       
-      expect(sharingText).toContain('WordPlay Challenge');
+      expect(sharingText).toContain('Challenge #');
       expect(sharingText).toContain(challenge.startWord);
       expect(sharingText).toContain(challenge.targetWord);
     });
