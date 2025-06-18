@@ -42,6 +42,11 @@ export const ChallengeCompletionOverlay: React.FC<ChallengeCompletionOverlayProp
     onHome();
   };
 
+  // Parse share text to extract step count and format content
+  const lines = shareText.split('\n').filter(line => line.trim());
+  const shareContent = lines.slice(0, -1); // All lines except the last
+  const stepCount = lines[lines.length - 1]; // Last line contains step count
+
   return (
     <div 
       className="challenge-completion-overlay" 
@@ -50,41 +55,44 @@ export const ChallengeCompletionOverlay: React.FC<ChallengeCompletionOverlayProp
       aria-modal="true"
       aria-labelledby="challenge-completion-title"
     >
-      <div className="challenge-completion-modal">
-        {/* Headline */}
-        <div className="challenge-completion__header">
-          <h1 
-            id="challenge-completion-title"
-            className="challenge-completion__title"
-          >
-            {isWinner ? 'Winner' : 'Loser'}
-          </h1>
-        </div>
-
-        {/* Share format display */}
-        <div className="challenge-completion__share-content">
-          <pre className="challenge-completion__share-text">
-            {shareText}
-          </pre>
-        </div>
-
-        {/* Action buttons */}
-        <div className="challenge-completion__actions">
-          <button
-            className="challenge-completion__action challenge-completion__action--share"
-            onClick={handleShareClick}
-            aria-label="Share challenge result"
-          >
-            share
-          </button>
-          <button
-            className="challenge-completion__action challenge-completion__action--home"
-            onClick={handleHomeClick}
-            aria-label="Return to main menu"
-          >
-            home
-          </button>
-        </div>
+      {/* Flat design - no modal container */}
+      <h1 
+        id="challenge-completion-title"
+        className="challenge-completion__title"
+      >
+        {isWinner ? 'Winner' : 'Loser'}
+      </h1>
+      
+      {/* Share content stacked vertically */}
+      <div className="challenge-completion__share-content">
+        {shareContent.map((line, index) => (
+          <div key={index} className="challenge-completion__share-line">
+            {line}
+          </div>
+        ))}
+      </div>
+      
+      {/* Step count as separate element */}
+      <div className="challenge-completion__step-count">
+        {stepCount}
+      </div>
+      
+      {/* Action buttons stacked vertically */}
+      <div className="challenge-completion__actions">
+        <button
+          className="challenge-completion__action"
+          onClick={handleHomeClick}
+          aria-label="Return to main menu"
+        >
+          home
+        </button>
+        <button
+          className="challenge-completion__action"
+          onClick={handleShareClick}
+          aria-label="Share challenge result"
+        >
+          share
+        </button>
       </div>
     </div>
   );

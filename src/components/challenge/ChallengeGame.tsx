@@ -346,24 +346,25 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     }));
   }, []);
 
-  // Word trail shows challenge sequence + target
+  // Word trail shows target word just above current word, with history extending upward
   const wordTrailMoves: WordMove[] = useMemo(() => {
     if (!challengeState) return [];
 
     const moves: WordMove[] = [];
     
-    // Add all played words (no scores in challenge mode)
-    challengeState.wordSequence.forEach((word, index) => {
+    // Add word history in reverse order (newest first, extending upward)
+    const wordHistory = [...challengeState.wordSequence].reverse();
+    wordHistory.forEach((word, index) => {
       moves.push({
         word,
         score: 0, // No scoring in challenge mode
-        turnNumber: index + 1
+        turnNumber: challengeState.wordSequence.length - index
       });
     });
 
-    // Add target word if available and not yet reached
+    // Add target word as the immediate next step (just above current word)
     if (challengeState.targetWord && !challengeState.wordSequence.includes(challengeState.targetWord)) {
-      moves.push({
+      moves.unshift({
         word: challengeState.targetWord,
         score: 0,
         turnNumber: challengeState.wordSequence.length + 1
