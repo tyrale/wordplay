@@ -348,23 +348,13 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     }));
   }, []);
 
-  // Word trail shows start word at top, target word at bottom, with played words in between
+  // Word trail shows only played words (start and target handled separately in challenge mode)
   const wordTrailMoves: WordMove[] = useMemo(() => {
     if (!challengeState) return [];
 
     const moves: WordMove[] = [];
     
-    // Add start word at the top (accent color)
-    if (challengeState.startWord) {
-      moves.push({
-        word: challengeState.startWord,
-        score: 0,
-        turnNumber: 0,
-        player: 'start' // Special player type for styling
-      });
-    }
-    
-    // Add played words in chronological order (excluding start word if it's in the sequence)
+    // Add played words in chronological order (excluding start word to avoid duplication)
     challengeState.wordSequence.forEach((word, index) => {
       // Skip start word if it appears in sequence to avoid duplication
       if (word !== challengeState.startWord) {
@@ -375,16 +365,6 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         });
       }
     });
-
-    // Add target word at the bottom (accent color) if not yet reached
-    if (challengeState.targetWord && !challengeState.wordSequence.includes(challengeState.targetWord)) {
-      moves.push({
-        word: challengeState.targetWord,
-        score: 0,
-        turnNumber: challengeState.wordSequence.length + 1,
-        player: 'target' // Special player type for styling
-      });
-    }
 
     return moves;
   }, [challengeState]);
@@ -466,6 +446,9 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
                 showScores={false}
                 showTurnNumbers={true}
                 maxVisible={5}
+                isChallengeMode={true}
+                startWord={challengeState.startWord}
+                targetWord={challengeState.targetWord}
               />
             </div>
             

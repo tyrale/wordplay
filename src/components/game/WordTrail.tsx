@@ -18,6 +18,10 @@ export interface WordTrailProps {
   maxVisible?: number;
   onWordClick?: (word: string, index: number) => void;
   className?: string;
+  // New props for challenge mode layout
+  startWord?: string;
+  targetWord?: string;
+  isChallengeMode?: boolean;
 }
 
 export const WordTrail: React.FC<WordTrailProps> = ({ 
@@ -27,7 +31,10 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   showTurnNumbers = false,
   maxVisible = 10,
   onWordClick,
-  className = '' 
+  className = '',
+  startWord,
+  targetWord,
+  isChallengeMode = false
 }) => {
   // Unused parameters to avoid TS warnings
   void showTurnNumbers;
@@ -82,6 +89,75 @@ export const WordTrail: React.FC<WordTrailProps> = ({
     );
   };
 
+  // Challenge mode uses new layout with positioned start/target words
+  if (isChallengeMode && startWord && targetWord) {
+    // Filter out start and target words from played moves
+    const playedMoves = displayData.filter(item => 
+      item.player !== 'start' && item.player !== 'target'
+    );
+
+    const hasPlayedWords = playedMoves.length > 0;
+
+    return (
+      <div className={`word-trail word-trail--challenge ${className}`.trim()} role="region" aria-label="Challenge word trail">
+        {/* Start word with arrow */}
+        <div className="word-trail__start-word">
+          <span className="word-trail__word word-trail__word--start">
+            {renderWordWithHighlights(startWord, [])}
+          </span>
+          <span className="word-trail__arrow word-trail__arrow--right">→</span>
+        </div>
+
+        {/* Played words trail (center) */}
+        <div className="word-trail__played-words">
+          {hasPlayedWords ? (
+            <div className="word-trail__container">
+              {playedMoves.map((item, index) => (
+                <div 
+                  key={`${item.word}-${item.turnNumber}-${index}`}
+                  className={[
+                    'word-trail__line',
+                    onWordClick && 'word-trail__line--clickable',
+                    item.player && `word-trail__line--player-${item.player}`
+                  ].filter(Boolean).join(' ')}
+                  role="listitem"
+                >
+                  <span 
+                    className="word-trail__word"
+                    onClick={onWordClick ? () => handleWordClick(item.word, index) : undefined}
+                    role={onWordClick ? 'button' : undefined}
+                    tabIndex={onWordClick ? 0 : undefined}
+                    aria-label={`Word: ${item.word}${showScores ? `, ${item.score} points` : ''}`}
+                  >
+                    {renderWordWithHighlights(item.word, item.keyLetters)}
+                  </span>
+                  
+                  {showScores && (item.score > 0 || (item.score === 0 && item.actions.includes('PASS'))) && (
+                    <span className="word-trail__score" aria-label={item.score === 0 && item.actions.includes('PASS') ? 'passed turn' : `${item.score} points`}>
+                      {item.score === 0 && item.actions.includes('PASS') ? 'pass' : `+${item.score}`}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            // Empty state - just spacing for arrows to point at each other
+            <div className="word-trail__empty-space"></div>
+          )}
+        </div>
+
+        {/* Target word with arrow */}
+        <div className="word-trail__target-word">
+          <span className="word-trail__arrow word-trail__arrow--left">←</span>
+          <span className="word-trail__word word-trail__word--target">
+            {renderWordWithHighlights(targetWord, [])}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular mode - original layout
   return (
     <div className={`word-trail ${className}`.trim()} role="region" aria-label="Game word history">
       <div className="word-trail__container">

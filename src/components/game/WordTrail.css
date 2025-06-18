@@ -155,4 +155,103 @@
   .word-trail__letter {
     transition: none;
   }
+}
+
+/* Challenge Mode Layout */
+.word-trail--challenge {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: "start played target";
+  align-items: start;
+  gap: var(--spacing-sm);
+  width: 100%;
+  height: 100%;
+}
+
+.word-trail__start-word {
+  grid-area: start;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  position: sticky;
+  top: 0;
+}
+
+.word-trail__played-words {
+  grid-area: played;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100%;
+  overflow-y: auto;
+}
+
+.word-trail__target-word {
+  grid-area: target;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  position: sticky;
+  bottom: 0;
+}
+
+.word-trail__empty-space {
+  min-height: 40px;
+  width: 100%;
+}
+
+/* Challenge mode arrows */
+.word-trail__arrow {
+  font-size: var(--theme-font-size-lg);
+  color: var(--theme-accent);
+  font-weight: var(--theme-font-weight);
+  user-select: none;
+}
+
+.word-trail__arrow--right {
+  margin-left: var(--spacing-xs);
+}
+
+.word-trail__arrow--left {
+  margin-right: var(--spacing-xs);
+}
+
+/* Challenge mode start and target word styling */
+.word-trail__word--start,
+.word-trail__word--target {
+  color: var(--theme-accent);
+  font-weight: var(--theme-font-weight);
+}
+
+/* Responsive adjustments for challenge mode */
+@media (max-width: 768px) {
+  .word-trail--challenge {
+    grid-template-columns: minmax(0, auto) 1fr minmax(0, auto);
+    gap: var(--spacing-xs);
+  }
+  
+  .word-trail__arrow {
+    font-size: var(--theme-font-size-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .word-trail--challenge {
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 1fr;
+    grid-template-areas: 
+      "start"
+      "played" 
+      "target";
+    gap: var(--spacing-xs);
+  }
+  
+  .word-trail__start-word,
+  .word-trail__target-word {
+    justify-content: center;
+  }
+  
+  .word-trail__empty-space {
+    min-height: 20px;
+  }
 } 
