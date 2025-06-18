@@ -165,41 +165,43 @@
 }
 
 .word-trail__challenge-container {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-areas: "start played target";
   width: 100%;
   height: 100%;
   max-height: inherit; /* Inherit from parent container */
-  gap: var(--spacing-sm);
+  position: relative; /* For absolute positioning of start/target words */
 }
 
-.word-trail__start-word {
-  grid-area: start;
+/* Start word positioned absolutely to the left of first played word */
+.word-trail__line--first .word-trail__start-word {
+  position: absolute;
+  left: -120px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  align-self: start;
-  justify-self: end;
+  white-space: nowrap;
 }
 
-/* When there are played words, align start word with first played word */
-.word-trail__start-word[data-has-played="true"] {
-  align-self: start;
-  margin-top: 5px;
-}
-
-/* When no played words, center the start word */
-.word-trail__start-word[data-has-played="false"] {
-  align-self: center;
+/* Empty state: start word centered when no played words */
+.word-trail__start-word--empty {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
 }
 
 .word-trail__played-words {
-  grid-area: played;
+  width: 100%;
   height: 30vh; /* Fixed viewport height to ensure scrolling */
   max-height: 300px; /* Maximum height constraint */
   min-height: 150px; /* Minimum height for usability */
   overflow-y: auto;
+  overflow-x: visible; /* Allow start/target words to extend outside */
   position: relative;
   /* Restore fade effect at top */
   mask: linear-gradient(to bottom, transparent 0%, black 20%, black 100%);
@@ -226,6 +228,7 @@
 /* Spacing for individual words in challenge mode - match default */
 .word-trail__played-words .word-trail__line {
   /* No additional margin/padding - use default spacing from container gap */
+  position: relative; /* For absolute positioning of start/target words */
 }
 
 .word-trail__played-words::-webkit-scrollbar {
@@ -246,29 +249,38 @@
   opacity: 0.6;
 }
 
-.word-trail__target-word {
-  grid-area: target;
+/* Target word positioned absolutely to the right of last played word */
+.word-trail__line--last .word-trail__target-word {
+  position: absolute;
+  right: -120px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  align-self: end;
-  justify-self: start;
+  white-space: nowrap;
 }
 
-/* When there are played words, align target word with last played word */
-.word-trail__target-word[data-has-played="true"] {
-  align-self: end;
-  margin-bottom: 5px;
-}
-
-/* When no played words, center the target word */
-.word-trail__target-word[data-has-played="false"] {
-  align-self: center;
+/* Empty state: target word centered when no played words */
+.word-trail__target-word--empty {
+  position: absolute;
+  right: 50%;
+  top: 50%;
+  transform: translate(50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
 }
 
 .word-trail__empty-space {
   min-height: 40px;
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  position: relative;
 }
 
 /* Challenge mode arrows */
@@ -302,9 +314,12 @@
 
 /* Responsive adjustments for challenge mode */
 @media (max-width: 768px) {
-  .word-trail--challenge {
-    grid-template-columns: minmax(0, auto) 1fr minmax(0, auto);
-    gap: var(--spacing-xs);
+  .word-trail__line--first .word-trail__start-word {
+    left: -100px; /* Closer positioning on tablet */
+  }
+  
+  .word-trail__line--last .word-trail__target-word {
+    right: -100px; /* Closer positioning on tablet */
   }
   
   .word-trail__arrow {
@@ -313,19 +328,27 @@
 }
 
 @media (max-width: 480px) {
-  .word-trail--challenge {
-    grid-template-rows: auto 1fr auto;
-    grid-template-columns: 1fr;
-    grid-template-areas: 
-      "start"
-      "played" 
-      "target";
-    gap: var(--spacing-xs);
+  /* On mobile, position start/target words above and below the played words */
+  .word-trail__line--first .word-trail__start-word {
+    position: absolute;
+    left: 50%;
+    top: -40px; /* Above the first word */
+    transform: translateX(-50%);
   }
   
-  .word-trail__start-word,
-  .word-trail__target-word {
+  .word-trail__line--last .word-trail__target-word {
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 10px); /* Below the last word */
+    transform: translateX(-50%);
+  }
+  
+  .word-trail__start-word--empty,
+  .word-trail__target-word--empty {
+    position: static; /* Use normal flow on mobile for empty state */
+    transform: none;
     justify-content: center;
+    margin: var(--spacing-xs) 0;
   }
   
   .word-trail__empty-space {
@@ -334,5 +357,7 @@
   
   .word-trail__played-words {
     max-height: 40vh; /* Smaller on mobile */
+    padding-top: 50px; /* Extra space for start word */
+    padding-bottom: 50px; /* Extra space for target word */
   }
 } 
