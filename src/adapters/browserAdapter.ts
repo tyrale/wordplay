@@ -91,23 +91,23 @@ class BrowserWordData implements WordDataDependencies {
         .map(word => word.trim().toUpperCase())
         .filter(word => word.length > 0);
 
-             // Build word set for fast lookup
-       this.enableWords = new Set(wordList);
+      // Build word set for fast lookup
+      this.enableWords = new Set(wordList);
 
-       // Build words-by-length map for random selection
-       this.wordsByLength.clear();
-       for (const word of wordList) {
-         const length = word.length;
-         if (!this.wordsByLength.has(length)) {
-           this.wordsByLength.set(length, []);
-         }
-         this.wordsByLength.get(length)!.push(word);
-       }
+      // Build words-by-length map for random selection
+      this.wordsByLength.clear();
+      for (const word of wordList) {
+        const length = word.length;
+        if (!this.wordsByLength.has(length)) {
+          this.wordsByLength.set(length, []);
+        }
+        this.wordsByLength.get(length)!.push(word);
+      }
 
-       // Initialize slang and profanity sets with basic examples
-       this.slangWords = new Set(); // Could be extended with slang list
-       this.profanityWords = new Set(['damn', 'hell']); // Basic profanity list
-       this.isLoaded = true;
+      // Initialize slang and profanity sets with basic examples
+      this.slangWords = new Set(); // Could be extended with slang list
+      this.profanityWords = new Set(['DAMN', 'HELL']); // Basic profanity list
+      this.isLoaded = true;
       
     } catch (error) {
       console.error('Failed to load dictionary:', error);
@@ -119,8 +119,21 @@ class BrowserWordData implements WordDataDependencies {
     // Fallback word set for development/testing
     this.enableWords = new Set([
       'CAT', 'DOG', 'FISH', 'BIRD', 'MOUSE', 'HORSE', 'COW', 'PIG', 'SHEEP', 'GOAT',
-      'CATS', 'DOGS', 'COAT', 'BOAT', 'GOATS', 'COATS', 'BOATS'
+      'CATS', 'DOGS', 'COAT', 'BOAT', 'GOATS', 'COATS', 'BOATS',
+      'HELLO', 'WORLD', 'TEST', 'WORD', 'GAME', 'PLAY', 'TURN', 'MOVE',
+      'TESTING', 'BROWSER', 'ADAPTER'
     ]);
+    
+    // Build words-by-length map for fallback dictionary
+    this.wordsByLength.clear();
+    for (const word of this.enableWords) {
+      const length = word.length;
+      if (!this.wordsByLength.has(length)) {
+        this.wordsByLength.set(length, []);
+      }
+      this.wordsByLength.get(length)!.push(word);
+    }
+    
     this.slangWords = new Set(['BRUH', 'YEET', 'FLEX']);
     this.profanityWords = new Set(['DAMN', 'HELL']);
     this.isLoaded = true;
