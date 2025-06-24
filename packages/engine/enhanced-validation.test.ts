@@ -139,7 +139,7 @@ describe('Enhanced Validation System', () => {
       const result = gameManager.attemptMove('CATSXY'); // Adding X and Y
       
       expect(result.isValid).toBe(false);
-      expect(result.validationResult.reason).toBe('TOO_MANY_ADDS');
+      expect(result.validationResult.reason).toBe('INVALID_MOVE');
       expect(result.validationResult.userMessage).toBe('illegal action');
     });
 
@@ -160,7 +160,7 @@ describe('Enhanced Validation System', () => {
       const result = testManager.attemptMove('TES'); 
       
       expect(result.isValid).toBe(false);
-      expect(result.validationResult.reason).toBe('TOO_MANY_REMOVES');
+      expect(result.validationResult.reason).toBe('INVALID_MOVE');
       expect(result.validationResult.userMessage).toBe('illegal action');
     });
 
@@ -279,7 +279,7 @@ describe('Enhanced Validation System', () => {
         { word: '', expectedReason: 'EMPTY_WORD' },
         { word: 'CAT123', expectedReason: 'INVALID_CHARACTERS' },
         { word: 'A', expectedReason: 'TOO_SHORT' },
-        { word: 'CATSXYZ', expectedReason: 'TOO_MANY_ADDS' }
+        { word: 'CATSXYZ', expectedReason: 'INVALID_MOVE' } // Move rule violations use generic INVALID_MOVE
       ];
 
       testCases.forEach(({ word, expectedReason }) => {
