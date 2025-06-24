@@ -216,7 +216,12 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
    * Reset unlock state to initial state (for testing/debugging)
    */
   async function resetState(): Promise<void> {
-    currentState = { ...INITIAL_UNLOCK_STATE };
+    currentState = {
+      themes: [...INITIAL_UNLOCK_STATE.themes],
+      mechanics: [...INITIAL_UNLOCK_STATE.mechanics],
+      bots: [...INITIAL_UNLOCK_STATE.bots],
+      achievements: [...INITIAL_UNLOCK_STATE.achievements]
+    };
     await saveState();
   }
 

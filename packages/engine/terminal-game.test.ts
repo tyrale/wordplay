@@ -7,6 +7,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TerminalGame, startTerminalGame, quickGame } from './terminal-game';
 import { LocalGameStateManagerWithDependencies } from './gamestate';
+import { TestAdapter } from '../../src/adapters/testAdapter';
 
 // Mock readline to avoid actual terminal interaction during tests
 vi.mock('readline', () => ({
@@ -18,20 +19,36 @@ vi.mock('readline', () => ({
 
 describe('Terminal Game Interface', () => {
   let terminalGame: TerminalGame;
+  let testAdapter: TestAdapter;
 
   beforeEach(() => {
+    // Initialize test adapter and terminal game
+    testAdapter = TestAdapter.getInstance();
+    
     terminalGame = new TerminalGame({
       maxTurns: 3,
       initialWord: 'CAT',
       enableKeyLetters: true,
       enableLockedLetters: false
     });
+
+    // Initialize the game manager with test dependencies
+    const dependencies = testAdapter.getGameDependencies();
+    terminalGame.initializeForTesting(dependencies);
   });
 
   describe('Initialization', () => {
     it('should create terminal game with default options', () => {
       const game = new TerminalGame();
       expect(game).toBeDefined();
+      
+      // Initialize for testing
+      const dependencies = testAdapter.getGameDependencies();
+      game.initializeForTesting(dependencies);
+      
+      // Now can access gameManager
+      const gameManager = (game as unknown as { gameManager: LocalGameStateManagerWithDependencies }).gameManager;
+      expect(gameManager).toBeDefined();
     });
 
     it('should create terminal game with custom options', () => {
@@ -42,6 +59,14 @@ describe('Terminal Game Interface', () => {
         enableLockedLetters: true
       });
       expect(game).toBeDefined();
+      
+      // Initialize for testing
+      const dependencies = testAdapter.getGameDependencies();
+      game.initializeForTesting(dependencies);
+      
+      // Now can access gameManager
+      const gameManager = (game as unknown as { gameManager: LocalGameStateManagerWithDependencies }).gameManager;
+      expect(gameManager).toBeDefined();
     });
   });
 
@@ -114,6 +139,7 @@ describe('Terminal Game Interface', () => {
     it('should create game instances quickly', () => {
       const startTime = performance.now();
       
+      // Test creating instances (without initializing gameManager for speed)
       for (let i = 0; i < 100; i++) {
         new TerminalGame({ maxTurns: 5 });
       }
@@ -146,10 +172,15 @@ describe('Terminal Game Interface', () => {
 
   describe('Error Handling', () => {
     it('should handle invalid game configurations gracefully', () => {
-      expect(() => new TerminalGame({
-        maxTurns: -1, // Invalid
-        initialWord: '', // Invalid
-      })).not.toThrow();
+      expect(() => {
+        const game = new TerminalGame({
+          maxTurns: -1, // Invalid
+          initialWord: '', // Invalid
+        });
+        // Initialize for testing
+        const dependencies = testAdapter.getGameDependencies();
+        game.initializeForTesting(dependencies);
+      }).not.toThrow();
     });
 
     it('should handle game state errors gracefully', () => {

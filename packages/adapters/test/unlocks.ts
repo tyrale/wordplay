@@ -6,7 +6,7 @@
  */
 
 import type { UnlockDependencies, UnlockState } from '../../engine/interfaces';
-import { INITIAL_UNLOCK_STATE } from '../../engine/unlock-definitions';
+import { getInitialUnlockState } from '../../engine/unlock-definitions';
 
 /**
  * Create test unlock dependencies with in-memory storage
@@ -15,7 +15,7 @@ export function createTestUnlockDependencies(
   initialState?: Partial<UnlockState>
 ): UnlockDependencies {
   let currentState: UnlockState = {
-    ...INITIAL_UNLOCK_STATE,
+    ...getInitialUnlockState(),
     ...initialState
   };
 
@@ -46,18 +46,28 @@ export function createTestUnlockDependencies(
 
 /**
  * Create test unlock dependencies with controlled state
+ * This ensures multiple engine instances share the same state
  */
 export function createControlledTestUnlockDependencies(
   controlledState: UnlockState
 ): UnlockDependencies {
   return {
     loadState: async (): Promise<UnlockState> => {
-      return { ...controlledState };
+      // Return a deep copy to prevent mutation but reflect shared state
+      return {
+        themes: [...controlledState.themes],
+        mechanics: [...controlledState.mechanics],
+        bots: [...controlledState.bots],
+        achievements: [...controlledState.achievements]
+      };
     },
     
     saveState: async (state: UnlockState): Promise<void> => {
-      // Update the controlled state
-      Object.assign(controlledState, state);
+      // Update the controlled state by replacing arrays
+      controlledState.themes = [...state.themes];
+      controlledState.mechanics = [...state.mechanics];
+      controlledState.bots = [...state.bots];
+      controlledState.achievements = [...state.achievements];
     },
     
     getTimestamp: () => Date.now()
@@ -71,21 +81,32 @@ export function createFailingTestUnlockDependencies(
   shouldFailLoad = false,
   shouldFailSave = false
 ): UnlockDependencies {
-  let currentState: UnlockState = { ...INITIAL_UNLOCK_STATE };
+  // Create a fresh copy of initial state to avoid mutation
+  let currentState: UnlockState = getInitialUnlockState();
 
   return {
     loadState: async (): Promise<UnlockState> => {
       if (shouldFailLoad) {
         throw new Error('Simulated load failure');
       }
-      return { ...currentState };
+      return {
+        themes: [...currentState.themes],
+        mechanics: [...currentState.mechanics],
+        bots: [...currentState.bots],
+        achievements: [...currentState.achievements]
+      };
     },
     
     saveState: async (state: UnlockState): Promise<void> => {
       if (shouldFailSave) {
         throw new Error('Simulated save failure');
       }
-      currentState = { ...state };
+      currentState = {
+        themes: [...state.themes],
+        mechanics: [...state.mechanics],
+        bots: [...state.bots],
+        achievements: [...state.achievements]
+      };
     },
     
     getTimestamp: () => Date.now()
@@ -98,15 +119,26 @@ export function createFailingTestUnlockDependencies(
 export function createDeterministicTestUnlockDependencies(
   fixedTimestamp = 1000000
 ): UnlockDependencies {
-  let currentState: UnlockState = { ...INITIAL_UNLOCK_STATE };
+  // Create a fresh copy of initial state to avoid mutation
+  let currentState: UnlockState = getInitialUnlockState();
 
   return {
     loadState: async (): Promise<UnlockState> => {
-      return { ...currentState };
+      return {
+        themes: [...currentState.themes],
+        mechanics: [...currentState.mechanics],
+        bots: [...currentState.bots],
+        achievements: [...currentState.achievements]
+      };
     },
     
     saveState: async (state: UnlockState): Promise<void> => {
-      currentState = { ...state };
+      currentState = {
+        themes: [...state.themes],
+        mechanics: [...state.mechanics],
+        bots: [...state.bots],
+        achievements: [...state.achievements]
+      };
     },
     
     getTimestamp: () => fixedTimestamp

@@ -201,6 +201,9 @@ describe('Unlock Engine', () => {
       // Create new engine instance with same dependencies
       const newEngine = createUnlockEngine(sharedDependencies);
       
+      // Initialize the new engine to load shared state
+      await newEngine.initialize();
+      
       // State should be loaded from dependencies
       expect(newEngine.isUnlocked('theme', 'red')).toBe(true);
       expect(newEngine.isUnlocked('bot', 'easy-bot')).toBe(true);
@@ -266,6 +269,12 @@ describe('Unlock Engine', () => {
       const failingDeps = createFailingTestUnlockDependencies(false, true);
       const engine = createUnlockEngine(failingDeps);
       
+      // Initialize the engine first (this should succeed)
+      await engine.initialize();
+      
+      // Verify the theme is not unlocked initially (should be clean state)
+      expect(engine.isUnlocked('theme', 'red')).toBe(false);
+      
       // This should trigger an unlock and then fail on save
       await expect(engine.checkWordTriggers('red')).rejects.toThrow('Simulated save failure');
     });
@@ -297,13 +306,27 @@ describe('Unlock Engine', () => {
 
   describe('Complex Scenarios', () => {
     it('should handle multiple unlocks from single word', async () => {
-      // Create fresh engine for this test
-      const freshDeps = createTestUnlockDependencies();
+      // Create fresh engine for this test with explicit clean state
+      const freshDeps = createTestUnlockDependencies({
+        themes: ['classic blue'],
+        mechanics: [],
+        bots: ['tester'],
+        achievements: []
+      });
       const freshEngine = createUnlockEngine(freshDeps);
+      
+      // Initialize the fresh engine
+      await freshEngine.initialize();
+      
+      // Verify initial state
+      expect(freshEngine.isUnlocked('theme', 'red')).toBe(false);
       
       // If a word triggers multiple unlocks (edge case)
       const results = await freshEngine.checkWordTriggers('red');
       expect(results).toHaveLength(1); // Only red theme should unlock
+      
+      // Verify unlock worked
+      expect(freshEngine.isUnlocked('theme', 'red')).toBe(true);
     });
 
     it('should handle mixed word and achievement unlocks in sequence', async () => {

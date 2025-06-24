@@ -60,9 +60,10 @@ interface TerminalGameOptions {
 export class TerminalGame {
   private gameManager: LocalGameStateManagerWithDependencies;
   private rl: readline.Interface;
+  private gameConfig: GameConfig;
 
   constructor(options: TerminalGameOptions = {}) {
-    const gameConfig: GameConfig = {
+    this.gameConfig = {
       maxTurns: options.maxTurns || 10,
       initialWord: options.initialWord,
       allowBotPlayer: true,
@@ -70,8 +71,9 @@ export class TerminalGame {
       enableLockedLetters: options.enableLockedLetters ?? true
     };
 
-    // Initialize with dummy manager, will be replaced in start()
+    // Initialize with null, will be replaced in start() or manually in tests
     this.gameManager = null as any;
+
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout
@@ -79,6 +81,13 @@ export class TerminalGame {
 
     // Note: We handle game ending in the main game loop instead of subscription
     // to avoid timing issues with readline interface
+  }
+
+  /**
+   * Initialize game manager with given dependencies (for testing)
+   */
+  public initializeForTesting(dependencies: any): void {
+    this.gameManager = createGameStateManagerWithDependencies(dependencies, this.gameConfig);
   }
 
   /**
@@ -95,18 +104,13 @@ export class TerminalGame {
     this.showWelcome();
     this.showHelp();
     
-    // Initialize Node.js adapter and create game manager
-    const nodeAdapter = await createNodeAdapter();
-    const dependencies = nodeAdapter.getGameDependencies();
+    // Initialize Node.js adapter and create game manager (only if not already initialized for tests)
+    if (!this.gameManager) {
+      const nodeAdapter = await createNodeAdapter();
+      const dependencies = nodeAdapter.getGameDependencies();
+      this.gameManager = createGameStateManagerWithDependencies(dependencies, this.gameConfig);
+    }
     
-    const gameConfig: GameConfig = {
-      maxTurns: this.gameManager === null ? 10 : 10, // Default config, will be overridden
-      allowBotPlayer: true,
-      enableKeyLetters: true,
-      enableLockedLetters: true
-    };
-    
-    this.gameManager = createGameStateManagerWithDependencies(dependencies, gameConfig);
     this.gameManager.startGame();
     
     await this.gameLoop();

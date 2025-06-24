@@ -9,14 +9,32 @@
 import type { UnlockDefinition, UnlockState } from './interfaces';
 
 /**
- * Initial unlock state for fresh users
+ * Initial unlock state for fresh users (immutable definition)
  */
-export const INITIAL_UNLOCK_STATE: UnlockState = {
+const _INITIAL_UNLOCK_STATE = {
   themes: ['classic blue'],  // Only default theme unlocked initially
   mechanics: [],             // No special mechanics unlocked
   bots: ['tester'],         // Only basic test bot unlocked
   achievements: []          // No achievements earned
-};
+} as const;
+
+/**
+ * Get a fresh copy of the initial unlock state
+ */
+export function getInitialUnlockState(): UnlockState {
+  return {
+    themes: [..._INITIAL_UNLOCK_STATE.themes],
+    mechanics: [..._INITIAL_UNLOCK_STATE.mechanics],
+    bots: [..._INITIAL_UNLOCK_STATE.bots],
+    achievements: [..._INITIAL_UNLOCK_STATE.achievements]
+  };
+}
+
+/**
+ * Initial unlock state for fresh users (DEPRECATED: use getInitialUnlockState() instead)
+ * @deprecated Use getInitialUnlockState() to get a fresh copy
+ */
+export const INITIAL_UNLOCK_STATE: UnlockState = getInitialUnlockState();
 
 /**
  * All unlock definitions - configurable rules for unlocking features
