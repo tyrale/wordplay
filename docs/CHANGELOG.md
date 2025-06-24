@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Development Plan Alignment** ✅ **COMPLETED**
+  - **Purpose**: Align dev-plan.md with accurate Task Progress structure to ensure consistent roadmap documentation
+  - **Problem**: Critical misalignment between Task Progress file and Development Plan file with phase numbering conflicts and missing tasks
+  - **Root Cause**: Task Progress file had evolved to reflect actual development state while dev-plan remained outdated
+  - **Solution**: Updated dev-plan.md to match the accurate Task Progress structure and current development reality
+  - **Alignment Fixes**:
+    - **Version Update**: Updated from v2.0 to v2.1 for documentation alignment tracking
+    - **Phase Renumbering**: Fixed phase numbering conflicts (Challenge Mode → Phase 3, Online Multiplayer → Phase 4, Themes & Unlocks → Phase 5)
+    - **Missing Task Addition**: Added task 1.5 (Terminal Game Interface) to Phase 1 Core Game Engine
+    - **Challenge Mode Integration**: Added complete Phase 3 Challenge Mode with tasks 3.1-3.4 and ✅ COMPLETE status
+    - **Tutorial Phase Addition**: Added Phase 5.5 Tutorials with tasks 5.5-5.6 matching Task Progress structure
+    - **Status Indicators**: Added proper completion status indicators (✅ COMPLETE, 🔄 IN PROGRESS, ⏳ PENDING)
+  - **Consistency Updates**:
+    - **Architecture Keyword**: Corrected from 'ShipHipV2' to 'ShipHip' for consistent commit title format
+    - **Workflow References**: Updated all commit title format references to use 'ShipHip' consistently
+    - **Phase Deliverables**: Updated task descriptions to match actual implemented features
+    - **Checkpoint Validation**: Ensured checkpoints align with current development state
+  - **Documentation Benefits**:
+    - **Single Source of Truth**: Both documents now provide consistent roadmap information
+    - **Accurate Planning**: Development plan reflects actual progress and priorities
+    - **Clear Next Steps**: Proper task dependencies and phase progression
+    - **Workflow Compliance**: Maintains ShipHip commit requirements and quality gates
+  - **Verification**: Dev-plan now matches Task Progress file structure with accurate phase numbering, task completion status, and consistent documentation
+
 - **Task Progress File Reorganization** ✅ **COMPLETED**
   - **Purpose**: Transform TASK_PROGRESS.md from monolithic document into focused project dashboard for better navigation and maintenance
   - **Problem**: 327-line file mixed high-level progress tracking with detailed implementation notes, creating poor usability and maintenance burden
