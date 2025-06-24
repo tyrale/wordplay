@@ -39,7 +39,9 @@ describe('MainScreen Component', () => {
     );
 
     // Should show main game options
-    expect(screen.getByText('challenge')).toBeInTheDocument();
+    expect(screen.getByText((content, element) => {
+      return element?.textContent === 'vs world';
+    })).toBeInTheDocument();
     expect(screen.getByText((content, element) => {
       return element?.textContent === 'vs human';
     })).toBeInTheDocument();
@@ -61,8 +63,8 @@ describe('MainScreen Component', () => {
     });
     fireEvent.click(vsBotButton);
 
-    // Should show bot selection screen
-    expect(screen.getByText('← back')).toBeInTheDocument();
+    // Should show bot selection screen (no back button - uses menu navigation)
+    expect(screen.getByRole('button', { name: 'Open menu' })).toBeInTheDocument();
     
     // Should show at least the tester bot (always unlocked)
     await waitFor(() => {
@@ -122,7 +124,7 @@ describe('MainScreen Component', () => {
     expect(mockOnStartGame).toHaveBeenCalledWith('bot', 'tester');
   });
 
-  it('should return to main screen when back button is clicked', async () => {
+  it('should show menu button for navigation in bot selection', async () => {
     render(
       <TestWrapper>
         <MainScreen onStartGame={mockOnStartGame} />
@@ -137,17 +139,15 @@ describe('MainScreen Component', () => {
 
     // Wait for bot selection screen
     await waitFor(() => {
-      expect(screen.getByText('← back')).toBeInTheDocument();
+      expect(screen.getByText('tester')).toBeInTheDocument();
     });
 
-    // Click back button
-    const backButton = screen.getByText('← back');
-    fireEvent.click(backButton);
+    // Should show menu button for navigation (current app pattern)
+    const menuButton = screen.getByRole('button', { name: 'Open menu' });
+    expect(menuButton).toBeInTheDocument();
+    expect(menuButton.textContent).toBe('≡');
 
-    // Should return to main screen
-    expect(screen.getByText('challenge')).toBeInTheDocument();
-    expect(screen.getByText((content, element) => {
-      return element?.textContent === 'vs bot';
-    })).toBeInTheDocument();
+    // Should show bot selection content
+    expect(screen.getByText('tester')).toBeInTheDocument();
   });
 }); 

@@ -39,7 +39,9 @@ describe('App Component', () => {
     render(<TestApp />);
     
     // Check that the main screen is rendered with game options
-    expect(screen.getByText('challenge')).toBeInTheDocument();
+    expect(screen.getByText((content, element) => {
+      return element?.textContent === 'vs world';
+    })).toBeInTheDocument();
     expect(screen.getByText((content, element) => {
       return element?.textContent === 'vs human';
     })).toBeInTheDocument();
@@ -61,9 +63,11 @@ describe('App Component', () => {
     expect(botButton).toBeInTheDocument();
     expect(botButton.tagName).toBe('BUTTON');
     
-    const challengeButton = screen.getByText('challenge');
-    expect(challengeButton).toBeInTheDocument();
-    expect(challengeButton.tagName).toBe('BUTTON');
+    const worldButton = screen.getByText((content, element) => {
+      return element?.textContent === 'vs world';
+    });
+    expect(worldButton).toBeInTheDocument();
+    expect(worldButton.tagName).toBe('BUTTON');
     
     const humanButton = screen.getByText((content, element) => {
       return element?.textContent === 'vs human';
@@ -76,7 +80,9 @@ describe('App Component', () => {
     render(<TestApp />);
     
     // Check for main screen elements
-    expect(screen.getByText('challenge')).toBeInTheDocument();
+    expect(screen.getByText((content, element) => {
+      return element?.textContent === 'vs world';
+    })).toBeInTheDocument();
     expect(screen.getByText((content, element) => {
       return element?.textContent === 'vs human';
     })).toBeInTheDocument();
