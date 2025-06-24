@@ -1,4 +1,4 @@
-# Word‑Game Rebuild – **Cursor‑Ready Development Plan** (v2.0)
+# Word‑Game Rebuild – **Cursor‑Ready Development Plan** (v2.1)
 
 > **Purpose** Serve as a _single source of truth_ for Cursor's automated development workflow. The document embeds **context**, a **chronological task breakdown**, and explicit **checkpoints** so you (the human reviewer) can validate progress after every step. Cursor should treat each task as an atomic pull‑request that must pass the listed checklist before moving forward.
 
@@ -10,7 +10,7 @@
 2. **Target Platforms** – **Web first** (desktop browsers, mobile browsers), **Native apps second** (Android, iOS after web proven).
 3. **MVP Scope** – Web-based offline vs Bot + 1‑v‑1 async multiplayer with key/locked letters, basic scoring, and color named themes to unlock.
 4. **Tech Stack** – **React + TypeScript + Vite** (web), **Shared game engine** (pure TypeScript), **Supabase backend**, **Future: React Native** (native apps after web success)
-5. **Architecture Keyword** – _"ShipHipV2"_ ← Cursor should include this word in every PR title to guarantee thread continuity.
+5. **Architecture Keyword** – _"ShipHip"_ ← Cursor should include this word in every PR title to guarantee thread continuity.
 
 ## 🏗️ **CORE ARCHITECTURAL PRINCIPLES**
 
@@ -49,7 +49,7 @@ _When Cursor is unsure about a requirement it \***\*must\*\*** halt and request 
 | --- | ----------------------------------------------------------------------------------------- | ----------------------------- |
 | 1   | Follow tasks **in listed order**; do **not** skip.                                        | Prevent dependency breaks.    |
 | 2   | After completing a task, run its **Checkpoint** tests (unit/E2E).                         | Ensures quality gate.         |
-| 3   | Open a PR titled `ShipHipV2: <Task Name>` containing only the files touched by that task. | Traceability + context token. |
+| 3   | Open a PR titled `ShipHip: <Task Name>` containing only the files touched by that task. | Traceability + context token. |
 | 4   | Await human approval **before** starting the next task.                                   | Allows manual validation.     |
 | 5   | Update `/docs/CHANGELOG.md` with a one‑line entry per task.                               | Audit trail.                  |
 
@@ -59,7 +59,7 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 
 ## 📅 Chronological Task List w/ Checkpoints
 
-### Phase 0 – Web Foundation & Tooling
+### Phase 0 – Web Foundation & Tooling ✅ **COMPLETE**
 
 | ID  | Task                                              | Deliverable                                                          | Checkpoint (human validates…)                         |
 | --- | ------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------- |
@@ -68,7 +68,7 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 | 0.3 | **Supabase Project Bootstrap** (SQL schema & RLS) | `supabase/` migrations, local .env.sample                            | `supabase db diff` shows no pending migrations.       |
 | 0.4 | **Web Hosting Setup** (Vercel deployment)         | Automatic deployment from main branch                                | Live web app accessible at public URL.                |
 
-### Phase 1 – Core Game Engine (Cross-Platform)
+### Phase 1 – Core Game Engine (Cross-Platform) ✅ **COMPLETE**
 
 | ID  | Task                        | Deliverable                                                         | Checkpoint                                                                  |
 | --- | --------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -76,52 +76,83 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 | 1.2 | **Scoring Module**          | Pure‑fn `scoreTurn(prevWord, newWord, actionsUsed, keyUsed)`        | Unit tests for examples in Appendix A all pass.                             |
 | 1.3 | **Bot AI v0 (Greedy)**      | `packages/ai/bot.ts` choosing highest scoring legal move            | Simulate 100 turns w/out crash; average latency <50 ms.                     |
 | 1.4 | **Local GameState Manager** | State management for words, key/locked letters                      | Jest: state manager passes add/remove/move scenarios.                       |
+| 1.5 | **Terminal Game Interface** | Interactive command-line game integrating all engine components     | Human can play full game vs bot in terminal; `npm run play` works.          |
 
-### Phase 2 – Web UI Foundation
+### Phase 2 – Web UI Foundation ✅ **COMPLETE**
 
-| 2.1 | **React Component Library** | Reusable game components with TypeScript | Storybook: displays normal/key/locked letters. |
-| 2.2 | **Alphabet Grid & Word Display** | Interactive letter grid and word trail | UI responds to clicks, shows game state. |
-| 2.3 | **Single‑Player Web Game** | Complete offline game vs bot | Human can play and finish 10-turn game in browser. |
-| 2.4 | **Responsive Design** | Works on desktop and mobile browsers | Game playable on phone browsers and desktop. |
+| ID  | Task                                   | Deliverable                                   | Checkpoint                                      |
+| --- | -------------------------------------- | --------------------------------------------- | ----------------------------------------------- |
+| 2.1 | **React Component Library**           | Reusable game components with TypeScript     | Storybook: displays normal/key/locked letters. |
+| 2.2 | **Alphabet Grid & Word Display**      | Interactive letter grid and word trail       | UI responds to clicks, shows game state.       |
+| 2.3 | **Single‑Player Web Game**            | Complete offline game vs bot                 | Human can play and finish 10-turn game in browser. |
+| 2.4 | **Responsive Design**                  | Works on desktop and mobile browsers         | Game playable on phone browsers and desktop.   |
 
-### Phase 3 – Online Multiplayer (Web)
+### Phase 3 – Challenge Mode ✅ **COMPLETE**
 
-| 3.1 | **Auth Flow (Supabase EmailLink)** | `/auth` pages, session persistence | Signup/login works in browser. |
-| 3.2 | **Game CRUD API** | `supabase` RPC + hooks: create/join, list games | API tests return 200; RLS prevents cross‑access. |
-| 3.3 | **Realtime Turn Sync** | Subscriptions push opponent moves; 48‑h timer job | Two browser tabs stay in sync under 1 s. |
-| 3.4 | **Avatar & Score HUD** | Upload to Supabase Storage; display top‑corners | PNG uploads within 100 kB; shows in game. |
+| ID  | Task                              | Deliverable                                            | Checkpoint                                           |
+| --- | --------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
+| 3.1 | **Challenge Engine (Cross-Platform)** | Daily puzzle generation with cross-platform compatibility | Challenge engine generates consistent daily puzzles. |
+| 3.2 | **Challenge Storage System**      | IndexedDB persistence for challenge progress          | Challenge state persists across browser sessions.   |
+| 3.3 | **Challenge UI Components**       | React components for challenge gameplay               | Challenge mode playable with proper UI feedback.    |
+| 3.4 | **Menu Integration**              | Challenge menu items and navigation                   | "vs world" button launches challenge mode.          |
 
-### Phase 4 – Themes & Unlocks (Web)
+### Phase 4 – Online Multiplayer (Web) ⏳ **PENDING**
 
-| 4.1 | **Unlock Framework** | Server table + client hook, feature flag per unlock | Unit: unlock fires when word == "BROWN". |
-| 4.2 | **Theme Provider + Brown Theme** | Context to swap colors; toggle in menu | Selecting theme re‑paints grid instantly. |
-| 4.3 | **Six‑Letter Attribute** | Config to set initial word length 6 | New game w/ attribute starts with 6‑letter seed. |
+| ID  | Task                                   | Deliverable                                                          | Checkpoint                                           |
+| --- | -------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------- |
+| 4.1 | **Auth Flow (Supabase EmailLink)**    | `/auth` pages, session persistence                                  | Signup/login works in browser.                      |
+| 4.2 | **Game CRUD API**                     | `supabase` RPC + hooks: create/join, list games                     | API tests return 200; RLS prevents cross‑access.   |
+| 4.3 | **Realtime Turn Sync**                | Subscriptions push opponent moves; 48‑h timer job                   | Two browser tabs stay in sync under 1 s.           |
+| 4.4 | **Avatar & Score HUD**                | Upload to Supabase Storage; display top‑corners                     | PNG uploads within 100 kB; shows in game.          |
 
-### Phase 5 – Web Polish & Accessibility
+### Phase 5 – Themes & Unlocks 🔄 **IN PROGRESS**
 
-| 5.1 | **Colour‑blind Palettes** | Two alt palettes w/ settings toggle | Sim Daltonism test passes WCAG contrast. |
-| 5.2 | **Web Audio & Haptics** | Click sounds + vibration API for mobile browsers | Audio plays on moves; mobile browsers vibrate. |
-| 5.3 | **E2E Web Testing** | Playwright tests covering full game flow | CI tests pass on Chrome, Firefox, Safari. |
+| ID  | Task                              | Deliverable                                            | Checkpoint                                           |
+| --- | --------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
+| 5.1 | **Unlock Framework** ✅           | Achievement system with cross-platform persistence    | Unit: unlock fires when word == "BROWN".            |
+| 5.2 | **Theme Provider + Brown Theme** ✅ | Context to swap colors; toggle in menu              | Selecting theme re‑paints grid instantly.           |
+| 5.3 | **Six‑Letter Attribute** ⏳       | Config to set initial word length 6                   | New game w/ attribute starts with 6‑letter seed.   |
 
-### Phase 6 – Web Release Prep
+### Phase 5.5 – Tutorials ⏳ **PENDING**
 
-| 6.1 | **PWA Features** | Service worker, offline play, install prompt | Game works offline; can be "installed" on mobile. |
-| 6.2 | **Web Performance Optimization** | Bundle size < 1MB, loading < 3s | Lighthouse score > 90 on all metrics. |
-| 6.3 | **Analytics Integration** | PostHog events: session_start, turn_commit, unlock | Dashboard shows live web events. |
-| 6.4 | **Production Launch** | Custom domain, monitoring, error tracking | Web game live at production URL. |
+| ID   | Task                         | Deliverable                                            | Checkpoint                                           |
+| ---- | ---------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
+| 5.5  | **Base Tutorial**            | Step-by-step tutorial building UI for each step       | New users can complete interactive tutorial.        |
+| 5.6  | **Challenge Tutorial**       | Tutorial explaining challenge mode                     | Users understand challenge mode mechanics.          |
 
-### Phase 7 – Monetization & Live‑Ops (Web)
+### Phase 6 – Web Polish & Accessibility ⏳ **PENDING**
 
-| 7.1 | **Web Payment Integration** | Stripe/PayPal for theme purchases | Sandbox purchase completes; restores properly. |
-| 7.2 | **Global Leaderboard** | Supabase function ranking by ELO | Top‑100 endpoint returns ≤ 200 ms. |
-| 7.3 | **Admin Dashboard** | Moderation tools, user management | Admin can manage users and content. |
+| ID  | Task                              | Deliverable                                            | Checkpoint                                           |
+| --- | --------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
+| 6.1 | **Colour‑blind Palettes**        | Two alt palettes w/ settings toggle                   | Sim Daltonism test passes WCAG contrast.            |
+| 6.2 | **Web Audio & Haptics**          | Click sounds + vibration API for mobile browsers      | Audio plays on moves; mobile browsers vibrate.      |
+| 6.3 | **E2E Web Testing**              | Playwright tests covering full game flow              | CI tests pass on Chrome, Firefox, Safari.           |
 
-### Phase 8 – Native Mobile Expansion (After Web Success)
+### Phase 7 – Web Release Prep ⏳ **PENDING**
 
-| 8.1 | **React Native Setup** | Expo/RN app using shared game engine | Native app boots with web game logic. |
-| 8.2 | **Native UI Adaptation** | Platform-specific components and navigation | Native feel while using same game engine. |
-| 8.3 | **App Store Optimization** | Icons, screenshots, store listings | Apps pass review on Google Play and App Store. |
-| 8.4 | **Native-Specific Features** | Push notifications, native sharing | Features that enhance mobile experience. |
+| ID  | Task                              | Deliverable                                            | Checkpoint                                           |
+| --- | --------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
+| 7.1 | **PWA Features**                  | Service worker, offline play, install prompt          | Game works offline; can be "installed" on mobile.   |
+| 7.2 | **Web Performance Optimization** | Bundle size < 1MB, loading < 3s                       | Lighthouse score > 90 on all metrics.               |
+| 7.3 | **Analytics Integration**         | PostHog events: session_start, turn_commit, unlock    | Dashboard shows live web events.                    |
+| 7.4 | **Production Launch**             | Custom domain, monitoring, error tracking             | Web game live at production URL.                    |
+
+### Phase 8 – Monetization & Live‑Ops (Web) ⏳ **PENDING**
+
+| ID  | Task                              | Deliverable                                            | Checkpoint                                           |
+| --- | --------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
+| 8.1 | **Web Payment Integration**       | Stripe/PayPal for theme purchases                      | Sandbox purchase completes; restores properly.      |
+| 8.2 | **Global Leaderboard**           | Supabase function ranking by ELO                      | Top‑100 endpoint returns ≤ 200 ms.                  |
+| 8.3 | **Admin Dashboard**               | Moderation tools, user management                     | Admin can manage users and content.                 |
+
+### Phase 9 – Native Mobile Expansion (After Web Success) ⏳ **PENDING**
+
+| ID  | Task                              | Deliverable                                            | Checkpoint                                           |
+| --- | --------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
+| 9.1 | **React Native Setup**           | Expo/RN app using shared game engine                  | Native app boots with web game logic.               |
+| 9.2 | **Native UI Adaptation**         | Platform-specific components and navigation           | Native feel while using same game engine.           |
+| 9.3 | **App Store Optimization**       | Icons, screenshots, store listings                    | Apps pass review on Google Play and App Store.      |
+| 9.4 | **Native-Specific Features**     | Push notifications, native sharing                    | Features that enhance mobile experience.            |
 
 ---
 
@@ -129,7 +160,7 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 
 - Cursor _must_ reference `docs/TASK_PROGRESS.md` at the start of every run. If a task is incomplete, resume; if completed, proceed to the next.
 - Cursor should read **only** the relevant spec sections to minimize token usage.
-- If external clarification is required, open an issue titled `ShipHipV2: Clarification Needed – <topic>`.
+- If external clarification is required, open an issue titled `ShipHip: Clarification Needed – <topic>`.
 - Cursor should tag commits with Conventional Commits (`feat:`, `fix:`, `chore:`) for semantic‑release auto‑versioning.
 
 ---
