@@ -167,24 +167,12 @@
   height: 100%;
   max-height: inherit; /* Inherit from parent container */
   position: relative; /* For absolute positioning of start/target words */
-  padding: 0 140px 0 140px; /* Reduced padding to provide more space for content */
+  padding: 0; /* No padding needed - start/target words positioned with calc() */
   margin: 0; /* Ensure no margin */
   box-sizing: border-box; /* Include padding in width calculation */
 }
 
-/* Start word positioned absolutely to the left of first played word (now bottom with column-reverse) */
-.word-trail__line--first .word-trail__start-word {
-  position: absolute;
-  left: -120px; /* Adjusted to work with reduced padding */
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  white-space: nowrap;
-  z-index: 10; /* Ensure visibility above other elements */
-  width: 100px; /* Reduced width to fit better */
-}
+
 
 /* Empty state: start word positioned at bottom left */
 .word-trail__start-word--empty {
@@ -231,6 +219,40 @@
   position: relative; /* For absolute positioning of start/target words */
 }
 
+/* First and last word lines need relative positioning for absolute child positioning */
+.word-trail__line--first,
+.word-trail__line--last {
+  position: relative;
+}
+
+/* Start word positioned to the left of first played word */
+.word-trail__line--first .word-trail__start-word {
+  position: absolute;
+  right: calc(100% + 10px); /* 10px to the left of the first word */
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
+  z-index: 10;
+  text-align: right; /* Right-justify the content */
+}
+
+/* Target word positioned to the right of last played word */
+.word-trail__line--last .word-trail__target-word {
+  position: absolute;
+  left: calc(100% + 10px); /* 10px to the right of the last word */
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
+  z-index: 10;
+  text-align: left; /* Left-justify the content */
+}
+
 .word-trail__played-words::-webkit-scrollbar {
   width: 4px;
 }
@@ -249,19 +271,7 @@
   opacity: 0.6;
 }
 
-/* Target word positioned absolutely to the right of last played word (now top with column-reverse) */
-.word-trail__line--last .word-trail__target-word {
-  position: absolute;
-  right: -120px; /* Adjusted to work with reduced padding */
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  white-space: nowrap;
-  z-index: 10; /* Ensure visibility above other elements */
-  width: 100px; /* Reduced width to fit better */
-}
+
 
 /* Empty state: target word positioned at bottom right */
 .word-trail__target-word--empty {
@@ -315,17 +325,15 @@
 /* Responsive adjustments for challenge mode */
 @media (max-width: 768px) {
   .word-trail__challenge-container {
-    padding: 0 120px; /* Match desktop padding for consistency */
+    padding: 0; /* No padding needed with calc() positioning */
   }
   
   .word-trail__line--first .word-trail__start-word {
-    left: -100px; /* Match desktop positioning */
-    width: 80px; /* Smaller width on tablet */
+    right: calc(100% + 10px); /* Same positioning as desktop */
   }
   
   .word-trail__line--last .word-trail__target-word {
-    right: -100px; /* Match desktop positioning */
-    width: 80px; /* Smaller width on tablet */
+    left: calc(100% + 10px); /* Same positioning as desktop */
   }
   
   .word-trail__arrow {
@@ -335,22 +343,20 @@
 
 @media (max-width: 480px) {
   .word-trail__challenge-container {
-    padding: 0 var(--spacing-sm); /* Minimal padding on mobile */
+    padding: 0; /* No padding needed with calc() positioning */
   }
   
-  /* On mobile, position start/target words with user-tested values */
+  /* On mobile, use same calc() positioning but allow clipping */
   .word-trail__line--first .word-trail__start-word {
-    position: absolute;
-    left: 50%;
-    top: 0px;
-    transform: translateX(-160%);
+    right: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
   }
   
   .word-trail__line--last .word-trail__target-word {
-    position: absolute;
-    left: 50%;
-    top: calc(-26% + 10px);
-    transform: translateX(60%);
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
   }
   
   .word-trail__start-word--empty,

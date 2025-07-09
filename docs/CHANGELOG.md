@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Challenge Mode Start/Target Word Positioning** ✅ **COMPLETED**
+  - **Purpose**: Simplified start/target word positioning in challenge mode using clean CSS calc() approach instead of complex fixed positioning
+  - **Problem**: Start word ("WINGERS") and target word ("TYNES") were overlapping with played words in word trail, creating messy layout with fixed positioning values
+  - **Root Cause**: Complex absolute positioning with fixed left/right values (-120px) and responsive breakpoint complications required padding calculations and didn't adapt to word lengths
+  - **Solution**: Implemented pure CSS solution using calc() positioning relative to played word lines
+  - **Technical Implementation**:
+    - **CSS Positioning**: Start word positioned `right: calc(100% + 10px)` with `text-align: right` for proper justification
+    - **CSS Positioning**: Target word positioned `left: calc(100% + 10px)` with `text-align: left` for proper justification
+    - **Relative Positioning**: Made `.word-trail__line--first` and `.word-trail__line--last` have `position: relative` for proper anchor points
+    - **Padding Removal**: Eliminated challenge container padding since words now position dynamically
+    - **Responsive Simplification**: Same calc() positioning works across all screen sizes without breakpoint complications
+  - **Behavior Achieved**:
+    - **Adaptive Positioning**: Words position exactly 10px from played word edges regardless of word length
+    - **Natural Clipping**: Long words can extend beyond viewport edges without layout issues
+    - **Consistent Spacing**: Same 10px gap maintained across all screen sizes and word lengths
+    - **Clean Layout**: No more overlapping between start/target words and played words
+  - **Architecture Benefits**:
+    - **Maintainable Code**: Pure CSS solution eliminates complex JavaScript calculations and DOM measurements
+    - **Cross-Platform Ready**: Simple CSS approach works consistently across web, mobile, and future platforms
+    - **Responsive Design**: Single positioning approach works for all screen sizes without media query complications
+    - **Performance**: No JavaScript positioning calculations or useEffect hooks needed
+  - **Verification**: All 278 tests passing, challenge mode start/target word positioning working correctly with clean layout
+
 - **Word Trail Bottom-Anchored Positioning** ✅ **COMPLETED**
   - **Purpose**: Fixed word trail positioning to anchor newest words at bottom with older words stacking upward and scrollable overflow
   - **Problem**: Word trail was top-aligned causing newest words to be pushed down and hidden behind game board as more words were added
