@@ -85,6 +85,66 @@ export const WordTrail: React.FC<WordTrailProps> = ({
     );
   };
 
+  // Render a word with start word positioned inside the first letter
+  const renderWordWithStartWord = (word: string, keyLetters: string[], startWord: string) => {
+    const letters = word.toUpperCase().split('');
+    
+    return (
+      <span className="word-trail__word-container">
+        {letters.map((letter, index) => {
+          const isKeyLetter = keyLetters.includes(letter);
+          const isFirstLetter = index === 0;
+          return (
+            <span
+              key={index}
+              className={`word-trail__letter ${isKeyLetter ? 'word-trail__letter--key' : ''} ${isFirstLetter ? 'word-trail__letter--first' : ''}`}
+            >
+              {isFirstLetter && (
+                <div className="word-trail__start-word">
+                  <span className="word-trail__word word-trail__word--start">
+                    {renderWordWithHighlights(startWord, [])}
+                  </span>
+                  <span className="word-trail__arrow word-trail__arrow--right">→</span>
+                </div>
+              )}
+              {letter}
+            </span>
+          );
+        })}
+      </span>
+    );
+  };
+
+  // Render a word with target word positioned inside the last letter
+  const renderWordWithTargetWord = (word: string, keyLetters: string[], targetWord: string) => {
+    const letters = word.toUpperCase().split('');
+    
+    return (
+      <span className="word-trail__word-container">
+        {letters.map((letter, index) => {
+          const isKeyLetter = keyLetters.includes(letter);
+          const isLastLetter = index === letters.length - 1;
+          return (
+            <span
+              key={index}
+              className={`word-trail__letter ${isKeyLetter ? 'word-trail__letter--key' : ''} ${isLastLetter ? 'word-trail__letter--last' : ''}`}
+            >
+              {letter}
+              {isLastLetter && (
+                <div className="word-trail__target-word">
+                  <span className="word-trail__arrow word-trail__arrow--left">←</span>
+                  <span className="word-trail__word word-trail__word--target">
+                    {renderWordWithHighlights(targetWord, [])}
+                  </span>
+                </div>
+              )}
+            </span>
+          );
+        })}
+      </span>
+    );
+  };
+
   // Challenge mode uses new layout with positioned start/target words
   // Handle challenge mode BEFORE early return to allow empty state rendering
   if (isChallengeMode && startWord && targetWord) {
@@ -119,55 +179,45 @@ export const WordTrail: React.FC<WordTrailProps> = ({
             <div className="word-trail__played-words" ref={playedWordsRef}>
               {hasPlayedWords ? (
                 <div className="word-trail__container">
-                  {reversedPlayedMoves.map((item, index) => (
-                    <div 
-                      key={`${item.word}-${item.turnNumber}-${index}`}
-                      className={[
-                        'word-trail__line',
-                        onWordClick && 'word-trail__line--clickable',
-                        item.player && `word-trail__line--player-${item.player}`,
-                        index === reversedPlayedMoves.length - 1 && 'word-trail__line--first',
-                        index === 0 && 'word-trail__line--last'
-                      ].filter(Boolean).join(' ')}
-                      role="listitem"
-                    >
-                      {/* Start word positioned absolutely on first word line (now last in reversed array) */}
-                      {index === reversedPlayedMoves.length - 1 && (
-                        <div className="word-trail__start-word">
-                          <span className="word-trail__word word-trail__word--start">
-                            {renderWordWithHighlights(startWord, [])}
-                          </span>
-                          <span className="word-trail__arrow word-trail__arrow--right">→</span>
-                        </div>
-                      )}
-
-                      <span 
-                        className="word-trail__word"
-                        onClick={onWordClick ? () => handleWordClick(item.word, index) : undefined}
-                        role={onWordClick ? 'button' : undefined}
-                        tabIndex={onWordClick ? 0 : undefined}
-                        aria-label={`Word: ${item.word}${showScores ? `, ${item.score} points` : ''}`}
+                  {reversedPlayedMoves.map((item, index) => {
+                    const isFirstWord = index === reversedPlayedMoves.length - 1;
+                    const isLastWord = index === 0;
+                    
+                    return (
+                      <div 
+                        key={`${item.word}-${item.turnNumber}-${index}`}
+                        className={[
+                          'word-trail__line',
+                          onWordClick && 'word-trail__line--clickable',
+                          item.player && `word-trail__line--player-${item.player}`,
+                          isFirstWord && 'word-trail__line--first',
+                          isLastWord && 'word-trail__line--last'
+                        ].filter(Boolean).join(' ')}
+                        role="listitem"
                       >
-                        {renderWordWithHighlights(item.word, item.keyLetters)}
-                      </span>
-                      
-                      {showScores && (item.score > 0 || (item.score === 0 && item.actions.includes('PASS'))) && (
-                        <span className="word-trail__score" aria-label={item.score === 0 && item.actions.includes('PASS') ? 'passed turn' : `${item.score} points`}>
-                          {item.score === 0 && item.actions.includes('PASS') ? 'pass' : `+${item.score}`}
+                        <span 
+                          className="word-trail__word"
+                          onClick={onWordClick ? () => handleWordClick(item.word, index) : undefined}
+                          role={onWordClick ? 'button' : undefined}
+                          tabIndex={onWordClick ? 0 : undefined}
+                          aria-label={`Word: ${item.word}${showScores ? `, ${item.score} points` : ''}`}
+                        >
+                          {isFirstWord 
+                            ? renderWordWithStartWord(item.word, item.keyLetters, startWord)
+                            : isLastWord
+                            ? renderWordWithTargetWord(item.word, item.keyLetters, targetWord)
+                            : renderWordWithHighlights(item.word, item.keyLetters)
+                          }
                         </span>
-                      )}
-
-                      {/* Target word positioned absolutely on last word line (now first in reversed array) */}
-                      {index === 0 && (
-                        <div className="word-trail__target-word">
-                          <span className="word-trail__arrow word-trail__arrow--left">←</span>
-                          <span className="word-trail__word word-trail__word--target">
-                            {renderWordWithHighlights(targetWord, [])}
+                        
+                        {showScores && (item.score > 0 || (item.score === 0 && item.actions.includes('PASS'))) && (
+                          <span className="word-trail__score" aria-label={item.score === 0 && item.actions.includes('PASS') ? 'passed turn' : `${item.score} points`}>
+                            {item.score === 0 && item.actions.includes('PASS') ? 'pass' : `+${item.score}`}
                           </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 // Empty state - start and target words centered

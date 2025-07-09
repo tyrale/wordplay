@@ -10,27 +10,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Challenge Mode Start/Target Word Positioning** ✅ **COMPLETED**
-  - **Purpose**: Simplified start/target word positioning in challenge mode using clean CSS calc() approach instead of complex fixed positioning
-  - **Problem**: Start word ("WINGERS") and target word ("TYNES") were overlapping with played words in word trail, creating messy layout with fixed positioning values
-  - **Root Cause**: Complex absolute positioning with fixed left/right values (-120px) and responsive breakpoint complications required padding calculations and didn't adapt to word lengths
-  - **Solution**: Implemented pure CSS solution using calc() positioning relative to played word lines
+  - **Purpose**: Fixed start/target word positioning in challenge mode to be precisely positioned relative to first/last letters instead of word containers
+  - **Problem**: Start word ("WINGERS") and target word ("TYNES") were disappearing with `calc(100% + 10px)` positioning and not adapting to word lengths
+  - **Root Cause**: CSS calc() positioning was relative to entire word line containers instead of actual letter boundaries, causing words to be pushed outside viewport and not responding to word length changes
+  - **Solution**: Repositioned start/target words inside first/last letter elements for precise letter-based positioning
   - **Technical Implementation**:
-    - **CSS Positioning**: Start word positioned `right: calc(100% + 10px)` with `text-align: right` for proper justification
-    - **CSS Positioning**: Target word positioned `left: calc(100% + 10px)` with `text-align: left` for proper justification
-    - **Relative Positioning**: Made `.word-trail__line--first` and `.word-trail__line--last` have `position: relative` for proper anchor points
-    - **Padding Removal**: Eliminated challenge container padding since words now position dynamically
-    - **Responsive Simplification**: Same calc() positioning works across all screen sizes without breakpoint complications
+    - **DOM Restructuring**: Moved start word container inside first letter span, target word container inside last letter span
+    - **Letter-Based Positioning**: Start word positioned `right: calc(100% + 10px)` relative to first letter, target word positioned `left: calc(100% + 10px)` relative to last letter
+    - **Enhanced Rendering Functions**: Created `renderWordWithStartWord()` and `renderWordWithTargetWord()` functions to handle letter-level positioning
+    - **CSS Selector Updates**: Changed from `.word-trail__line--first/.word-trail__line--last` to `.word-trail__letter--first/.word-trail__letter--last` for precise targeting
+    - **Responsive Consistency**: Same calc() positioning works across all screen sizes with letter-level precision
   - **Behavior Achieved**:
-    - **Adaptive Positioning**: Words position exactly 10px from played word edges regardless of word length
-    - **Natural Clipping**: Long words can extend beyond viewport edges without layout issues
-    - **Consistent Spacing**: Same 10px gap maintained across all screen sizes and word lengths
-    - **Clean Layout**: No more overlapping between start/target words and played words
+    - **Letter-Precise Positioning**: Start word exactly 10px left of first letter, target word exactly 10px right of last letter
+    - **Length-Adaptive**: Automatically adjusts when word lengths change since positioning is relative to actual letter boundaries
+    - **Always Visible**: Words positioned relative to letters instead of containers ensures they remain in viewport
+    - **Clean Layout**: No more overlapping or disappearing words, perfect alignment with letter boundaries
   - **Architecture Benefits**:
-    - **Maintainable Code**: Pure CSS solution eliminates complex JavaScript calculations and DOM measurements
-    - **Cross-Platform Ready**: Simple CSS approach works consistently across web, mobile, and future platforms
-    - **Responsive Design**: Single positioning approach works for all screen sizes without media query complications
-    - **Performance**: No JavaScript positioning calculations or useEffect hooks needed
-  - **Verification**: All 278 tests passing, challenge mode start/target word positioning working correctly with clean layout
+    - **Pure CSS Solution**: Maintains clean CSS-only approach with better anchor points
+    - **Automatic Adaptation**: Word length changes automatically update positioning without JavaScript
+    - **Cross-Platform Ready**: Letter-based positioning works consistently across all platforms
+    - **Maintainable Code**: Clear separation of concerns with dedicated rendering functions
+  - **Verification**: All 278 tests passing, challenge mode start/target word positioning working correctly with letter-precise positioning
 
 - **Word Trail Bottom-Anchored Positioning** ✅ **COMPLETED**
   - **Purpose**: Fixed word trail positioning to anchor newest words at bottom with older words stacking upward and scrollable overflow

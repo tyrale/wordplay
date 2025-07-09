@@ -219,16 +219,16 @@
   position: relative; /* For absolute positioning of start/target words */
 }
 
-/* First and last word lines need relative positioning for absolute child positioning */
-.word-trail__line--first,
-.word-trail__line--last {
+/* First and last letters need relative positioning for absolute child positioning */
+.word-trail__letter--first,
+.word-trail__letter--last {
   position: relative;
 }
 
-/* Start word positioned to the left of first played word */
-.word-trail__line--first .word-trail__start-word {
+/* Start word positioned to the left of first letter */
+.word-trail__letter--first .word-trail__start-word {
   position: absolute;
-  right: calc(100% + 10px); /* 10px to the left of the first word */
+  right: calc(100% + 10px); /* 10px to the left of the first letter */
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -239,10 +239,10 @@
   text-align: right; /* Right-justify the content */
 }
 
-/* Target word positioned to the right of last played word */
-.word-trail__line--last .word-trail__target-word {
+/* Target word positioned to the right of last letter */
+.word-trail__letter--last .word-trail__target-word {
   position: absolute;
-  left: calc(100% + 10px); /* 10px to the right of the last word */
+  left: calc(100% + 10px); /* 10px to the right of the last letter */
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -328,11 +328,11 @@
     padding: 0; /* No padding needed with calc() positioning */
   }
   
-  .word-trail__line--first .word-trail__start-word {
+  .word-trail__letter--first .word-trail__start-word {
     right: calc(100% + 10px); /* Same positioning as desktop */
   }
   
-  .word-trail__line--last .word-trail__target-word {
+  .word-trail__letter--last .word-trail__target-word {
     left: calc(100% + 10px); /* Same positioning as desktop */
   }
   
@@ -347,13 +347,13 @@
   }
   
   /* On mobile, use same calc() positioning but allow clipping */
-  .word-trail__line--first .word-trail__start-word {
+  .word-trail__letter--first .word-trail__start-word {
     right: calc(100% + 10px);
     top: 50%;
     transform: translateY(-50%);
   }
   
-  .word-trail__line--last .word-trail__target-word {
+  .word-trail__letter--last .word-trail__target-word {
     left: calc(100% + 10px);
     top: 50%;
     transform: translateY(-50%);
