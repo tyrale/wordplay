@@ -97,16 +97,20 @@ export const WordTrail: React.FC<WordTrailProps> = ({
     const playedWordsRef = useRef<HTMLDivElement>(null);
     const challengeContainerRef = useRef<HTMLDivElement>(null);
 
-    // Auto-scroll to bottom when new words are added
+    // Auto-scroll to top to show newest words (with column-reverse, newest at bottom)
     useEffect(() => {
       if (playedWordsRef.current && hasPlayedWords) {
         const container = playedWordsRef.current;
         // Use requestAnimationFrame for smooth scrolling
         requestAnimationFrame(() => {
-          container.scrollTop = container.scrollHeight;
+          // With column-reverse, scroll to top (0) to show newest words at bottom
+          container.scrollTop = 0;
         });
       }
     }, [playedMoves.length, hasPlayedWords]);
+
+    // Reverse data order for column-reverse layout (newest items appear at bottom)
+    const reversedPlayedMoves = [...playedMoves].reverse();
 
           return (
         <div className={`word-trail word-trail--challenge ${className}`.trim()} role="region" aria-label="Challenge word trail">
@@ -115,20 +119,20 @@ export const WordTrail: React.FC<WordTrailProps> = ({
             <div className="word-trail__played-words" ref={playedWordsRef}>
               {hasPlayedWords ? (
                 <div className="word-trail__container">
-                  {playedMoves.map((item, index) => (
+                  {reversedPlayedMoves.map((item, index) => (
                     <div 
                       key={`${item.word}-${item.turnNumber}-${index}`}
                       className={[
                         'word-trail__line',
                         onWordClick && 'word-trail__line--clickable',
                         item.player && `word-trail__line--player-${item.player}`,
-                        index === 0 && 'word-trail__line--first',
-                        index === playedMoves.length - 1 && 'word-trail__line--last'
+                        index === reversedPlayedMoves.length - 1 && 'word-trail__line--first',
+                        index === 0 && 'word-trail__line--last'
                       ].filter(Boolean).join(' ')}
                       role="listitem"
                     >
-                      {/* Start word positioned absolutely on first word line */}
-                      {index === 0 && (
+                      {/* Start word positioned absolutely on first word line (now last in reversed array) */}
+                      {index === reversedPlayedMoves.length - 1 && (
                         <div className="word-trail__start-word">
                           <span className="word-trail__word word-trail__word--start">
                             {renderWordWithHighlights(startWord, [])}
@@ -153,8 +157,8 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                         </span>
                       )}
 
-                      {/* Target word positioned absolutely on last word line */}
-                      {index === playedMoves.length - 1 && (
+                      {/* Target word positioned absolutely on last word line (now first in reversed array) */}
+                      {index === 0 && (
                         <div className="word-trail__target-word">
                           <span className="word-trail__arrow word-trail__arrow--left">←</span>
                           <span className="word-trail__word word-trail__word--target">
@@ -193,11 +197,28 @@ export const WordTrail: React.FC<WordTrailProps> = ({
     return null;
   }
 
-  // Regular mode - original layout
+  // Regular mode - with auto-scroll support
+  const regularContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to top to show newest words (with column-reverse, newest at bottom)
+  useEffect(() => {
+    if (regularContainerRef.current && displayData.length > 0) {
+      const container = regularContainerRef.current;
+      // Use requestAnimationFrame for smooth scrolling
+      requestAnimationFrame(() => {
+        // With column-reverse, scroll to top (0) to show newest words at bottom
+        container.scrollTop = 0;
+      });
+    }
+  }, [displayData.length]);
+
+  // Reverse data order for column-reverse layout (newest items appear at bottom)
+  const reversedDisplayData = [...displayData].reverse();
+
   return (
     <div className={`word-trail ${className}`.trim()} role="region" aria-label="Game word history">
-      <div className="word-trail__container">
-        {displayData.map((item, index) => (
+      <div className="word-trail__container" ref={regularContainerRef}>
+        {reversedDisplayData.map((item, index) => (
           <div 
             key={`${item.word}-${item.turnNumber}-${index}`}
             className={[

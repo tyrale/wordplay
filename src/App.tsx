@@ -138,7 +138,7 @@ function App() {
               {appState === 'game' && (
                 <InteractiveGame 
                   config={{ 
-                    maxTurns: 10,
+                    maxTurns: 20,
                     allowBotPlayer: true,
                     enableKeyLetters: true,
                     enableLockedLetters: true,
