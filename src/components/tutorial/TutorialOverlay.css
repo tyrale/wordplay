@@ -28,8 +28,48 @@
   opacity: 1 !important;
 }
 
-/* Step 2+ - all letters return to full opacity */
-.tutorial-overlay__game[data-tutorial-step="2"] .grid-cell--letter,
+/* Step 2 specific constraints */
+
+/* Hide action icons in alphabet grid during step 2 */
+.tutorial-overlay__game[data-tutorial-step="2"] .grid-cell--action {
+  display: none;
+}
+
+/* Step 2 - all alphabet letters return to full opacity */
+.tutorial-overlay__game[data-tutorial-step="2"] .grid-cell--letter {
+  opacity: 1 !important;
+}
+
+/* Step 2 - word builder letters at reduced opacity except D */
+.tutorial-overlay__game[data-tutorial-step="2"] .word-builder__letter {
+  opacity: 0.3 !important;
+}
+
+/* Step 2 - D letter in word builder at full opacity */
+.tutorial-overlay__game[data-tutorial-step="2"] .word-builder__letter[data-letter="D"] {
+  opacity: 1 !important;
+}
+
+/* Disable alphabet clicks during step 2 */
+.tutorial-overlay__game[data-tutorial-step="2"] .grid-cell--letter {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Disable score clicks during step 2 */
+.tutorial-overlay__game[data-tutorial-step="2"] .interactive-game__score,
+.tutorial-overlay__game[data-tutorial-step="2"] .score-display {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Enable only D letter clicking in word builder during step 2 */
+.tutorial-overlay__game[data-tutorial-step="2"] .word-builder__letter[data-letter="D"] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Step 3+ - all letters return to full opacity */
 .tutorial-overlay__game[data-tutorial-step="3"] .grid-cell--letter,
 .tutorial-overlay__game[data-tutorial-step="4"] .grid-cell--letter,
 .tutorial-overlay__game[data-tutorial-step="5"] .grid-cell--letter,
@@ -49,6 +89,12 @@
   cursor: default;
 }
 
+/* Ensure S letter is clickable in step 1 */
+.tutorial-overlay__game[data-tutorial-step="1"] .grid-cell--letter[data-letter="S"] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
 /* Disable word builder letter removal during step 1 */
 .tutorial-overlay__game[data-tutorial-step="1"] .word-builder__letter {
   pointer-events: none;
@@ -56,7 +102,14 @@
 }
 
 /* Disable drag and drop during step 1 */
-.tutorial-overlay__game[data-tutorial-step="1"] .grid-cell--letter[draggable] {
+.tutorial-overlay__game[data-tutorial-step="1"] .grid-cell--letter[draggable]:not([data-letter="S"]) {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Disable score clicks during step 1 */
+.tutorial-overlay__game[data-tutorial-step="1"] .interactive-game__score,
+.tutorial-overlay__game[data-tutorial-step="1"] .score-display {
   pointer-events: none;
   cursor: default;
 }

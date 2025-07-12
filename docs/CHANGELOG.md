@@ -9,13 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Tutorial System - Phase 5.5 Step 1** 🔄 **IN PROGRESS**
+- **Tutorial System - Phase 5.5 Step 1** ✅ **COMPLETED**
   - **Purpose**: Interactive tutorial system that teaches players the basics of the game through guided steps
   - **Implementation**: Extension layer approach that wraps the real game with tutorial-specific constraints
   - **Architecture**: 
     - **TutorialOverlay**: Main component that manages tutorial state and progression
-    - **TutorialInstructions**: Floating instruction text component positioned at top of screen
-    - **Tutorial CSS**: Constraint system that hides/shows/disables UI elements based on tutorial step
+    - **TutorialInstructions**: Floating instruction text component positioned at top of screen (clean, no border/shadow)
+    - **Tutorial CSS**: Step-specific constraint system using data-tutorial-step attributes
     - **Menu Integration**: "the basics" menu item added to "about" section
   - **Step 1 Features**:
     - **Forced Starting Word**: Game always starts with "WORD"
@@ -49,7 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `src/components/game/InteractiveGame.tsx` (added tutorial support)
     - `src/App.tsx` (added tutorial state management)
     - `src/components/index.ts` (exported tutorial components)
-  - **Testing**: 4 tutorial component tests passing, verifying rendering and CSS constraints
+  - **Testing**: 4 tutorial component tests passing, verifying rendering and data attributes
+  - **Bug Fixes**: Fixed alphabet grid opacity interference, removed tutorial instruction styling
   - **Next Steps**: Implement Steps 2-6 of tutorial progression system
   - **Ready for Testing**: Step 1 tutorial functional and ready for user testing
 

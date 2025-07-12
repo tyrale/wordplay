@@ -5,7 +5,7 @@ import './TutorialOverlay.css';
 
 interface TutorialStep {
   id: number;
-  instructions: string;
+  instructions: string | string[];
   constraints: TutorialConstraints;
   completionCondition: (gameState: any, pendingWord: string) => boolean;
 }
@@ -13,7 +13,6 @@ interface TutorialStep {
 interface TutorialConstraints {
   hiddenElements: string[];
   disabledActions: string[];
-  forcedGameConfig: any;
   letterOpacity: Record<string, number>;
   allowedLetters?: string[];
 }
@@ -29,20 +28,27 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     instructions: "add a letter",
     constraints: {
       hiddenElements: ['action-icons', 'key-letters'],
-      disabledActions: ['remove-letter', 'move-letter'],
-      forcedGameConfig: { 
-        startingWord: 'WORD',
-        maxTurns: 20,
-        allowBotPlayer: true,
-        enableKeyLetters: true,
-        enableLockedLetters: true,
-        botId: 'tester'
-      },
+      disabledActions: ['remove-letter', 'move-letter', 'score-click'],
       letterOpacity: { default: 0.3, S: 1.0 },
       allowedLetters: ['S']
     },
     completionCondition: (gameState, pendingWord) => {
-      return pendingWord === 'WORDS' || gameState.currentWord === 'WORDS';
+      // Step 1 completes when user clicks S from alphabet
+      return gameState?.lastAction === 'letter-added' && gameState?.lastLetter === 'S';
+    }
+  },
+  {
+    id: 2,
+    instructions: ["add a letter", "remove a letter"],
+    constraints: {
+      hiddenElements: ['action-icons', 'key-letters'],
+      disabledActions: ['alphabet-click', 'score-click'],
+      letterOpacity: { default: 1.0 },
+      allowedLetters: []
+    },
+    completionCondition: (gameState, pendingWord) => {
+      // Step 2 completes when user clicks D from word builder (removal)
+      return gameState?.lastAction === 'letter-removed' && gameState?.lastLetter === 'D';
     }
   }
 ];
@@ -74,14 +80,6 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
       }
     }
   }, [gameState, pendingWord, currentStep, currentTutorialStep, tutorialComplete]);
-
-  // Monitor for step 1 completion by checking if current word is WORDS
-  useEffect(() => {
-    if (currentStep === 1 && gameState?.currentWord === 'WORDS') {
-      // Step 1 completed - user successfully added S to WORD
-      setTutorialComplete(true);
-    }
-  }, [currentStep, gameState?.currentWord]);
 
   const handleGameStateChange = useCallback((newGameState: any) => {
     setGameState(newGameState);
@@ -116,7 +114,6 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
         data-tutorial-step={tutorialComplete ? 'complete' : currentStep}
       >
         <InteractiveGame
-          config={currentTutorialStep.constraints.forcedGameConfig}
           onGameEnd={handleGameEnd}
           onResign={handleResign}
           onNavigateHome={onNavigateHome}
