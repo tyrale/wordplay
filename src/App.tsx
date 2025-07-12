@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ThemeProvider, InteractiveGame, MainScreen } from './components';
 import { ChallengeGame } from './components/challenge/ChallengeGame';
+import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
 import { ConfirmationDialog } from './components/ui/ConfirmationDialog';
 import { AnimationProvider } from './animations';
 import { UnlockProvider } from './components/unlock/UnlockProvider';
@@ -10,7 +11,7 @@ import { initViewportHeight } from './utils/viewportHeight';
 import { ToastProvider } from './components/ui/ToastManager';
 import './App.css';
 
-type AppState = 'main' | 'game' | 'challenge' | 'quitter';
+type AppState = 'main' | 'game' | 'challenge' | 'tutorial' | 'quitter';
 
 interface ConfirmationState {
   isVisible: boolean;
@@ -42,7 +43,7 @@ function App() {
     setConfirmationState(prev => ({ ...prev, isVisible: false }));
   };
 
-  const handleStartGame = (gameType: 'bot' | 'challenge', botId?: string) => {
+  const handleStartGame = (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => {
     if (gameType === 'bot' && botId) {
       // Check if we need confirmation for game transition
       if (appState === 'challenge') {
@@ -78,6 +79,9 @@ function App() {
         // No current game or already in challenge, start directly
         setAppState('challenge');
       }
+    } else if (gameType === 'tutorial') {
+      // Always start tutorial directly (resets to step 1)
+      setAppState('tutorial');
     }
   };
 
@@ -121,6 +125,11 @@ function App() {
     }
   };
 
+  const handleTutorialComplete = () => {
+    // Return to main screen after tutorial completion
+    setAppState('main');
+  };
+
   // Initialize viewport height handling
   React.useEffect(() => {
     initViewportHeight();
@@ -158,6 +167,12 @@ function App() {
                   onNavigateHome={handleNavigateHome}
                   onResetChallenge={handleResetChallenge}
                   onStartGame={handleStartGame}
+                />
+              )}
+              {appState === 'tutorial' && (
+                <TutorialOverlay
+                  onComplete={handleTutorialComplete}
+                  onNavigateHome={handleNavigateHome}
                 />
               )}
               

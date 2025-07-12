@@ -83,6 +83,8 @@ export const GridCell: React.FC<GridCellProps> = ({
       role="button"
       tabIndex={disabled ? -1 : 0}
       aria-label={ariaLabel || content}
+      data-letter={type === 'letter' ? content : undefined}
+      data-type={type}
     >
       <span className="grid-cell__content">
         {content}

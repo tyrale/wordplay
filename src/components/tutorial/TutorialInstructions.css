@@ -1,0 +1,22 @@
+.tutorial-instructions {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.tutorial-instructions__content {
+  background-color: var(--theme-surface);
+  color: var(--theme-text);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: 12px;
+  font-family: var(--theme-font-family);
+  font-size: var(--theme-font-size-lg);
+  font-weight: var(--theme-font-weight);
+  text-align: center;
+
+  max-width: 90vw;
+  word-wrap: break-word;
+} 

@@ -124,6 +124,10 @@ export type { WordBuilderProps } from './game/WordBuilder';
 export { InteractiveGame } from './game/InteractiveGame';
 export type { InteractiveGameProps } from './game/InteractiveGame';
 
+// Tutorial Components
+export { TutorialOverlay } from './tutorial/TutorialOverlay';
+export { TutorialInstructions } from './tutorial/TutorialInstructions';
+
 // Hooks
 export { useGameState, useGameStats, useWordState } from '../hooks/useGameState';
 export type { UseGameStateOptions, GameStateActions, UseGameStateReturn } from '../hooks/useGameState'; 

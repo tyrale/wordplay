@@ -1,0 +1,83 @@
+.tutorial-overlay {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+}
+
+.tutorial-overlay__game {
+  width: 100%;
+  height: 100%;
+}
+
+/* Tutorial Step 1 Constraints */
+
+/* Step 1 specific constraints */
+
+/* Hide action icons in alphabet grid during step 1 */
+.tutorial-overlay__game[data-tutorial-step="1"] .grid-cell--action {
+  display: none;
+}
+
+/* Step 1 - reduced opacity for all letters except S */
+.tutorial-overlay__game[data-tutorial-step="1"] .grid-cell--letter {
+  opacity: 0.3 !important;
+}
+
+/* Full opacity for S letter in step 1 */
+.tutorial-overlay__game[data-tutorial-step="1"] .grid-cell[data-letter="S"] {
+  opacity: 1 !important;
+}
+
+/* Step 2+ - all letters return to full opacity */
+.tutorial-overlay__game[data-tutorial-step="2"] .grid-cell--letter,
+.tutorial-overlay__game[data-tutorial-step="3"] .grid-cell--letter,
+.tutorial-overlay__game[data-tutorial-step="4"] .grid-cell--letter,
+.tutorial-overlay__game[data-tutorial-step="5"] .grid-cell--letter,
+.tutorial-overlay__game[data-tutorial-step="6"] .grid-cell--letter {
+  opacity: 1 !important;
+}
+
+/* Hide key letter styling (force base color) during step 1 */
+.tutorial-overlay__game[data-tutorial-step="1"] .grid-cell--key {
+  background-color: var(--theme-background);
+  color: var(--theme-text);
+}
+
+/* Disable interaction for non-allowed letters during step 1 */
+.tutorial-overlay__game[data-tutorial-step="1"] .grid-cell--letter:not([data-letter="S"]) {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Disable word builder letter removal during step 1 */
+.tutorial-overlay__game[data-tutorial-step="1"] .word-builder__letter {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Disable drag and drop during step 1 */
+.tutorial-overlay__game[data-tutorial-step="1"] .grid-cell--letter[draggable] {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* Tutorial complete state - remove all constraints */
+.tutorial-overlay__game--complete .grid-cell--action {
+  display: flex;
+}
+
+.tutorial-overlay__game--complete .grid-cell--letter {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.tutorial-overlay__game--complete .grid-cell--key {
+  background-color: var(--theme-accent);
+  color: var(--theme-accent-text);
+}
+
+.tutorial-overlay__game--complete .word-builder__letter {
+  pointer-events: auto;
+  cursor: pointer;
+} 

@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Tutorial System - Phase 5.5 Step 1** 🔄 **IN PROGRESS**
+  - **Purpose**: Interactive tutorial system that teaches players the basics of the game through guided steps
+  - **Implementation**: Extension layer approach that wraps the real game with tutorial-specific constraints
+  - **Architecture**: 
+    - **TutorialOverlay**: Main component that manages tutorial state and progression
+    - **TutorialInstructions**: Floating instruction text component positioned at top of screen
+    - **Tutorial CSS**: Constraint system that hides/shows/disables UI elements based on tutorial step
+    - **Menu Integration**: "the basics" menu item added to "about" section
+  - **Step 1 Features**:
+    - **Forced Starting Word**: Game always starts with "WORD"
+    - **Letter Opacity Control**: All letters at 30% opacity except 'S' at full opacity
+    - **Action Icon Hiding**: Action icons in alphabet grid are hidden
+    - **Key Letter Hiding**: Key letters appear as normal letters (no accent color)
+    - **Interaction Constraints**: Only 'S' letter can be clicked, all other interactions disabled
+    - **Word Manipulation Disabled**: Cannot remove letters or rearrange in word builder
+    - **Tutorial Instructions**: "add a letter" instruction displayed at top
+    - **Step Completion**: Automatically detects when user clicks 'S' to form "WORDS"
+  - **Technical Implementation**:
+    - **Real Game Foundation**: Uses actual InteractiveGame component with real game logic
+    - **CSS Custom Properties**: Dynamic letter opacity control via CSS variables
+    - **Data Attributes**: Added data-letter attributes to GridCell for precise CSS targeting
+    - **State Monitoring**: Game state changes monitored to detect tutorial progression
+    - **Clean Transition**: Tutorial constraints automatically removed when step completes
+  - **User Experience**:
+    - **Menu Access**: Click "the basics" in about menu to start tutorial
+    - **Clean Slate**: Tutorial resets to step 1 each time it's accessed
+    - **Seamless Progression**: After tutorial completion, user can continue playing real game
+    - **Visual Feedback**: Clear visual constraints guide user to correct action
+  - **Files Added**: 
+    - `src/components/tutorial/TutorialOverlay.tsx`
+    - `src/components/tutorial/TutorialInstructions.tsx`
+    - `src/components/tutorial/TutorialOverlay.css`
+    - `src/components/tutorial/TutorialInstructions.css`
+    - `src/components/tutorial/__tests__/tutorial.test.tsx`
+  - **Files Updated**: 
+    - `src/components/ui/Menu.tsx` (added "the basics" menu item)
+    - `src/components/ui/GridCell.tsx` (added data attributes for CSS targeting)
+    - `src/components/game/InteractiveGame.tsx` (added tutorial support)
+    - `src/App.tsx` (added tutorial state management)
+    - `src/components/index.ts` (exported tutorial components)
+  - **Testing**: 4 tutorial component tests passing, verifying rendering and CSS constraints
+  - **Next Steps**: Implement Steps 2-6 of tutorial progression system
+  - **Ready for Testing**: Step 1 tutorial functional and ready for user testing
+
 ### Fixed
 
 - **Challenge Mode Start/Target Word Positioning** ✅ **COMPLETED**

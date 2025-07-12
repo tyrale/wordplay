@@ -24,7 +24,7 @@ interface MenuProps {
   onClose: () => void;
   onDebugOpen?: () => void;
   onResign?: () => void;
-  onStartGame?: (gameType: 'bot' | 'challenge', botId?: string) => void;
+  onStartGame?: (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => void;
   onNavigateHome?: () => void;
   className?: string;
   isInGame?: boolean; // Whether user is currently in an active game
@@ -116,6 +116,7 @@ const getMenuItems = (
     id: 'about',
     title: 'about',
     children: [
+      { id: 'the-basics', title: 'the basics' },
       { id: 'game-version', title: 'game version' },
       { id: 'credits', title: 'credits' },
       { id: 'privacy-policy', title: 'privacy policy' },
@@ -273,6 +274,10 @@ export const Menu: React.FC<MenuProps> = ({
           // Don't close menu after theme change
         }
       }
+    } else if (tier1Id === 'about' && tier2Id === 'the-basics') {
+      // Start tutorial
+      onStartGame?.('tutorial');
+      handleClose(); // Close menu after starting tutorial
     } else if (tier1Id === 'about' && tier2Id === 'debug') {
       // Open debug dialog
       onDebugOpen?.();

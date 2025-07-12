@@ -61,7 +61,8 @@ export interface InteractiveGameProps {
   onResign?: () => void;
   onNavigateHome?: () => void;
   currentGameMode?: string;
-  onStartGame?: (gameType: 'bot' | 'challenge', botId?: string) => void;
+  onStartGame?: (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => void;
+  onGameStateChange?: (gameState: any) => void;
 }
 
 export const InteractiveGame: React.FC<InteractiveGameProps> = ({
@@ -70,7 +71,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   onResign,
   onNavigateHome,
   currentGameMode,
-  onStartGame
+  onStartGame,
+  onGameStateChange
 }) => {
   // Unlock system integration
   const { handleWordSubmission, handleGameCompletion } = useUnlockSystem();
@@ -136,6 +138,13 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   useEffect(() => {
     setPendingWord(wordState.currentWord);
   }, [wordState.currentWord]);
+
+  // Notify parent of game state changes (for tutorial)
+  useEffect(() => {
+    if (onGameStateChange && gameState) {
+      onGameStateChange(gameState);
+    }
+  }, [gameState, onGameStateChange]);
 
   // Handle game end
   useEffect(() => {

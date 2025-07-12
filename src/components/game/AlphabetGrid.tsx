@@ -107,20 +107,34 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   }, [disabled, onLetterDragStart]);
 
   const handleMouseUp = useCallback((_e: React.MouseEvent) => {
-    // Reset visual feedback for all letters
+    // Reset visual feedback for all letters, but only if not in tutorial mode
     const letters = document.querySelectorAll('.grid-cell--letter');
     letters.forEach(letter => {
-      (letter as HTMLElement).style.opacity = '1';
+      const element = letter as HTMLElement;
+      // Only reset opacity if not constrained by tutorial CSS
+      if (!element.closest('.tutorial-overlay__game:not(.tutorial-overlay__game--complete)')) {
+        element.style.opacity = '1';
+      } else {
+        // In tutorial mode, remove inline style to let CSS take over
+        element.style.opacity = '';
+      }
     });
     
     onLetterDragEnd?.();
   }, [onLetterDragEnd]);
 
   const handleTouchEnd = useCallback((_e: React.TouchEvent) => {
-    // Reset visual feedback for all letters
+    // Reset visual feedback for all letters, but only if not in tutorial mode
     const letters = document.querySelectorAll('.grid-cell--letter');
     letters.forEach(letter => {
-      (letter as HTMLElement).style.opacity = '1';
+      const element = letter as HTMLElement;
+      // Only reset opacity if not constrained by tutorial CSS
+      if (!element.closest('.tutorial-overlay__game:not(.tutorial-overlay__game--complete)')) {
+        element.style.opacity = '1';
+      } else {
+        // In tutorial mode, remove inline style to let CSS take over
+        element.style.opacity = '';
+      }
     });
     
     onLetterDragEnd?.();
