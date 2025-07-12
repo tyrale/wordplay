@@ -53,18 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Next Steps**: Implement Steps 2-6 of tutorial progression system
   - **Ready for Testing**: Step 1 tutorial functional and ready for user testing
 
-- **ShipHip Phase 5.5 Base Tutorial Step 2 Complete** - Enhanced tutorial system with two-step progression
-  - Tutorial instructions now use accent color for better visibility
-  - Score display interactions disabled during all tutorial steps
-  - Step 2: All alphabet grid letters at full opacity (no longer dimmed)
-  - Step 2: Multi-line instructions showing "add a letter\nremove a letter"
-  - Step 2: Word-in-play letters "WORS" at 30% opacity, "D" at full opacity
-  - Step 2: Only "D" letter clickable for removal, other word letters blocked
-  - Step 2: Completes when user removes "D" to form "WORS"
-  - Clean tutorial completion with proper constraint removal
-  - Enhanced CSS constraint system for step-specific visual guidance
-  - Comprehensive test coverage with 281 tests passing (no regressions)
-
 ### Fixed
 
 - **Challenge Mode Start/Target Word Positioning** ✅ **COMPLETED**
@@ -121,6 +109,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Cross-Platform Ready**: Consistent behavior across web, mobile, and future platforms
   - **Verification**: All 278 tests passing, word trail positioning working correctly in both regular and challenge modes
 
+### Fixed
+
 - **Test Suite Resolution - State Contamination Fixes** ✅ **COMPLETED**
   - **Purpose**: Resolve all remaining test failures (11 total) in terminal game and unlock engine test suites to achieve comprehensive test health
   - **Problem**: Multiple categories of test failures including null manager issues (8 failures) and state persistence problems (3 failures)
@@ -151,6 +141,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Cross-Platform Verification**: Terminal game and unlock system verified working across all adapters
     - **Dependency Injection Compliance**: Proper async initialization patterns maintain architectural principles
   - **Verification**: All 278 core tests passing, terminal game fully functional, unlock system state management working correctly
+
+### Changed
 
 - **Browser Environment Test Fixes** ✅ **COMPLETED**
   - **Purpose**: Fix browser adapter integration tests failing due to Node.js environment limitations
@@ -221,6 +213,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Scalability**: Structure supports project growth without becoming unwieldy
   - **Workflow Preservation**: Maintained ShipHip commit requirements, quality gates, and task completion criteria
   - **Verification**: File size reduced from 327 to 192 lines while preserving all essential information and improving navigation
+
+### Fixed
 
 - **Engine Architecture Cleanup** ✅ **COMPLETED**
   - **Purpose**: Comprehensive cleanup of game engine architecture to eliminate duplicate functions, consolidate validation logic, and maintain single source of truth
@@ -405,6 +399,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Future Compatibility**: Native apps will implement their own state management while reusing identical game engine
     - **Clean Separation**: UI concerns solved at UI layer, game logic remains platform-independent
   - **Verification**: All navigation flows working correctly, bot switching immediate and reliable, challenge confirmations proper, home navigation direct
+
+### Added
 
 - **Unlock System Documentation** ✅ **VERIFIED**
   - **Purpose**: Comprehensive documentation of the unlock system implementation status and future expansion plans
