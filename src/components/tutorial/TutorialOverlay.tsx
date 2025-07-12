@@ -7,7 +7,7 @@ interface TutorialStep {
   id: number;
   instructions: string | string[];
   constraints: TutorialConstraints;
-  completionCondition: (gameState: any, pendingWord: string) => boolean;
+  completionCondition: (gameState: any, tutorialState: TutorialState) => boolean;
 }
 
 interface TutorialConstraints {
@@ -16,6 +16,11 @@ interface TutorialConstraints {
   forcedGameConfig: any;
   letterOpacity: Record<string, number>;
   allowedLetters?: string[];
+}
+
+interface TutorialState {
+  lastPendingWord: string;
+  wordHistory: string[];
 }
 
 interface TutorialOverlayProps {
@@ -27,22 +32,24 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 1,
     instructions: "add a letter",
-          constraints: {
-        hiddenElements: ['action-icons', 'key-letters'],
-        disabledActions: ['remove-letter', 'move-letter'],
-        forcedGameConfig: { 
-          initialWord: 'WORD',
-          maxTurns: 20,
-          allowBotPlayer: true,
-          enableKeyLetters: true,
-          enableLockedLetters: true,
-          botId: 'tester'
-        },
+    constraints: {
+      hiddenElements: ['action-icons', 'key-letters'],
+      disabledActions: ['remove-letter', 'move-letter'],
+      forcedGameConfig: { 
+        initialWord: 'WORD',
+        maxTurns: 20,
+        allowBotPlayer: true,
+        enableKeyLetters: true,
+        enableLockedLetters: true,
+        botId: 'tester'
+      },
       letterOpacity: { default: 0.3, S: 1.0 },
       allowedLetters: ['S']
     },
-    completionCondition: (gameState, pendingWord) => {
-      return pendingWord === 'WORDS' || gameState.currentWord === 'WORDS';
+    completionCondition: (gameState, tutorialState: TutorialState) => {
+      // Step 1 completes when user has "WORDS" in their pending word
+      return tutorialState.lastPendingWord === 'WORDS' || 
+             gameState.currentWord === 'WORDS';
     }
   },
   {
@@ -62,8 +69,10 @@ const TUTORIAL_STEPS: TutorialStep[] = [
       letterOpacity: {},
       allowedLetters: []
     },
-    completionCondition: (gameState, pendingWord) => {
-      return pendingWord === 'WORS' || gameState.currentWord === 'WORS';
+    completionCondition: (gameState, tutorialState: TutorialState) => {
+      // Step 2 completes when user has "WORS" in their pending word (removed D)
+      return tutorialState.lastPendingWord === 'WORS' || 
+             gameState.currentWord === 'WORS';
     }
   }
 ];
@@ -74,47 +83,82 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [gameState, setGameState] = useState<any>(null);
-  const [pendingWord] = useState<string>('');
+  const [tutorialState, setTutorialState] = useState<TutorialState>({
+    lastPendingWord: '',
+    wordHistory: []
+  });
   const [tutorialComplete, setTutorialComplete] = useState<boolean>(false);
 
   const currentTutorialStep = TUTORIAL_STEPS.find(step => step.id === currentStep);
 
-  // Monitor game state changes to check for step completion
+  // Enhanced game state change handler that tracks pending word
+  const handleGameStateChange = useCallback((newGameState: any) => {
+    setGameState(newGameState);
+    
+    // Track the pending word by monitoring the word builder
+    // We'll use a DOM observation approach to detect changes
+    const wordBuilderElement = document.querySelector('.word-builder');
+    if (wordBuilderElement) {
+      const letters = wordBuilderElement.querySelectorAll('.word-builder__letter');
+      const currentPendingWord = Array.from(letters).map(letter => letter.textContent).join('');
+      
+      if (currentPendingWord && currentPendingWord !== tutorialState.lastPendingWord) {
+        setTutorialState((prev: TutorialState) => ({
+          ...prev,
+          lastPendingWord: currentPendingWord,
+          wordHistory: [...prev.wordHistory, currentPendingWord]
+        }));
+      }
+    }
+  }, [tutorialState.lastPendingWord]);
+
+  // Monitor for step completion
   useEffect(() => {
-    if (currentTutorialStep && gameState) {
-      const isStepComplete = currentTutorialStep.completionCondition(gameState, pendingWord);
+    if (currentTutorialStep && gameState && tutorialState.lastPendingWord) {
+      const isStepComplete = currentTutorialStep.completionCondition(gameState, tutorialState);
       
       if (isStepComplete && !tutorialComplete) {
+        console.log(`[Tutorial] Step ${currentStep} completed! Pending word: ${tutorialState.lastPendingWord}`);
+        
         if (currentStep < TUTORIAL_STEPS.length) {
           // Move to next step
-          setCurrentStep(currentStep + 1);
+          setTimeout(() => {
+            setCurrentStep(currentStep + 1);
+            console.log(`[Tutorial] Moving to step ${currentStep + 1}`);
+          }, 500); // Small delay to ensure the user sees the completion
         } else {
           // Tutorial complete - remove all constraints
           setTutorialComplete(true);
         }
       }
     }
-  }, [gameState, pendingWord, currentStep, currentTutorialStep, tutorialComplete]);
+  }, [gameState, tutorialState, currentStep, currentTutorialStep, tutorialComplete]);
 
-  // Monitor for step 1 completion by checking if current word is WORDS
+  // Additional DOM monitoring for more reliable tracking
   useEffect(() => {
-    if (currentStep === 1 && gameState?.currentWord === 'WORDS') {
-      // Step 1 completed - user successfully added S to WORD
-      setCurrentStep(2); // Move to step 2
-    }
-  }, [currentStep, gameState?.currentWord]);
+    const checkPendingWord = () => {
+      const wordBuilderElement = document.querySelector('.word-builder');
+      if (wordBuilderElement) {
+        const letters = wordBuilderElement.querySelectorAll('.word-builder__letter');
+        const currentPendingWord = Array.from(letters).map(letter => letter.textContent).join('');
+        
+        if (currentPendingWord && currentPendingWord !== tutorialState.lastPendingWord) {
+          console.log(`[Tutorial] Detected pending word change: ${tutorialState.lastPendingWord} -> ${currentPendingWord}`);
+          setTutorialState((prev: TutorialState) => ({
+            ...prev,
+            lastPendingWord: currentPendingWord,
+            wordHistory: [...prev.wordHistory, currentPendingWord]
+          }));
+        }
+      }
+    };
 
-  // Monitor for step 2 completion by checking if current word is WORS
-  useEffect(() => {
-    if (currentStep === 2 && pendingWord === 'WORS') {
-      // Step 2 completed - user successfully removed D from WORDS
-      setCurrentStep(3); // Move to step 3 (not implemented yet)
-    }
-  }, [currentStep, pendingWord]);
+    // Check immediately and then set up periodic checking
+    checkPendingWord();
+    const interval = setInterval(checkPendingWord, 200);
 
-  const handleGameStateChange = useCallback((newGameState: any) => {
-    setGameState(newGameState);
-  }, []);
+    return () => clearInterval(interval);
+  }, [tutorialState.lastPendingWord]);
 
   const handleGameEnd = useCallback(() => {
     // Tutorial completed naturally through game end
@@ -157,6 +201,26 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
           onGameStateChange={handleGameStateChange}
         />
       </div>
+      
+      {/* Debug info for development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{ 
+          position: 'fixed', 
+          top: '10px', 
+          right: '10px', 
+          background: 'rgba(0,0,0,0.8)', 
+          color: 'white', 
+          padding: '10px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          zIndex: 9999
+        }}>
+          <div>Tutorial Step: {currentStep}</div>
+          <div>Current Word: {gameState?.currentWord || 'N/A'}</div>
+          <div>Pending Word: {tutorialState.lastPendingWord || 'N/A'}</div>
+          <div>Word History: {tutorialState.wordHistory.slice(-3).join(' → ')}</div>
+        </div>
+      )}
     </div>
   );
 }; 
