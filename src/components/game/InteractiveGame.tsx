@@ -139,20 +139,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     setPendingWord(wordState.currentWord);
   }, [wordState.currentWord]);
 
-  // Track last action for tutorial
-  const [lastAction, setLastAction] = useState<{action: string, letter: string} | null>(null);
-
   // Notify parent of game state changes (for tutorial)
   useEffect(() => {
     if (onGameStateChange && gameState) {
-      const enhancedState = {
-        ...gameState,
-        lastAction: lastAction?.action || null,
-        lastLetter: lastAction?.letter || null
-      };
-      onGameStateChange(enhancedState);
+      onGameStateChange(gameState);
     }
-  }, [gameState, onGameStateChange, lastAction]);
+  }, [gameState, onGameStateChange]);
 
   // Handle game end
   useEffect(() => {
@@ -309,7 +301,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     // Add letter to pending word
     if (pendingWord.length < 10) { // Max word length
       const newWord = pendingWord + letter;
-      setLastAction({action: 'letter-added', letter});
       handleWordChange(newWord);
     }
   }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
@@ -349,11 +340,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     }
     
     const letters = pendingWord.split('');
-    const removedLetter = letters[index];
     letters.splice(index, 1);
     const newWord = letters.join('');
     
-    setLastAction({action: 'letter-removed', letter: removedLetter});
     handleWordChange(newWord);
   }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
 

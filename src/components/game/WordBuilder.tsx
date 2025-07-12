@@ -276,7 +276,6 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
             
             <span
               data-letter-index={index}
-              data-letter={letter}
               className={[
                 'word-builder__letter',
                 isKey && 'word-builder__letter--key',

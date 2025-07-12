@@ -5,7 +5,7 @@ import './TutorialOverlay.css';
 
 interface TutorialStep {
   id: number;
-  instructions: string | string[];
+  instructions: string;
   constraints: TutorialConstraints;
   completionCondition: (gameState: any, pendingWord: string) => boolean;
 }
@@ -13,6 +13,7 @@ interface TutorialStep {
 interface TutorialConstraints {
   hiddenElements: string[];
   disabledActions: string[];
+  forcedGameConfig: any;
   letterOpacity: Record<string, number>;
   allowedLetters?: string[];
 }
@@ -28,27 +29,41 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     instructions: "add a letter",
     constraints: {
       hiddenElements: ['action-icons', 'key-letters'],
-      disabledActions: ['remove-letter', 'move-letter', 'score-click'],
+      disabledActions: ['remove-letter', 'move-letter'],
+      forcedGameConfig: { 
+        initialWord: 'WORD',
+        maxTurns: 20,
+        allowBotPlayer: true,
+        enableKeyLetters: true,
+        enableLockedLetters: true,
+        botId: 'tester'
+      },
       letterOpacity: { default: 0.3, S: 1.0 },
       allowedLetters: ['S']
     },
     completionCondition: (gameState, pendingWord) => {
-      // Step 1 completes when user clicks S from alphabet
-      return gameState?.lastAction === 'letter-added' && gameState?.lastLetter === 'S';
+      return pendingWord === 'WORDS' || gameState.currentWord === 'WORDS';
     }
   },
   {
     id: 2,
-    instructions: ["add a letter", "remove a letter"],
+    instructions: "add a letter\nremove a letter",
     constraints: {
       hiddenElements: ['action-icons', 'key-letters'],
-      disabledActions: ['alphabet-click', 'score-click'],
+      disabledActions: ['add-letter', 'move-letter'],
+      forcedGameConfig: { 
+        initialWord: 'WORDS',
+        maxTurns: 20,
+        allowBotPlayer: true,
+        enableKeyLetters: true,
+        enableLockedLetters: true,
+        botId: 'tester'
+      },
       letterOpacity: { default: 1.0 },
       allowedLetters: []
     },
     completionCondition: (gameState, pendingWord) => {
-      // Step 2 completes when user clicks D from word builder (removal)
-      return gameState?.lastAction === 'letter-removed' && gameState?.lastLetter === 'D';
+      return pendingWord === 'WORS' || gameState.currentWord === 'WORS';
     }
   }
 ];
@@ -80,6 +95,19 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
       }
     }
   }, [gameState, pendingWord, currentStep, currentTutorialStep, tutorialComplete]);
+
+  // Monitor for step completion by checking current word changes
+  useEffect(() => {
+    if (currentStep === 1 && gameState?.currentWord === 'WORDS') {
+      // Step 1 completed - user successfully added S to WORD
+      // Move to step 2
+      setCurrentStep(2);
+    } else if (currentStep === 2 && gameState?.currentWord === 'WORS') {
+      // Step 2 completed - user successfully removed D from WORDS
+      // Tutorial complete
+      setTutorialComplete(true);
+    }
+  }, [currentStep, gameState?.currentWord]);
 
   const handleGameStateChange = useCallback((newGameState: any) => {
     setGameState(newGameState);
@@ -114,6 +142,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
         data-tutorial-step={tutorialComplete ? 'complete' : currentStep}
       >
         <InteractiveGame
+          config={currentTutorialStep.constraints.forcedGameConfig}
           onGameEnd={handleGameEnd}
           onResign={handleResign}
           onNavigateHome={onNavigateHome}
