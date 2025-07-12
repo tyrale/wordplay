@@ -56,6 +56,24 @@
   cursor: pointer !important;
 }
 
+/* Disable score display interaction in step 1 */
+.tutorial-overlay--step-1 .interactive-game__score {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+/* Disable all ScoreDisplay component interactions in step 1 */
+.tutorial-overlay--step-1 .score-display {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+/* Disable submit anchor interactions in step 1 */
+.tutorial-overlay--step-1 .interactive-game__submit-anchor {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
 /* Tutorial Step 2+ - Full opacity for all letters */
 .tutorial-overlay--step-2 .alphabet-grid .grid-cell--letter,
 .tutorial-overlay--step-3 .alphabet-grid .grid-cell--letter,

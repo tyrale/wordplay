@@ -8,7 +8,7 @@
 }
 
 .tutorial-instructions__content {
-  color: var(--theme-text);
+  color: var(--theme-accent);
   padding: var(--spacing-md) var(--spacing-lg);
   font-family: var(--theme-font-family);
   font-size: var(--theme-font-size-lg);

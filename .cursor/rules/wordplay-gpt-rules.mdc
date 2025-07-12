@@ -110,7 +110,7 @@ alwaysApply: true
 5. **Check for regressions** - ensure existing functionality unaffected.
 6. Commit only after successful diff review AND functional verification.
 
-### Verification Standards *(NEW)*
+### Verification Standards
 
 #### For "Working" Claims
 1. Execute specific test command
