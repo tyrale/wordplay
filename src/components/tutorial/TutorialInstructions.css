@@ -1,6 +1,6 @@
 .tutorial-instructions {
   position: fixed;
-  top: 20px;
+  top: 20%;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
@@ -8,12 +8,17 @@
 }
 
 .tutorial-instructions__content {
-  color: var(--theme-accent);
-  padding: var(--spacing-md) var(--spacing-lg);
+  text-align: center;
   font-family: var(--theme-font-family);
   font-size: var(--theme-font-size-lg);
   font-weight: var(--theme-font-weight);
-  text-align: center;
-  max-width: 90vw;
-  word-wrap: break-word;
+  color: var(--theme-accent);
+}
+
+.tutorial-instructions__line {
+  margin-bottom: 8px;
+}
+
+.tutorial-instructions__line:last-child {
+  margin-bottom: 0;
 } 

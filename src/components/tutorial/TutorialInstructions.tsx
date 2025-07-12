@@ -2,7 +2,7 @@ import React from 'react';
 import './TutorialInstructions.css';
 
 interface TutorialInstructionsProps {
-  text: string;
+  text: string | string[];
   className?: string;
 }
 
@@ -10,10 +10,16 @@ export const TutorialInstructions: React.FC<TutorialInstructionsProps> = ({
   text,
   className = ''
 }) => {
+  const lines = Array.isArray(text) ? text : [text];
+  
   return (
     <div className={`tutorial-instructions ${className}`.trim()}>
       <div className="tutorial-instructions__content">
-        {text}
+        {lines.map((line, index) => (
+          <div key={index} className="tutorial-instructions__line">
+            {line}
+          </div>
+        ))}
       </div>
     </div>
   );

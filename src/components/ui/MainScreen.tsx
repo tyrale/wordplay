@@ -9,7 +9,7 @@ interface Bot {
 }
 
 interface MainScreenProps {
-  onStartGame: (gameType: 'bot' | 'challenge', botId?: string) => void;
+  onStartGame: (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => void;
 }
 
 // Complete bot list with display names (same as Menu.tsx)

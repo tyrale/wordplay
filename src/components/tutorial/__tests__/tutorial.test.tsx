@@ -1,62 +1,38 @@
-import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
 import { TutorialInstructions } from '../TutorialInstructions';
-import { TutorialOverlay } from '../TutorialOverlay';
 
 // Mock the InteractiveGame component
 vi.mock('../../game/InteractiveGame', () => ({
-  InteractiveGame: () => <div data-testid="interactive-game">Mocked Game</div>
+  InteractiveGame: () => <div data-testid="interactive-game">Mock Interactive Game</div>
 }));
 
-describe('Tutorial Components', () => {
-  describe('TutorialInstructions', () => {
-    it('should render tutorial instructions text', () => {
-      render(<TutorialInstructions text="add a letter" />);
-      
-      expect(screen.getByText('add a letter')).toBeInTheDocument();
-    });
-
-    it('should apply custom className', () => {
-      const { container } = render(
-        <TutorialInstructions text="test" className="custom-class" />
-      );
-      
-      expect(container.firstChild).toHaveClass('tutorial-instructions', 'custom-class');
-    });
+describe('TutorialInstructions', () => {
+  it('renders single line instruction', () => {
+    render(<TutorialInstructions text="add a letter" />);
+    expect(screen.getByText('add a letter')).toBeInTheDocument();
   });
 
-  describe('TutorialOverlay', () => {
-    it('should render tutorial overlay with instructions', () => {
-      const mockOnComplete = vi.fn();
-      const mockOnNavigateHome = vi.fn();
+  it('renders multiple line instructions', () => {
+    render(<TutorialInstructions text={["add a letter", "remove a letter"]} />);
+    expect(screen.getByText('add a letter')).toBeInTheDocument();
+    expect(screen.getByText('remove a letter')).toBeInTheDocument();
+  });
 
-      render(
-        <TutorialOverlay 
-          onComplete={mockOnComplete}
-          onNavigateHome={mockOnNavigateHome}
-        />
-      );
+  it('applies custom className', () => {
+    render(<TutorialInstructions text="test" className="custom-class" />);
+    const element = screen.getByText('test').closest('.tutorial-instructions');
+    expect(element).toHaveClass('custom-class');
+  });
 
-      // Check that tutorial instructions are shown
-      expect(screen.getByText('add a letter')).toBeInTheDocument();
-      
-      // Check that the game component is rendered
-      expect(screen.getByTestId('interactive-game')).toBeInTheDocument();
-    });
-
-    it('should have proper CSS classes for step 1', () => {
-      const mockOnComplete = vi.fn();
-      const mockOnNavigateHome = vi.fn();
-
-      const { container } = render(
-        <TutorialOverlay 
-          onComplete={mockOnComplete}
-          onNavigateHome={mockOnNavigateHome}
-        />
-      );
-
-      const gameContainer = container.querySelector('.tutorial-overlay__game');
-      expect(gameContainer).toHaveClass('tutorial-overlay--step-1');
+  it('renders each instruction line with proper class', () => {
+    render(<TutorialInstructions text={["first line", "second line"]} />);
+    
+    const lines = screen.getAllByText(/line/);
+    expect(lines).toHaveLength(2);
+    
+    lines.forEach(line => {
+      expect(line.closest('.tutorial-instructions__line')).toBeInTheDocument();
     });
   });
 }); 

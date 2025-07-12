@@ -74,7 +74,70 @@
   cursor: default !important;
 }
 
-/* Tutorial Step 2+ - Full opacity for all letters */
+/* Tutorial Step 2 Constraints */
+
+/* Hide action icons in alphabet grid during step 2 */
+.tutorial-overlay--step-2 .grid-cell--action {
+  display: none;
+}
+
+/* Hide key letter styling (force base color) in step 2 */
+.tutorial-overlay--step-2 .grid-cell--key {
+  background-color: var(--theme-background) !important;
+  color: var(--theme-text) !important;
+}
+
+/* Disable score display interaction in step 2 */
+.tutorial-overlay--step-2 .interactive-game__score {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+/* Disable all ScoreDisplay component interactions in step 2 */
+.tutorial-overlay--step-2 .score-display {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+/* Disable submit anchor interactions in step 2 */
+.tutorial-overlay--step-2 .interactive-game__submit-anchor {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+/* Word builder constraints for step 2 - dim W, O, R, S and disable interactions */
+.tutorial-overlay--step-2 .word-builder__letter[data-letter-index="0"] {
+  opacity: 0.3 !important;
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+.tutorial-overlay--step-2 .word-builder__letter[data-letter-index="1"] {
+  opacity: 0.3 !important;
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+.tutorial-overlay--step-2 .word-builder__letter[data-letter-index="2"] {
+  opacity: 0.3 !important;
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+.tutorial-overlay--step-2 .word-builder__letter[data-letter-index="4"] {
+  opacity: 0.3 !important;
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+/* Keep D letter (index 3) fully interactive in step 2 */
+.tutorial-overlay--step-2 .word-builder__letter[data-letter-index="3"] {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Tutorial Step 2+ - Full opacity for all letters in alphabet grid */
 .tutorial-overlay--step-2 .alphabet-grid .grid-cell--letter,
 .tutorial-overlay--step-3 .alphabet-grid .grid-cell--letter,
 .tutorial-overlay--step-4 .alphabet-grid .grid-cell--letter,
@@ -100,6 +163,7 @@
 }
 
 .tutorial-overlay--complete .word-builder__letter {
+  opacity: 1 !important;
   pointer-events: auto !important;
   cursor: pointer !important;
 } 
