@@ -49,9 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Step 3 Features**:
     - **Four-line Instructions**: "add a letter", "remove a letter", "move to spell ROWS", "tap to submit"
     - **Word Rearrangement Only**: Alphabet grid disabled to prevent adding/removing letters
-    - **Word Builder Enabled**: All letters in word builder are interactive for rearrangement
+    - **Click Removal Prevention**: Cannot click word builder letters to remove them
+    - **Drag Rearrangement Enabled**: Can drag letters within word builder to rearrange
     - **Score Interactions Enabled**: Score row becomes fully interactive
-    - **Focused Learning**: Users can only rearrange existing letters, not add new ones
+    - **Focused Learning**: Users must rearrange "WORS" to "ROWS" using drag only
     - **Step Completion**: Automatically detects when user submits "ROWS" as valid word
   - **Technical Implementation**:
     - **Real Game Foundation**: Uses actual InteractiveGame component with real game logic
@@ -60,6 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **DOM Monitoring System**: Robust word detection using DOM observation and periodic checking
     - **Progressive Constraint Removal**: Each step removes more constraints, culminating in full game access
     - **Submission Detection**: Monitors submittedWords array to detect successful word submissions
+    - **Click Event Interception**: Global event listener prevents word builder letter clicks in Step 3
+    - **Drag Preservation**: Drag events (mousedown, mousemove, mouseup) remain functional for rearrangement
   - **User Experience**:
     - **Menu Access**: Click "the basics" in about menu to start tutorial
     - **Clean Slate**: Tutorial resets to step 1 each time it's accessed
