@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **ShipHip: Letter Removal Double-Click Bug** 🐛 **FIXED**
+  - **Issue**: Clicking to remove a letter from the word builder sometimes removed 2 letters instead of 1
+  - **Root Cause**: Both mouse and touch events could fire for the same user interaction, especially on mobile devices
+  - **Solution**: Added debouncing mechanism to `handleMouseUp` in `WordBuilder.tsx` (same 100ms threshold as existing `handleTouchEnd`)
+  - **Technical Details**: 
+    - `handleTouchEnd` already had proper debouncing using `lastEventTimeRef`
+    - `handleMouseUp` was missing the same debouncing logic
+    - Both events could fire within milliseconds of each other, causing double letter removal
+  - **Impact**: Ensures only one letter is removed per click interaction across all platforms
+  - **Files Modified**: `src/components/game/WordBuilder.tsx`
+  - **Verification**: Manual testing confirmed fix resolves double-removal issue
+
 ### Added
 
 - **Tutorial System - Phase 5.5 Steps 1-3** 🔄 **IN PROGRESS**

@@ -139,26 +139,31 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       return;
     }
 
-    if (!isDragging) {
-      handleLetterClick(draggedIndex);
-    } else if (dropTargetIndex !== null) {
-      const newLetters = [...currentWord];
-      const draggedLetter = newLetters[draggedIndex];
-      newLetters.splice(draggedIndex, 1);
-      
-      const insertIndex = dropTargetIndex > draggedIndex ? dropTargetIndex - 1 : dropTargetIndex;
-      newLetters.splice(insertIndex, 0, draggedLetter);
-      
-      if (onWordChange) {
-        onWordChange(newLetters.join(''));
-      }
-    }
+    const eventNow = Date.now();
+    if (eventNow - lastEventTimeRef.current > 100) {
+      lastEventTimeRef.current = eventNow;
 
-    setDraggedIndex(null);
-    setIsDragging(false);
-    setDragStartPos({ x: 0, y: 0 });
-    setDropTargetIndex(null);
-    inputMethodRef.current = null;
+      if (!isDragging) {
+        handleLetterClick(draggedIndex);
+      } else if (dropTargetIndex !== null) {
+        const newLetters = [...currentWord];
+        const draggedLetter = newLetters[draggedIndex];
+        newLetters.splice(draggedIndex, 1);
+        
+        const insertIndex = dropTargetIndex > draggedIndex ? dropTargetIndex - 1 : dropTargetIndex;
+        newLetters.splice(insertIndex, 0, draggedLetter);
+        
+        if (onWordChange) {
+          onWordChange(newLetters.join(''));
+        }
+      }
+
+      setDraggedIndex(null);
+      setIsDragging(false);
+      setDragStartPos({ x: 0, y: 0 });
+      setDropTargetIndex(null);
+      inputMethodRef.current = null;
+    }
   }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent, index: number) => {
