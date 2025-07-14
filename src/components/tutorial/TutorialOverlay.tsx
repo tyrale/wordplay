@@ -74,6 +74,29 @@ const TUTORIAL_STEPS: TutorialStep[] = [
       return tutorialState.lastPendingWord === 'WORS' || 
              gameState.currentWord === 'WORS';
     }
+  },
+  {
+    id: 3,
+    instructions: ["add a letter", "remove a letter", "move to spell ROWS", "tap to submit"],
+    constraints: {
+      hiddenElements: ['action-icons', 'key-letters'],
+      disabledActions: [],
+      forcedGameConfig: { 
+        initialWord: 'WORS',
+        maxTurns: 20,
+        allowBotPlayer: true,
+        enableKeyLetters: true,
+        enableLockedLetters: true,
+        botId: 'tester'
+      },
+      letterOpacity: {},
+      allowedLetters: []
+    },
+    completionCondition: (gameState, tutorialState: TutorialState) => {
+      // Step 3 completes when user submits "ROWS" as a valid word
+      return gameState && gameState.submittedWords && 
+             gameState.submittedWords.some((word: string) => word === 'ROWS');
+    }
   }
 ];
 

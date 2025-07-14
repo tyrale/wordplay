@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Tutorial System - Phase 5.5 Step 1** 🔄 **IN PROGRESS**
+- **Tutorial System - Phase 5.5 Steps 1-3** 🔄 **IN PROGRESS**
   - **Purpose**: Interactive tutorial system that teaches players the basics of the game through guided steps
   - **Implementation**: Extension layer approach that wraps the real game with tutorial-specific constraints
   - **Architecture**: 
@@ -26,12 +26,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Word Manipulation Disabled**: Cannot remove letters or rearrange in word builder
     - **Tutorial Instructions**: "add a letter" instruction displayed at top
     - **Step Completion**: Automatically detects when user clicks 'S' to form "WORDS"
+  - **Step 2 Features**:
+    - **Multi-line Instructions**: "add a letter" and "remove a letter" displayed
+    - **Alphabet Grid Disabled**: All alphabet letters become non-interactive
+    - **Word Builder Selective**: Only 'D' letter (index 3) remains interactive for removal
+    - **Letter Opacity**: W, O, R, S letters dimmed to 30% opacity and disabled
+    - **Step Completion**: Automatically detects when "WORDS" becomes "WORS" (D removed)
+  - **Step 3 Features**:
+    - **Four-line Instructions**: "add a letter", "remove a letter", "move to spell ROWS", "tap to submit"
+    - **Normal Game Play**: All constraints removed - full alphabet grid and word builder interaction
+    - **Score Interactions Enabled**: Score row becomes fully interactive
+    - **Game Logic Intact**: Complete game functionality available (move, add, remove letters)
+    - **Step Completion**: Automatically detects when user submits "ROWS" as valid word
   - **Technical Implementation**:
     - **Real Game Foundation**: Uses actual InteractiveGame component with real game logic
-    - **CSS Custom Properties**: Dynamic letter opacity control via CSS variables
-    - **Data Attributes**: Added data-letter attributes to GridCell for precise CSS targeting
-    - **State Monitoring**: Game state changes monitored to detect tutorial progression
-    - **Clean Transition**: Tutorial constraints automatically removed when step completes
+    - **Step-based CSS Architecture**: CSS classes for each step (tutorial-overlay--step-1, --step-2, --step-3)
+    - **Data Attributes**: Added data-letter and data-letter-index attributes for precise CSS targeting
+    - **DOM Monitoring System**: Robust word detection using DOM observation and periodic checking
+    - **Progressive Constraint Removal**: Each step removes more constraints, culminating in full game access
+    - **Submission Detection**: Monitors submittedWords array to detect successful word submissions
   - **User Experience**:
     - **Menu Access**: Click "the basics" in about menu to start tutorial
     - **Clean Slate**: Tutorial resets to step 1 each time it's accessed

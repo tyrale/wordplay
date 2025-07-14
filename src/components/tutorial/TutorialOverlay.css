@@ -145,8 +145,47 @@
   cursor: pointer !important;
 }
 
+/* Tutorial Step 3 - Normal game play with hidden action icons and key letters */
+.tutorial-overlay--step-3 .grid-cell--action {
+  display: none;
+}
+
+.tutorial-overlay--step-3 .grid-cell--key {
+  background-color: var(--theme-background) !important;
+  color: var(--theme-text) !important;
+}
+
+/* Step 3: Full opacity and interaction for all alphabet grid letters */
+.tutorial-overlay--step-3 .alphabet-grid .grid-cell--letter {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Step 3: Full opacity and interaction for all word builder letters */
+.tutorial-overlay--step-3 .word-builder__letter {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Step 3: Enable score interactions */
+.tutorial-overlay--step-3 .interactive-game__score {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+.tutorial-overlay--step-3 .score-display {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+.tutorial-overlay--step-3 .interactive-game__submit-anchor {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
 /* Tutorial Step 2+ - Full opacity for all letters in alphabet grid (but disabled in step 2) */
-.tutorial-overlay--step-3 .alphabet-grid .grid-cell--letter,
 .tutorial-overlay--step-4 .alphabet-grid .grid-cell--letter,
 .tutorial-overlay--step-5 .alphabet-grid .grid-cell--letter,
 .tutorial-overlay--step-6 .alphabet-grid .grid-cell--letter {

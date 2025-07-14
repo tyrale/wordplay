@@ -19,6 +19,14 @@ describe('TutorialInstructions', () => {
     expect(screen.getByText('remove a letter')).toBeInTheDocument();
   });
 
+  it('renders Step 3 four-line instructions', () => {
+    render(<TutorialInstructions text={["add a letter", "remove a letter", "move to spell ROWS", "tap to submit"]} />);
+    expect(screen.getByText('add a letter')).toBeInTheDocument();
+    expect(screen.getByText('remove a letter')).toBeInTheDocument();
+    expect(screen.getByText('move to spell ROWS')).toBeInTheDocument();
+    expect(screen.getByText('tap to submit')).toBeInTheDocument();
+  });
+
   it('applies custom className', () => {
     render(<TutorialInstructions text="test" className="custom-class" />);
     const element = screen.getByText('test').closest('.tutorial-instructions');
