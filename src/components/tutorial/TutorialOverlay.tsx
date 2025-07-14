@@ -201,26 +201,6 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
           onGameStateChange={handleGameStateChange}
         />
       </div>
-      
-      {/* Debug info for development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div style={{ 
-          position: 'fixed', 
-          top: '10px', 
-          right: '10px', 
-          background: 'rgba(0,0,0,0.8)', 
-          color: 'white', 
-          padding: '10px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          zIndex: 9999
-        }}>
-          <div>Tutorial Step: {currentStep}</div>
-          <div>Current Word: {gameState?.currentWord || 'N/A'}</div>
-          <div>Pending Word: {tutorialState.lastPendingWord || 'N/A'}</div>
-          <div>Word History: {tutorialState.wordHistory.slice(-3).join(' → ')}</div>
-        </div>
-      )}
     </div>
   );
 }; 
