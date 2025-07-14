@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { TutorialInstructions } from '../TutorialInstructions';
+import { TutorialOverlay } from '../TutorialOverlay';
 
 // Mock the InteractiveGame component
 vi.mock('../../game/InteractiveGame', () => ({
@@ -42,5 +43,20 @@ describe('TutorialInstructions', () => {
     lines.forEach(line => {
       expect(line.closest('.tutorial-instructions__line')).toBeInTheDocument();
     });
+  });
+});
+
+describe('TutorialOverlay', () => {
+  it('renders tutorial overlay component', () => {
+    render(
+      <TutorialOverlay 
+        onComplete={() => {}}
+        onNavigateHome={() => {}}
+      />
+    );
+
+    // Check that the tutorial overlay renders
+    const overlay = document.querySelector('.tutorial-overlay');
+    expect(overlay).toBeInTheDocument();
   });
 }); 

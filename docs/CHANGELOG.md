@@ -34,9 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Step Completion**: Automatically detects when "WORDS" becomes "WORS" (D removed)
   - **Step 3 Features**:
     - **Four-line Instructions**: "add a letter", "remove a letter", "move to spell ROWS", "tap to submit"
-    - **Normal Game Play**: All constraints removed - full alphabet grid and word builder interaction
+    - **Word Rearrangement Only**: Alphabet grid disabled to prevent adding/removing letters
+    - **Word Builder Enabled**: All letters in word builder are interactive for rearrangement
     - **Score Interactions Enabled**: Score row becomes fully interactive
-    - **Game Logic Intact**: Complete game functionality available (move, add, remove letters)
+    - **Focused Learning**: Users can only rearrange existing letters, not add new ones
     - **Step Completion**: Automatically detects when user submits "ROWS" as valid word
   - **Technical Implementation**:
     - **Real Game Foundation**: Uses actual InteractiveGame component with real game logic

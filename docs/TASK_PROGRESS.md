@@ -80,7 +80,7 @@
 - **5.3** ⏳ Six-Letter Attribute - Game difficulty variations
 
 ### Phase 5.5 - Tutorials 🔄 **IN PROGRESS**
-- **5.5** 🔄 Base Tutorial - Step-by-step tutorial building UI for each step (Steps 1-3 implemented)
+- **5.5** 🔄 Base Tutorial - Step-by-step tutorial building UI for each step (Steps 1-3 implemented, Step 3 alphabet grid disabled)
 - **5.6** ⏳ Challenge Tutorial - Tutorial explaining challenge mode
 
 ### Phase 6 - Web Polish & Accessibility ⏳ **PENDING**
