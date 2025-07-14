@@ -16,6 +16,7 @@ interface TutorialConstraints {
   forcedGameConfig: any;
   letterOpacity: Record<string, number>;
   allowedLetters?: string[];
+  disableLetterRemoval?: boolean;
 }
 
 interface TutorialState {
@@ -90,7 +91,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
         botId: 'tester'
       },
       letterOpacity: {},
-      allowedLetters: []
+      allowedLetters: [],
+      disableLetterRemoval: true
     },
     completionCondition: (gameState, tutorialState: TutorialState) => {
       // Step 3 completes when user submits "ROWS" as a valid word
@@ -111,6 +113,23 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
     wordHistory: []
   });
   const [tutorialComplete, setTutorialComplete] = useState<boolean>(false);
+  
+  // Add click interception for Step 3 letter removal prevention
+  useEffect(() => {
+    if (currentStep === 3) {
+      const handleClick = (e: Event) => {
+        const target = e.target as HTMLElement;
+        if (target.classList.contains('word-builder__letter')) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      };
+      
+      document.addEventListener('click', handleClick, true);
+      return () => document.removeEventListener('click', handleClick, true);
+    }
+  }, [currentStep]);
 
   const currentTutorialStep = TUTORIAL_STEPS.find(step => step.id === currentStep);
 

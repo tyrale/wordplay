@@ -162,11 +162,22 @@
   opacity: 0.3 !important;
 }
 
-/* Step 3: Full opacity and interaction for all word builder letters */
+/* Step 3: Word builder letters - prevent click but allow drag */
 .tutorial-overlay--step-3 .word-builder__letter {
   opacity: 1 !important;
   pointer-events: auto !important;
-  cursor: pointer !important;
+  cursor: grab !important;
+  user-select: none !important;
+}
+
+/* Step 3: Visual feedback during drag */
+.tutorial-overlay--step-3 .word-builder__letter:active {
+  cursor: grabbing !important;
+}
+
+/* Step 3: Disable click events via JavaScript interception */
+.tutorial-overlay--step-3 .word-builder__letter {
+  --tutorial-disable-click: true;
 }
 
 /* Step 3: Enable score interactions */
