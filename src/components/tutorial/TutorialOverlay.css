@@ -196,48 +196,8 @@
   cursor: pointer !important;
 }
 
-/* Step 4: Full game experience - all constraints removed */
-.tutorial-overlay--step-4 .alphabet-grid .grid-cell {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  cursor: pointer !important;
-}
-
-.tutorial-overlay--step-4 .alphabet-grid .grid-cell--letter {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  cursor: pointer !important;
-}
-
-.tutorial-overlay--step-4 .grid-cell--action {
-  display: flex !important;
-}
-
-.tutorial-overlay--step-4 .grid-cell--key {
-  background-color: var(--theme-accent) !important;
-  color: var(--theme-accent-text) !important;
-}
-
-.tutorial-overlay--step-4 .word-builder__letter {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  cursor: pointer !important;
-}
-
-.tutorial-overlay--step-4 .interactive-game__score {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-}
-
-.tutorial-overlay--step-4 .score-display {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-}
-
-.tutorial-overlay--step-4 .interactive-game__submit-anchor {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-}
+/* Step 4: Full game experience - NO constraints, let game render naturally */
+/* No CSS rules needed - Step 4 should have zero tutorial interference */
 
 /* Tutorial Step 5+ - Full opacity for all letters in alphabet grid */
 .tutorial-overlay--step-5 .alphabet-grid .grid-cell--letter,
