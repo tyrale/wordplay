@@ -252,7 +252,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       player: turn.playerId,
       turnNumber: turn.turnNumber,
       actions: turn.scoringBreakdown.actions,
-      keyLetters: turn.scoringBreakdown.keyLettersUsed || []
+      keyLetters: turn.scoringBreakdown.keyLettersUsed || [],
+      scoreBreakdown: turn.scoringBreakdown.breakdown
     }));
     
     return moves;

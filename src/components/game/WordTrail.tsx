@@ -8,6 +8,12 @@ export interface WordMove {
   turnNumber?: number;
   actions?: string[];
   keyLetters?: string[];
+  scoreBreakdown?: {
+    addLetterPoints: number;
+    removeLetterPoints: number;
+    movePoints: number;
+    keyLetterUsagePoints: number;
+  };
 }
 
 export interface WordTrailProps {
@@ -47,7 +53,8 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         player: move.player,
         turnNumber: move.turnNumber || index + 1,
         actions: move.actions || [],
-        keyLetters: move.keyLetters || []
+        keyLetters: move.keyLetters || [],
+        scoreBreakdown: move.scoreBreakdown
       }))
     : words.map((word, index) => ({
         word,
@@ -55,7 +62,8 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         player: undefined,
         turnNumber: index + 1,
         actions: [],
-        keyLetters: []
+        keyLetters: [],
+        scoreBreakdown: undefined
       }));
 
   const handleWordClick = (word: string, index: number) => {
@@ -212,7 +220,20 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                         
                         {showScores && (item.score > 0 || (item.score === 0 && item.actions.includes('PASS'))) && (
                           <span className="word-trail__score" aria-label={item.score === 0 && item.actions.includes('PASS') ? 'passed turn' : `${item.score} points`}>
-                            {item.score === 0 && item.actions.includes('PASS') ? 'pass' : `+${item.score}`}
+                            {item.score === 0 && item.actions.includes('PASS') ? 'pass' : 
+                              item.scoreBreakdown ? 
+                                (() => {
+                                  const base = item.scoreBreakdown.addLetterPoints + item.scoreBreakdown.removeLetterPoints + item.scoreBreakdown.movePoints;
+                                  const keyBonus = item.scoreBreakdown.keyLetterUsagePoints;
+                                  if (base > 0) {
+                                    return keyBonus > 0 ? `+${base} +${keyBonus}` : `+${base}`;
+                                  } else if (keyBonus > 0) {
+                                    return `+${keyBonus}`;
+                                  }
+                                  return '+0';
+                                })() : 
+                                `+${item.score}`
+                            }
                           </span>
                         )}
                       </div>
@@ -290,7 +311,20 @@ export const WordTrail: React.FC<WordTrailProps> = ({
             
             {showScores && (item.score > 0 || (item.score === 0 && item.actions.includes('PASS'))) && (
               <span className="word-trail__score" aria-label={item.score === 0 && item.actions.includes('PASS') ? 'passed turn' : `${item.score} points`}>
-                {item.score === 0 && item.actions.includes('PASS') ? 'pass' : `+${item.score}`}
+                {item.score === 0 && item.actions.includes('PASS') ? 'pass' : 
+                  item.scoreBreakdown ? 
+                    (() => {
+                      const base = item.scoreBreakdown.addLetterPoints + item.scoreBreakdown.removeLetterPoints + item.scoreBreakdown.movePoints;
+                      const keyBonus = item.scoreBreakdown.keyLetterUsagePoints;
+                      if (base > 0) {
+                        return keyBonus > 0 ? `+${base} +${keyBonus}` : `+${base}`;
+                      } else if (keyBonus > 0) {
+                        return `+${keyBonus}`;
+                      }
+                      return '+0';
+                    })() : 
+                    `+${item.score}`
+                }
               </span>
             )}
           </div>
