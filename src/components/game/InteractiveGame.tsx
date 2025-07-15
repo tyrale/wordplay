@@ -63,6 +63,7 @@ export interface InteractiveGameProps {
   currentGameMode?: string;
   onStartGame?: (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => void;
   onGameStateChange?: (gameState: any) => void;
+  disableLetterRemoval?: boolean;
 }
 
 export const InteractiveGame: React.FC<InteractiveGameProps> = ({
@@ -72,7 +73,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   onNavigateHome,
   currentGameMode,
   onStartGame,
-  onGameStateChange
+  onGameStateChange,
+  disableLetterRemoval = false
 }) => {
   // Unlock system integration
   const { handleWordSubmission, handleGameCompletion } = useUnlockSystem();
@@ -335,6 +337,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       return;
     }
     
+    if (disableLetterRemoval) {
+      console.log('[Tutorial] Letter removal disabled in Step 3');
+      return;
+    }
+    
     if (index < 0 || index >= pendingWord.length) {
       return;
     }
@@ -344,7 +351,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     const newWord = letters.join('');
     
     handleWordChange(newWord);
-  }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
+  }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange, disableLetterRemoval]);
 
   const handleSubmit = useCallback(async () => {
     

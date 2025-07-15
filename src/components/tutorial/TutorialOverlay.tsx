@@ -114,22 +114,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
   });
   const [tutorialComplete, setTutorialComplete] = useState<boolean>(false);
   
-  // Add click interception for Step 3 letter removal prevention
-  useEffect(() => {
-    if (currentStep === 3) {
-      const handleClick = (e: Event) => {
-        const target = e.target as HTMLElement;
-        if (target.classList.contains('word-builder__letter')) {
-          e.preventDefault();
-          e.stopPropagation();
-          return false;
-        }
-      };
-      
-      document.addEventListener('click', handleClick, true);
-      return () => document.removeEventListener('click', handleClick, true);
-    }
-  }, [currentStep]);
+
 
   const currentTutorialStep = TUTORIAL_STEPS.find(step => step.id === currentStep);
 
@@ -241,6 +226,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
           currentGameMode="tutorial"
           onStartGame={() => {}} // Disable game switching during tutorial
           onGameStateChange={handleGameStateChange}
+          disableLetterRemoval={currentStep === 3}
         />
       </div>
     </div>
