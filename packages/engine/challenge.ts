@@ -127,6 +127,26 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
   }
 
   /**
+   * Check if a word has repeating letters
+   */
+  function hasRepeatingLetters(word: string): boolean {
+    const letterCounts = new Map<string, number>();
+    for (const letter of word.toUpperCase()) {
+      const count = letterCounts.get(letter) || 0;
+      if (count > 0) return true;
+      letterCounts.set(letter, count + 1);
+    }
+    return false;
+  }
+
+  /**
+   * Check if a start word is valid (no repeating letters)
+   */
+  function isValidStartWord(word: string): boolean {
+    return !hasRepeatingLetters(word);
+  }
+
+  /**
    * Generate start and target words for a given date
    */
   function generateDailyWords(dateString: string): { startWord: string; targetWord: string } {
@@ -140,22 +160,26 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     // For testing with mock dictionary, use different selection method
     let startWord: string | null = null;
     let attempts = 0;
-    const maxAttempts = 10;
+    const maxAttempts = 50; // Increased attempts due to additional constraint
     
-    // Try to get a valid start word
+    // Try to get a valid start word (no repeating letters)
     while (!startWord && attempts < maxAttempts) {
-      startWord = dictionary.getRandomWordByLength(startLength);
-      attempts++;
+      const candidateWord = dictionary.getRandomWordByLength(startLength);
       
-      // Use the RNG to vary selection even with deterministic mock
-      if (startWord && rng.next() < 0.5 && attempts < maxAttempts) {
-        startWord = null; // Skip this word sometimes to get variation
+      if (candidateWord && isValidStartWord(candidateWord)) {
+        // Use the RNG to vary selection even with deterministic mock
+        if (rng.next() < 0.7 || attempts >= maxAttempts - 5) {
+          startWord = candidateWord;
+        }
+        // Otherwise skip this word to get variation
       }
+      
+      attempts++;
     }
     
     if (!startWord) {
-      // Fallback words if random generation fails
-      const fallbacks = ['GAMES', 'WORDS', 'PLAYS', 'TIMES', 'MAKES'];
+      // Fallback words if random generation fails - all have no repeating letters
+      const fallbacks = ['GAMES', 'WORDS', 'PLAYS', 'TIMES', 'MAKES', 'WORLD', 'HOUSE', 'LIGHT', 'SOUND', 'NIGHT'];
       startWord = fallbacks[rng.nextInt(0, fallbacks.length - 1)];
     }
     
@@ -548,14 +572,33 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     const randomSeed = utilities.getTimestamp();
     const rng = new SeededRandom(randomSeed);
     
-    // Generate random start word
+    // Generate random start word (no repeating letters)
     const startLengths = [4, 5, 6];
     const startLength = startLengths[rng.nextInt(0, startLengths.length - 1)];
     
-    let startWord = dictionary.getRandomWordByLength(startLength);
+    let startWord: string | null = null;
+    let attempts = 0;
+    const maxAttempts = 50;
+    
+    // Try to get a valid start word (no repeating letters)
+    while (!startWord && attempts < maxAttempts) {
+      const candidateWord = dictionary.getRandomWordByLength(startLength);
+      
+      if (candidateWord && isValidStartWord(candidateWord)) {
+        // Use the RNG to vary selection
+        if (rng.next() < 0.7 || attempts >= maxAttempts - 5) {
+          startWord = candidateWord;
+        }
+        // Otherwise skip this word to get variation
+      }
+      
+      attempts++;
+    }
+    
     if (!startWord) {
-      // Updated fallback to ensure ≥5 letter words can be generated
-      startWord = 'GAMES';
+      // Fallback words if random generation fails - all have no repeating letters
+      const fallbacks = ['GAMES', 'WORDS', 'PLAYS', 'TIMES', 'MAKES', 'WORLD', 'HOUSE', 'LIGHT', 'SOUND', 'NIGHT'];
+      startWord = fallbacks[rng.nextInt(0, fallbacks.length - 1)];
     }
     
     // Generate random target word with same constraints as daily challenges
@@ -565,16 +608,16 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     const finalTargetLength = Math.max(minTargetLength, Math.min(maxTargetLength, targetLength));
     
     let targetWord: string | null = null;
-    let attempts = 0;
-    const maxAttempts = 50;
+    let targetAttempts = 0;
+    const maxTargetAttempts = 50;
     
     // Try to get a valid target word with all constraints
-    while ((!targetWord || !isValidTargetWord(startWord, targetWord)) && attempts < maxAttempts) {
+    while ((!targetWord || !isValidTargetWord(startWord, targetWord)) && targetAttempts < maxTargetAttempts) {
       targetWord = dictionary.getRandomWordByLength(finalTargetLength);
-      attempts++;
+      targetAttempts++;
       
       // Use the RNG to vary selection
-      if (targetWord && isValidTargetWord(startWord, targetWord) && rng.next() < 0.3 && attempts < maxAttempts) {
+      if (targetWord && isValidTargetWord(startWord, targetWord) && rng.next() < 0.3 && targetAttempts < maxTargetAttempts) {
         targetWord = null; // Skip this word sometimes to get variation
       }
     }

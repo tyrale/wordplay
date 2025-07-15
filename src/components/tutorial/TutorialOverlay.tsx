@@ -95,9 +95,10 @@ const TUTORIAL_STEPS: TutorialStep[] = [
       disableLetterRemoval: true
     },
     completionCondition: (gameState, tutorialState: TutorialState) => {
-      // Step 3 completes when user submits "ROWS" as a valid word
-      return gameState && gameState.submittedWords && 
-             gameState.submittedWords.some((word: string) => word === 'ROWS');
+      // Step 3 completes when user has "ROWS" in their word history and then changes to a different word
+      // This indicates they successfully submitted "ROWS" and the game moved forward
+      return tutorialState.wordHistory.includes('ROWS') && 
+             tutorialState.lastPendingWord !== 'ROWS';
     }
   },
   {

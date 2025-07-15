@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **ShipHip: Challenge Mode Start Word Filter** 🎯 **IMPLEMENTED**
+  - **Purpose**: Prevents challenge mode from generating start words with repeating letters (like "GOODIE" or "FLUFFY")
+  - **Problem**: Start words with repeating letters make it extremely difficult to find transformation paths to target words
+  - **Solution**: Added `hasRepeatingLetters()` and `isValidStartWord()` functions to filter out problematic words
+  - **Implementation Details**:
+    - Modified `generateDailyWords()` in `packages/engine/challenge.ts` to check for repeating letters
+    - Updated `generateRandomChallenge()` with same filtering logic
+    - Increased retry attempts from 10 to 50 to accommodate additional constraint
+    - Enhanced fallback words list to ensure no repeating letters
+  - **Testing**: Added comprehensive tests to verify constraint enforcement
+  - **Impact**: Significantly improves challenge mode difficulty balance and player experience
+  - **Files Modified**: `packages/engine/challenge.ts`, `packages/engine/challenge.test.ts`
+  - **Verification**: All 20 challenge tests passing, including new repeating letter constraint tests
+
 ### Fixed
 
 - **ShipHip: Letter Removal Double-Click Bug** 🐛 **FIXED**

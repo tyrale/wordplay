@@ -133,6 +133,27 @@ describe('Challenge Engine', () => {
       }
     });
 
+    test('should enforce no repeating letters constraint for start words', async () => {
+      // Helper function to check for repeating letters
+      const hasRepeatingLetters = (word: string): boolean => {
+        const letterCounts = new Map<string, number>();
+        for (const letter of word.toUpperCase()) {
+          const count = letterCounts.get(letter) || 0;
+          if (count > 0) return true;
+          letterCounts.set(letter, count + 1);
+        }
+        return false;
+      };
+
+      // Test multiple dates to ensure constraint is consistently applied
+      const dates = ['2024-01-15', '2024-02-20', '2024-03-25', '2024-04-30', '2024-05-10'];
+      
+      for (const date of dates) {
+        const challenge = await challengeEngine.getDailyChallengeState(date);
+        expect(hasRepeatingLetters(challenge.startWord)).toBe(false);
+      }
+    });
+
     test('should enforce maximum common letters constraint (≤2 letters)', async () => {
       // Helper function to count common letters (same as in implementation)
       const countCommonLetters = (word1: string, word2: string): number => {
@@ -356,6 +377,17 @@ describe('Challenge Engine', () => {
         return commonCount;
       };
 
+      // Helper function to check for repeating letters
+      const hasRepeatingLetters = (word: string): boolean => {
+        const letterCounts = new Map<string, number>();
+        for (const letter of word.toUpperCase()) {
+          const count = letterCounts.get(letter) || 0;
+          if (count > 0) return true;
+          letterCounts.set(letter, count + 1);
+        }
+        return false;
+      };
+
       // Test multiple random challenges
       for (let i = 0; i < 5; i++) {
         const challenge = await challengeEngine.generateRandomChallenge();
@@ -366,6 +398,9 @@ describe('Challenge Engine', () => {
         // Should meet maximum common letters constraint
         const commonLetters = countCommonLetters(challenge.startWord, challenge.targetWord);
         expect(commonLetters).toBeLessThanOrEqual(2);
+        
+        // Should have no repeating letters in start word
+        expect(hasRepeatingLetters(challenge.startWord)).toBe(false);
         
         // Should be different words
         expect(challenge.startWord).not.toBe(challenge.targetWord);
