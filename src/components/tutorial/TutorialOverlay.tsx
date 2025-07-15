@@ -125,6 +125,30 @@ const TUTORIAL_STEPS: TutorialStep[] = [
              gameState.submittedWords.length >= 2 && // At least 2 words submitted (ROWS + next word)
              gameState.submittedWords.some((word: string) => word === 'ROWS'); // Ensure ROWS was submitted
     }
+  },
+  {
+    id: 5,
+    instructions: ["thanks & have fun"],
+    constraints: {
+      hiddenElements: [], // No hidden elements - full game experience
+      disabledActions: [], // No disabled actions - full game experience
+      forcedGameConfig: { 
+        initialWord: '', // Continue from Step 4 result
+        maxTurns: 15, // Real game turn limit
+        allowBotPlayer: true,
+        enableKeyLetters: true,
+        enableLockedLetters: true,
+        botId: 'tester'
+      },
+      letterOpacity: {}, // No opacity constraints - full game experience
+      allowedLetters: [], // No letter restrictions - full game experience
+      disableLetterRemoval: false // Full letter removal enabled
+    },
+    completionCondition: (gameState, tutorialState: TutorialState) => {
+      // Step 5 completes when user submits any word (tutorial ends)
+      return gameState && gameState.submittedWords && 
+             gameState.submittedWords.length >= 3; // At least 3 words submitted (ROWS + Step 4 word + Step 5 word)
+    }
   }
 ];
 
@@ -180,8 +204,12 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
             console.log(`[Tutorial] Moving to step ${currentStep + 1}`);
           }, 500); // Small delay to ensure the user sees the completion
         } else {
-          // Tutorial complete - remove all constraints
-          setTutorialComplete(true);
+          // Tutorial complete - remove all constraints and end tutorial
+          setTimeout(() => {
+            setTutorialComplete(true);
+            console.log(`[Tutorial] Tutorial completed! Calling onComplete to remove tutorial overlay.`);
+            onComplete(); // This will remove the tutorial overlay entirely
+          }, 1000); // Give user time to see the "thanks & have fun" message
         }
       }
     }

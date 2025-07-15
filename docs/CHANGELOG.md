@@ -82,6 +82,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Action Icons Visible**: All action icons restored in alphabet grid
     - **Real Game Mechanics**: 15-turn limit, key letter scoring, locked letter mechanics
     - **Step Completion**: Automatically detects when user submits their next word after "ROWS"
+  - **Step 5 Features**:
+    - **Thank You Message**: Single-line instruction "thanks & have fun"
+    - **Tutorial Completion**: Completes when user submits any word
+    - **Full Tutorial Removal**: Calls onComplete() to remove tutorial overlay entirely
+    - **Natural Game Continuation**: Game proceeds normally after tutorial ends
+    - **Vanity Layer Only**: No changes to core game logic or mechanics
+    - **Timed Completion**: 1-second delay to show thank you message before removal
   - **Technical Implementation**:
     - **Real Game Foundation**: Uses actual InteractiveGame component with real game logic
     - **Step-based CSS Architecture**: CSS classes for each step (tutorial-overlay--step-1, --step-2, --step-3, --step-4)

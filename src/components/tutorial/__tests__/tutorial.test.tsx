@@ -40,6 +40,15 @@ describe('TutorialInstructions', () => {
     expect(instructionLines).toHaveLength(5);
   });
 
+  it('renders Step 5 single-line thank you message', () => {
+    render(<TutorialInstructions text={["thanks & have fun"]} />);
+    expect(screen.getByText('thanks & have fun')).toBeInTheDocument();
+    
+    // Check that there is only 1 instruction line
+    const instructionLines = document.querySelectorAll('.tutorial-instructions__line');
+    expect(instructionLines).toHaveLength(1);
+  });
+
   it('applies custom className', () => {
     render(<TutorialInstructions text="test" className="custom-class" />);
     const element = screen.getByText('test').closest('.tutorial-instructions');
