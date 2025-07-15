@@ -133,6 +133,16 @@ describe('Challenge Engine', () => {
       }
     });
 
+    test('should enforce 5-letter start words constraint', async () => {
+      // Test multiple dates to ensure constraint is consistently applied
+      const dates = ['2024-01-15', '2024-02-20', '2024-03-25', '2024-04-30', '2024-05-10'];
+      
+      for (const date of dates) {
+        const challenge = await challengeEngine.getDailyChallengeState(date);
+        expect(challenge.startWord.length).toBe(5);
+      }
+    });
+
     test('should enforce no repeating letters constraint for start words', async () => {
       // Helper function to check for repeating letters
       const hasRepeatingLetters = (word: string): boolean => {
@@ -401,6 +411,9 @@ describe('Challenge Engine', () => {
         
         // Should have no repeating letters in start word
         expect(hasRepeatingLetters(challenge.startWord)).toBe(false);
+        
+        // Should be exactly 5 letters
+        expect(challenge.startWord.length).toBe(5);
         
         // Should be different words
         expect(challenge.startWord).not.toBe(challenge.targetWord);

@@ -153,9 +153,8 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     const seed = generateDailySeed(dateString);
     const rng = new SeededRandom(seed);
     
-    // Get a random start word (4-6 letters for balanced gameplay)
-    const startLengths = [4, 5, 6];
-    const startLength = startLengths[rng.nextInt(0, startLengths.length - 1)];
+    // Get a random start word (5 letters only for optimal difficulty balance)
+    const startLength = 5;
     
     // For testing with mock dictionary, use different selection method
     let startWord: string | null = null;
@@ -178,7 +177,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     }
     
     if (!startWord) {
-      // Fallback words if random generation fails - all have no repeating letters
+      // Fallback words if random generation fails - all 5 letters, no repeating letters
       const fallbacks = ['GAMES', 'WORDS', 'PLAYS', 'TIMES', 'MAKES', 'WORLD', 'HOUSE', 'LIGHT', 'SOUND', 'NIGHT'];
       startWord = fallbacks[rng.nextInt(0, fallbacks.length - 1)];
     }
@@ -572,9 +571,8 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     const randomSeed = utilities.getTimestamp();
     const rng = new SeededRandom(randomSeed);
     
-    // Generate random start word (no repeating letters)
-    const startLengths = [4, 5, 6];
-    const startLength = startLengths[rng.nextInt(0, startLengths.length - 1)];
+    // Generate random start word (5 letters only, no repeating letters)
+    const startLength = 5;
     
     let startWord: string | null = null;
     let attempts = 0;
@@ -596,7 +594,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     }
     
     if (!startWord) {
-      // Fallback words if random generation fails - all have no repeating letters
+      // Fallback words if random generation fails - all 5 letters, no repeating letters
       const fallbacks = ['GAMES', 'WORDS', 'PLAYS', 'TIMES', 'MAKES', 'WORLD', 'HOUSE', 'LIGHT', 'SOUND', 'NIGHT'];
       startWord = fallbacks[rng.nextInt(0, fallbacks.length - 1)];
     }

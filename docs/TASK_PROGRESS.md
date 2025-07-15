@@ -67,7 +67,7 @@
 - **3.2** ✅ Challenge Storage System - IndexedDB persistence
 - **3.3** ✅ Challenge UI Components - React components for gameplay
 - **3.4** ✅ Menu Integration - Challenge menu items and navigation
-- **3.5** ✅ Start Word Filter - Prevents repeating letters in start words for better difficulty balance
+- **3.5** ✅ Start Word Constraints - 5-letter words only, no repeating letters for optimal difficulty balance
 
 ### Phase 4 - Online Multiplayer ⏳ **PENDING**
 - **4.1** ⏳ Auth Flow (Supabase EmailLink) - User authentication

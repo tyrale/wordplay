@@ -9,19 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **ShipHip: Challenge Mode Start Word Filter** 🎯 **IMPLEMENTED**
-  - **Purpose**: Prevents challenge mode from generating start words with repeating letters (like "GOODIE" or "FLUFFY")
-  - **Problem**: Start words with repeating letters make it extremely difficult to find transformation paths to target words
-  - **Solution**: Added `hasRepeatingLetters()` and `isValidStartWord()` functions to filter out problematic words
+- **ShipHip: Challenge Mode Start Word Constraints** 🎯 **IMPLEMENTED**
+  - **Purpose**: Optimizes challenge mode difficulty by constraining start word generation
+  - **Problem**: Variable word lengths (4-6 letters) and repeating letters create inconsistent difficulty
+  - **Solution**: 
+    - Limited start words to exactly 5 letters for optimal difficulty balance
+    - Added `hasRepeatingLetters()` and `isValidStartWord()` functions to filter out problematic words
   - **Implementation Details**:
-    - Modified `generateDailyWords()` in `packages/engine/challenge.ts` to check for repeating letters
-    - Updated `generateRandomChallenge()` with same filtering logic
-    - Increased retry attempts from 10 to 50 to accommodate additional constraint
-    - Enhanced fallback words list to ensure no repeating letters
-  - **Testing**: Added comprehensive tests to verify constraint enforcement
-  - **Impact**: Significantly improves challenge mode difficulty balance and player experience
+    - Modified `generateDailyWords()` and `generateRandomChallenge()` to use only 5-letter start words
+    - Added repeating letter filtering to prevent words like "GOODIE" or "FLUFFY"
+    - Increased retry attempts from 10 to 50 to accommodate additional constraints
+    - Enhanced fallback words list to ensure all words are 5 letters with no repeating letters
+  - **Testing**: Added comprehensive tests to verify both length and repeating letter constraints
+  - **Impact**: Provides consistent, balanced difficulty across all challenge mode puzzles
   - **Files Modified**: `packages/engine/challenge.ts`, `packages/engine/challenge.test.ts`
-  - **Verification**: All 20 challenge tests passing, including new repeating letter constraint tests
+  - **Verification**: All 21 challenge tests passing, including new 5-letter and repeating letter constraint tests
 
 ### Fixed
 
