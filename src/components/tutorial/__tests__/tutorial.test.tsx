@@ -28,6 +28,18 @@ describe('TutorialInstructions', () => {
     expect(screen.getByText('tap to submit')).toBeInTheDocument();
   });
 
+  it('renders Step 4 five-line instructions with empty line', () => {
+    render(<TutorialInstructions text={["key letter +1", "& locked next turn", "", "15 turns each", "high score wins"]} />);
+    expect(screen.getByText('key letter +1')).toBeInTheDocument();
+    expect(screen.getByText('& locked next turn')).toBeInTheDocument();
+    expect(screen.getByText('15 turns each')).toBeInTheDocument();
+    expect(screen.getByText('high score wins')).toBeInTheDocument();
+    
+    // Check that there are 5 instruction lines (including empty one)
+    const instructionLines = document.querySelectorAll('.tutorial-instructions__line');
+    expect(instructionLines).toHaveLength(5);
+  });
+
   it('applies custom className', () => {
     render(<TutorialInstructions text="test" className="custom-class" />);
     const element = screen.getByText('test').closest('.tutorial-instructions');

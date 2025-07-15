@@ -99,6 +99,31 @@ const TUTORIAL_STEPS: TutorialStep[] = [
       return gameState && gameState.submittedWords && 
              gameState.submittedWords.some((word: string) => word === 'ROWS');
     }
+  },
+  {
+    id: 4,
+    instructions: ["key letter +1", "& locked next turn", "", "15 turns each", "high score wins"],
+    constraints: {
+      hiddenElements: [], // No hidden elements - full game experience
+      disabledActions: [], // No disabled actions - full game experience
+      forcedGameConfig: { 
+        initialWord: '', // Continue from Step 3 result
+        maxTurns: 15, // Real game turn limit
+        allowBotPlayer: true,
+        enableKeyLetters: true,
+        enableLockedLetters: true,
+        botId: 'tester'
+      },
+      letterOpacity: {}, // No opacity constraints - full game experience
+      allowedLetters: [], // No letter restrictions - full game experience
+      disableLetterRemoval: false // Full letter removal enabled
+    },
+    completionCondition: (gameState, tutorialState: TutorialState) => {
+      // Step 4 completes when user submits their next word after "ROWS"
+      return gameState && gameState.submittedWords && 
+             gameState.submittedWords.length >= 2 && // At least 2 words submitted (ROWS + next word)
+             gameState.submittedWords.some((word: string) => word === 'ROWS'); // Ensure ROWS was submitted
+    }
   }
 ];
 

@@ -54,14 +54,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Score Interactions Enabled**: Score row becomes fully interactive
     - **Focused Learning**: Users must rearrange "WORS" to "ROWS" using drag only
     - **Step Completion**: Automatically detects when user submits "ROWS" as valid word
+  - **Step 4 Features**:
+    - **Full Game Experience**: All tutorial constraints removed - complete default game behavior
+    - **Five-line Instructions**: "key letter +1", "& locked next turn", "", "15 turns each", "high score wins"
+    - **Alphabet Grid Enabled**: Full opacity and interaction restored for all letters
+    - **Word Builder Enabled**: All letters fully interactive (click to remove, drag to rearrange)
+    - **Score Display Enabled**: Complete score interaction and display functionality
+    - **Key Letters Visible**: Key letters display with proper accent colors
+    - **Action Icons Visible**: All action icons restored in alphabet grid
+    - **Real Game Mechanics**: 15-turn limit, key letter scoring, locked letter mechanics
+    - **Step Completion**: Automatically detects when user submits their next word after "ROWS"
   - **Technical Implementation**:
     - **Real Game Foundation**: Uses actual InteractiveGame component with real game logic
-    - **Step-based CSS Architecture**: CSS classes for each step (tutorial-overlay--step-1, --step-2, --step-3)
+    - **Step-based CSS Architecture**: CSS classes for each step (tutorial-overlay--step-1, --step-2, --step-3, --step-4)
     - **Data Attributes**: Added data-letter and data-letter-index attributes for precise CSS targeting
     - **DOM Monitoring System**: Robust word detection using DOM observation and periodic checking
     - **Progressive Constraint Removal**: Each step removes more constraints, culminating in full game access
     - **Submission Detection**: Monitors submittedWords array to detect successful word submissions
     - **Click Event Interception**: Global event listener prevents word builder letter clicks in Step 3
+    - **Prop-based Disabling**: Clean architectural solution using disableLetterRemoval prop for Step 3
+    - **Full Game Restoration**: Step 4 removes all constraints for complete default game experience
     - **Drag Preservation**: Drag events (mousedown, mousemove, mouseup) remain functional for rearrangement
   - **User Experience**:
     - **Menu Access**: Click "the basics" in about menu to start tutorial
