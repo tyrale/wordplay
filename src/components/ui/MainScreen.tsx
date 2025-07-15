@@ -14,7 +14,7 @@ interface MainScreenProps {
 
 // Complete bot list with display names (same as Menu.tsx)
 const allBots: Bot[] = [
-  { id: 'tester', name: 'tester' },
+  { id: 'basicBot', name: 'basicBot' },
   { id: 'easy-bot', name: 'easy bot' },
   { id: 'medium-bot', name: 'medium bot' },
   { id: 'hard-bot', name: 'hard bot' },

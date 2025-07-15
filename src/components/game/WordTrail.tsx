@@ -5,6 +5,7 @@ export interface WordMove {
   word: string;
   score: number;
   player?: string;
+  opponentName?: string; // Display name for the opponent (e.g., "basicBot", "easy bot")
   turnNumber?: number;
   actions?: string[];
   keyLetters?: string[];
@@ -51,6 +52,7 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         word: move.word,
         score: move.score,
         player: move.player,
+        opponentName: move.opponentName,
         turnNumber: move.turnNumber || index + 1,
         actions: move.actions || [],
         keyLetters: move.keyLetters || [],
@@ -60,6 +62,7 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         word,
         score: 0,
         player: undefined,
+        opponentName: undefined,
         turnNumber: index + 1,
         actions: [],
         keyLetters: [],
@@ -203,6 +206,13 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                         ].filter(Boolean).join(' ')}
                         role="listitem"
                       >
+                        {/* Opponent name on the left side for bot moves */}
+                        {item.player === 'bot' && item.opponentName && (
+                          <span className="word-trail__opponent-name">
+                            {item.opponentName}
+                          </span>
+                        )}
+                        
                         <span 
                           className="word-trail__word"
                           onClick={onWordClick ? () => handleWordClick(item.word, index) : undefined}
@@ -299,6 +309,13 @@ export const WordTrail: React.FC<WordTrailProps> = ({
             ].filter(Boolean).join(' ')}
             role="listitem"
           >
+            {/* Opponent name on the left side for bot moves */}
+            {item.player === 'bot' && item.opponentName && (
+              <span className="word-trail__opponent-name">
+                {item.opponentName}
+              </span>
+            )}
+            
             <span 
               className="word-trail__word"
               onClick={onWordClick ? () => handleWordClick(item.word, index) : undefined}

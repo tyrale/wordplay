@@ -66,10 +66,8 @@ describe('MainScreen Component', () => {
     // Should show bot selection screen (no back button - uses menu navigation)
     expect(screen.getByRole('button', { name: 'Open menu' })).toBeInTheDocument();
     
-    // Should show at least the tester bot (always unlocked)
-    await waitFor(() => {
-      expect(screen.getByText('tester')).toBeInTheDocument();
-    });
+    // Should show at least the basicBot bot (always unlocked)
+    expect(screen.getByText('basicBot')).toBeInTheDocument();
   });
 
   it('should only show unlocked bots in fresh user state', async () => {
@@ -87,11 +85,11 @@ describe('MainScreen Component', () => {
 
     // Wait for unlock system to initialize
     await waitFor(() => {
-      expect(screen.getByText('tester')).toBeInTheDocument();
+      expect(screen.getByText('basicBot')).toBeInTheDocument();
     });
 
-    // In fresh user state, should only show tester bot
-    expect(screen.getByText('tester')).toBeInTheDocument();
+    // In fresh user state, should only show basicBot bot
+    expect(screen.getByText('basicBot')).toBeInTheDocument();
     
     // Should not show locked bots like easy bot (until unlocked)
     expect(screen.queryByText('easy bot')).not.toBeInTheDocument();
@@ -112,16 +110,16 @@ describe('MainScreen Component', () => {
     });
     fireEvent.click(vsBotButton);
 
-    // Wait for tester bot to appear and click it
+    // Wait for basicBot to appear and click it
     await waitFor(() => {
-      expect(screen.getByText('tester')).toBeInTheDocument();
+      expect(screen.getByText('basicBot')).toBeInTheDocument();
     });
 
-    const testerButton = screen.getByText('tester');
-    fireEvent.click(testerButton);
+    const basicBotButton = screen.getByText('basicBot');
+    fireEvent.click(basicBotButton);
 
     // Should call onStartGame with correct parameters
-    expect(mockOnStartGame).toHaveBeenCalledWith('bot', 'tester');
+    expect(mockOnStartGame).toHaveBeenCalledWith('bot', 'basicBot');
   });
 
   it('should show menu button for navigation in bot selection', async () => {
@@ -139,7 +137,7 @@ describe('MainScreen Component', () => {
 
     // Wait for bot selection screen
     await waitFor(() => {
-      expect(screen.getByText('tester')).toBeInTheDocument();
+      expect(screen.getByText('basicBot')).toBeInTheDocument();
     });
 
     // Should show menu button for navigation (current app pattern)
@@ -148,6 +146,6 @@ describe('MainScreen Component', () => {
     expect(menuButton.textContent).toBe('≡');
 
     // Should show bot selection content
-    expect(screen.getByText('tester')).toBeInTheDocument();
+    expect(screen.getByText('basicBot')).toBeInTheDocument();
   });
 }); 

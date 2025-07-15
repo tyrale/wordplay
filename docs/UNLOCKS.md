@@ -75,7 +75,7 @@ export interface GameConfig {
 
 ### Fresh User Experience
 - **Themes**: Only "Classic Blue" available
-- **Bots**: Only "Tester" bot available
+- **Bots**: Only "basicBot" bot available
 - **Mechanics**: None available (empty section)
 
 ### Progressive Disclosure
@@ -213,7 +213,7 @@ const mechanicDisplayNames: Record<string, string> = {
 ## Bot Unlocks Checklist
 
 ### Achievement-Based Progression
-- 🟧 beat_tester - Easy Bot
+- 🟧 beat_basicBot - Easy Bot
 - 🟧 beat_easy_bot - Medium Bot
 - 🟧 beat_medium_bot - Hard Bot
 - 🟧 beat_hard_bot - Expert Bot

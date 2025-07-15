@@ -55,15 +55,17 @@ describe('Unlock Engine Integration', () => {
     expect(engine.isUnlocked('mechanic', '5-letter-start')).toBe(true);
   });
 
-  it('should unlock easy bot when beating tester bot', async () => {
+  it('should unlock easy bot when beating basicBot bot', async () => {
     const dependencies = createTestUnlockDependencies();
     const engine = createUnlockEngine(dependencies);
     
-    // Initially easy bot should not be unlocked
-    expect(engine.isUnlocked('bot', 'easy-bot')).toBe(false);
+    // Initial state - only basicBot available
+    const initialState = engine.getCurrentState();
+    expect(initialState.bots).toContain('basicBot');
+    expect(initialState.bots).not.toContain('easy-bot');
     
-    // Beat the tester bot
-    const results = await engine.checkAchievementTriggers('beat_tester');
+    // Beat the basicBot bot
+    const results = await engine.checkAchievementTriggers('beat_basicBot');
     
     // Should unlock easy bot
     expect(results).toHaveLength(1);
@@ -78,7 +80,7 @@ describe('Unlock Engine Integration', () => {
     
     // Achievement should be tracked
     const state = engine.getCurrentState();
-    expect(state.achievements).toContain('beat_tester');
+    expect(state.achievements).toContain('beat_basicBot');
   });
 
   it('should unlock pirate bot when playing "pirate"', async () => {
@@ -110,7 +112,7 @@ describe('Unlock Engine Integration', () => {
     // Start with initial state
     const initialState = engine.getCurrentState();
     expect(initialState.themes).toEqual(['classic blue']);
-    expect(initialState.bots).toEqual(['tester']);
+    expect(initialState.bots).toEqual(['basicBot']);
     expect(initialState.mechanics).toEqual([]);
     
     // Unlock some themes
@@ -124,7 +126,7 @@ describe('Unlock Engine Integration', () => {
     
     // Unlock some bots
     await engine.checkWordTriggers('pirate');
-    await engine.checkAchievementTriggers('beat_tester');
+    await engine.checkAchievementTriggers('beat_basicBot');
     
     // Verify final state
     const finalState = engine.getCurrentState();
@@ -135,7 +137,7 @@ describe('Unlock Engine Integration', () => {
     expect(finalState.mechanics).toContain('6-letter-start');
     expect(finalState.bots).toContain('pirate-bot');
     expect(finalState.bots).toContain('easy-bot');
-    expect(finalState.achievements).toContain('beat_tester');
+    expect(finalState.achievements).toContain('beat_basicBot');
   });
 
   it('should not unlock already unlocked items', async () => {

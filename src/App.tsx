@@ -22,7 +22,7 @@ interface ConfirmationState {
 
 function App() {
   const [appState, setAppState] = useState<AppState>('main');
-  const [selectedBotId, setSelectedBotId] = useState<string>('tester');
+  const [selectedBotId, setSelectedBotId] = useState<string>('basicBot');
   const [confirmationState, setConfirmationState] = useState<ConfirmationState>({
     isVisible: false,
     title: '',

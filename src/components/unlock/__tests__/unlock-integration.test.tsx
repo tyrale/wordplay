@@ -57,7 +57,7 @@ describe('Unlock System Integration', () => {
 
     // Check initial state
     expect(screen.getByTestId('unlocked-themes')).toHaveTextContent('classic blue');
-    expect(screen.getByTestId('unlocked-bots')).toHaveTextContent('tester');
+    expect(screen.getByTestId('unlocked-bots')).toHaveTextContent('basicBot');
     expect(screen.getByTestId('unlocked-mechanics')).toHaveTextContent('');
     expect(screen.getByTestId('red-theme-unlocked')).toHaveTextContent('no');
   });

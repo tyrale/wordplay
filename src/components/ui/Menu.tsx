@@ -43,7 +43,7 @@ const mechanicDisplayNames: Record<string, string> = {
 
 // Map bot IDs to display names
 const botDisplayNames: Record<string, string> = {
-  'tester': 'tester',
+  'basicBot': 'basicBot',
   'easy-bot': 'easy bot',
   'medium-bot': 'medium bot',
   'hard-bot': 'hard bot',

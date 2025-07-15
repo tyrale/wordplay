@@ -111,6 +111,21 @@
   text-align: center;
 }
 
+.word-trail__opponent-name {
+  position: absolute;
+  left: 10px;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-sm);
+  color: var(--theme-accent);
+  padding: 2px var(--spacing-xs);
+  border-radius: 12px;
+  text-align: center;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+  text-transform: uppercase;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .word-trail__container {
@@ -122,6 +137,11 @@
   }
   
   .word-trail__score {
+    font-size: 12px;
+    padding: 1px 4px;
+  }
+  
+  .word-trail__opponent-name {
     font-size: 12px;
     padding: 1px 4px;
   }
@@ -138,6 +158,10 @@
     border: 1px solid var(--theme-accent);
   }
   
+  .word-trail__opponent-name {
+    border: 1px solid var(--theme-accent);
+  }
+  
   /* Removed hover styles */
   
   .word-trail__letter--key {
@@ -151,6 +175,10 @@
   }
   
   .word-trail__letter {
+    transition: none;
+  }
+  
+  .word-trail__opponent-name {
     transition: none;
   }
 }

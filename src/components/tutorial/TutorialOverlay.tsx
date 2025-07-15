@@ -42,7 +42,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
         allowBotPlayer: true,
         enableKeyLetters: true,
         enableLockedLetters: true,
-        botId: 'tester'
+        botId: 'basicBot'
       },
       letterOpacity: { default: 0.3, S: 1.0 },
       allowedLetters: ['S']
@@ -65,7 +65,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
         allowBotPlayer: true,
         enableKeyLetters: true,
         enableLockedLetters: true,
-        botId: 'tester'
+        botId: 'basicBot'
       },
       letterOpacity: {},
       allowedLetters: []
@@ -88,7 +88,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
         allowBotPlayer: true,
         enableKeyLetters: true,
         enableLockedLetters: true,
-        botId: 'tester'
+        botId: 'basicBot'
       },
       letterOpacity: {},
       allowedLetters: [],
@@ -113,7 +113,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
         allowBotPlayer: true,
         enableKeyLetters: true,
         enableLockedLetters: true,
-        botId: 'tester'
+        botId: 'basicBot'
       },
       letterOpacity: {}, // No opacity constraints - full game experience
       allowedLetters: [], // No letter restrictions - full game experience
@@ -138,7 +138,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
         allowBotPlayer: true,
         enableKeyLetters: true,
         enableLockedLetters: true,
-        botId: 'tester'
+        botId: 'basicBot'
       },
       letterOpacity: {}, // No opacity constraints - full game experience
       allowedLetters: [], // No letter restrictions - full game experience

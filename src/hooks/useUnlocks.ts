@@ -34,7 +34,7 @@ export function useUnlocks(): UseUnlocksReturn {
   const [unlockState, setUnlockState] = useState<UnlockState>({
     themes: ['classic blue'],
     mechanics: [],
-    bots: ['tester'],
+    bots: ['basicBot'],
     achievements: []
   });
   const [isLoading, setIsLoading] = useState(true);

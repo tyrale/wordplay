@@ -31,8 +31,8 @@ describe('Unlock Engine', () => {
       expect(unlockEngine.isUnlocked('theme', 'blue')).toBe(false);
     });
 
-    it('should have only tester bot unlocked initially', () => {
-      expect(unlockEngine.isUnlocked('bot', 'tester')).toBe(true);
+    it('should have only basicBot bot unlocked initially', () => {
+      expect(unlockEngine.isUnlocked('bot', 'basicBot')).toBe(true);
       expect(unlockEngine.isUnlocked('bot', 'easy-bot')).toBe(false);
       expect(unlockEngine.isUnlocked('bot', 'pirate-bot')).toBe(false);
     });
@@ -133,8 +133,8 @@ describe('Unlock Engine', () => {
   });
 
   describe('Achievement Triggers', () => {
-    it('should unlock easy bot when beating tester', async () => {
-      const results = await unlockEngine.checkAchievementTriggers('beat_tester');
+    it('should unlock easy bot when beating basicBot', async () => {
+      const results = await unlockEngine.checkAchievementTriggers('beat_basicBot');
       
       expect(results).toHaveLength(1);
       expect(results[0]).toMatchObject({
@@ -146,12 +146,12 @@ describe('Unlock Engine', () => {
       expect(unlockEngine.isUnlocked('bot', 'easy-bot')).toBe(true);
       
       const state = unlockEngine.getCurrentState();
-      expect(state.achievements).toContain('beat_tester');
+      expect(state.achievements).toContain('beat_basicBot');
     });
 
     it('should chain bot unlocks through achievements', async () => {
       // Beat tester -> unlock easy bot
-      await unlockEngine.checkAchievementTriggers('beat_tester');
+      await unlockEngine.checkAchievementTriggers('beat_basicBot');
       expect(unlockEngine.isUnlocked('bot', 'easy-bot')).toBe(true);
 
       // Beat easy bot -> unlock medium bot
@@ -171,11 +171,11 @@ describe('Unlock Engine', () => {
     });
 
     it('should not duplicate achievements', async () => {
-      await unlockEngine.checkAchievementTriggers('beat_tester');
-      await unlockEngine.checkAchievementTriggers('beat_tester');
+      await unlockEngine.checkAchievementTriggers('beat_basicBot');
+      await unlockEngine.checkAchievementTriggers('beat_basicBot');
       
       const state = unlockEngine.getCurrentState();
-      const achievementCount = state.achievements.filter(a => a === 'beat_tester').length;
+      const achievementCount = state.achievements.filter(a => a === 'beat_basicBot').length;
       expect(achievementCount).toBe(1);
     });
   });
@@ -196,7 +196,7 @@ describe('Unlock Engine', () => {
       
       // First engine instance makes unlocks
       await firstEngine.checkWordTriggers('red');
-      await firstEngine.checkAchievementTriggers('beat_tester');
+      await firstEngine.checkAchievementTriggers('beat_basicBot');
 
       // Create new engine instance with same dependencies
       const newEngine = createUnlockEngine(sharedDependencies);
@@ -213,7 +213,7 @@ describe('Unlock Engine', () => {
       // Make some unlocks
       await unlockEngine.checkWordTriggers('red');
       await unlockEngine.checkWordTriggers('blue');
-      await unlockEngine.checkAchievementTriggers('beat_tester');
+      await unlockEngine.checkAchievementTriggers('beat_basicBot');
 
       // Reset state
       await unlockEngine.resetState();
@@ -295,7 +295,7 @@ describe('Unlock Engine', () => {
       expect(triggers.word).toContain('five');
       expect(triggers.word).toContain('pirate');
       
-      expect(triggers.achievement).toContain('beat_tester');
+      expect(triggers.achievement).toContain('beat_basicBot');
       expect(triggers.achievement).toContain('beat_easy_bot');
       
       // Should be sorted and unique
@@ -335,18 +335,18 @@ describe('Unlock Engine', () => {
       await unlockEngine.checkWordTriggers('pirate');
       
       // Achievement unlock
-      await unlockEngine.checkAchievementTriggers('beat_tester');
+      await unlockEngine.checkAchievementTriggers('beat_basicBot');
       
       const state = unlockEngine.getCurrentState();
       expect(state.themes).toContain('red');
       expect(state.bots).toContain('pirate-bot');
       expect(state.bots).toContain('easy-bot');
-      expect(state.achievements).toContain('beat_tester');
+      expect(state.achievements).toContain('beat_basicBot');
     });
 
     it('should maintain state consistency across many operations', async () => {
       const words = ['red', 'blue', 'green', 'yellow', 'orange'];
-      const achievements = ['beat_tester', 'beat_easy_bot', 'custom_achievement'];
+      const achievements = ['beat_basicBot', 'beat_easy_bot', 'custom_achievement'];
       
       // Perform many unlock operations
       for (const word of words) {
@@ -368,7 +368,7 @@ describe('Unlock Engine', () => {
       expect(state.bots).toContain('easy-bot');
       expect(state.bots).toContain('medium-bot');
       
-      expect(state.achievements).toContain('beat_tester');
+      expect(state.achievements).toContain('beat_basicBot');
       expect(state.achievements).toContain('beat_easy_bot');
       expect(state.achievements).toContain('custom_achievement');
     });

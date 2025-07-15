@@ -10,6 +10,23 @@ import { DebugDialog } from './DebugDialog';
 import { Menu } from '../ui/Menu';
 import { createWebAdapter } from '../../adapters/webAdapter';
 
+// Bot display names mapping (same as Menu.tsx and MainScreen.tsx)
+const botDisplayNames: Record<string, string> = {
+  'basicBot': 'basicBot',
+  'easy-bot': 'easy bot',
+  'medium-bot': 'medium bot',
+  'hard-bot': 'hard bot',
+  'expert-bot': 'expert bot',
+  'pirate-bot': 'pirate bot',
+  'chaos-bot': 'chaos bot',
+};
+
+/**
+ * Get display name for a bot ID
+ */
+function getBotDisplayName(botId?: string): string | undefined {
+  return botId ? botDisplayNames[botId] : undefined;
+}
 
 // Temporary placeholder types until dependency injection implemented - TODO: Replace in Step 3
 interface GameConfig {
@@ -250,6 +267,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       word: turn.newWord,
       score: turn.score,
       player: turn.playerId,
+      opponentName: turn.playerId === 'bot' ? getBotDisplayName(config?.botId) : undefined,
       turnNumber: turn.turnNumber,
       actions: turn.scoringBreakdown.actions,
       keyLetters: turn.scoringBreakdown.keyLettersUsed || [],
@@ -257,7 +275,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     }));
     
     return moves;
-  }, [gameState.turnHistory, gameState.players, gameState.currentTurn]);
+  }, [gameState.turnHistory, config?.botId]);
 
   // Event handlers
   const handleActionClick = useCallback((action: string) => {

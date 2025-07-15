@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **ShipHip: Word Trail Opponent Names** ✅ **IMPLEMENTED**
+  - **Purpose**: Display opponent names in word trail for better game clarity
+  - **Problem**: Players couldn't easily identify which bot they were playing against in the word trail
+  - **Solution**: Added opponent name display on the left side of word trail lines for bot moves
+  - **Implementation Details**:
+    - Extended `WordMove` interface with `opponentName` field
+    - Added bot display names mapping in `InteractiveGame.tsx`
+    - Created `getBotDisplayName()` utility function
+    - Updated `WordTrail` component to render opponent names for bot moves only
+    - Added CSS styling with `word-trail__opponent-name` class
+    - Positioned on left side to mirror score positioning on right side
+    - Includes responsive design, high contrast mode, and reduced motion support
+  - **User Experience**: 
+    - Bot moves show opponent name (e.g., "basicBot", "easy bot", "pirate bot")
+    - Human moves show only word and score (no opponent name)
+    - Styled with accent color and uppercase text transform
+    - **Example Layout**: `| BASICBOT | WORD | +2 |` for bot moves, `| | HELLO | +3 |` for human moves
+
 - **ShipHip: Challenge Mode Start Word Constraints** 🎯 **IMPLEMENTED**
   - **Purpose**: Optimizes challenge mode difficulty by constraining start word generation
   - **Problem**: Variable word lengths (4-6 letters) and repeating letters create inconsistent difficulty
@@ -210,8 +228,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Dependency Injection Compliance**: Proper async initialization patterns maintain architectural principles
   - **Verification**: All 278 core tests passing, terminal game fully functional, unlock system state management working correctly
 
-### Changed
-
 - **Browser Environment Test Fixes** ✅ **COMPLETED**
   - **Purpose**: Fix browser adapter integration tests failing due to Node.js environment limitations
   - **Problem**: Browser adapters couldn't run in Node.js test environment (IndexedDB undefined, fetch URL issues, missing browser APIs)
@@ -281,8 +297,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Scalability**: Structure supports project growth without becoming unwieldy
   - **Workflow Preservation**: Maintained ShipHip commit requirements, quality gates, and task completion criteria
   - **Verification**: File size reduced from 327 to 192 lines while preserving all essential information and improving navigation
-
-### Fixed
 
 - **Engine Architecture Cleanup** ✅ **COMPLETED**
   - **Purpose**: Comprehensive cleanup of game engine architecture to eliminate duplicate functions, consolidate validation logic, and maintain single source of truth
@@ -468,8 +482,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Clean Separation**: UI concerns solved at UI layer, game logic remains platform-independent
   - **Verification**: All navigation flows working correctly, bot switching immediate and reliable, challenge confirmations proper, home navigation direct
 
-### Added
-
 - **Unlock System Documentation** ✅ **VERIFIED**
   - **Purpose**: Comprehensive documentation of the unlock system implementation status and future expansion plans
   - **Requirements Delivered**:
@@ -505,7 +517,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Game Flow Integration**: Word submission and game completion events trigger unlock checks with immediate feedback
     - **Theme Application**: Immediate theme switching when theme unlocks are triggered with visual confirmation
     - **Cross-Platform Persistence**: IndexedDB storage with localStorage fallback ensuring unlocks survive browser refreshes and cache clears
-    - **Fresh User Experience**: New users see minimal menu with only default theme and tester bot until items are unlocked
+    - **Fresh User Experience**: New users see minimal menu with only default theme and basicBot bot until items are unlocked
     - **Progressive Disclosure**: Menu categories (mechanics, bots) only appear when first items in those categories are unlocked
   - **Technical Implementation**:
     - **React Hook**: `src/hooks/useUnlocks.ts` providing unlock state, loading state, and trigger functions
@@ -534,7 +546,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Unlock Framework System** ✅ **VERIFIED**
   - **Purpose**: Platform-agnostic unlock system that allows users to unlock themes, game mechanics, and bots by playing specific words or achieving certain goals
   - **Requirements Delivered**:
-    - **Fresh User Experience**: New users see minimal menu with only default theme and tester bot until unlocks are earned
+    - **Fresh User Experience**: New users see minimal menu with only default theme and basicBot bot until unlocks are earned
     - **Word-Triggered Unlocks**: Playing theme names (e.g., "red", "blue", "green") unlocks and immediately applies those themes
     - **Mechanic Unlocks**: Playing specific words unlocks game mechanics (e.g., "five" → 5-letter starting words)
     - **Achievement-Based Unlocks**: Beating bots unlocks progressively harder opponents (beat tester → unlock easy bot)
@@ -765,7 +777,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ShipHip: Temporary Reset Button** - Added testing tool to reset unlocks to fresh user state
   - Reset button available in menu under "about" → "reset unlocks (testing)"
   - Allows easy testing of fresh user experience and unlock progression
-  - Resets all unlocks back to default state (Classic Blue theme + Tester bot only)
+  - Resets all unlocks back to default state (Classic Blue theme + basicBot bot only)
   - Useful for development and testing unlock system functionality
 - **ShipHip: Fix Unlock Persistence After Browser Refresh** - Fixed critical bug where unlocks disappeared after page refresh
   - Added proper initialization method to unlock engine for explicit state loading
@@ -775,7 +787,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Verified fix works with IndexedDB storage and localStorage fallback
 - **ShipHip: Main Menu Bot Filtering** - Updated main menu bot selection to only show unlocked bots
   - Integrated unlock system with MainScreen component bot list
-  - Fresh users now see only tester bot in main menu bot selection
+  - Fresh users now see only basicBot bot in main menu bot selection
   - Bot list dynamically updates as new bots are unlocked through gameplay
   - Consistent behavior between main menu and settings menu bot filtering
   - Added comprehensive test coverage for bot filtering functionality

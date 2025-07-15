@@ -651,7 +651,7 @@ export interface UnlockState {
   themes: string[];        // Theme names that are unlocked (e.g., ['red', 'blue'])
   mechanics: string[];     // Mechanic IDs that are unlocked (e.g., ['5-letter-start'])
   bots: string[];         // Bot IDs that are unlocked (e.g., ['easy-bot', 'pirate-bot'])
-  achievements: string[]; // Achievement IDs that are earned (e.g., ['beat-tester'])
+  achievements: string[]; // Achievement IDs that are earned (e.g., ['beat-basicBot'])
 }
 
 export interface UnlockTrigger {

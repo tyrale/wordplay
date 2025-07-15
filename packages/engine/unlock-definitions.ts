@@ -14,7 +14,7 @@ import type { UnlockDefinition, UnlockState } from './interfaces';
 const _INITIAL_UNLOCK_STATE = {
   themes: ['classic blue'],  // Only default theme unlocked initially
   mechanics: [],             // No special mechanics unlocked
-  bots: ['tester'],         // Only basic test bot unlocked
+  bots: ['basicBot'],         // Only basic test bot unlocked
   achievements: []          // No achievements earned
 } as const;
 
@@ -450,7 +450,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
   {
     id: 'unlock_easy_bot',
     category: 'bot',
-    trigger: { type: 'achievement', value: 'beat_tester', timing: 'game_completion' },
+    trigger: { type: 'achievement', value: 'beat_basicBot', timing: 'game_completion' },
     target: 'easy-bot'
   },
   {
