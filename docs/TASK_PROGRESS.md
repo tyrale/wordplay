@@ -6,10 +6,10 @@
 
 | Metric | Status | Details |
 |--------|--------|---------|
-| **Overall Progress** | 16/32 tasks (50%) | [Phase Overview](#-phase-overview) |
+| **Overall Progress** | 18/32 tasks (56%) | [Phase Overview](#-phase-overview) |
 | **Current Phase** | Phase 4 - Online Multiplayer | [Current Sprint](#-current-sprint) |
 | **Production Ready** | ✅ Single-player web game | [Playable Now](#-ready-for-production) |
-| **Test Status** | 278 tests passing | [Testing Reports](TESTING_REPORTS.md) |
+| **Test Status** | 288 tests passing | [Testing Reports](TESTING_REPORTS.md) |
 | **Bundle Size** | 228.64 kB JS, 29.30 kB CSS | [Performance Metrics](TESTING_REPORTS.md#build-and-bundle-testing) |
 
 ## 🎯 Current Sprint
@@ -35,7 +35,7 @@
 | **Phase 3** - Challenge Mode | 4/4 | 100% | ✅ **COMPLETE** | Daily puzzles, Storage, UI, Menu integration |
 | **Phase 4** - Online Multiplayer | 0/4 | 0% | ⏳ **PENDING** | Auth, CRUD API, Realtime, Profiles |
 | **Phase 5** - Themes & Unlocks | 2/3 | 67% | 🔄 **IN PROGRESS** | Framework ✅, Themes ✅, Six-letter ⏳ |
-| **Phase 5.5** - Tutorials | 1/2 | 50% | 🔄 **IN PROGRESS** | Base tutorial Steps 1-3 ✅, Challenge tutorial |
+| **Phase 5.5** - Tutorials | 2/2 | 100% | ✅ **COMPLETE** | Base tutorial Steps 1-5 ✅, Opponent names ✅ |
 | **Phase 6** - Web Polish | 0/3 | 0% | ⏳ **PENDING** | Accessibility, Audio, E2E testing |
 | **Phase 7** - Web Release | 0/4 | 0% | ⏳ **PENDING** | PWA, Performance, Analytics, Launch |
 | **Phase 8** - Monetization | 0/3 | 0% | ⏳ **PENDING** | Payments, Leaderboard, Admin |
@@ -80,9 +80,9 @@
 - **5.2** ✅ Theme Provider + Brown Theme - Theme system (81 themes implemented)
 - **5.3** ⏳ Six-Letter Attribute - Game difficulty variations
 
-### Phase 5.5 - Tutorials 🔄 **IN PROGRESS**
-- **5.5** 🔄 Base Tutorial - Step-by-step tutorial building UI for each step (Steps 1-5 implemented, complete tutorial system)
-- **5.6** ⏳ Challenge Tutorial - Tutorial explaining challenge mode
+### Phase 5.5 - Tutorials ✅ **COMPLETE**
+- **5.5** ✅ Base Tutorial - Step-by-step tutorial building UI for each step (Steps 1-5 implemented, complete tutorial system)
+- **5.6** ✅ Opponent Names Display - Word trail shows opponent names for bot moves with accent color and uppercase styling
 
 ### Phase 6 - Web Polish & Accessibility ⏳ **PENDING**
 - **6.1** ⏳ Colour-blind Palettes - Accessibility improvements
@@ -121,7 +121,7 @@
 - **Cross-platform architecture** ready for mobile expansion
 
 ### 📊 **Quality Metrics**
-- **Tests**: 278 passing tests
+- **Tests**: 288 passing tests
 - **Performance**: Lighthouse scores >90
 - **Accessibility**: WCAG AA compliant
 - **Browser Support**: Chrome, Firefox, Safari, Edge
