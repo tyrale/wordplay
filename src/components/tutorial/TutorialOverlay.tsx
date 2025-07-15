@@ -120,10 +120,11 @@ const TUTORIAL_STEPS: TutorialStep[] = [
       disableLetterRemoval: false // Full letter removal enabled
     },
     completionCondition: (gameState, tutorialState: TutorialState) => {
-      // Step 4 completes when user submits their next word after "ROWS"
-      return gameState && gameState.submittedWords && 
-             gameState.submittedWords.length >= 2 && // At least 2 words submitted (ROWS + next word)
-             gameState.submittedWords.some((word: string) => word === 'ROWS'); // Ensure ROWS was submitted
+      // Step 4 completes when user has submitted a word after Step 3 completion
+      // We track this by checking if the word history has grown beyond just "ROWS"
+      return tutorialState.wordHistory.includes('ROWS') && 
+             tutorialState.wordHistory.length >= 2 && // At least ROWS + one more word
+             tutorialState.lastPendingWord !== tutorialState.wordHistory[tutorialState.wordHistory.length - 1];
     }
   },
   {
@@ -146,8 +147,9 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     },
     completionCondition: (gameState, tutorialState: TutorialState) => {
       // Step 5 completes when user submits any word (tutorial ends)
-      return gameState && gameState.submittedWords && 
-             gameState.submittedWords.length >= 3; // At least 3 words submitted (ROWS + Step 4 word + Step 5 word)
+      return tutorialState.wordHistory.includes('ROWS') && 
+             tutorialState.wordHistory.length >= 3 && // At least ROWS + 2 more words
+             tutorialState.lastPendingWord !== tutorialState.wordHistory[tutorialState.wordHistory.length - 1];
     }
   }
 ];
