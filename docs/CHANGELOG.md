@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **ShipHip: Dramatic Winner/Loser Overlays for VS Bot Games** ✅ **IMPLEMENTED**
+  - **Purpose**: Replace basic "Game Over!" screen with dramatic, QuitterOverlay-style winner/loser displays
+  - **Problem**: VS bot games had inconsistent end experience compared to challenge mode's sophisticated overlays
+  - **Solution**: Created `WinnerOverlay` and `LoserOverlay` components using QuitterOverlay's dramatic animation pattern
+  - **Implementation Details**:
+    - **WinnerOverlay**: Billboard "winner" text with *cheer* and *applause* sound effects
+    - **LoserOverlay**: Billboard "loser" text with *sigh* and *groan* sound effects
+    - **Animation Sequence**: 800px text slides right-to-left (1.15s), sound effects fade in/out (1.85s), overlay fade out (2.7s total)
+    - **Final Scores Display**: Shows human vs bot scores with bot display names from registry
+    - **App Integration**: Updated `handleGameEnd` to show appropriate overlay based on winner
+    - **InteractiveGame Modification**: Hidden built-in end screen for bot mode, preserved for tutorial mode
+    - **Base Component Architecture**: Designed for easy adaptation to challenge mode and future vs human mode
+  - **Features**:
+    - ✅ Consistent with QuitterOverlay design language and animation timing
+    - ✅ Responsive typography (800px → 500px tablet → 360px mobile)
+    - ✅ Accessibility support with reduced-motion alternatives
+    - ✅ Full-screen overlay with theme-consistent styling
+    - ✅ Sound effect theming (*cheer*/*applause* vs *sigh*/*groan*)
+    - ✅ Bot name integration from centralized registry
+  - **User Experience**: Dramatic, memorable game completion with proper emotional feedback
+  - **Files Created**: `WinnerOverlay.tsx/css`, `LoserOverlay.tsx/css`, `GameEndOverlays.test.tsx`
+  - **Verification**: 6 overlay tests + 8 tutorial tests + 5 App tests all passing
+
 - **ShipHip: Centralized Bot Registry System** ✅ **IMPLEMENTED**
   - **Purpose**: Create single source of truth for all bot definitions and display names
   - **Problem**: Bot names were duplicated across 3 different files with inconsistent listings
