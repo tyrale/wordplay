@@ -45,6 +45,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **ShipHip: Tutorial Post-Game Winner/Loser Display** 🐛 **FIXED**
+  - **Issue**: After completing the tutorial (all 5 steps) and finishing the 15-round game, the game would immediately return to main menu without showing winner/loser screen
+  - **Root Cause**: Tutorial's `handleGameEnd` was immediately calling `onComplete()` instead of allowing `InteractiveGame` to display the normal game end screen
+  - **Solution**: 
+    - Modified tutorial to let `InteractiveGame` show winner/loser screen after 15 rounds
+    - Added tutorial mode detection in `InteractiveGame` to show "Home" button instead of "New Game"
+    - User can now see final scores and winner/loser status before returning to main menu
+  - **Implementation Details**:
+    - Updated `handleGameEnd` in `TutorialOverlay.tsx` to not immediately call `onComplete()`
+    - Modified `InteractiveGame.tsx` to check `currentGameMode === 'tutorial'` for button behavior
+    - "Home" button calls `onNavigateHome` to return to main menu
+    - Maintains tutorial step styling throughout game end sequence
+  - **User Experience**: Tutorial now provides proper game completion feedback before navigation
+  - **Verification**: All 8 tutorial tests passing, all 5 App tests passing, TypeScript compilation successful
+
 - **ShipHip: Letter Removal Double-Click Bug** 🐛 **FIXED**
   - **Issue**: Clicking to remove a letter from the word builder sometimes removed 2 letters instead of 1
   - **Root Cause**: Both mouse and touch events could fire for the same user interaction, especially on mobile devices
