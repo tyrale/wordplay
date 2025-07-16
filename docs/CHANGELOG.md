@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **ShipHip: Centralized Bot Registry System** ✅ **IMPLEMENTED**
+  - **Purpose**: Create single source of truth for all bot definitions and display names
+  - **Problem**: Bot names were duplicated across 3 different files with inconsistent listings
+  - **Solution**: Created centralized `src/data/botRegistry.ts` with complete bot definitions
+  - **Implementation Details**:
+    - Created `Bot` interface with id, displayName, description, difficulty, theme, and category fields
+    - Implemented `BOT_REGISTRY` array with 32+ bots organized by progression, themed, and behavior categories
+    - Added utility functions: `getBotDisplayName()`, `getBotById()`, `getAllBots()`, `getBotsByCategory()`
+    - Updated `MainScreen.tsx` to use `getAllBots()` instead of hardcoded `allBots` array
+    - Updated `Menu.tsx` to use `getBotDisplayNamesMapping()` instead of hardcoded `botDisplayNames`
+    - Updated `InteractiveGame.tsx` to use `getBotDisplayName()` function from registry
+    - Added comprehensive test suite with 9 test cases covering all registry functionality
+  - **Benefits**:
+    - ✅ Eliminated duplication across components
+    - ✅ Single source of truth for bot names and metadata
+    - ✅ Easy maintenance and addition of new bots
+    - ✅ Type-safe bot definitions with categories and difficulty levels
+    - ✅ Consistent display names across all UI components
+  - **Files Created**: `src/data/botRegistry.ts`, `src/data/__tests__/botRegistry.test.ts`
+  - **Files Updated**: `MainScreen.tsx`, `Menu.tsx`, `InteractiveGame.tsx`
+  - **Verification**: All 9 registry tests passing, UI components working correctly
+
 - **ShipHip: Word Trail Opponent Names** ✅ **IMPLEMENTED**
   - **Purpose**: Display opponent names in word trail for better game clarity
   - **Problem**: Players couldn't easily identify which bot they were playing against in the word trail
