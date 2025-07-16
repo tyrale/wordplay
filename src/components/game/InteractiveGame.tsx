@@ -514,10 +514,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
               </div>
               <button 
                 className="interactive-game__reset-btn"
-                onClick={handleResetGame}
+                onClick={currentGameMode === 'tutorial' ? onNavigateHome : handleResetGame}
                 type="button"
               >
-                New Game
+                {currentGameMode === 'tutorial' ? 'Home' : 'New Game'}
               </button>
             </div>
           </div>

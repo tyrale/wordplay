@@ -216,10 +216,7 @@
   cursor: pointer !important;
 }
 
-.tutorial-overlay--complete .grid-cell--key {
-  background-color: var(--theme-accent) !important;
-  color: var(--theme-accent-text) !important;
-}
+/* Removed key letter styling - let normal game styling apply */
 
 .tutorial-overlay--complete .word-builder__letter {
   opacity: 1 !important;
