@@ -22,7 +22,7 @@ export const BOT_REGISTRY: Bot[] = [
   // Default/Starter Bot
   { 
     id: 'basicBot', 
-    displayName: 'basicBot', 
+    displayName: 'Basic Bot', 
     difficulty: 'basic',
     category: 'progression',
     description: 'Basic bot for new players'

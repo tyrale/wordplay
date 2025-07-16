@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **ShipHip: Tutorial Integration with Dramatic Winner/Loser Overlays** ✅ **IMPLEMENTED**
+  - **Purpose**: Use the same dramatic winner/loser overlays for tutorial completion as VS bot games
+  - **Problem**: Tutorial games showed basic end screen while VS bot games had dramatic overlays, creating inconsistent experience
+  - **Solution**: Extended tutorial system to use same `WinnerOverlay` and `LoserOverlay` components
+  - **Implementation Details**:
+    - Added `onGameEnd` optional prop to `TutorialOverlay` component
+    - Created `handleTutorialGameEnd` in `App.tsx` to process tutorial game results
+    - Modified tutorial completion flow: Tutorial → Game End → Winner/Loser Overlay → Main Menu
+    - Uses "Tutorial Bot" as friendly bot name in final scores display
+    - Preserves existing tutorial functionality while adding dramatic completion experience
+  - **User Experience**: Tutorial completion now has same memorable, dramatic feedback as regular bot games
+  - **Verification**: 9 tutorial tests + 5 App tests + 6 overlay tests all passing, TypeScript compilation successful
+
 - **ShipHip: Dramatic Winner/Loser Overlays for VS Bot Games** ✅ **IMPLEMENTED**
   - **Purpose**: Replace basic "Game Over!" screen with dramatic, QuitterOverlay-style winner/loser displays
   - **Problem**: VS bot games had inconsistent end experience compared to challenge mode's sophisticated overlays

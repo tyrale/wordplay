@@ -121,11 +121,11 @@ const getMenuItems = (
   },
 ];
 
-export const Menu: React.FC<MenuProps> = ({
-  isOpen,
-  onClose,
-  onDebugOpen,
-  onResign,
+export const Menu: React.FC<MenuProps> = ({ 
+  isOpen, 
+  onClose, 
+  onDebugOpen, 
+  onResign, 
   onStartGame,
   onNavigateHome,
   className = '',
@@ -137,11 +137,16 @@ export const Menu: React.FC<MenuProps> = ({
   const { currentTheme, setTheme, isInverted, toggleInverted } = useTheme();
   
   // Get unlock state
-  const { getUnlockedItems, resetUnlocksToFresh } = useUnlockSystem();
+  const { getUnlockedItems, resetUnlocksToFresh, isLoading } = useUnlockSystem();
   const unlockedThemeIds = getUnlockedItems('theme');
   const unlockedMechanics = getUnlockedItems('mechanic');
   const unlockedBots = getUnlockedItems('bot');
   
+  // DEBUG: Log the unlocked bots
+  console.log('🤖 DEBUG Menu - isLoading:', isLoading);
+  console.log('🤖 DEBUG Menu - unlockedBots:', unlockedBots);
+  console.log('🤖 DEBUG Menu - bot display names mapping:', getBotDisplayNamesMapping());
+
   // Filter themes based on unlock state
   const unlockedThemes = useUnlockedThemes({ unlockedThemes: unlockedThemeIds });
 

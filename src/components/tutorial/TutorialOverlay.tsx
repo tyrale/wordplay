@@ -28,6 +28,7 @@ interface TutorialState {
 interface TutorialOverlayProps {
   onComplete: () => void;
   onNavigateHome: () => void;
+  onGameEnd?: (winner: string | null, finalScores: { human: number; bot: number }) => void;
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
@@ -153,7 +154,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
 
 export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
   onComplete,
-  onNavigateHome
+  onNavigateHome,
+  onGameEnd
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [gameState, setGameState] = useState<any>(null);
@@ -264,7 +266,8 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
     // Game ended naturally - let InteractiveGame show winner/loser screen
     // User can then click "Home" button to return to main menu
     console.log('[Tutorial] Game ended - winner:', winner, 'scores:', finalScores);
-  }, []);
+    onGameEnd?.(winner, finalScores);
+  }, [onGameEnd]);
 
   const handleResign = useCallback(() => {
     // Allow resignation from tutorial

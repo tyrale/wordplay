@@ -152,6 +152,25 @@ function App() {
     setAppState('main');
   };
 
+  const handleTutorialGameEnd = (winner: string | null, finalScores: { human: number; bot: number }) => {
+    // Tutorial game ended - store results and show appropriate overlay
+    setGameResults({
+      winner,
+      finalScores,
+      botName: 'Tutorial Bot' // Use a friendly name for tutorial bot
+    });
+    
+    // Show appropriate overlay based on winner
+    if (winner === 'human') {
+      setAppState('winner');
+    } else if (winner === 'bot') {
+      setAppState('loser');
+    } else {
+      // Tie - show loser overlay
+      setAppState('loser');
+    }
+  };
+
   const handleWinnerComplete = () => {
     // Return to main screen after winner animation completes
     setAppState('main');
@@ -207,6 +226,7 @@ function App() {
                 <TutorialOverlay
                   onComplete={handleTutorialComplete}
                   onNavigateHome={handleNavigateHome}
+                  onGameEnd={handleTutorialGameEnd}
                 />
               )}
               
