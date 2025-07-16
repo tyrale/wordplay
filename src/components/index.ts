@@ -96,6 +96,10 @@ export { MainScreen } from './ui/MainScreen';
 export { ChallengeCompletionOverlay } from './ui/ChallengeCompletionOverlay';
 export type { ChallengeCompletionOverlayProps } from './ui/ChallengeCompletionOverlay';
 
+export { QuitterOverlay } from './ui/QuitterOverlay';
+export { WinnerOverlay } from './ui/WinnerOverlay';
+export { LoserOverlay } from './ui/LoserOverlay';
+
 // Game Components
 export { AlphabetGrid } from './game/AlphabetGrid';
 export type { AlphabetGridProps, LetterState } from './game/AlphabetGrid';

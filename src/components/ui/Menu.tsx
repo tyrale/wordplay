@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { useTheme } from '../theme/ThemeProvider';
-import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
+import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { getBotDisplayNamesMapping } from '../../data/botRegistry';
 import './Menu.css';
 
 interface MenuTier2Item {
@@ -39,21 +40,6 @@ const mechanicDisplayNames: Record<string, string> = {
   'double-key-letters': 'double key letters',
   'reverse-scoring': 'reverse scoring',
   'challenge-dictionary': 'challenge dictionary'
-};
-
-// Map bot IDs to display names
-const botDisplayNames: Record<string, string> = {
-  'basicBot': 'basicBot',
-  'easy-bot': 'easy bot',
-  'medium-bot': 'medium bot',
-  'hard-bot': 'hard bot',
-  'expert-bot': 'expert bot',
-  'pirate-bot': 'pirate bot',
-  'chaos-bot': 'chaos bot',
-  'puzzle-bot': 'puzzle bot',
-  'speed-bot': 'speed bot',
-  'strategic-bot': 'strategic bot',
-  'creative-bot': 'creative bot'
 };
 
 // Updated menu structure based on requirements and unlock state
@@ -109,7 +95,7 @@ const getMenuItems = (
     title: 'bots',
     children: unlockedBots.map(botId => ({
       id: botId,
-      title: botDisplayNames[botId] || botId
+      title: getBotDisplayNamesMapping()[botId] || botId
     }))
   }] : []),
   {

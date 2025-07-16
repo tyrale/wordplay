@@ -7,11 +7,14 @@ import { AnimationProvider } from './animations';
 import { UnlockProvider } from './components/unlock/UnlockProvider';
 import ResponsiveTest from './components/game/ResponsiveTest';
 import { QuitterOverlay } from './components/ui/QuitterOverlay';
+import { WinnerOverlay } from './components/ui/WinnerOverlay';
+import { LoserOverlay } from './components/ui/LoserOverlay';
+import { getBotDisplayName } from './data/botRegistry';
 import { initViewportHeight } from './utils/viewportHeight';
 import { ToastProvider } from './components/ui/ToastManager';
 import './App.css';
 
-type AppState = 'main' | 'game' | 'challenge' | 'tutorial' | 'quitter';
+type AppState = 'main' | 'game' | 'challenge' | 'tutorial' | 'quitter' | 'winner' | 'loser';
 
 interface ConfirmationState {
   isVisible: boolean;
@@ -23,6 +26,11 @@ interface ConfirmationState {
 function App() {
   const [appState, setAppState] = useState<AppState>('main');
   const [selectedBotId, setSelectedBotId] = useState<string>('basicBot');
+  const [gameResults, setGameResults] = useState<{
+    winner: string | null;
+    finalScores: { human: number; bot: number };
+    botName?: string;
+  } | null>(null);
   const [confirmationState, setConfirmationState] = useState<ConfirmationState>({
     isVisible: false,
     title: '',
@@ -85,9 +93,23 @@ function App() {
     }
   };
 
-  const handleGameEnd = (_winner: string | null, _finalScores: { human: number; bot: number }) => {
-    // Return to main screen after game ends
-    setAppState('main');
+  const handleGameEnd = (winner: string | null, finalScores: { human: number; bot: number }) => {
+    // Store game results for overlay display
+    setGameResults({
+      winner,
+      finalScores,
+      botName: getBotDisplayName(selectedBotId)
+    });
+    
+    // Show appropriate overlay based on winner
+    if (winner === 'human') {
+      setAppState('winner');
+    } else if (winner === 'bot') {
+      setAppState('loser');
+    } else {
+      // Tie - could show loser or custom tie screen, for now show loser
+      setAppState('loser');
+    }
   };
 
   const handleChallengeComplete = (completed: boolean, stepCount: number) => {
@@ -128,6 +150,18 @@ function App() {
   const handleTutorialComplete = () => {
     // Return to main screen after tutorial completion
     setAppState('main');
+  };
+
+  const handleWinnerComplete = () => {
+    // Return to main screen after winner animation completes
+    setAppState('main');
+    setGameResults(null);
+  };
+
+  const handleLoserComplete = () => {
+    // Return to main screen after loser animation completes
+    setAppState('main');
+    setGameResults(null);
   };
 
   // Initialize viewport height handling
@@ -189,6 +223,22 @@ function App() {
               <QuitterOverlay 
                 isVisible={appState === 'quitter'}
                 onComplete={handleQuitterComplete}
+              />
+              
+              {/* Winner Overlay */}
+              <WinnerOverlay
+                isVisible={appState === 'winner'}
+                onComplete={handleWinnerComplete}
+                finalScores={gameResults?.finalScores}
+                botName={gameResults?.botName}
+              />
+              
+              {/* Loser Overlay */}
+              <LoserOverlay
+                isVisible={appState === 'loser'}
+                onComplete={handleLoserComplete}
+                finalScores={gameResults?.finalScores}
+                botName={gameResults?.botName}
               />
             </ResponsiveTest>
           </AnimationProvider>

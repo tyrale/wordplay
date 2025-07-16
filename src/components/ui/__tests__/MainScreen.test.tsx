@@ -4,12 +4,13 @@
  * Tests the main screen component including bot filtering based on unlock state.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
+import { MainScreen } from '../MainScreen';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { UnlockProvider } from '../../unlock/UnlockProvider';
 import { ToastProvider } from '../ToastManager';
-import { MainScreen } from '../MainScreen';
 
 // Test wrapper with required providers
 function TestWrapper({ children }: { children: React.ReactNode }) {

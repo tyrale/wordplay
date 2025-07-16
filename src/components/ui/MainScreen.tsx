@@ -1,52 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import { Menu } from './Menu';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { getAllBots } from '../../data/botRegistry';
 import './MainScreen.css';
-
-interface Bot {
-  id: string;
-  name: string;
-}
 
 interface MainScreenProps {
   onStartGame: (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => void;
 }
-
-// Complete bot list with display names (same as Menu.tsx)
-const allBots: Bot[] = [
-  { id: 'basicBot', name: 'basicBot' },
-  { id: 'easy-bot', name: 'easy bot' },
-  { id: 'medium-bot', name: 'medium bot' },
-  { id: 'hard-bot', name: 'hard bot' },
-  { id: 'expert-bot', name: 'expert bot' },
-  { id: 'adaptive-bot', name: 'adaptive bot' },
-  { id: 'puzzle-bot', name: 'puzzle bot' },
-  { id: 'speed-bot', name: 'speed bot' },
-  { id: 'strategic-bot', name: 'strategic bot' },
-  { id: 'creative-bot', name: 'creative bot' },
-  { id: 'aggressive-bot', name: 'aggressive bot' },
-  { id: 'defensive-bot', name: 'defensive bot' },
-  { id: 'learning-bot', name: 'learning bot' },
-  { id: 'memory-bot', name: 'memory bot' },
-  { id: 'pattern-bot', name: 'pattern bot' },
-  { id: 'chaos-bot', name: 'chaos bot' },
-  { id: 'minimalist-bot', name: 'minimalist bot' },
-  { id: 'maximalist-bot', name: 'maximalist bot' },
-  { id: 'vowel-bot', name: 'vowel bot' },
-  { id: 'consonant-bot', name: 'consonant bot' },
-  { id: 'rhyme-bot', name: 'rhyme bot' },
-  { id: 'alliteration-bot', name: 'alliteration bot' },
-  { id: 'length-bot', name: 'length bot' },
-  { id: 'suffix-bot', name: 'suffix bot' },
-  { id: 'prefix-bot', name: 'prefix bot' },
-  { id: 'compound-bot', name: 'compound bot' },
-  { id: 'analytical-bot', name: 'analytical bot' },
-  { id: 'intuitive-bot', name: 'intuitive bot' },
-  { id: 'experimental-bot', name: 'experimental bot' },
-  { id: 'classic-bot', name: 'classic bot' },
-  { id: 'modern-bot', name: 'modern bot' },
-  { id: 'pirate-bot', name: 'pirate bot' }, // Added missing themed bots
-];
 
 export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
   const [currentView, setCurrentView] = useState<'main' | 'bots'>('main');
@@ -57,7 +17,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
   const unlockedBotIds = getUnlockedItems('bot');
   
   // Filter bots based on unlock state
-  const availableBots = allBots.filter(bot => unlockedBotIds.includes(bot.id));
+  const availableBots = getAllBots().filter(bot => unlockedBotIds.includes(bot.id));
 
   const handleGameTypeSelect = useCallback((gameType: string) => {
     if (gameType === 'vs-bot') {
@@ -129,7 +89,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
                   className="main-screen__bot-option"
                   onClick={() => handleBotSelect(bot.id)}
                 >
-                  {bot.name}
+                  {bot.displayName}
                 </button>
               ))}
             </div>
