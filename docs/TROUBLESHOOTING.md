@@ -2,6 +2,47 @@
 
 Common issues and solutions for the WordPlay project. This guide helps resolve development, build, and runtime problems.
 
+## Current Known Issues (Updated 2025-01-22)
+
+### Test Suite Failures (264/307 tests passing)
+
+**Problem**: Some tests are failing due to interface mismatches
+
+**Current Status**: 43 tests failing (14% failure rate)
+
+**Primary Issues**:
+1. **Scoring Interface Mismatches** (35 failures): Tests expect old `ScoringResult` format
+2. **Profanity System Tests** (6 failures): Test environment profanity word loading
+3. **Storybook Component Tests** (5 failures): Test environment setup issues
+
+**Solutions**:
+```bash
+# Run tests to see current status
+npm test
+
+# Run specific test pattern
+npm test -- --testNamePattern="scoring"
+
+# See detailed test results
+npm test -- --reporter=verbose
+```
+
+**Known Working**: Core game functionality, challenge mode, theme system, unlock system
+
+### Architecture Dual Adapters
+
+**Problem**: `browserAdapter.ts` and `webAdapter.ts` provide similar functionality
+
+**Impact**: Code duplication and maintenance overhead
+
+**Workaround**: Both adapters are functional; use `browserAdapter` for new features
+
+### Storybook IndexedDB Issues
+
+**Problem**: Storybook tests fail with IndexedDB getter errors
+
+**Workaround**: Storybook functionality works in development, test issues are environment-specific
+
 ## Development Server Issues
 
 ### Port 5173 Already in Use
