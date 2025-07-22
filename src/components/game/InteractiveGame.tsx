@@ -229,11 +229,27 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     }
     
     const actions = pendingMoveAttempt.scoringResult.actions;
-    return {
-      add: actions.some((action: string) => action.startsWith('Added letter')),
-      remove: actions.some((action: string) => action.startsWith('Removed letter')),
-      move: actions.some((action: string) => action === 'Moved letters')
-    };
+    
+    // Handle both string arrays (legacy) and ScoringAction arrays (new)
+    if (Array.isArray(actions) && actions.length > 0) {
+      if (typeof actions[0] === 'string') {
+        // Legacy string format
+        return {
+          add: actions.some((action: any) => action.startsWith('Added letter')),
+          remove: actions.some((action: any) => action.startsWith('Removed letter')),
+          move: actions.some((action: any) => action === 'Moved letters')
+        };
+      } else {
+        // New ScoringAction format
+        return {
+          add: actions.some((action: any) => action.type === 'add'),
+          remove: actions.some((action: any) => action.type === 'remove'), 
+          move: actions.some((action: any) => action.type === 'rearrange')
+        };
+      }
+    }
+    
+    return { add: false, remove: false, move: false };
   }, [pendingMoveAttempt]);
 
   // Score breakdown
@@ -243,11 +259,33 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     }
     
     const result = pendingMoveAttempt.scoringResult;
-    return {
-      base: result.breakdown.addLetterPoints + result.breakdown.removeLetterPoints + result.breakdown.movePoints,
-      keyBonus: result.breakdown.keyLetterUsagePoints,
-      total: result.totalScore
-    };
+    
+    // Handle both legacy and new ScoringResult formats
+    if (result.baseScore !== undefined && result.keyLetterScore !== undefined) {
+      // New format
+      return {
+        base: result.baseScore,
+        keyBonus: result.keyLetterScore,
+        total: result.totalScore
+      };
+    } else {
+      // Legacy format fallback - try to extract from breakdown if it's an object
+      const breakdown = result.breakdown as any;
+      if (breakdown && typeof breakdown === 'object' && !Array.isArray(breakdown)) {
+        return {
+          base: (breakdown.addLetterPoints || 0) + (breakdown.removeLetterPoints || 0) + (breakdown.movePoints || 0),
+          keyBonus: breakdown.keyLetterUsagePoints || 0,
+          total: result.totalScore
+        };
+      } else {
+        // Fallback to score only
+        return {
+          base: result.score || result.totalScore || 0,
+          keyBonus: 0,
+          total: result.totalScore || result.score || 0
+        };
+      }
+    }
   }, [pendingMoveAttempt]);
 
   // Word trail with move details
