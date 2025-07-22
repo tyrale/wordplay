@@ -259,6 +259,11 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
       return false;
     }
     
+    // Must not have repeating letters
+    if (hasRepeatingLetters(targetWord)) {
+      return false;
+    }
+    
     return true;
   }
 
@@ -267,18 +272,19 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
    */
   function getFallbackTargetWords(startWord: string, targetLength: number): string[] {
     // Pre-selected words that are likely to meet constraints for common start words
+    // All words below have NO repeating letters and minimal overlap potential
     const allFallbacks = [
       // 5-letter words with minimal overlap potential
-      'QUICK', 'JUMPY', 'FRIZZ', 'BLITZ', 'WALTZ', 'QUIRK', 'FJORD', 'BUMPH',
-      'ZINGY', 'PROXY', 'FUZZY', 'WHISK', 'JERKY', 'MIXED', 'VINYL', 'ZEBRA',
+      'QUICK', 'JUMPY', 'BLITZ', 'WALTZ', 'QUIRK', 'FJORD', 'BUMPH',
+      'ZINGY', 'PROXY', 'WHISK', 'JERKY', 'MIXED', 'VINYL', 'ZEBRA',
       // 6-letter words
-      'QUARTZ', 'FRIZZY', 'JOCKEY', 'WHISKY', 'ZEPHYR', 'OXYGEN', 'PYTHON',
+      'QUARTZ', 'JOCKEY', 'WHISKY', 'ZEPHYR', 'OXYGEN', 'PYTHON',
       'RHYTHM', 'SPHINX', 'SYZYGY', 'FLYWAY', 'GIZMOS', 'HIJACK', 'JAUNTY',
       // 7-letter words  
-      'QUICKLY', 'FIZZING', 'JOCKEYS', 'WHISKEY', 'ZEPHYRS', 'PYTHONS',
-      'RHYTHMS', 'FLYWAYS', 'HIJACKS', 'JAUNTED', 'QUIZZED', 'PUZZLED',
+      'QUICKLY', 'JOCKEYS', 'WHISKEY', 'ZEPHYRS', 'PYTHONS',
+      'RHYTHMS', 'FLYWAYS', 'HIJACKS', 'JAUNTED', 'COMPLEX', 'DYNASTY',
       // 8-letter words
-      'QUIZZERS', 'PUZZLERS', 'JOCKEYED', 'WHISKEYS', 'RHYTHMIC', 'HIJACKED'
+      'JOCKEYED', 'WHISKEYS', 'RHYTHMIC', 'HIJACKED', 'DYNAMITE', 'SYMPHONY'
     ];
     
     // Filter by length and constraint validation
@@ -291,7 +297,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
       const anyLengthFallbacks = allFallbacks.filter(word => 
         word.length >= 5 && isValidTargetWord(startWord, word)
       );
-      return anyLengthFallbacks.length > 0 ? anyLengthFallbacks : ['QUICK', 'JUMPY', 'FRIZZ'];
+      return anyLengthFallbacks.length > 0 ? anyLengthFallbacks : ['QUICK', 'JUMPY', 'BLITZ'];
     }
     
     return validFallbacks;

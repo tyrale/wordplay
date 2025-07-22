@@ -67,8 +67,8 @@ describe('MainScreen Component', () => {
     // Should show bot selection screen (no back button - uses menu navigation)
     expect(screen.getByRole('button', { name: 'Open menu' })).toBeInTheDocument();
     
-    // Should show at least the basicBot bot (always unlocked)
-    expect(screen.getByText('basicBot')).toBeInTheDocument();
+    // Should show at least the Basic Bot bot (always unlocked)
+    expect(screen.getByText('Basic Bot')).toBeInTheDocument();
   });
 
   it('should only show unlocked bots in fresh user state', async () => {
@@ -86,11 +86,11 @@ describe('MainScreen Component', () => {
 
     // Wait for unlock system to initialize
     await waitFor(() => {
-      expect(screen.getByText('basicBot')).toBeInTheDocument();
+      expect(screen.getByText('Basic Bot')).toBeInTheDocument();
     });
 
-    // In fresh user state, should only show basicBot bot
-    expect(screen.getByText('basicBot')).toBeInTheDocument();
+    // In fresh user state, should only show Basic Bot bot
+    expect(screen.getByText('Basic Bot')).toBeInTheDocument();
     
     // Should not show locked bots like easy bot (until unlocked)
     expect(screen.queryByText('easy bot')).not.toBeInTheDocument();
@@ -111,12 +111,12 @@ describe('MainScreen Component', () => {
     });
     fireEvent.click(vsBotButton);
 
-    // Wait for basicBot to appear and click it
+    // Wait for Basic Bot to appear and click it
     await waitFor(() => {
-      expect(screen.getByText('basicBot')).toBeInTheDocument();
+      expect(screen.getByText('Basic Bot')).toBeInTheDocument();
     });
 
-    const basicBotButton = screen.getByText('basicBot');
+    const basicBotButton = screen.getByText('Basic Bot');
     fireEvent.click(basicBotButton);
 
     // Should call onStartGame with correct parameters
@@ -138,7 +138,7 @@ describe('MainScreen Component', () => {
 
     // Wait for bot selection screen
     await waitFor(() => {
-      expect(screen.getByText('basicBot')).toBeInTheDocument();
+      expect(screen.getByText('Basic Bot')).toBeInTheDocument();
     });
 
     // Should show menu button for navigation (current app pattern)
@@ -147,6 +147,6 @@ describe('MainScreen Component', () => {
     expect(menuButton.textContent).toBe('≡');
 
     // Should show bot selection content
-    expect(screen.getByText('basicBot')).toBeInTheDocument();
+    expect(screen.getByText('Basic Bot')).toBeInTheDocument();
   });
 }); 

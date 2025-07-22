@@ -92,22 +92,21 @@
 
 .loser-scores {
   position: absolute;
-  bottom: 20%;
+  bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
+  
   display: flex;
-  gap: var(--spacing-xl);
+  gap: var(--spacing-lg, 32px);
+  justify-content: center;
+  align-items: center;
   
-  font-family: var(--theme-font-family);
-  font-weight: var(--theme-font-weight);
-  font-size: var(--theme-font-size-lg);
+  font-size: var(--theme-font-size-md);
   color: var(--theme-text);
+  opacity: 0.8;
+  text-transform: uppercase; /* Make bot names uppercase */
   
-  /* Start invisible */
-  opacity: 0;
-  
-  /* Fade in with first sigh */
-  animation: scoresFade 0.85s ease-in-out 1.15s forwards;
+  animation: fadeInUp 0.4s ease-out 2.3s both;
 }
 
 @keyframes scoresFade {

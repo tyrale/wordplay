@@ -127,6 +127,7 @@
   font-size: 20px; /* Updated to 20px */
   color: var(--theme-text);
   text-align: center;
+  text-transform: uppercase; /* Force bot names to all caps */
   
   /* Interaction */
   transition: opacity 0.2s ease;

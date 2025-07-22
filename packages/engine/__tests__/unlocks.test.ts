@@ -186,7 +186,7 @@ describe('Unlock Engine', () => {
       const sharedState: UnlockState = {
         themes: ['classic blue'],
         mechanics: [],
-        bots: ['tester'],
+        bots: ['basicBot'],
         achievements: []
       };
       
@@ -310,7 +310,7 @@ describe('Unlock Engine', () => {
       const freshDeps = createTestUnlockDependencies({
         themes: ['classic blue'],
         mechanics: [],
-        bots: ['tester'],
+        bots: ['basicBot'],
         achievements: []
       });
       const freshEngine = createUnlockEngine(freshDeps);

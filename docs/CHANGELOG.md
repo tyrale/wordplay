@@ -622,7 +622,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Fresh User Experience**: New users see minimal menu with only default theme and basicBot bot until unlocks are earned
     - **Word-Triggered Unlocks**: Playing theme names (e.g., "red", "blue", "green") unlocks and immediately applies those themes
     - **Mechanic Unlocks**: Playing specific words unlocks game mechanics (e.g., "five" → 5-letter starting words)
-    - **Achievement-Based Unlocks**: Beating bots unlocks progressively harder opponents (beat tester → unlock easy bot)
+    - **Achievement-Based Unlocks**: Beating bots unlocks progressively harder opponents (beat basicBot → unlock easy bot)
     - **Mixed Unlock Types**: Some bots unlock via words ("pirate" → pirate bot), others via achievements
     - **Immediate Theme Application**: Theme unlocks automatically apply the new theme for instant visual feedback
     - **Persistent State**: Unlocks survive browser refreshes, cache clears, and app quits via IndexedDB/file storage
@@ -1493,3 +1493,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Dependencies Updated:** None - architecture uses existing dependencies efficiently
 **Breaking Changes:** None - legacy functions preserved for backward compatibility
 **Next Phase:** Web component integration can proceed with browser adapter
+
+## Latest Changes
+
+### ShipHip: Bot Names Display in All Caps (CSS Transform) *(Task 5.6)*
+*Date: 2025-01-10*
+
+**Enhanced Bot Name Styling**
+- **CSS-Based Transformation**: Applied `text-transform: uppercase` to force all bot names to display in all caps
+- **Clean Implementation**: Uses CSS styling instead of modifying underlying data files
+- **Comprehensive Coverage**: Applied to all bot name display locations:
+  - Main screen bot selection list (`.main-screen__bot-option`)
+  - Menu bot items (`.menu-tier2-list[id="menu-bots-submenu"] .menu-tier2-item`)
+  - Word trail opponent names (`.word-trail__opponent-name`)
+  - Winner/Loser overlay bot names (`.winner-scores`, `.loser-scores`)
+- **Data Integrity**: Preserves original readable bot names in code while enforcing visual consistency
+- **Accessibility**: Maintains screen reader compatibility with proper underlying text
+
+**Technical Implementation**
+- No changes to bot registry data or display name mappings
+- CSS-only solution ensures easy maintenance and consistent styling
+- Responsive design maintained across all screen sizes
+- All existing tests pass without modification
+
+### ShipHip: Centralized Bot Registry System *(Task 5.5)*

@@ -1,3 +1,8 @@
+/* Bot names styling - force uppercase */
+.menu-tier2-list[id="menu-bots-submenu"] .menu-tier2-item {
+  text-transform: uppercase;
+}
+
 /* Menu Component Styles */
 
 /* Keyframe animations */

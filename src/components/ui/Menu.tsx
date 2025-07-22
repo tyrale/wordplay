@@ -49,7 +49,7 @@ const getMenuItems = (
   isInverted: boolean, 
   isInGame: boolean = false,
   unlockedMechanics: string[] = [],
-  unlockedBots: string[] = [],
+  availableBots: string[] = [],
   currentGameMode?: string
 ): MenuTier1Item[] => [
   // Only include resign if user is in an active game
@@ -89,11 +89,11 @@ const getMenuItems = (
       title: mechanicDisplayNames[mechanicId] || mechanicId
     }))
   }] : []),
-  // Only show bots section if there are unlocked bots beyond the default tester
-  ...(unlockedBots.length > 0 ? [{
+  // Show bots section if there are available bots
+  ...(availableBots.length > 0 ? [{
     id: 'bots',
     title: 'bots',
-    children: unlockedBots.map(botId => ({
+    children: availableBots.map((botId: string) => ({
       id: botId,
       title: getBotDisplayNamesMapping()[botId] || botId
     }))
@@ -103,14 +103,8 @@ const getMenuItems = (
     title: 'about',
     children: [
       { id: 'the-basics', title: 'the basics' },
-      { id: 'game-version', title: 'game version' },
-      { id: 'credits', title: 'credits' },
-      { id: 'privacy-policy', title: 'privacy policy' },
-      { id: 'terms-of-service', title: 'terms of service' },
-      { id: 'contact-support', title: 'contact support' },
-      { id: 'feedback', title: 'feedback' },
-      { id: 'debug', title: 'debug' },
-      { id: 'reset-unlocks', title: 'reset unlocks (testing)' },
+      { id: 'debug-mode', title: 'debug mode' },
+      { id: 'reset-unlocks', title: 'reset unlocks (debug)' },
     ]
   },
   // Home item - moved to bottom
@@ -142,10 +136,8 @@ export const Menu: React.FC<MenuProps> = ({
   const unlockedMechanics = getUnlockedItems('mechanic');
   const unlockedBots = getUnlockedItems('bot');
   
-  // DEBUG: Log the unlocked bots
-  console.log('🤖 DEBUG Menu - isLoading:', isLoading);
-  console.log('🤖 DEBUG Menu - unlockedBots:', unlockedBots);
-  console.log('🤖 DEBUG Menu - bot display names mapping:', getBotDisplayNamesMapping());
+  // Ensure basicBot is always available (fallback for loading state or missing data)
+  const availableBots = isLoading ? ['basicBot'] : (unlockedBots.length > 0 ? unlockedBots : ['basicBot']);
 
   // Filter themes based on unlock state
   const unlockedThemes = useUnlockedThemes({ unlockedThemes: unlockedThemeIds });
@@ -161,7 +153,7 @@ export const Menu: React.FC<MenuProps> = ({
     }
   }, []);
 
-  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, unlockedBots, currentGameMode);
+  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -269,7 +261,7 @@ export const Menu: React.FC<MenuProps> = ({
       // Start tutorial
       onStartGame?.('tutorial');
       handleClose(); // Close menu after starting tutorial
-    } else if (tier1Id === 'about' && tier2Id === 'debug') {
+    } else if (tier1Id === 'about' && (tier2Id === 'debug' || tier2Id === 'debug-mode')) {
       // Open debug dialog
       onDebugOpen?.();
       handleClose(); // Close menu after opening debug
