@@ -155,7 +155,10 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * Get the current game state (read-only copy)
    */
   public getState(): GameState {
-    return { ...this.state };
+    return { 
+      ...this.state,
+      usedWords: Array.from(this.state.usedWords) as any // Convert Set to Array for React state
+    };
   }
 
   /**
