@@ -155,11 +155,13 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * Get the current game state (read-only copy)
    */
   public getState(): GameState {
-    return { 
+    const stateToReturn = { 
       ...this.state,
       usedWords: Array.from(this.state.usedWords) as any, // Convert Set to Array for React state
       usedKeyLetters: Array.from(this.state.usedKeyLetters) as any // Convert Set to Array for React state
     };
+    console.log('[DEBUG] getState: Returning state with turnHistory length:', stateToReturn.turnHistory.length);
+    return stateToReturn;
   }
 
   /**
@@ -378,6 +380,8 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     };
 
     this.state.turnHistory.push(turnRecord);
+    console.log('[DEBUG] applyMoveAttempt: Added turn record to history. New length:', this.state.turnHistory.length);
+    console.log('[DEBUG] applyMoveAttempt: Turn record:', turnRecord);
 
     // KEY LETTER LOCKING FEATURE
     // Clear any existing locked key letters since this player has now completed their turn with them
