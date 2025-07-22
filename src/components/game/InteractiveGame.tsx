@@ -290,6 +290,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   // Word trail with move details
   const wordTrailMoves: WordMove[] = React.useMemo(() => {
+    console.log('[DEBUG] WordTrail: gameState keys:', Object.keys(gameState));
+    console.log('[DEBUG] WordTrail: gameStatus:', gameState.gameStatus);
+    console.log('[DEBUG] WordTrail: currentTurn:', gameState.currentTurn);
     console.log('[DEBUG] WordTrail: turnHistory length:', gameState.turnHistory.length);
     console.log('[DEBUG] WordTrail: turnHistory:', gameState.turnHistory);
     

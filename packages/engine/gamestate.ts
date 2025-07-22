@@ -157,7 +157,8 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
   public getState(): GameState {
     return { 
       ...this.state,
-      usedWords: Array.from(this.state.usedWords) as any // Convert Set to Array for React state
+      usedWords: Array.from(this.state.usedWords) as any, // Convert Set to Array for React state
+      usedKeyLetters: Array.from(this.state.usedKeyLetters) as any // Convert Set to Array for React state
     };
   }
 
