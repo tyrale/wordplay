@@ -329,7 +329,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     
     console.log('[DEBUG] WordTrail: processed moves:', moves);
     return moves;
-  }, [gameState.turnHistory, config?.botId]);
+  }, [gameState, config?.botId]); // Use full gameState instead of just turnHistory
 
   // Event handlers
   const handleActionClick = useCallback((action: string) => {
