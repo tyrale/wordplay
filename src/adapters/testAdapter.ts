@@ -106,7 +106,7 @@ class TestWordData implements WordDataDependencies {
       this.profanityWords = new Set();
     }
 
-    this.isLoaded = true;
+    // loaded property is already set to true in constructor
   }
 
   // Test-specific methods for controlling word data during tests
