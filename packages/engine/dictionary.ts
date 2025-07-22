@@ -23,20 +23,8 @@ export interface ValidationOptions {
   previousWord?: string;
 }
 
-export interface ValidationResult {
-  isValid: boolean;
-  word: string;
-  reason?: string;
-  userMessage?: string;
-  censored?: string;
-}
-
-// Dependency interface for word data
-export interface WordDataDependencies {
-  enableWords: Set<string>;
-  slangWords: Set<string>;
-  profanityWords: Set<string>;
-}
+// Import shared interfaces from central location
+import type { ValidationResult, WordDataDependencies } from './interfaces';
 
 // Word sets for different validation scenarios
 class WordDictionary {

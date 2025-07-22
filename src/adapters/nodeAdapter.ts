@@ -202,14 +202,7 @@ const nodeBotDependencies: GameStateBotDependencies = {
       calculateScore: nodeScoringDependencies.calculateScore
     };
     
-    const result = await generateBotMoveWithDependencies(word, botDeps, options);
-    
-    // Ensure result has required properties for the interface
-    return {
-      move: result.move,
-      analysis: result.analysis || [],
-      executionTime: result.executionTime || 0
-    };
+    return await generateBotMoveWithDependencies(word, botDeps, options);
   }
 };
 
