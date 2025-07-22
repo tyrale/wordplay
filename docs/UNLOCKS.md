@@ -8,7 +8,7 @@ The WordPlay unlock system is a comprehensive feature progression system that al
 
 ### ✅ Fully Implemented
 
-**Themes (81 unlocks)**
+**Themes (~80 unlocks)**
 - Complete implementation with immediate application
 - Triggers: Playing color/theme names (e.g., "red", "blue", "midnight")
 - Immediately applies theme when unlocked and persists across sessions
