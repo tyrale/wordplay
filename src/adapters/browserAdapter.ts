@@ -7,6 +7,8 @@
 
 import type { WordDataDependencies, ValidationResult } from '../../packages/engine/dictionary';
 import { validateWordWithDependencies, isValidDictionaryWordWithDependencies } from '../../packages/engine/dictionary';
+import { calculateScore, getScoreForMove, isValidMove } from '../../packages/engine/scoring';
+import type { ScoringResult } from '../../packages/engine/scoring';
 
 // Import centralized profanity management
 import { getComprehensiveProfanityWords } from '../../packages/engine/profanity';
