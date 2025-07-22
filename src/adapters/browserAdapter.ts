@@ -130,6 +130,9 @@ class BrowserWordData implements WordDataDependencies {
 // BROWSER DEPENDENCY IMPLEMENTATIONS
 // =============================================================================
 
+// Singleton instance for browser word data
+const browserWordData = new BrowserWordData();
+
 /**
  * Browser dictionary dependencies implementation
  */
