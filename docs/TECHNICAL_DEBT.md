@@ -88,23 +88,37 @@ This document tracks technical debt and architectural issues that need to be add
 6. **Phase 6**: Verification - Ensure all adapters compile and function correctly
 
 #### **Estimated Effort**: 
-- **Time**: 4-6 hours
-- **Risk**: Medium (could break other adapters if not done carefully)
+- **Time**: 8-12 hours (increased due to scope expansion)
+- **Risk**: High (affects ALL adapters - requires coordinated fix)
 - **Dependencies**: None (can be done after profanity task completion)
+
+#### **🚨 CRITICAL UPDATE: Universal Adapter Interface Crisis**
+During Phase 2 cleanup (slang word centralization), discovered these interface issues affect **ALL ADAPTERS**:
+
+- **`src/adapters/nodeAdapter.ts`** - 10+ linter errors
+- **`src/adapters/webAdapter.ts`** - 9+ linter errors  
+- **`src/adapters/browserAdapter.ts`** - 9+ linter errors
+- **`src/adapters/testAdapter.ts`** - 8+ linter errors
+
+**Root Cause**: Interface definitions scattered across multiple files with inconsistent exports.
+
+**Immediate Impact**: 
+- ✅ Runtime functionality works (confirmed by tests)
+- ❌ TypeScript compilation fails 
+- ❌ Development velocity severely impacted
+- ❌ Cannot proceed with further adapter improvements
+
+**Recommended Emergency Fix Strategy**: 
+1. **Phase 1**: Create temporary interface compatibility layer
+2. **Phase 2**: Audit and consolidate all interface definitions
+3. **Phase 3**: Migrate all adapters simultaneously
+4. **Phase 4**: Remove compatibility layer
+
+**NOTE**: These are pre-existing issues revealed by touching adapter imports, not caused by current cleanup.
 
 ---
 
-## 📋 Other Technical Debt
-
-### **Test Adapter Interface Issues** 🟡 **MEDIUM PRIORITY**
-**Location**: `src/adapters/testAdapter.ts`  
-**Issues**: Similar interface naming conflicts, duplicate isLoaded properties  
-**Status**: Partially addressed during profanity cleanup  
-
-### **Browser Adapter Interface Issues** 🟡 **MEDIUM PRIORITY**  
-**Location**: `src/adapters/browserAdapter.ts`  
-**Issues**: GameStateDependencies import issues  
-**Status**: Identified during build check  
+## 📋 Other Technical Debt  
 
 ---
 
