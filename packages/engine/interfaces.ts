@@ -58,14 +58,15 @@ export interface BotMove {
 
 export interface BotResult {
   move: BotMove | null;
-  analysis: string[];
-  executionTime: number;
+  candidates: BotMove[];
+  processingTime: number;
+  totalCandidatesGenerated: number;
 }
 
 export interface MoveCandidate {
   word: string;
-  action: 'add' | 'remove' | 'rearrange' | 'substitute';
-  letters?: string[];
+  type: 'add' | 'remove' | 'rearrange' | 'substitute';
+  operations: string[];
 }
 
 // =============================================================================
@@ -80,6 +81,7 @@ export interface WordDataDependencies {
   enableWords: Set<string>;
   slangWords: Set<string>;
   profanityWords: Set<string>;
+  wordCount: number;
 }
 
 /**
@@ -154,13 +156,18 @@ export interface ScoringDependencies {
    * @returns Scoring result with breakdown
    */
   calculateScore?(fromWord: string, toWord: string, keyLetters: string[], lockedLetters: string[]): ScoringResult;
+  
+  /**
+   * Get simple numeric score for a move (used by bot AI)
+   */
+  getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]) => number;
 }
 
 /**
  * Combined dependencies for bot AI
  * All dependencies the bot needs to generate moves
  */
-export interface BotDependencies extends DictionaryDependencies, UtilityDependencies {
+export interface BotDependencies extends DictionaryDependencies, UtilityDependencies, ScoringDependencies {
   // Bot-specific dependencies can be added here
 }
 
@@ -169,9 +176,7 @@ export interface BotDependencies extends DictionaryDependencies, UtilityDependen
  * All dependencies needed for full game functionality
  */
 export interface GameEngineDependencies extends BotDependencies, ScoringDependencies {
-  // Game engine specific scoring functions
-  getScoreForMove?: (fromWord: string, toWord: string, keyLetters?: string[]) => number;
-  // Game engine specific bot functions
+  // Game engine specific bot functions  
   generateBotMove?: (currentWord: string, options?: any) => Promise<BotResult>;
 }
 
@@ -523,18 +528,22 @@ export function createMockDependencies(): GameEngineDependencies {
     generateBotMove: async (currentWord: string, options: any = {}) => {
       // Simple bot that tries to add 'S'
       const candidate = currentWord + 'S';
+      const candidateMove = { word: candidate, score: 1, confidence: 0.8, reasoning: ['Added S'] };
+      
       if (testWords.has(candidate)) {
         return {
-          move: { word: candidate, score: 1, confidence: 0.8, reasoning: ['Added S'] },
-          analysis: ['Simple add S strategy'],
-          executionTime: 5
+          move: candidateMove,
+          candidates: [candidateMove],
+          processingTime: 5,
+          totalCandidatesGenerated: 1
         };
       }
       
       return {
         move: null,
-        analysis: ['No valid moves found'],
-        executionTime: 5
+        candidates: [],
+        processingTime: 5,
+        totalCandidatesGenerated: 0
       };
     }
   };

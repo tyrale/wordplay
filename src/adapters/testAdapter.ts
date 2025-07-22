@@ -28,6 +28,7 @@ class TestWordData implements WordDataDependencies {
   public enableWords: Set<string> = new Set();
   public slangWords: Set<string> = new Set();
   public profanityWords: Set<string> = new Set();
+  public wordCount: number = 0;
   private wordsByLength: Map<number, string[]> = new Map();
   private loaded = true; // Always loaded for tests
 
@@ -77,6 +78,7 @@ class TestWordData implements WordDataDependencies {
     ];
 
     this.enableWords = new Set(testWords);
+    this.wordCount = this.enableWords.size;
 
     // Build words-by-length map for random selection
     this.wordsByLength.clear();
@@ -113,6 +115,7 @@ class TestWordData implements WordDataDependencies {
   public addWord(word: string): void {
     const upperWord = word.toUpperCase();
     this.enableWords.add(upperWord);
+    this.wordCount = this.enableWords.size;
     
     const length = upperWord.length;
     if (!this.wordsByLength.has(length)) {
@@ -126,6 +129,7 @@ class TestWordData implements WordDataDependencies {
   public removeWord(word: string): void {
     const upperWord = word.toUpperCase();
     this.enableWords.delete(upperWord);
+    this.wordCount = this.enableWords.size;
     
     const length = upperWord.length;
     const wordsOfLength = this.wordsByLength.get(length);
