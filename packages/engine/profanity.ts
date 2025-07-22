@@ -20,15 +20,6 @@ export interface ProfanityConfig {
 }
 
 /**
- * Legacy basic profanity words preserved for backward compatibility
- * These words are guaranteed to be included even if not in comprehensive list
- */
-const LEGACY_WORDS = [
-  'DAMN', 'HELL', 'CRAP', 'PISS', 'SHIT', 'FUCK', 'BITCH', 'ASSHOLE',
-  'BASTARD', 'WHORE', 'SLUT', 'FART', 'POOP', 'BUTT', 'ASS'
-];
-
-/**
  * Loads and cleans the comprehensive profanity word list
  * Filters out words with spaces or numbers for performance and simplicity
  */
@@ -36,8 +27,8 @@ function loadComprehensiveProfanityWords(): string[] {
   try {
     const naughtyWords = require('naughty-words');
     if (!naughtyWords?.en || !Array.isArray(naughtyWords.en)) {
-      console.warn('Failed to load comprehensive profanity list, using legacy words only');
-      return LEGACY_WORDS;
+      console.warn('Failed to load comprehensive profanity list, using empty fallback');
+      return [];
     }
 
     // Filter out words with spaces or numbers for performance and simplicity
@@ -48,22 +39,23 @@ function loadComprehensiveProfanityWords(): string[] {
     // Convert to uppercase for consistency
     const uppercaseWords = cleanedWords.map((word: string) => word.toUpperCase());
     
-    // Ensure all legacy words are included for backward compatibility
-    const allWords = new Set([...uppercaseWords, ...LEGACY_WORDS]);
-    
-    return Array.from(allWords);
+    return uppercaseWords;
   } catch (error) {
-    console.warn('Failed to load naughty-words package, using legacy words only:', error);
-    return LEGACY_WORDS;
+    console.warn('Failed to load naughty-words package, using empty fallback:', error);
+    return [];
   }
 }
 
 /**
- * Get basic profanity words (legacy compatibility)
- * @returns Array of basic profanity words
+ * Get basic profanity words (legacy compatibility - now returns subset of comprehensive)
+ * @returns Array of shorter/more common profanity words
  */
 export function getBasicProfanityWords(): string[] {
-  return [...LEGACY_WORDS];
+  const comprehensive = loadComprehensiveProfanityWords();
+  
+  // Return a dynamic subset based on word characteristics rather than hardcoded lists
+  // Basic mode returns shorter words (3-5 letters) which tend to be more common
+  return comprehensive.filter(word => word.length >= 3 && word.length <= 5);
 }
 
 /**
@@ -83,7 +75,7 @@ export function getProfanityWords(config: ProfanityConfig = { level: 'comprehens
   let words: string[];
   
   if (config.level === 'basic') {
-    words = [...LEGACY_WORDS];
+    words = getBasicProfanityWords();
   } else {
     words = loadComprehensiveProfanityWords();
   }
@@ -123,14 +115,14 @@ export function getProfanityStats(): {
   filtered: number;
   compressionRatio: number;
 } {
-  const basicCount = LEGACY_WORDS.length;
+  const basicCount = getBasicProfanityWords().length;
   const comprehensiveCount = loadComprehensiveProfanityWords().length;
   
   // Calculate how many words were filtered out
   try {
     const naughtyWords = require('naughty-words');
     const originalCount = naughtyWords?.en?.length || 0;
-    const filteredCount = originalCount - comprehensiveCount + LEGACY_WORDS.length; // Adjust for legacy overlap
+    const filteredCount = originalCount - comprehensiveCount;
     
     return {
       basic: basicCount,
