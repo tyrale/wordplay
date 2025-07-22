@@ -47,7 +47,8 @@ Open your browser to: **http://localhost:5173/**
 
 The web app includes:
 - ✅ **Single-player game** vs bot
-- ✅ **81 themes** to choose from
+- ✅ **Theme system** with animation themes (default, falling)
+- ✅ **Challenge mode** with step-by-step puzzles
 - ✅ **Responsive design** (desktop, tablet, mobile)
 - ✅ **Full game engine** with scoring and validation
 
@@ -217,15 +218,17 @@ npm run build
 Run tests to check for issues:
 ```bash
 npm test
-# All tests should pass
+# Current status: 264/307 tests passing (86% success rate)
+# Some failing tests are due to interface mismatches (documented in TESTING_REPORTS.md)
 ```
 
 ## Next Steps
 
 ### For Players
 - Try the web game at http://localhost:5173/
-- Experiment with different themes
-- Challenge yourself against the bot
+- Experiment with animation themes (default, falling)
+- Try challenge mode for step-by-step puzzles
+- Challenge yourself against bot opponents
 
 ### For Developers
 - Read [ARCHITECTURE.md](ARCHITECTURE.md) for technical details
