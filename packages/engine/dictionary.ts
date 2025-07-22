@@ -12,7 +12,7 @@
 // import { fileURLToPath } from 'url';
 
 // Import centralized profanity management
-import { getBasicProfanityWords } from './profanity';
+import { getComprehensiveProfanityWords } from './profanity';
 
 // Types for validation
 export interface ValidationOptions {
@@ -83,7 +83,7 @@ class WordDictionary {
     slangWords.forEach(word => this.slangWords.add(word.toUpperCase()));
 
     // Use centralized profanity source instead of hardcoded list
-    this.profanityWords = getBasicProfanityWords();
+    this.profanityWords = new Set(getComprehensiveProfanityWords());
 
     this.initialized = true;
     console.warn('Dictionary: Using minimal word set. For full functionality, use dependency injection with complete word data.');

@@ -84,8 +84,8 @@ class TestWordData implements WordDataDependencies {
     ]);
 
     // Use centralized profanity management for testing
-    // Use basic profanity for more predictable tests
-    this.profanityWords = getBasicProfanityWords();
+    // Use comprehensive profanity for complete coverage
+    this.profanityWords = new Set(getComprehensiveProfanityWords());
 
     this.isLoaded = true;
   }
@@ -133,11 +133,11 @@ class TestWordData implements WordDataDependencies {
   }
 
   public switchToComprehensiveProfanity(): void {
-    this.profanityWords = getComprehensiveProfanityWords();
+    this.profanityWords = new Set(getComprehensiveProfanityWords());
   }
 
   public switchToBasicProfanity(): void {
-    this.profanityWords = getBasicProfanityWords();
+    this.profanityWords = new Set(getBasicProfanityWords());
   }
 }
 

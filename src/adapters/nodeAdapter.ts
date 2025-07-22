@@ -142,7 +142,8 @@ class NodeWordData implements WordDataDependencies {
     
     this.enableWords = new Set(fallbackWords);
     this.slangWords = new Set(['BRUH', 'YEAH']);
-    this.profanityWords = new Set(['DAMN', 'HELL']);
+    // Use centralized profanity management even in fallback mode
+    this.profanityWords = new Set(getComprehensiveProfanityWords());
     this.isLoaded = true;
   }
 }
