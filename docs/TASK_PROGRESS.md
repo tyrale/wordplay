@@ -149,17 +149,19 @@
 
 ## 📚 Detailed Documentation
 
-### Technical Documentation
-- **[Implementation History](IMPLEMENTATION_HISTORY.md)** - Detailed implementation notes and technical achievements
-- **[Architecture](ARCHITECTURE.md)** - System architecture and design patterns
-- **[API Reference](API_REFERENCE.md)** - Complete API documentation
-- **[Testing Reports](TESTING_REPORTS.md)** - Test status, metrics, and performance data
+### Core Documentation
+- **[Game Rules](GAME_RULES.md)** - Complete game mechanics and scoring rules
+- **[Architecture](ARCHITECTURE.md)** - System design and component relationships  
+- **[API Reference](API_REFERENCE.md)** - Complete engine API documentation
+- **[Implementation History](IMPLEMENTATION_HISTORY.md)** - Detailed development timeline
+- **[Testing Reports](TESTING_REPORTS.md)** - Comprehensive test results and performance metrics
 
 ### Development Documentation  
-- **[Development Plan](dev-plan.md)** - Master development plan and chronological tasks
-- **[Changelog](CHANGELOG.md)** - Detailed change history with ShipHip commits
-- **[Troubleshooting](TROUBLESHOOTING.md)** - Problem resolution and debugging
-- **[Quick Start](QUICK_START.md)** - Getting started guide
+- **[Quick Start](QUICK_START.md)** - Get up and running quickly
+- **[Deployment](DEPLOYMENT.md)** - Production deployment instructions
+- **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Technical Debt](TECHNICAL_DEBT.md)** - Interface issues and cleanup tasks identified during development
+- **[Migration Guide](MIGRATION_TO_RENDER.md)** - Hosting migration documentation
 
 ### Feature Documentation
 - **[Unlocks](UNLOCKS.md)** - Unlock system documentation and reference

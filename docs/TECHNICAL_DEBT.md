@@ -1,0 +1,131 @@
+# Technical Debt Cleanup List
+
+This document tracks technical debt and architectural issues that need to be addressed in future development cycles.
+
+## 📋 Adapter Interface Issues
+
+### **Node Adapter Interface Problems** 🔴 **HIGH PRIORITY**
+
+**Location**: `src/adapters/nodeAdapter.ts`  
+**Discovered**: During profanity cleanup task (2025-01-22)  
+**Impact**: Build errors, TypeScript compilation failures  
+
+#### **Issues to Fix:**
+
+1. **Missing Interface Exports** - Lines 20-21
+   ```typescript
+   // ❌ CURRENT: Importing non-existent interfaces
+   import type { 
+     GameDependencies,           // ← DOESN'T EXIST
+     WordDataDependencies,       // ← WRONG IMPORT LOCATION
+   } from '../../packages/engine/interfaces';
+   
+   // ✅ FIX: Use correct interface names and locations
+   import type { GameStateDependencies } from '../../packages/engine/interfaces';
+   import type { WordDataDependencies } from '../../packages/engine/dictionary';
+   ```
+
+2. **Missing Function Exports** - Line 30
+   ```typescript
+   // ❌ CURRENT: Importing non-existent functions
+   import { 
+     calculateScoreWithDependencies,     // ← DOESN'T EXIST  
+     getScoreForMoveWithDependencies     // ← DOESN'T EXIST
+   } from '../../packages/engine/scoring';
+   
+   // ✅ FIX: Find correct function names or create missing exports
+   ```
+
+3. **ValidationResult Type Mismatch** - Line 163
+   ```typescript
+   // ❌ ISSUE: Type conflict between engine/dictionary and engine/interfaces
+   // ValidationResult from dictionary: { isValid: boolean; ... }
+   // ValidationResult from interfaces: { isValid: true } | { isValid: false; ... }
+   
+   // ✅ FIX: Align ValidationResult types across modules
+   ```
+
+4. **Duplicate Property Declaration** - Lines 45 & 65
+   ```typescript
+   // ❌ CURRENT: Duplicate 'isLoaded' declarations
+   private isLoaded = false;           // Line 45
+   public isLoaded(): boolean { ... }  // Line 65
+   
+   // ✅ FIX: Rename one to avoid conflict (e.g., 'loaded' property + 'isLoaded()' method)
+   ```
+
+5. **Array-to-Set Type Error** - Line 127
+   ```typescript
+   // ❌ CURRENT: Assigning string[] to Set<string>
+   this.profanityWords = getComprehensiveProfanityWords();  // Returns string[]
+   
+   // ✅ FIX: Wrap in Set constructor (PARTIALLY FIXED during profanity cleanup)
+   this.profanityWords = new Set(getComprehensiveProfanityWords());
+   ```
+
+6. **Unused Parameters** - Lines 184+
+   ```typescript
+   // ❌ CURRENT: Unused parameters causing linter warnings
+   calculateScore: (fromWord: string, toWord: string, options?: any) => {
+     // fromWord, toWord never used
+   }
+   
+   // ✅ FIX: Implement proper scoring logic or mark parameters as intentionally unused
+   ```
+
+#### **Root Cause Analysis:**
+- **Interface Evolution**: Engine interfaces were refactored but adapters weren't updated
+- **Import Fragmentation**: Interfaces scattered across multiple files without clear organization
+- **Type System Drift**: Different modules defining conflicting versions of same types
+- **Incomplete Migration**: Some functions renamed/moved but imports not updated
+
+#### **Proposed Solution Approach:**
+1. **Phase 1**: Interface Audit - Catalog all interface definitions and their correct locations
+2. **Phase 2**: Type Unification - Consolidate conflicting type definitions 
+3. **Phase 3**: Import Cleanup - Update all import statements to use correct locations
+4. **Phase 4**: Missing Function Resolution - Implement or locate missing scoring functions
+5. **Phase 5**: Property Cleanup - Resolve duplicate/conflicting property declarations
+6. **Phase 6**: Verification - Ensure all adapters compile and function correctly
+
+#### **Estimated Effort**: 
+- **Time**: 4-6 hours
+- **Risk**: Medium (could break other adapters if not done carefully)
+- **Dependencies**: None (can be done after profanity task completion)
+
+---
+
+## 📋 Other Technical Debt
+
+### **Test Adapter Interface Issues** 🟡 **MEDIUM PRIORITY**
+**Location**: `src/adapters/testAdapter.ts`  
+**Issues**: Similar interface naming conflicts, duplicate isLoaded properties  
+**Status**: Partially addressed during profanity cleanup  
+
+### **Browser Adapter Interface Issues** 🟡 **MEDIUM PRIORITY**  
+**Location**: `src/adapters/browserAdapter.ts`  
+**Issues**: GameStateDependencies import issues  
+**Status**: Identified during build check  
+
+---
+
+## 📝 Cleanup Tracking
+
+| Issue | Priority | Status | Assigned | ETA |
+|-------|----------|--------|----------|-----|
+| Node Adapter Interfaces | 🔴 High | Pending | TBD | TBD |
+| Test Adapter Interfaces | 🟡 Medium | Partial | TBD | TBD |
+| Browser Adapter Interfaces | 🟡 Medium | Pending | TBD | TBD |
+
+---
+
+## 🎯 Next Actions
+
+1. **Complete profanity centralization task** ✅ (Current priority)
+2. **Schedule Node adapter interface cleanup** (Next major task)
+3. **Create interface architecture documentation** (Future enhancement)
+4. **Implement adapter interface tests** (Quality assurance)
+
+---
+
+*Last Updated: 2025-01-22*  
+*Related to: ShipHip profanity centralization cleanup* 
