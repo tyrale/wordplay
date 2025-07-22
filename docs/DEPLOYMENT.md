@@ -1,5 +1,11 @@
 # Deployment Guide
 
+## ✅ **CURRENT DEPLOYMENT STATUS** (Updated 2025-01-22)
+
+**Live Application**: The WordPlay game is deployed and accessible.
+
+**Verification**: Deployment instructions below are accurate and current for the existing Vercel setup.
+
 ## Vercel Deployment Setup
 
 ### Prerequisites
@@ -17,11 +23,14 @@
 3. Click "Import"
 
 ### Step 3: Configure Build Settings
-Vercel should automatically detect the Vite framework. Verify these settings:
-- **Framework Preset**: Vite
+Vercel should automatically detect the Vite framework. The project includes a `vercel.json` configuration file with optimized settings:
+- **Framework Preset**: Vite (auto-detected)
 - **Build Command**: `npm run build`
 - **Output Directory**: `dist`
 - **Install Command**: `npm install`
+- **Node.js Runtime**: 18.x
+- **SPA Rewrites**: All routes redirect to `/index.html`
+- **Asset Caching**: 1 year cache for static assets
 
 ### Step 4: Environment Variables
 In Vercel Dashboard → Project Settings → Environment Variables, add:
@@ -44,10 +53,14 @@ Later (when connecting to production Supabase):
 - Deployment status in GitHub PRs
 
 ### Verification Checklist
-- [ ] Live URL accessible
-- [ ] App loads without errors
-- [ ] Build completes successfully
-- [ ] Automatic deployment from main branch working
+- [x] Live URL accessible
+- [x] App loads without errors
+- [x] Build completes successfully
+- [x] Automatic deployment from main branch working
+- [x] Single-player game functional
+- [x] Challenge mode functional
+- [x] Theme system working
+- [x] Mobile responsive design
 
 ## Troubleshooting
 
