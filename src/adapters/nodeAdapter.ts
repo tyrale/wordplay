@@ -24,7 +24,8 @@ import type {
   WordDataDependencies,
   ValidationResult,
   ScoringResult,
-  BotResult
+  BotResult,
+  BotDependencies
 } from '../../packages/engine/interfaces';
 
 import { validateWordWithDependencies } from '../../packages/engine/dictionary';
@@ -188,16 +189,22 @@ const nodeScoringDependencies: GameStateScoringDependencies = {
  */
 const nodeBotDependencies: GameStateBotDependencies = {
   generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
-    // Create combined dependencies for bot (adapting to bot interface expectations)
-    const botDeps = {
+    // Create complete BotDependencies with all required interfaces
+    const botDeps: BotDependencies = {
+      // DictionaryDependencies
       validateWord: nodeDictionaryDependencies.validateWord,
       isValidDictionaryWord: (word: string): boolean => {
         return nodeWordData.hasWord(word);
       },
       getRandomWordByLength: nodeDictionaryDependencies.getRandomWordByLength,
-      getWordCount: () => nodeWordData.wordCount,
-      getTimestamp: () => Date.now(),
-      random: () => Math.random(),
+      getWordCount: (): number => nodeWordData.wordCount,
+      
+      // UtilityDependencies
+      getTimestamp: (): number => Date.now(),
+      random: (): number => Math.random(),
+      log: (message: string): void => console.log(`[NodeBot] ${message}`),
+      
+      // ScoringDependencies
       getScoreForMove: nodeScoringDependencies.getScoreForMove,
       calculateScore: nodeScoringDependencies.calculateScore
     };

@@ -13,7 +13,8 @@ import type {
   GameStateBotDependencies,
   ValidationResult,
   ScoringResult,
-  BotResult
+  BotResult,
+  BotDependencies
 } from '../../packages/engine/interfaces';
 
 import { validateWordWithDependencies, isValidDictionaryWordWithDependencies } from '../../packages/engine/dictionary';
@@ -185,6 +186,10 @@ class TestWordData implements WordDataDependencies {
       this.profanityWords = new Set();
     }
   }
+
+  public getWordsOfLength(length: number): string[] {
+    return this.wordsByLength.get(length) || [];
+  }
 }
 
 // Singleton test word data
@@ -241,12 +246,29 @@ const testScoringDependencies: GameStateScoringDependencies = {
  */
 const testBotDependencies: GameStateBotDependencies = {
   generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
-    // Create combined dependencies for bot
-    const botDeps: GameStateDependencies = {
-      ...testDictionaryDependencies,
-      ...testScoringDependencies,
+    // Create complete BotDependencies with all required interfaces
+    const botDeps: BotDependencies = {
+      // DictionaryDependencies
+      validateWord: testDictionaryDependencies.validateWord,
       isValidDictionaryWord: (word: string): boolean => {
         return isValidDictionaryWordWithDependencies(word, testWordData);
+      },
+      getRandomWordByLength: testDictionaryDependencies.getRandomWordByLength,
+      getWordCount: (): number => {
+        return testWordData.wordCount;
+      },
+      
+      // UtilityDependencies  
+      getTimestamp: (): number => Date.now(),
+      random: (): number => Math.random(),
+      log: (message: string): void => console.log(`[TestBot] ${message}`),
+      
+      // ScoringDependencies
+      getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]): number => {
+        return getScoreForMove(fromWord, toWord, keyLetters || []);
+      },
+      calculateScore: (fromWord: string, toWord: string, keyLetters: string[], lockedLetters: string[]): ScoringResult => {
+        return calculateScore(fromWord, toWord, { keyLetters });
       }
     };
     
@@ -447,11 +469,28 @@ export function createCustomTestDependencies(words: string[]): GameStateDependen
 
   const customBotDependencies: GameStateBotDependencies = {
     generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
-      const botDeps: GameStateDependencies = {
-        ...customDictionaryDependencies,
-        ...testScoringDependencies,
+      const botDeps: BotDependencies = {
+        // DictionaryDependencies
+        validateWord: customDictionaryDependencies.validateWord,
         isValidDictionaryWord: (word: string): boolean => {
           return isValidDictionaryWordWithDependencies(word, customWordData);
+        },
+        getRandomWordByLength: customDictionaryDependencies.getRandomWordByLength,
+        getWordCount: (): number => {
+          return customWordData.wordCount;
+        },
+        
+        // UtilityDependencies  
+        getTimestamp: (): number => Date.now(),
+        random: (): number => Math.random(),
+        log: (message: string): void => console.log(`[CustomBot] ${message}`),
+        
+        // ScoringDependencies
+        getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]): number => {
+          return getScoreForMove(fromWord, toWord, keyLetters || []);
+        },
+        calculateScore: (fromWord: string, toWord: string, keyLetters: string[], lockedLetters: string[]): ScoringResult => {
+          return calculateScore(fromWord, toWord, { keyLetters });
         }
       };
       

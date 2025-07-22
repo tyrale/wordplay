@@ -13,7 +13,8 @@ import type {
   WordDataDependencies,
   ValidationResult,
   ScoringResult,
-  BotResult
+  BotResult,
+  BotDependencies
 } from '../../packages/engine/interfaces';
 
 import { validateWordWithDependencies, isValidDictionaryWordWithDependencies } from '../../packages/engine/dictionary';
@@ -38,6 +39,10 @@ class WebWordData implements WordDataDependencies {
   public hasWord(word: string): boolean {
     const upperWord = word.toUpperCase();
     return this.enableWords.has(upperWord) || this.slangWords.has(upperWord);
+  }
+
+  public get wordCount(): number {
+    return this.enableWords.size;
   }
 
   public getRandomWordByLength(length: number): string | null {
@@ -175,11 +180,29 @@ const webScoringDependencies: GameStateScoringDependencies = {
 
 const webBotDependencies: GameStateBotDependencies = {
   generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
-    const botDeps: GameStateBotDependencies = {
-      ...webDictionaryDependencies,
-      ...webScoringDependencies,
+    // Create complete BotDependencies with all required interfaces
+    const botDeps: BotDependencies = {
+      // DictionaryDependencies
+      validateWord: webDictionaryDependencies.validateWord,
       isValidDictionaryWord: (word: string): boolean => {
         return isValidDictionaryWordWithDependencies(word, getWebWordData());
+      },
+      getRandomWordByLength: webDictionaryDependencies.getRandomWordByLength,
+      getWordCount: (): number => {
+        return getWebWordData().enableWords.size;
+      },
+      
+      // UtilityDependencies  
+      getTimestamp: (): number => Date.now(),
+      random: (): number => Math.random(),
+      log: (message: string): void => console.log(`[WebBot] ${message}`),
+      
+      // ScoringDependencies
+      getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]): number => {
+        return getScoreForMove(fromWord, toWord, keyLetters || []);
+      },
+      calculateScore: (fromWord: string, toWord: string, keyLetters: string[], lockedLetters: string[]): ScoringResult => {
+        return calculateScore(fromWord, toWord, { keyLetters });
       }
     };
     return generateBotMoveWithDependencies(word, botDeps, options);

@@ -5,12 +5,12 @@
  * dictionary loading via fetch API and caching strategies.
  */
 
-import type { WordDataDependencies, ValidationResult } from '../../packages/engine/interfaces';
+import type { WordDataDependencies, ValidationResult, BotDependencies } from '../../packages/engine/interfaces';
 import { validateWordWithDependencies, isValidDictionaryWordWithDependencies } from '../../packages/engine/dictionary';
 import { calculateScore, getScoreForMove, isValidMove } from '../../packages/engine/scoring';
 import type { ScoringResult } from '../../packages/engine/scoring';
 import { generateBotMoveWithDependencies } from '../../packages/engine/bot';
-import type { BotDependencies, BotOptions } from '../../packages/engine/bot';
+import type { BotOptions } from '../../packages/engine/bot';
 import type { BotMove, BotResult } from '../../packages/engine/interfaces';
 import type { 
   GameStateDictionaryDependencies, 
@@ -197,11 +197,29 @@ const browserScoringDependencies: GameStateScoringDependencies = {
 
 const browserBotDependencies: GameStateBotDependencies = {
   generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
+    // Create complete BotDependencies with all required interfaces
     const botDeps: BotDependencies = {
-      ...browserDictionaryDependencies,
-      ...browserScoringDependencies,
+      // DictionaryDependencies
+      validateWord: browserDictionaryDependencies.validateWord,
       isValidDictionaryWord: (word: string): boolean => {
         return isValidDictionaryWordWithDependencies(word, getBrowserWordData());
+      },
+      getRandomWordByLength: browserDictionaryDependencies.getRandomWordByLength,
+      getWordCount: (): number => {
+        return getBrowserWordData().wordCount;
+      },
+      
+      // UtilityDependencies  
+      getTimestamp: (): number => Date.now(),
+      random: (): number => Math.random(),
+      log: (message: string): void => console.log(`[Bot] ${message}`),
+      
+      // ScoringDependencies
+      getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]): number => {
+        return getScoreForMove(fromWord, toWord, keyLetters || []);
+      },
+      calculateScore: (fromWord: string, toWord: string, keyLetters: string[], lockedLetters: string[]): ScoringResult => {
+        return calculateScore(fromWord, toWord, { keyLetters });
       }
     };
     return generateBotMoveWithDependencies(word, botDeps, options);
