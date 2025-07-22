@@ -1,6 +1,19 @@
 # Word‑Game Rebuild – **Cursor‑Ready Development Plan** (v2.1)
 
-> **Purpose** Serve as a _single source of truth_ for Cursor's automated development workflow. The document embeds **context**, a **chronological task breakdown**, and explicit **checkpoints** so you (the human reviewer) can validate progress after every step. Cursor should treat each task as an atomic pull‑request that must pass the listed checklist before moving forward.
+## ⚠️ **DOCUMENTATION NOTICE (Updated 2025-01-22)**
+
+**This development plan contains aspirational roadmap phases that do not reflect current project reality.** For accurate current status, refer to:
+
+- **Current Project Status**: Core game complete, no active development - See [TASK_PROGRESS.md](TASK_PROGRESS.md)
+- **Actual Features**: Single-player game with challenge mode - See [QUICK_START.md](QUICK_START.md)
+- **Architecture Reality**: Platform-agnostic engine implemented - See [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Test Status**: 264/307 tests passing (86%) - See [TESTING_REPORTS.md](TESTING_REPORTS.md)
+
+**The phases below reflect historical planning and aspirational features, not current development priorities.**
+
+---
+
+> **Original Purpose** Serve as a _single source of truth_ for Cursor's automated development workflow. The document embeds **context**, a **chronological task breakdown**, and explicit **checkpoints** so you (the human reviewer) can validate progress after every step. Cursor should treat each task as an atomic pull‑request that must pass the listed checklist before moving forward.
 
 ---
 
