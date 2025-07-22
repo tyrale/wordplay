@@ -30,7 +30,7 @@ class BrowserWordData implements WordDataDependencies {
   public slangWords: Set<string> = new Set();
   public profanityWords: Set<string> = new Set();
   private wordsByLength: Map<number, string[]> = new Map();
-  private isLoaded = false;
+  private loaded = false;
 
   constructor() {
     this.loadDictionary();
@@ -51,11 +51,11 @@ class BrowserWordData implements WordDataDependencies {
   }
 
   public isLoaded(): boolean {
-    return this.isLoaded;
+    return this.loaded;
   }
 
   private async loadDictionary(): Promise<void> {
-    if (this.isLoaded) return; // Prevent multiple loads
+    if (this.loaded) return; // Prevent multiple loads
     console.log('Loading dictionary...'); // Log dictionary loading
     try {
       // Load the full ENABLE dictionary (172,819 words)
@@ -113,7 +113,7 @@ class BrowserWordData implements WordDataDependencies {
         this.profanityWords = new Set();
       }
       
-      this.isLoaded = true;
+      this.loaded = true;
       console.log('Dictionary loaded successfully.'); // Log successful load
     } catch (error) {
       console.error('Failed to load dictionary:', error);
@@ -135,7 +135,7 @@ class BrowserWordData implements WordDataDependencies {
     // Use empty profanity set for fallback
     this.profanityWords = new Set();
     
-    this.isLoaded = true;
+    this.loaded = true;
   }
 }
 
