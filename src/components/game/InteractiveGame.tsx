@@ -12,6 +12,7 @@ import { DebugDialog } from './DebugDialog';
 import { Menu } from '../ui/Menu';
 import { createWebAdapter } from '../../adapters/webAdapter';
 import { getBotDisplayName } from '../../data/botRegistry';
+import type { WordDataDependencies } from '../../../packages/engine/interfaces';
 
 // Game configuration and state interfaces
 interface GameConfig {
@@ -29,29 +30,41 @@ interface MoveAttempt {
   reason?: string;
 }
 
-// Initialize web adapter for dictionary validation
-let webAdapter: any = null;
-
-const initializeWebAdapter = async () => {
-  if (!webAdapter) {
-    webAdapter = await createWebAdapter();
-  }
-  return webAdapter;
-};
-
-const isValidDictionaryWord = (word: string): boolean => {
-  if (!webAdapter) {
-    console.warn('Web adapter not initialized, using fallback validation');
-    return false;
-  }
+// Dictionary validation using proper dependency injection
+function useDictionaryValidation() {
+  const [wordData, setWordData] = useState<WordDataDependencies | null>(null);
   
-  const deps = webAdapter.getDictionaryDependencies();
-  const result = deps.validateWord(word, { 
-    allowSlang: true, 
-    checkLength: false 
-  });
-  return result.isValid;
-};
+  useEffect(() => {
+    const initializeWordData = async () => {
+      try {
+        const adapter = await createWebAdapter();
+        const adapterWordData = adapter.getWordData();
+        setWordData(adapterWordData);
+      } catch (error) {
+        console.error('Failed to initialize word data:', error);
+      }
+    };
+    
+    initializeWordData();
+  }, []);
+  
+  const isValidDictionaryWord = useCallback((word: string): boolean => {
+    if (!wordData) {
+      console.warn('Dictionary not loaded yet, validation failed');
+      return false;
+    }
+    
+    try {
+      // Use the dependency injection pattern
+      return wordData.enableWords.has(word.toUpperCase()) || wordData.slangWords.has(word.toUpperCase());
+    } catch (error) {
+      console.warn('Dictionary validation error:', error);
+      return false;
+    }
+  }, [wordData]);
+  
+  return { isValidDictionaryWord, wordData };
+}
 
 import type { LetterState, ScoreBreakdown, LetterHighlight, WordMove } from '../index';
 import type { ActionState } from './ScoreDisplay';
@@ -78,6 +91,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   onGameStateChange,
   disableLetterRemoval = false
 }) => {
+  // Initialize dictionary validation hook
+  const { isValidDictionaryWord } = useDictionaryValidation();
+  
   // Unlock system integration
   const { handleWordSubmission, handleGameCompletion } = useUnlockSystem();
   const { shouldWordUnlockVanity, unlockVanityToggle, isVanityFilterUnlocked } = useVanityFilter();
@@ -128,21 +144,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [showValidationError, setShowValidationError] = useState(false);
-
-  // Initialize web adapter for dictionary validation
-  useEffect(() => {
-    const initializeGameDependencies = async () => {
-      try {
-        const adapter = await createWebAdapter();
-        const dependencies = adapter.getGameDependencies();
-        // Use dependencies as needed
-      } catch (err) {
-        console.error('Failed to initialize game dependencies:', err);
-      }
-    };
-
-    initializeGameDependencies();
-  }, []);
 
   // Initialize pending word with current word
   useEffect(() => {
@@ -522,7 +523,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     
     // Remove duplicates and return first 8
     return [...new Set(validSuggestions)].slice(0, 8);
-  }, [wordState.usedWords]);
+  }, [wordState.usedWords, isValidDictionaryWord]);
 
   const handleHelp = useCallback(() => {
     // Show help modal or navigate to help
