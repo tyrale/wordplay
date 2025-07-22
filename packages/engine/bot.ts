@@ -37,20 +37,8 @@ export interface DictionaryValidation {
   isValidDictionaryWord: (word: string) => boolean;
 }
 
-/**
- * Scoring dependencies for bot operations
- */
-export interface ScoringDependencies {
-  getScoreForMove: (previousWord: string, currentWord: string, keyLetters?: string[]) => number;
-  calculateScore?: (fromWord: string, toWord: string, options?: { keyLetters?: string[] }) => { score: number; breakdown: string[] };
-}
-
-/**
- * Combined dependencies for bot AI
- */
-export interface BotDependencies extends DictionaryValidation, ScoringDependencies {
-  // Additional bot-specific dependencies can be added here
-}
+// Import dependency interfaces from central location
+import type { ScoringDependencies, BotDependencies } from './interfaces';
 
 // =============================================================================
 // TYPES FOR BOT OPERATIONS
@@ -64,25 +52,8 @@ export interface BotOptions {
   timeLimit?: number; // ms
 }
 
-export interface BotMove {
-  word: string;
-  score: number;
-  confidence: number;
-  reasoning: string[];
-}
-
-export interface BotResult {
-  move: BotMove | null;
-  candidates: BotMove[];
-  processingTime: number;
-  totalCandidatesGenerated: number;
-}
-
-export interface MoveCandidate {
-  word: string;
-  type: 'add' | 'remove' | 'rearrange' | 'substitute';
-  operations: string[];
-}
+// Import standard interfaces from central location
+import type { BotMove, BotResult, MoveCandidate } from './interfaces';
 
 // Common letter frequencies for move generation priority
 const COMMON_LETTERS = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'.split('');
@@ -337,7 +308,7 @@ export function generateBotMoveWithDependencies(
 // =============================================================================
 
 // Dynamic import for Node.js dictionary (avoids bundling in browser)
-let nodeDictionary: any = null;
+let nodeDictionary: typeof import('./dictionary') | null = null;
 async function getNodeDictionary() {
   if (!nodeDictionary) {
     try {
@@ -349,7 +320,7 @@ async function getNodeDictionary() {
   return nodeDictionary;
 }
 
-let nodeScoring: any = null;
+let nodeScoring: typeof import('./scoring') | null = null;
 async function getNodeScoring() {
   if (!nodeScoring) {
     try {
@@ -414,8 +385,23 @@ export function generateBotMoveAgnostic(
   // Convert legacy interface to new dependency interface
   const dependencies: BotDependencies = {
     ...dictionaryValidation,
+    // DictionaryDependencies (missing methods)
+    getRandomWordByLength: () => null, // No dictionary access in legacy mode
+    getWordCount: () => 0, // No dictionary access in legacy mode
+    // UtilityDependencies
+    getTimestamp: () => Date.now(),
+    random: () => Math.random(),
+    // ScoringDependencies
     getScoreForMove: () => 1, // Default scoring when no scoring dependency
-    calculateScore: () => ({ score: 1, breakdown: ['Default scoring'] })
+    calculateScore: () => ({
+      score: 1,
+      totalScore: 1,
+      breakdown: ['Default scoring'],
+      actions: [],
+      keyLetterScore: 0,
+      baseScore: 1,
+      keyLettersUsed: []
+    })
   };
   
   return generateBotMoveWithDependencies(currentWord, dependencies, options);
@@ -434,6 +420,10 @@ export async function generateBotMove(
   const dependencies: BotDependencies = {
     validateWord: dictionary.validateWord,
     isValidDictionaryWord: dictionary.isValidDictionaryWord,
+    getRandomWordByLength: dictionary.getRandomWordByLength || (() => null),
+    getWordCount: dictionary.getWordCount || (() => 0),
+    getTimestamp: () => Date.now(),
+    random: () => Math.random(),
     getScoreForMove: scoring.getScoreForMove,
     calculateScore: scoring.calculateScore
   };
@@ -447,7 +437,7 @@ export async function generateBotMove(
  * Use simulateBotGameWithDependencies for new code.
  */
 export function simulateBotGame(
-  initialWord: string, 
+  _initialWord: string, 
   _turns: number = 100, 
   _keyLetters: string[] = []
 ): {
@@ -497,7 +487,7 @@ export function performanceTestBot(_iterations = 100): {
  * Use explainBotMoveWithDependencies for new code.
  */
 export function explainBotMove(
-  currentWord: string, 
+  _currentWord: string, 
   _keyLetters: string[] = [],
   _showTop = 5
 ): {

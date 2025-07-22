@@ -25,6 +25,13 @@ export default tseslint.config({ ignores: ['dist'] }, {
       'warn',
       { allowConstantExport: true },
     ],
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { 
+        'argsIgnorePattern': '^_',
+        'varsIgnorePattern': '^_' 
+      }
+    ],
     ...prettierConfig.rules,
   },
 }, storybook.configs["flat/recommended"]);
