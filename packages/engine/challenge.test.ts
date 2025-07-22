@@ -433,6 +433,9 @@ describe('Challenge Engine', () => {
         // Should have no repeating letters in start word
         expect(hasRepeatingLetters(challenge.startWord)).toBe(false);
         
+        // Should have no repeating letters in target word
+        expect(hasRepeatingLetters(challenge.targetWord)).toBe(false);
+        
         // Should be exactly 5 letters
         expect(challenge.startWord.length).toBe(5);
         

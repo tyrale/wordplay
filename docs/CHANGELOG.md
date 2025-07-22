@@ -101,6 +101,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Files Modified**: `packages/engine/challenge.ts`, `packages/engine/challenge.test.ts`
   - **Verification**: All 21 challenge tests passing, including new 5-letter and repeating letter constraint tests
 
+- **ShipHip: Challenge Mode Target Word Duplicate Letter Prevention** 🎯 **IMPLEMENTED**
+  - **Purpose**: Prevents target words with duplicate letters from appearing in challenge mode
+  - **Problem**: Target words like "GEEZER" (3 E's) create terrible user experience due to excessive difficulty from duplicate letters
+  - **Solution**: 
+    - Extended `isValidTargetWord()` function to include duplicate letter check using existing `hasRepeatingLetters()` function
+    - Updated fallback target words list to remove all words with duplicate letters ('FRIZZ', 'FUZZY', 'FRIZZY', 'FIZZING', 'QUIZZED', 'PUZZLED', 'QUIZZERS', 'PUZZLERS')
+    - Replaced duplicate-letter words with suitable alternatives ('COMPLEX', 'DYNASTY', 'DYNAMITE', 'SYMPHONY')
+  - **Implementation Details**:
+    - Modified `isValidTargetWord()` in `packages/engine/challenge.ts` to add `hasRepeatingLetters(targetWord)` check
+    - Cleaned up `getFallbackTargetWords()` function to ensure all fallback words have no duplicate letters
+    - Updated final fallback array from `['QUICK', 'JUMPY', 'FRIZZ']` to `['QUICK', 'JUMPY', 'BLITZ']`
+  - **Testing**: Added comprehensive test "should enforce no repeating letters constraint for target words" for both daily and random challenges
+  - **Impact**: Eliminates problematic target words like "GEEZER", "BUBBLE", "COFFEE", ensuring consistent difficulty balance
+  - **Files Modified**: `packages/engine/challenge.ts`, `packages/engine/challenge.test.ts`
+  - **Verification**: All 22 challenge tests passing, including new target word duplicate letter prevention tests
+
 ### Fixed
 
 - **ShipHip: Tutorial Post-Game Winner/Loser Display** 🐛 **FIXED**
