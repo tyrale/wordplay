@@ -13,15 +13,33 @@ The WordPlay engine follows **Platform-Agnostic Design** with **Dependency Injec
 packages/engine/           # Pure game logic (platform-agnostic)
 ├── bot.ts                # Bot AI (accepts dependencies)
 ├── scoring.ts            # Scoring logic (accepts dependencies)  
-├── validation.ts         # Word validation (accepts dependencies)
-├── dictionary.ts         # Dictionary interface contracts
+├── dictionary.ts         # Word validation (accepts dependencies)
+├── gamestate.ts          # Game state management (accepts dependencies)
+├── challenge.ts          # Challenge mode logic
+├── profanity.ts          # Profanity filtering system
+├── unlocks.ts            # Achievement/unlock system
 └── interfaces.ts         # All engine dependency contracts
 
-packages/adapters/         # Platform-specific implementations
-├── node/                 # Node.js file system, performance.now()
-├── browser/              # HTTP fetch, window.performance.now()
-└── test/                 # Mocks, deterministic random
+src/adapters/             # Platform-specific implementations (main adapters)
+├── browserAdapter.ts     # Browser HTTP fetch, performance.now()
+├── webAdapter.ts         # Alternative web implementation 
+├── nodeAdapter.ts        # Node.js file system, performance.now()
+└── testAdapter.ts        # Mocks, deterministic random
+
+packages/adapters/        # Specialized feature adapters
+├── browser/              # Browser-specific challenge/unlock implementations
+├── node/                 # Node.js-specific unlock implementations
+└── test/                 # Test-specific unlock implementations
 ```
+
+### **Current Dual Adapter System**
+
+The codebase currently uses **two different adapters** for different components:
+
+- **`browserAdapter.ts`**: Used by challenge mode (`ChallengeGame`) and hooks (`useGameState`)
+- **`webAdapter.ts`**: Used by interactive game mode (`InteractiveGame`)
+
+Both provide the same `GameStateDependencies` interface but with slightly different implementations.
 
 ### **Data Flow**
 
@@ -37,11 +55,11 @@ Platform Code → Adapter → Dependencies → Engine → Results → Platform C
 
 ```typescript
 // ✅ CORRECT: Engine function with dependency injection
-export function generateBotMove(
+export function generateBotMoveWithDependencies(
   currentWord: string,
   dependencies: BotDependencies,
   options: BotOptions = {}
-): BotResult {
+): Promise<BotResult> {
   // Uses provided dependencies, imports nothing platform-specific
   const validation = dependencies.validateWord(candidate.word);
   const isValid = dependencies.isValidDictionaryWord(candidate.word);
@@ -53,61 +71,145 @@ export function generateBotMove(
 
 ```typescript
 // ✅ CORRECT: Browser adapter provides dependencies
-export function createBrowserAdapter(): GameEngine {
-  const dependencies: BotDependencies = {
-    validateWord: browserValidateWord,
-    isValidDictionaryWord: browserIsValidWord,
-    getTimestamp: () => performance.now(),
-    random: Math.random
-  };
-  
-  return {
-    generateBotMove: (word, options) => 
-      generateBotMove(word, dependencies, options)
-  };
+export class BrowserAdapter {
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+    await this.wordData.waitForLoad();
+    this.initialized = true;
+  }
+
+  getGameDependencies(): GameStateDependencies {
+    return {
+      validateWord: (word: string, options?: any): ValidationResult => {
+        return validateWordWithDependencies(word, this.wordData, options);
+      },
+      calculateScore: (fromWord: string, toWord: string, options?: any): ScoringResult => {
+        return calculateScore(fromWord, toWord, options);
+      },
+      generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
+        return generateBotMoveWithDependencies(word, this.getBotDependencies(), options);
+      }
+    };
+  }
+}
+```
+
+## **Current Interface Contracts**
+
+### **Core Engine Interfaces**
+
+```typescript
+// From packages/engine/interfaces.ts
+export interface GameStateDependencies extends 
+  GameStateDictionaryDependencies, 
+  GameStateScoringDependencies, 
+  GameStateBotDependencies {}
+
+export interface GameStateDictionaryDependencies {
+  validateWord: (word: string, options?: any) => ValidationResult;
+  getRandomWordByLength: (length: number) => string | null;
+}
+
+export interface GameStateScoringDependencies {
+  calculateScore: (fromWord: string, toWord: string, options?: any) => ScoringResult;
+  getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]) => number;
+  isValidMove: (fromWord: string, toWord: string) => boolean;
+}
+
+export interface GameStateBotDependencies {
+  generateBotMove: (word: string, options?: any) => Promise<BotResult>;
+}
+
+export interface WordDataDependencies {
+  enableWords: Set<string>;
+  slangWords: Set<string>;
+  profanityWords: Set<string>;
+  wordCount: number;
+  hasWord: (word: string) => boolean;
+  isLoaded: () => boolean;
+  waitForLoad: () => Promise<void>;
+  getRandomWordByLength: (length: number) => string | null;
 }
 ```
 
 ## **Integration Examples**
 
-### **✅ CORRECT: Platform uses adapter**
+### **✅ CORRECT: Challenge mode uses browser adapter**
 ```typescript
-// Browser code
-import { createBrowserAdapter } from '@wordplay/adapters/browser';
+// ChallengeGame.tsx
+import { createBrowserAdapter } from '../../adapters/browserAdapter';
 
-const gameEngine = createBrowserAdapter();
-const result = gameEngine.generateBotMove('CAT', options);
+useEffect(() => {
+  const initializeGameDependencies = async () => {
+    const adapter = await createBrowserAdapter();
+    const dependencies = adapter.getGameDependencies();
+    setGameDependencies(dependencies);
+  };
+  initializeGameDependencies();
+}, []);
 ```
 
-### **✅ CORRECT: Node.js uses adapter**
+### **✅ CORRECT: Interactive game uses web adapter**
 ```typescript
-// Terminal game code
-import { createNodeAdapter } from '@wordplay/adapters/node';
+// InteractiveGame.tsx
+import { createWebAdapter } from '../../adapters/webAdapter';
 
-const gameEngine = createNodeAdapter();
-const result = gameEngine.generateBotMove('CAT', options);
+useEffect(() => {
+  const initializeGameDependencies = async () => {
+    const adapter = await createWebAdapter();
+    const dependencies = adapter.getGameDependencies();
+    // Use dependencies as needed
+  };
+  initializeGameDependencies();
+}, []);
 ```
 
-### **✅ CORRECT: Tests use adapter**
+### **✅ CORRECT: Hooks use browser adapter**
 ```typescript
-// Test code
-import { createTestAdapter } from '@wordplay/adapters/test';
+// useGameState.ts
+import { BrowserAdapter } from '../adapters/browserAdapter';
 
-const gameEngine = createTestAdapter({
-  isValidDictionaryWord: (word) => ['CAT', 'CATS'].includes(word)
+useEffect(() => {
+  async function initializeGameManager() {
+    const browserAdapter = BrowserAdapter.getInstance();
+    await browserAdapter.initialize();
+    const dependencies = browserAdapter.getGameDependencies();
+    gameManagerRef.current = createGameStateManagerWithDependencies(dependencies, config);
+  }
+  initializeGameManager();
+}, [config]);
+```
+
+### **✅ CORRECT: Tests use test adapter**
+```typescript
+// App.test.tsx
+import { createTestAdapter } from './adapters/testAdapter';
+
+// Mock the BrowserAdapter to use TestAdapter instead
+vi.mock('./adapters/browserAdapter', () => {
+  return {
+    BrowserAdapter: {
+      getInstance: () => {
+        const testAdapter = createTestAdapter();
+        return {
+          initialize: async () => {},
+          getGameDependencies: () => testAdapter.getGameDependencies()
+        };
+      }
+    }
+  };
 });
-const result = gameEngine.generateBotMove('CAT', options);
 ```
 
 ### **❌ WRONG: Direct engine import**
 ```typescript
 // Browser code  
-import { generateBotMove } from '@wordplay/engine/bot'; // ❌ Will fail in browser
+import { generateBotMoveWithDependencies } from '../../packages/engine/bot'; // ❌ Missing dependencies
 ```
 
 ### **❌ WRONG: Browser-specific engine**
 ```typescript
-// ❌ FORBIDDEN: browserEngine.ts
+// ❌ FORBIDDEN: browserEngine.ts - This violates single source of truth
 export function generateBrowserBotMove(word: string) {
   // Reimplementing engine logic for browsers
 }
@@ -115,29 +217,42 @@ export function generateBrowserBotMove(word: string) {
 
 ## **Adding New Platforms**
 
-1. Create new adapter in `packages/adapters/[platform]/`
-2. Implement all required dependency interfaces
+1. Create new adapter in `src/adapters/[platform]Adapter.ts`
+2. Implement all required dependency interfaces (`GameStateDependencies`)
 3. Export factory function: `createPlatformAdapter()`
 4. Platform code imports adapter, never engine directly
 
 ### **Example: Adding React Native Support**
 
 ```typescript
-// packages/adapters/react-native/index.ts
-import { AsyncStorage } from '@react-native-async-storage/async-storage';
+// src/adapters/reactNativeAdapter.ts
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { GameStateDependencies } from '../../packages/engine/interfaces';
 
-export function createReactNativeAdapter(): GameEngine {
-  const dependencies: BotDependencies = {
-    validateWord: reactNativeValidateWord,
-    isValidDictionaryWord: reactNativeIsValidWord,
-    getTimestamp: () => Date.now(), // React Native timing
-    random: Math.random
-  };
+export class ReactNativeAdapter {
+  private static instance: ReactNativeAdapter | null = null;
   
-  return {
-    generateBotMove: (word, options) => 
-      generateBotMove(word, dependencies, options)
-  };
+  static getInstance(): ReactNativeAdapter {
+    if (!ReactNativeAdapter.instance) {
+      ReactNativeAdapter.instance = new ReactNativeAdapter();
+    }
+    return ReactNativeAdapter.instance;
+  }
+
+  getGameDependencies(): GameStateDependencies {
+    return {
+      validateWord: reactNativeValidateWord,
+      calculateScore: (fromWord, toWord, options) => calculateScore(fromWord, toWord, options),
+      generateBotMove: async (word, options) => 
+        generateBotMoveWithDependencies(word, this.getBotDependencies(), options)
+    };
+  }
+}
+
+export async function createReactNativeAdapter(): Promise<ReactNativeAdapter> {
+  const adapter = ReactNativeAdapter.getInstance();
+  await adapter.initialize();
+  return adapter;
 }
 ```
 
@@ -148,19 +263,26 @@ export function createReactNativeAdapter(): GameEngine {
 - **Cross-platform tests**: Same test suite + different adapters
 - **Regression tests**: Verify all platforms produce identical results
 
-### **Example: Cross-Platform Test**
+### **Current Test Results (Verified 2025-01-22)**
+- **Total Tests**: 307 tests
+- **Passing**: 264 tests (86%)
+- **Failing**: 43 tests (14%) - mainly scoring interface mismatches
+- **Test Files**: 17 passed, 7 failed
+
+### **Example: Cross-Platform Test Pattern**
 
 ```typescript
 describe('Bot Move Generation', () => {
-  const platforms = [
-    createNodeAdapter(),
-    createBrowserAdapter(), 
-    createTestAdapter()
+  const adapters = [
+    createTestAdapter(),    // Deterministic for unit tests
+    createBrowserAdapter(), // Real HTTP dictionary loading  
+    createWebAdapter()      // Alternative web implementation
   ];
   
-  platforms.forEach((adapter, index) => {
-    it(`generates valid moves on platform ${index}`, () => {
-      const result = adapter.generateBotMove('CAT');
+  adapters.forEach((adapter, index) => {
+    it(`generates valid moves on platform ${index}`, async () => {
+      const deps = adapter.getGameDependencies();
+      const result = await deps.generateBotMove('CAT');
       expect(result.move).toBeDefined();
       expect(result.move.word).toMatch(/^[A-Z]+$/);
     });
@@ -175,6 +297,15 @@ describe('Bot Move Generation', () => {
 - Engine operations remain synchronous for performance
 - Graceful fallback if dictionary fails to load
 
+```typescript
+// Browser adapter waits for dictionary before marking as initialized
+async initialize(): Promise<void> {
+  if (this.initialized) return;
+  await this.wordData.waitForLoad();
+  this.initialized = true;
+}
+```
+
 ### **Dependency Injection Overhead**
 - Minimal performance impact (function parameter passing)
 - Benefits outweigh costs (testability, maintainability)
@@ -185,20 +316,30 @@ describe('Bot Move Generation', () => {
 ### **Dependency Missing**
 ```typescript
 if (!dependencies.validateWord) {
-  throw new Error('BotDependencies.validateWord is required');
+  throw new Error('GameStateDependencies.validateWord is required');
 }
 ```
 
 ### **Dictionary Load Failure**
 ```typescript
 // Adapter falls back to minimal word list
-const fallbackWords = ['CAT', 'CATS', 'DOG', 'DOGS'];
+private initializeFallback(): void {
+  console.warn('Dictionary load failed, using fallback word list');
+  const fallbackWords = ['CAT', 'CATS', 'DOG', 'DOGS', 'BIRD', 'BIRDS'];
+  this.enableWords = new Set(fallbackWords);
+  this.wordCount = this.enableWords.size;
+  this.loaded = true;
+}
 ```
 
 ### **Validation Failure**
 ```typescript
 // Engine returns error state instead of throwing
-return { isValid: false, reason: 'system_error' };
+return { 
+  isValid: false, 
+  reason: 'system_error',
+  userMessage: 'Unable to validate word. Please try again.'
+};
 ```
 
 ## **Migration Guide**
@@ -207,16 +348,16 @@ return { isValid: false, reason: 'system_error' };
 
 **Before:**
 ```typescript
-import { validateWord } from './dictionary';
+import { validateWordWithDependencies } from './dictionary';
 
 export function generateBotMove(word: string) {
-  const validation = validateWord(candidate.word);
+  const validation = validateWordWithDependencies(candidate.word);
 }
 ```
 
 **After:**
 ```typescript
-export function generateBotMove(
+export function generateBotMoveWithDependencies(
   word: string, 
   dependencies: BotDependencies
 ) {
@@ -228,28 +369,48 @@ export function generateBotMove(
 
 **Before:**
 ```typescript
-import { generateBotMove } from '@wordplay/engine/bot';
+import { generateBotMove } from '../../packages/engine/bot';
 
 const result = generateBotMove('CAT');
 ```
 
 **After:**
 ```typescript
-import { createBrowserAdapter } from '@wordplay/adapters/browser';
+import { createBrowserAdapter } from '../adapters/browserAdapter';
 
-const gameEngine = createBrowserAdapter();
-const result = gameEngine.generateBotMove('CAT');
+const adapter = await createBrowserAdapter();
+const deps = adapter.getGameDependencies();
+const result = await deps.generateBotMove('CAT');
 ```
+
+## **Current Architecture Issues**
+
+### **Dual Adapter Problem**
+- Currently maintains two similar adapters (`browserAdapter` vs `webAdapter`)
+- Should consolidate to single web adapter for consistency
+- Different components use different adapters causing maintenance overhead
+
+### **Interface Mismatches** 
+- Tests expect `result.breakdown.addLetterPoints` but get different structure
+- Scoring module interfaces need alignment between engine and consumers
+- 43 failing tests indicate API inconsistencies
+
+### **Next Steps for Cleanup**
+1. Consolidate `browserAdapter` and `webAdapter` into single implementation
+2. Fix scoring interface mismatches causing test failures
+3. Update all consumers to use consistent adapter pattern
+4. Remove debug logging statements throughout codebase
 
 ## **Compliance Checklist**
 
 Before accepting any engine changes:
 - ✅ Verify engine files have no platform-specific imports
 - ✅ Confirm adapters provide all required dependencies  
-- ✅ Test same functionality works across Node.js, Browser, and Test environments
+- ✅ Test same functionality works across all adapter implementations
 - ✅ Update interface contracts if dependencies change
 - ✅ Add cross-platform tests for new functionality
-- ✅ Document any new dependency requirements 
+- ✅ Document any new dependency requirements
+- ✅ Verify test suite passes (currently 264/307 passing)
 
 ---
 
@@ -313,7 +474,7 @@ This section documents major architectural decisions made during the WordPlay pr
 - ⚠️ **Negative**: Async initialization required for some platforms
 
 **Implementation**:
-- `DictionaryDependencies` interface with validation functions
+- `WordDataDependencies` interface with validation functions
 - Browser adapter uses HTTP fetch with fallback word list
 - Node.js adapter uses file system with multiple path fallbacks
 - Test adapter uses controlled word sets
@@ -376,7 +537,7 @@ This section documents major architectural decisions made during the WordPlay pr
 
 **Implementation**:
 - Created component library in `src/components/`
-- Theme system with 81 different themes
+- Theme system with multiple theme options
 - Responsive CSS with mobile-first approach
 - WCAG AA accessibility compliance
 - Storybook integration for development
@@ -411,125 +572,61 @@ This section documents major architectural decisions made during the WordPlay pr
 - Comprehensive test coverage for edge cases
 - Performance optimization maintained
 
-### **ADR-006: Menu System Architecture (Phase 2)**
+### **ADR-006: Dual Adapter System (Phase 2)**
+
+**Date**: Phase 2 Development  
+**Status**: ⚠️ **NEEDS CONSOLIDATION**  
+**Decision**: Implement both browserAdapter and webAdapter for different use cases
+
+**Context**:
+- Different components had different adapter requirements
+- Challenge mode needed specific browser optimizations
+- Interactive game used alternative web implementation
+- Both provided same interface but different internals
+
+**Decision**:
+- Maintain `browserAdapter.ts` for challenge mode and hooks
+- Keep `webAdapter.ts` for interactive game mode
+- Both implement `GameStateDependencies` interface
+- Allow specialized implementations for different contexts
+
+**Consequences**:
+- ✅ **Positive**: Specialized optimizations for different use cases
+- ✅ **Positive**: Maintains interface consistency
+- ⚠️ **Negative**: Code duplication and maintenance overhead
+- ⚠️ **Negative**: Confusion about which adapter to use
+
+**Current Status**: Should be consolidated into single web adapter
+
+### **ADR-007: Profanity Management System (Phase 2)**
 
 **Date**: Phase 2 Development  
 **Status**: ✅ **IMPLEMENTED**  
-**Decision**: Comprehensive menu system with theme integration and animations
+**Decision**: Implement JSON-based profanity filtering with unlock system
 
 **Context**:
-- Need navigation system for game options
-- Theme selection should be integrated into menu
-- Animations improve user experience
-- Mobile-friendly interaction required
+- Need consistent profanity filtering across platforms
+- Support for user preference and unlock system
+- Maintainable word lists separate from code
+- Performance requirements for real-time filtering
 
 **Decision**:
-- Full-screen overlay menu with accordion functionality
-- Integrated theme selection with live preview
-- Animated menu transitions and interactions
-- Mobile-optimized touch targets and layout
+- JSON-based profanity word lists in `public/data/`
+- Centralized profanity management in `packages/engine/profanity.ts`
+- Platform-agnostic filtering with adapter-provided word lists
+- Unlock system integration for mature content
 
 **Consequences**:
-- ✅ **Positive**: Intuitive navigation and theme selection
-- ✅ **Positive**: Excellent mobile user experience
-- ✅ **Positive**: Smooth animations enhance polish
-- ⚠️ **Negative**: Increased complexity in state management
+- ✅ **Positive**: Maintainable word lists separate from code
+- ✅ **Positive**: Consistent filtering across all platforms
+- ✅ **Positive**: User control through unlock system
+- ✅ **Positive**: Platform-agnostic implementation
 
 **Implementation**:
-- Created `Menu.tsx` with accordion functionality
-- Integrated theme system with live preview
-- Animated menu button and transitions
-- Mobile-responsive design with touch optimization
-
-### **ADR-007: Key Letter Frequency Tracking (Phase 2)**
-
-**Date**: Phase 2 Development  
-**Status**: ✅ **IMPLEMENTED**  
-**Decision**: Implement logging system for key letter generation analysis
-
-**Context**:
-- Need to analyze randomness of key letter generation
-- Track frequency distribution across games
-- Identify potential bias in letter selection
-- Support game balance analysis
-
-**Decision**:
-- Dedicated logging utility with file-based persistence
-- Cross-game frequency analysis with statistical reporting
-- Real-time logging during gameplay
-- Analysis scripts for data visualization
-
-**Consequences**:
-- ✅ **Positive**: Data-driven insights into game balance
-- ✅ **Positive**: Ability to detect and fix randomness issues
-- ✅ **Positive**: Historical tracking for long-term analysis
-- ⚠️ **Negative**: Additional file I/O overhead
-
-**Implementation**:
-- Created `KeyLetterLogger` utility class
-- File-based logging with CSV format
-- Analysis script with frequency charts
-- Cross-platform logging support
-
-### **ADR-008: Mobile Touch Optimization (Phase 2)**
-
-**Date**: Phase 2 Development  
-**Status**: ✅ **IMPLEMENTED**  
-**Decision**: Implement comprehensive mobile touch support
-
-**Context**:
-- HTML5 drag-and-drop unreliable on mobile devices
-- Need consistent interaction across desktop and mobile
-- Touch targets must meet accessibility standards
-- Performance critical for smooth mobile experience
-
-**Decision**:
-- Mouse/touch event system for reliable cross-platform interaction
-- 44px minimum touch targets for accessibility
-- Gesture detection to distinguish clicks from drags
-- Optimized event handling for performance
-
-**Consequences**:
-- ✅ **Positive**: Reliable interaction on all devices
-- ✅ **Positive**: Excellent mobile user experience
-- ✅ **Positive**: Accessibility compliance achieved
-- ⚠️ **Negative**: More complex event handling logic
-
-**Implementation**:
-- Replaced HTML5 drag-and-drop with mouse/touch events
-- Gesture detection with movement threshold
-- Touch target optimization across all components
-- Cross-platform event handling
-
-### **ADR-009: Build and Deployment Architecture (Phase 0-2)**
-
-**Date**: Throughout Development  
-**Status**: ✅ **IMPLEMENTED**  
-**Decision**: Modern build toolchain with comprehensive CI/CD
-
-**Context**:
-- Need fast development iteration
-- Comprehensive testing and quality checks
-- Automated deployment to production
-- Performance optimization for production builds
-
-**Decision**:
-- Vite for fast development and optimized builds
-- Vitest for comprehensive testing
-- GitHub Actions for CI/CD pipeline
-- Vercel for production deployment
-
-**Consequences**:
-- ✅ **Positive**: Fast development iteration with HMR
-- ✅ **Positive**: Comprehensive automated testing
-- ✅ **Positive**: Reliable deployment pipeline
-- ✅ **Positive**: Excellent production performance
-
-**Implementation**:
-- Vite configuration with TypeScript and React
-- Comprehensive test suite with 252+ tests
-- GitHub Actions pipeline with quality gates
-- Vercel deployment with environment configuration
+- JSON files: `profanity-words.json`, `slang-words.json`
+- Centralized profanity management utility
+- Adapter integration for word list loading
+- Unlock system integration
 
 ### **Lessons Learned**
 
@@ -546,6 +643,12 @@ This section documents major architectural decisions made during the WordPlay pr
 3. **Scoring Algorithm Complexity**: Iterative refinement led to accurate implementation
 4. **Performance Requirements**: Met through careful optimization and measurement
 
+**Current Technical Debt**:
+1. **Dual Adapter Consolidation**: Need to merge browserAdapter and webAdapter
+2. **Test Interface Mismatches**: 43 failing tests due to scoring interface changes
+3. **Debug Log Cleanup**: Remove development debugging statements
+4. **Documentation Alignment**: Update docs to match current implementation
+
 **Future Considerations**:
 1. **React Native Support**: Architecture ready for mobile app development
 2. **Multiplayer Architecture**: Dependency injection supports server-side game logic
@@ -554,4 +657,4 @@ This section documents major architectural decisions made during the WordPlay pr
 
 ---
 
-*This architecture has been battle-tested through comprehensive development and provides a solid foundation for future enhancements.* 
+*This architecture has been battle-tested through comprehensive development and provides a solid foundation for future enhancements, with some consolidation needed to reduce maintenance overhead.* 
