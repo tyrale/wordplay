@@ -30,177 +30,52 @@ import { KeyLetterLogger } from './keyLetterLogger.js';
 import type { ValidationResult } from './dictionary';
 import type { ScoringResult } from './scoring';
 
+// Import consolidated interfaces from main interfaces file
+import type { 
+  GameStateDependencies,
+  GameStateDictionaryDependencies,
+  GameStateScoringDependencies,
+  GameStateBotDependencies,
+  GameState,
+  GameConfig,
+  Player,
+  TurnHistory,
+  GameStateUpdate,
+  BotMove,
+  BotResult,
+  IGameStateManager,
+  GameStateListener,
+  MoveAttempt
+} from './interfaces';
+
 // Re-export imported types for compatibility
 export type { ValidationResult, ScoringResult };
 
-// =============================================================================
-// DEPENDENCY INTERFACES
-// =============================================================================
-
-/**
- * Dictionary dependencies for game state management
- */
-export interface GameStateDictionaryDependencies {
-  validateWord: (word: string, options?: any) => ValidationResult;
-  getRandomWordByLength: (length: number) => string | null;
-}
-
-/**
- * Scoring dependencies for game state management
- */
-export interface GameStateScoringDependencies {
-  calculateScore: (fromWord: string, toWord: string, options?: any) => ScoringResult;
-  getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]) => number;
-  isValidMove: (fromWord: string, toWord: string) => boolean;
-}
-
-/**
- * Bot dependencies for game state management
- */
-export interface GameStateBotDependencies {
-  generateBotMove: (word: string, options?: any) => Promise<BotResult>;
-}
-
-/**
- * Complete dependencies interface combining all sub-dependencies
- */
-export interface GameStateDependencies extends 
-  GameStateDictionaryDependencies, 
-  GameStateScoringDependencies, 
-  GameStateBotDependencies {
-}
+// Re-export consolidated interfaces for external usage
+export type { 
+  GameStateDependencies,
+  GameStateDictionaryDependencies,
+  GameStateScoringDependencies,
+  GameStateBotDependencies,
+  GameState,
+  GameConfig,
+  Player,
+  TurnHistory,
+  GameStateUpdate,
+  BotMove,
+  BotResult,
+  IGameStateManager
+};
 
 // =============================================================================
-// RESULT TYPES (IMPORTED FROM ENGINE INTERFACES)
-// =============================================================================
-
-export interface BotMove {
-  word: string;
-  score: number;
-  confidence: number;
-  reasoning: string[];
-}
-
-export interface BotResult {
-  move: BotMove | null;
-  candidates: BotMove[];
-  processingTime: number;
-  totalCandidatesGenerated: number;
-}
-
-// =============================================================================
-// GAME STATE TYPES
-// =============================================================================
-
-// Core game state types
-export interface GameConfig {
-  maxTurns?: number;
-  initialWord?: string;
-  allowBotPlayer?: boolean;
-  enableKeyLetters?: boolean;
-  enableLockedLetters?: boolean;
-}
-
-export interface PlayerState {
-  id: string;
-  name: string;
-  isBot: boolean;
-  score: number;
-  isCurrentPlayer: boolean;
-}
-
-export interface TurnHistory {
-  turnNumber: number;
-  playerId: string;
-  previousWord: string;
-  newWord: string;
-  score: number;
-  scoringBreakdown: ScoringResult;
-  timestamp: number;
-}
-
-export interface PublicGameState {
-  // Core state
-  currentWord: string;
-  keyLetters: string[];
-  lockedLetters: string[];
-  lockedKeyLetters: string[]; // NEW: Key letters that are locked for the current player's turn
-  usedWords: string[]; // Exposed as array for easier consumption
-  
-  // Game flow
-  players: PlayerState[];
-  currentTurn: number;
-  maxTurns: number;
-  gameStatus: 'waiting' | 'playing' | 'finished';
-  winner: PlayerState | null;
-  
-  // History and scoring
-  turnHistory: TurnHistory[];
-  totalMoves: number;
-  
-  // Configuration
-  config: GameConfig;
-  
-  // Timestamps
-  gameStartTime: number;
-  lastMoveTime: number;
-}
-
-export interface GameState {
-  // Core state
-  currentWord: string;
-  keyLetters: string[];
-  lockedLetters: string[];
-  lockedKeyLetters: string[]; // NEW: Key letters that are locked for the current player's turn
-  usedWords: Set<string>; // Track all words used in this game
-  usedKeyLetters: Set<string>; // Track all key letters used in this game to prevent repetition
-  
-  // Game flow
-  players: PlayerState[];
-  currentTurn: number;
-  maxTurns: number;
-  gameStatus: 'waiting' | 'playing' | 'finished';
-  winner: PlayerState | null;
-  
-  // History and scoring
-  turnHistory: TurnHistory[];
-  totalMoves: number;
-  
-  // Configuration
-  config: GameConfig;
-  
-  // Timestamps
-  gameStartTime: number;
-  lastMoveTime: number;
-}
-
-export interface MoveAttempt {
-  newWord: string;
-  isValid: boolean;
-  validationResult: ValidationResult;
-  scoringResult: ScoringResult | null;
-  canApply: boolean;
-  reason?: string;
-}
-
-export interface GameStateUpdate {
-  type: 'word_changed' | 'turn_completed' | 'game_finished' | 'player_changed' | 'letters_updated';
-  data: Record<string, unknown>;
-  timestamp: number;
-}
-
-// Event system for state change notifications
-type GameStateListener = (update: GameStateUpdate) => void;
-
-// =============================================================================
-// DEPENDENCY-INJECTED GAME STATE MANAGER (NEW ARCHITECTURE)
+// GAME STATE MANAGER IMPLEMENTATION
 // =============================================================================
 
 /**
  * Local GameState Manager Class with Dependency Injection
  * Manages all game state and integrates with validation, scoring, and bot AI via dependencies
  */
-export class LocalGameStateManagerWithDependencies {
+export class LocalGameStateManagerWithDependencies implements IGameStateManager {
   private state: GameState;
   private listeners: GameStateListener[] = [];
   private dependencies: GameStateDependencies;
@@ -231,7 +106,7 @@ export class LocalGameStateManagerWithDependencies {
       initialWord: initialWord
     };
 
-    const humanPlayer: PlayerState = {
+    const humanPlayer: Player = {
       id: 'human',
       name: 'Player',
       isBot: false,
@@ -243,7 +118,7 @@ export class LocalGameStateManagerWithDependencies {
 
     // Add bot player if enabled
     if (defaultConfig.allowBotPlayer) {
-      const botPlayer: PlayerState = {
+      const botPlayer: Player = {
         id: 'bot',
         name: 'Bot AI',
         isBot: true,
@@ -278,37 +153,21 @@ export class LocalGameStateManagerWithDependencies {
   /**
    * Get the current game state (read-only copy)
    */
-  public getState(): PublicGameState {
-    return {
-      currentWord: this.state.currentWord,
-      keyLetters: [...this.state.keyLetters],
-      lockedLetters: [...this.state.lockedLetters],
-      lockedKeyLetters: [...this.state.lockedKeyLetters],
-      usedWords: Array.from(this.state.usedWords),
-      players: this.state.players.map(p => ({ ...p })),
-      currentTurn: this.state.currentTurn,
-      maxTurns: this.state.maxTurns,
-      gameStatus: this.state.gameStatus,
-      winner: this.state.winner ? { ...this.state.winner } : null,
-      turnHistory: this.state.turnHistory.map(h => ({ ...h })),
-      totalMoves: this.state.totalMoves,
-      config: { ...this.state.config },
-      gameStartTime: this.state.gameStartTime,
-      lastMoveTime: this.state.lastMoveTime
-    };
+  public getState(): GameState {
+    return { ...this.state };
   }
 
   /**
    * Get the current player
    */
-  public getCurrentPlayer(): PlayerState | null {
+  public getCurrentPlayer(): Player | null {
     return this.state.players.find(p => p.isCurrentPlayer) || null;
   }
 
   /**
    * Get the other (non-current) player
    */
-  public getOtherPlayer(): PlayerState | null {
+  public getOtherPlayer(): Player | null {
     return this.state.players.find(p => !p.isCurrentPlayer) || null;
   }
 

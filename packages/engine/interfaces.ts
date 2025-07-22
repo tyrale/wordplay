@@ -10,36 +10,42 @@
 // CORE RESULT TYPES
 // =============================================================================
 
-export type GameStatus = 'ready' | 'playing' | 'finished';
+export type GameStatus = 'ready' | 'waiting' | 'playing' | 'finished';
 
-export type ValidationResult = 
-  | { isValid: true; word: string; censored?: string; }
-  | { 
-    isValid: false; 
-    reason: 'NOT_IN_DICTIONARY' | 'ALREADY_PLAYED' | 'TOO_MANY_ADDS' | 'TOO_MANY_REMOVES' | 'INVALID_CHARACTERS' | 'TOO_SHORT' | 'EMPTY_WORD' | 'GAME_NOT_PLAYING' | 'NO_PLAYER' | 'LENGTH_CHANGE_TOO_LARGE';
-    word: string; 
-    userMessage: string;
-  };
+export interface ValidationResult {
+  isValid: boolean;
+  reason?: 'NOT_IN_DICTIONARY' | 'ALREADY_PLAYED' | 'TOO_MANY_ADDS' | 'TOO_MANY_REMOVES' | 'INVALID_CHARACTERS' | 'TOO_SHORT' | 'EMPTY_WORD' | 'GAME_NOT_PLAYING' | 'NO_PLAYER' | 'LENGTH_CHANGE_TOO_LARGE' | 'INVALID_MOVE' | string;
+  word: string;
+  userMessage?: string;
+  censored?: string;
+}
 
 export interface ScoringResult {
   score: number;
-  breakdown: ScoringBreakdown;
-  actions: string[];
+  totalScore: number;
+  breakdown: string[];
+  actions: ScoringAction[];
+  keyLetterScore: number;
+  baseScore: number;
 }
 
-export interface ScoringBreakdown {
-  addLetterPoints: number;
-  removeLetterPoints: number;
-  movePoints: number;
-  keyLetterBonus: number;
-  total: number;
+export interface ScoringAction {
+  type: 'add' | 'remove' | 'rearrange' | 'substitute' | 'key-letter';
+  letters?: string[];
+  score: number;
 }
 
 export interface WordAnalysis {
   addedLetters: string[];
   removedLetters: string[];
-  rearrangedLetters: boolean;
-  usedKeyLetters: string[];
+  isMoved: boolean;
+  keyLettersUsed: string[];
+  // New interface compatibility
+  added: string[];
+  removed: string[];
+  rearranged: boolean;
+  substituted: { from: string; to: string }[];
+  valid: boolean;
 }
 
 export interface BotMove {
@@ -51,18 +57,29 @@ export interface BotMove {
 
 export interface BotResult {
   move: BotMove | null;
+  analysis: string[];
   executionTime: number;
 }
 
 export interface MoveCandidate {
   word: string;
-  type: 'add' | 'remove' | 'rearrange' | 'substitute';
-  operations: string[];
+  action: 'add' | 'remove' | 'rearrange' | 'substitute';
+  letters?: string[];
 }
 
 // =============================================================================
-// DEPENDENCY INTERFACES
+// DEPENDENCY INTERFACES - CONSOLIDATED
 // =============================================================================
+
+/**
+ * Word data dependencies interface
+ * Platform adapters must provide word sets for validation
+ */
+export interface WordDataDependencies {
+  enableWords: Set<string>;
+  slangWords: Set<string>;
+  profanityWords: Set<string>;
+}
 
 /**
  * Dictionary validation dependencies
@@ -151,30 +168,77 @@ export interface BotDependencies extends DictionaryDependencies, UtilityDependen
  * All dependencies needed for full game functionality
  */
 export interface GameEngineDependencies extends BotDependencies, ScoringDependencies {
-  // Game engine specific dependencies can be added here
+  // Game engine specific scoring functions
+  getScoreForMove?: (fromWord: string, toWord: string, keyLetters?: string[]) => number;
+  // Game engine specific bot functions
+  generateBotMove?: (currentWord: string, options?: any) => Promise<BotResult>;
 }
 
 // =============================================================================
-// OPTIONS AND CONFIGURATION
+// GAME STATE INTERFACES - CONSOLIDATED
+// =============================================================================
+
+/**
+ * Dictionary dependencies for game state management
+ * CONSOLIDATED: Matches adapter expectations with consistent signatures
+ */
+export interface GameStateDictionaryDependencies {
+  validateWord: (word: string, options?: any) => ValidationResult;
+  getRandomWordByLength: (length: number) => string | null;
+}
+
+/**
+ * Scoring dependencies for game state management
+ * CONSOLIDATED: Matches adapter expectations with consistent signatures
+ */
+export interface GameStateScoringDependencies {
+  calculateScore: (fromWord: string, toWord: string, options?: any) => ScoringResult;
+  getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]) => number;
+  isValidMove: (fromWord: string, toWord: string) => boolean;
+}
+
+/**
+ * Bot dependencies for game state management
+ * CONSOLIDATED: Matches adapter expectations with consistent signatures
+ */
+export interface GameStateBotDependencies {
+  generateBotMove: (word: string, options?: any) => Promise<BotResult>;
+}
+
+/**
+ * Complete dependencies interface for game state
+ * CONSOLIDATED: Unified flat structure that adapters actually use
+ */
+export interface GameStateDependencies extends 
+  GameStateDictionaryDependencies, 
+  GameStateScoringDependencies, 
+  GameStateBotDependencies {
+}
+
+// =============================================================================
+// OPTIONS INTERFACES
 // =============================================================================
 
 export interface ValidationOptions {
   isBot?: boolean;
   previousWord?: string;
-  allowSlang?: boolean;
-  profanityFilter?: boolean;
+  allowProfanity?: boolean;
+  customValidator?: (word: string) => boolean;
+}
+
+export interface ScoringOptions {
+  keyLetters?: string[];
+  lockedLetters?: string[];
+  bonusMultiplier?: number;
+  penaltyMultiplier?: number;
 }
 
 export interface BotOptions {
   keyLetters?: string[];
   lockedLetters?: string[];
-  difficulty?: 'easy' | 'medium' | 'hard';
   maxCandidates?: number;
   timeLimit?: number;
-}
-
-export interface ScoringOptions {
-  keyLetters?: string[];
+  difficulty?: 'easy' | 'medium' | 'hard';
 }
 
 export interface GameEngineOptions {
@@ -339,37 +403,28 @@ export interface GameEngine extends BotEngine, ScoringEngine, DictionaryEngine {
 export type AdapterFactory<T = GameEngine> = (config?: any) => T;
 
 /**
- * Platform adapter configuration
- * Common configuration for all adapters
+ * Platform adapter registry
+ * Maps platform names to adapter factories
  */
-export interface AdapterConfig {
-  /**
-   * Dictionary configuration
-   */
-  dictionary?: {
-    source?: string; // URL, file path, etc.
-    fallbackWords?: string[];
-    enableSlang?: boolean;
-    profanityFilter?: boolean;
-  };
-  
-  /**
-   * Performance configuration
-   */
-  performance?: {
-    enableLogging?: boolean;
-    timeoutMs?: number;
-    maxCandidates?: number;
-  };
-  
-  /**
-   * Testing configuration
-   */
-  testing?: {
-    deterministic?: boolean;
-    mockTimestamp?: number;
-    mockRandom?: () => number;
-  };
+export interface AdapterRegistry {
+  [platform: string]: AdapterFactory;
+}
+
+/**
+ * Platform detection function type
+ * How the system determines current platform
+ */
+export type PlatformDetector = () => string;
+
+/**
+ * Cross-platform configuration
+ * Settings that apply across all platforms
+ */
+export interface CrossPlatformConfig {
+  enableLogging?: boolean;
+  enablePerformanceTracking?: boolean;
+  defaultDictionarySize?: number;
+  enableCaching?: boolean;
 }
 
 // =============================================================================
@@ -394,160 +449,99 @@ export function validateDependencies(
 }
 
 /**
- * Create default utility dependencies for testing
- * @param overrides - Override specific dependencies
- * @returns Utility dependencies with defaults
+ * Test configuration factory
+ * Creates consistent test configurations across platforms
  */
-export function createDefaultUtilityDependencies(
-  overrides: Partial<UtilityDependencies> = {}
-): UtilityDependencies {
-  return {
-    getTimestamp: () => Date.now(),
-    random: Math.random,
-    log: console.log,
-    ...overrides
+export function createTestConfig(overrides?: Partial<GameEngineOptions>): GameEngineOptions {
+  const validWords = ['CAT', 'CATS', 'DOG', 'DOGS'];
+  
+  // Mock implementation for testing
+  const defaultConfig: GameEngineOptions = {
+    validation: {
+      customValidator: (word: string) => {
+        return validWords.includes(word.toUpperCase());
+      }
+    },
+    scoring: {
+      keyLetters: [],
+      lockedLetters: []
+    },
+    bot: {
+      difficulty: 'easy' as const,
+      maxCandidates: 10
+    }
   };
+
+  return { ...defaultConfig, ...overrides };
 }
 
 /**
- * Create deterministic dependencies for testing
- * @param config - Test configuration
- * @returns Complete test dependencies for game state manager
+ * Mock dependencies factory  
+ * Creates mock dependencies for testing
  */
-export function createTestDependencies(config: {
-  timestamp?: number;
-  randomSeed?: number;
-  validWords?: string[];
-}): any {
-  const { timestamp = 1000, randomSeed = 0.5, validWords = ['CAT', 'CATS', 'DOG', 'DOGS'] } = config;
+export function createMockDependencies(): GameEngineDependencies {
+  const testWords = new Set(['CAT', 'CATS', 'DOG', 'DOGS', 'BAT', 'BATS']);
   
-  // Enhanced validation function that checks both dictionary and character validation
-  const validateWord = (word: string, options: ValidationOptions = {}): ValidationResult => {
-    const normalizedWord = word.trim().toUpperCase();
-    const { isBot = false, previousWord } = options;
-
-    // Bots can bypass all validation
-    if (isBot) {
-      return { isValid: true, word: normalizedWord };
-    }
-
-    // Empty word check
-    if (!normalizedWord) {
-      return {
-        isValid: false,
-        word: normalizedWord,
-        reason: 'EMPTY_WORD',
-        userMessage: 'word cannot be empty'
-      };
-    }
-
-    // Character validation - only letters allowed for humans
-    if (!/^[A-Z]+$/.test(normalizedWord)) {
-      return {
-        isValid: false,
-        word: normalizedWord,
-        reason: 'INVALID_CHARACTERS',
-        userMessage: 'only letters allowed'
-      };
-    }
-
-    // Length validation - minimum 3 letters
-    if (normalizedWord.length < 3) {
-      return {
-        isValid: false,
-        word: normalizedWord,
-        reason: 'TOO_SHORT',
-        userMessage: 'too short'
-      };
-    }
-
-    // Length change validation is now handled by move action validation in gamestate.ts
-    // so we skip it here to avoid conflicts
-
-    // Dictionary check
-    const isValid = validWords.includes(normalizedWord);
-    return isValid 
-      ? { isValid: true, word: normalizedWord }
-      : { 
-        isValid: false, 
-        word: normalizedWord, 
-        reason: 'NOT_IN_DICTIONARY',
-        userMessage: 'not a word'
-      };
-  };
-
   return {
-    // Dictionary dependencies (flat structure)
-    validateWord,
-    getRandomWordByLength: (length: number) => validWords.find(w => w.length === length) || null,
+    validateWord: (word: string, options?: ValidationOptions) => {
+      const normalizedWord = word.trim().toUpperCase();
+      
+      if (normalizedWord.length === 0) {
+        return { isValid: false, reason: 'EMPTY_WORD', word: normalizedWord };
+      }
+      
+      if (testWords.has(normalizedWord)) {
+        return { isValid: true, word: normalizedWord };
+      }
+      
+      return { isValid: false, reason: 'NOT_IN_DICTIONARY', word: normalizedWord };
+    },
     
-    // Scoring dependencies (flat structure)
-    calculateScore: (fromWord: string, toWord: string, options: any = {}) => {
-      // Simple scoring for tests - return ScoringResult format from gamestate.ts
-      const { keyLetters = [] } = options;
-      let score = 1; // Base score for any move
-      
-      // Add key letter bonus
-      const keyLetterBonus = keyLetters.filter((letter: string) => 
-        toWord.toUpperCase().includes(letter.toUpperCase())
-      ).length;
-      
-      return {
-        totalScore: score + keyLetterBonus,
-        breakdown: {
-          addLetterPoints: fromWord.length < toWord.length ? 1 : 0,
-          removeLetterPoints: fromWord.length > toWord.length ? 1 : 0,
-          movePoints: fromWord.length === toWord.length ? 1 : 0,
-          keyLetterUsagePoints: keyLetterBonus
-        },
-        actions: ['test-action'],
-        keyLettersUsed: keyLetters.filter((letter: string) => 
-          toWord.toUpperCase().includes(letter.toUpperCase())
-        )
-      };
+    isValidDictionaryWord: (word: string) => {
+      return testWords.has(word.toUpperCase());
     },
+    
+    getRandomWordByLength: (length: number) => {
+      const words = Array.from(testWords).filter(w => w.length === length);
+      return words.length > 0 ? words[0] : null;
+    },
+    
+    getWordCount: () => testWords.size,
+    
+    getTimestamp: () => Date.now(),
+    random: () => Math.random(),
+    
+         calculateScore: (fromWord: string, toWord: string, keyLetters: string[] = []) => {
+       return { score: 1, totalScore: 1, breakdown: ['Base score: 1'], actions: [], keyLetterScore: 0, baseScore: 1 };
+     },
+    
     getScoreForMove: (fromWord: string, toWord: string, keyLetters: string[] = []) => {
-      return 1 + keyLetters.filter(letter => 
-        toWord.toUpperCase().includes(letter.toUpperCase())
-      ).length;
+      return 1; // Simple scoring for tests
     },
-    isValidMove: (fromWord: string, toWord: string) => {
-      // Simple move validation for tests
-      return Math.abs(fromWord.length - toWord.length) <= 1;
-    },
-
-    // Bot dependencies (flat structure)
+    
     generateBotMove: async (currentWord: string, options: any = {}) => {
-      // Simple bot that just adds an 'S' if possible
+      // Simple bot that tries to add 'S'
       const candidate = currentWord + 'S';
-      if (validWords.includes(candidate)) {
+      if (testWords.has(candidate)) {
         return {
-          move: {
-            word: candidate,
-            score: 1,
-            confidence: 0.8,
-            reasoning: ['Adding S']
-          },
-          candidates: [],
-          processingTime: 10,
-          totalCandidatesGenerated: 1
+          move: { word: candidate, score: 1, confidence: 0.8, reasoning: ['Added S'] },
+          analysis: ['Simple add S strategy'],
+          executionTime: 5
         };
       }
+      
       return {
         move: null,
-        candidates: [],
-        processingTime: 10,
-        totalCandidatesGenerated: 0
+        analysis: ['No valid moves found'],
+        executionTime: 5
       };
     }
   };
 }
 
-export interface IGameState {
-  // Game state properties
-  currentWord: string;
-  // ... existing code ...
-}
+// =============================================================================
+// GAME STATE INTERFACES  
+// =============================================================================
 
 export interface Player {
   id: string;
@@ -558,15 +552,15 @@ export interface Player {
 }
 
 export interface GameState {
-  gameId: string;
-  config: GameConfig;
-  gameStatus: 'waiting' | 'playing' | 'finished';
-  players: Player[];
-  currentTurn: number;
+  gameStatus: GameStatus;
   currentWord: string;
   keyLetters: string[];
   lockedLetters: string[];
   lockedKeyLetters: string[];
+  players: Player[];
+  currentPlayerIndex: number;
+  currentTurn: number;
+  maxTurns: number;
   usedWords: Set<string>;
   usedKeyLetters: Set<string>;
   turnHistory: TurnHistory[];
@@ -574,26 +568,7 @@ export interface GameState {
   lastMoveTime: number | null;
   winner: Player | null;
   totalMoves: number;
-}
-
-export interface GameStateDictionaryDependencies {
-  validateWord: (word: string) => ValidationResult;
-  getRandomWordByLength: (length: number) => string | null;
-}
-
-export interface GameStateScoringDependencies {
-  calculateScore: (previousWord: string, currentWord: string, options: ScoringOptions) => ScoringResult;
-  isValidMove: (previousWord: string, currentWord: string) => boolean;
-}
-
-export interface GameStateBotDependencies {
-  generateBotMove: (currentWord: string, options: BotOptions) => Promise<BotResult>;
-}
-
-export interface GameStateDependencies {
-  dictionary: GameStateDictionaryDependencies;
-  scoring: GameStateScoringDependencies;
-  bot: GameStateBotDependencies;
+  config: GameConfig;
 }
 
 export interface GameStateUpdate {
@@ -618,9 +593,21 @@ export interface TurnHistory {
   previousWord: string;
   newWord: string;
   score: number;
-  scoringBreakdown: ScoringResult;
+  keyLettersUsed: string[];
   timestamp: number;
 }
+
+export interface MoveAttempt {
+  newWord: string;
+  isValid: boolean;
+  validationResult: ValidationResult;
+  scoringResult: ScoringResult | null;
+  canApply: boolean;
+  reason?: string;
+}
+
+// Event system for state change notifications
+export type GameStateListener = (update: GameStateUpdate) => void;
 
 export interface IGameStateManager {
   subscribe(listener: (update: GameStateUpdate) => void): () => void;
@@ -654,32 +641,29 @@ export interface UnlockState {
   achievements: string[]; // Achievement IDs that are earned (e.g., ['beat-basicBot'])
 }
 
+export interface UnlockResult {
+  category: 'theme' | 'mechanic' | 'bot';
+  itemId: string;
+  name: string;
+  description: string;
+  isNew: boolean; // true if this is a new unlock, false if already unlocked
+}
+
 export interface UnlockTrigger {
   type: 'word' | 'achievement';
-  value: string;           // Word to play OR achievement to earn
-  timing: 'word_submission' | 'game_completion';
+  condition: string;
+  unlocks: Array<{
+    category: 'theme' | 'mechanic' | 'bot';
+    itemId: string;
+  }>;
 }
 
 export interface UnlockDefinition {
-  id: string;              // Unique identifier for this unlock
-  category: 'theme' | 'mechanic' | 'bot';
   trigger: UnlockTrigger;
-  target: string;          // Theme name, mechanic ID, or bot ID to unlock
-  immediate_effect?: {
-    type: 'apply_theme';
-    value: string;         // Theme name to apply immediately
-  };
-}
-
-export interface UnlockResult {
-  unlockId: string;
   category: 'theme' | 'mechanic' | 'bot';
-  target: string;
-  wasAlreadyUnlocked: boolean;
-  immediateEffect?: {
-    type: 'apply_theme';
-    value: string;
-  };
+  itemId: string;
+  name: string;
+  description: string;
 }
 
 export interface UnlockDependencies {

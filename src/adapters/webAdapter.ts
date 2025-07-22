@@ -6,14 +6,19 @@
  */
 
 import type {
-  WordDataDependencies
+  GameStateDependencies,
+  GameStateDictionaryDependencies,
+  GameStateScoringDependencies,
+  GameStateBotDependencies,
+  WordDataDependencies,
+  ValidationResult,
+  ScoringResult,
+  BotResult
 } from '../../packages/engine/interfaces';
 
-// Import centralized profanity management
-import { getComprehensiveProfanityWords } from '../../packages/engine/profanity';
-
-// Ensure correct imports
+import { validateWordWithDependencies, isValidDictionaryWordWithDependencies } from '../../packages/engine/dictionary';
 import { calculateScore, getScoreForMove, isValidMove } from '../../packages/engine/scoring';
+import { generateBotMoveWithDependencies } from '../../packages/engine/bot';
 
 /**
  * Web-specific word data implementation
@@ -24,7 +29,7 @@ class WebWordData implements WordDataDependencies {
   public slangWords: Set<string> = new Set();
   public profanityWords: Set<string> = new Set();
   private wordsByLength: Map<number, string[]> = new Map();
-  private isLoaded = false;
+  private loaded = false;
 
   constructor() {
     this.loadDictionary();
@@ -45,7 +50,7 @@ class WebWordData implements WordDataDependencies {
   }
 
   public isLoaded(): boolean {
-    return this.isLoaded;
+    return this.loaded;
   }
 
   private async loadDictionary(): Promise<void> {
@@ -100,7 +105,7 @@ class WebWordData implements WordDataDependencies {
         this.profanityWords = new Set();
       }
 
-      this.isLoaded = true;
+      this.loaded = true;
       console.log(`Dictionary loaded successfully: ${this.enableWords.size} words`);
       
     } catch (error) {
@@ -125,7 +130,7 @@ class WebWordData implements WordDataDependencies {
     // Use empty profanity set for fallback
     this.profanityWords = new Set();
     
-    this.isLoaded = true;
+    this.loaded = true;
   }
 }
 
@@ -171,7 +176,7 @@ const webScoringDependencies: GameStateScoringDependencies = {
 
 const webBotDependencies: GameStateBotDependencies = {
   generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
-    const botDeps: BotDependencies = {
+    const botDeps: GameStateBotDependencies = {
       ...webDictionaryDependencies,
       ...webScoringDependencies,
       isValidDictionaryWord: (word: string): boolean => {

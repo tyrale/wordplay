@@ -5,10 +5,20 @@
  * predictable word data and deterministic behavior for test scenarios.
  */
 
-import type { WordDataDependencies } from '../../packages/engine/dictionary';
+import type { 
+  WordDataDependencies,
+  GameStateDependencies,
+  GameStateDictionaryDependencies,
+  GameStateScoringDependencies,
+  GameStateBotDependencies,
+  ValidationResult,
+  ScoringResult,
+  BotResult
+} from '../../packages/engine/interfaces';
 
-// Import centralized profanity management
-import { getComprehensiveProfanityWords, getBasicProfanityWords } from '../../packages/engine/profanity';
+import { validateWordWithDependencies, isValidDictionaryWordWithDependencies } from '../../packages/engine/dictionary';
+import { calculateScore, getScoreForMove, isValidMove } from '../../packages/engine/scoring';
+import { generateBotMoveWithDependencies } from '../../packages/engine/bot';
 
 /**
  * Test-specific word data implementation
@@ -225,7 +235,7 @@ const testScoringDependencies: GameStateScoringDependencies = {
 const testBotDependencies: GameStateBotDependencies = {
   generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
     // Create combined dependencies for bot
-    const botDeps: BotDependencies = {
+    const botDeps: GameStateDependencies = {
       ...testDictionaryDependencies,
       ...testScoringDependencies,
       isValidDictionaryWord: (word: string): boolean => {
@@ -430,7 +440,7 @@ export function createCustomTestDependencies(words: string[]): GameStateDependen
 
   const customBotDependencies: GameStateBotDependencies = {
     generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
-      const botDeps: BotDependencies = {
+      const botDeps: GameStateDependencies = {
         ...customDictionaryDependencies,
         ...testScoringDependencies,
         isValidDictionaryWord: (word: string): boolean => {

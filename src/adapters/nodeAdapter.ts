@@ -17,21 +17,19 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 import type { 
-  GameDependencies, 
+  GameStateDependencies,
+  GameStateDictionaryDependencies,
+  GameStateScoringDependencies,
+  GameStateBotDependencies,
   WordDataDependencies,
   ValidationResult,
-  ValidationOptions,
   ScoringResult,
-  BotResult,
-  BotDependencies
+  BotResult
 } from '../../packages/engine/interfaces';
 
 import { validateWordWithDependencies } from '../../packages/engine/dictionary';
 import { calculateScoreWithDependencies, getScoreForMoveWithDependencies } from '../../packages/engine/scoring';
 import { generateBotMoveWithDependencies } from '../../packages/engine/bot';
-
-// Import centralized profanity management
-import { getComprehensiveProfanityWords } from '../../packages/engine/profanity';
 
 /**
  * Node.js-specific word data implementation
@@ -42,28 +40,14 @@ class NodeWordData implements WordDataDependencies {
   public slangWords: Set<string> = new Set();
   public profanityWords: Set<string> = new Set();
   private wordsByLength: Map<number, string[]> = new Map();
-  private isLoaded = false;
+  private loaded = false;
 
   constructor() {
-    this.loadDictionary();
-  }
-
-  public hasWord(word: string): boolean {
-    const upperWord = word.toUpperCase();
-    return this.enableWords.has(upperWord) || this.slangWords.has(upperWord);
-  }
-
-  public getRandomWordByLength(length: number): string | null {
-    const words = this.wordsByLength.get(length);
-    if (!words || words.length === 0) {
-      return null;
-    }
-    const randomIndex = Math.floor(Math.random() * words.length);
-    return words[randomIndex];
+    this.loadDictionaryInternal();
   }
 
   public isLoaded(): boolean {
-    return this.isLoaded;
+    return this.loaded;
   }
 
   private async loadDictionaryInternal(): Promise<void> {
@@ -125,34 +109,38 @@ class NodeWordData implements WordDataDependencies {
 
       // Load profanity words from shared data file
       try {
-        const profanityPath = join(__dirname, '../../public/data/profanity-words.json');
-        const profanityData = JSON.parse(readFileSync(profanityPath, 'utf-8'));
+        const profanityData = JSON.parse(readFileSync(join(__dirname, '../../public/data/profanity-words.json'), 'utf-8'));
         this.profanityWords = new Set(profanityData.words || []);
-        console.log(`✅ Profanity words loaded: ${this.profanityWords.size} words`);
+        console.log(`Profanity words loaded: ${this.profanityWords.size} words`);
       } catch (profanityError) {
-        console.warn('⚠️  Failed to load profanity words:', profanityError);
+        console.warn('Error loading profanity words:', profanityError);
         this.profanityWords = new Set();
       }
 
-      this.isLoaded = true;
-      
+      this.loaded = true;
+      console.log(`✅ Dictionary loaded: ${this.enableWords.size} words, ${this.slangWords.size} slang words, ${this.profanityWords.size} profanity words`);
+
     } catch (error) {
-      console.error(`Failed to load dictionary from any path:`, error);
-      this.initializeFallback();
+      console.error('❌ Failed to load dictionary:', error);
+      throw error;
     }
   }
 
-  private initializeFallback(): void {
-    const fallbackWords = [
-      'CAT', 'DOG', 'WORD', 'GAME', 'PLAY', 'MOVE', 'TURN', 'SCORE',
-      'CATS', 'DOGS', 'WORDS', 'GAMES', 'PLAYS', 'MOVES', 'TURNS', 'SCORES'
-    ];
-    
-    this.enableWords = new Set(fallbackWords);
-    this.slangWords = new Set(['BRUH', 'YEAH']);
-    // Use empty profanity set for fallback
-    this.profanityWords = new Set();
-    this.isLoaded = true;
+  public getRandomWordByLength(length: number): string | null {
+    const words = this.wordsByLength.get(length);
+    if (!words || words.length === 0) {
+      return null;
+    }
+    return words[Math.floor(Math.random() * words.length)];
+  }
+
+  public hasWord(word: string): boolean {
+    const upperWord = word.toUpperCase();
+    return this.enableWords.has(upperWord) || this.slangWords.has(upperWord);
+  }
+
+  public get wordCount(): number {
+    return this.enableWords.size + this.slangWords.size;
   }
 }
 
@@ -166,7 +154,7 @@ const nodeWordData = new NodeWordData();
 /**
  * Node.js dictionary dependencies implementation
  */
-const nodeDictionaryDependencies: WordDataDependencies = {
+const nodeDictionaryDependencies: GameStateDictionaryDependencies = {
   validateWord: (word: string, options?: any): ValidationResult => {
     return validateWordWithDependencies(word, nodeWordData, options);
   },
@@ -180,7 +168,7 @@ const nodeDictionaryDependencies: WordDataDependencies = {
  * Node.js scoring dependencies implementation
  * Uses direct imports from scoring module since it's platform-agnostic
  */
-const nodeScoringDependencies: GameDependencies = {
+const nodeScoringDependencies: GameStateScoringDependencies = {
   calculateScore: (fromWord: string, toWord: string, options?: any): ScoringResult => {
     return calculateScoreWithDependencies(fromWord, toWord, options);
   },
@@ -190,35 +178,45 @@ const nodeScoringDependencies: GameDependencies = {
   },
 
   isValidMove: (fromWord: string, toWord: string): boolean => {
-    // This function is not directly available in the new scoring module,
-    // so we'll keep the original logic or assume it's handled elsewhere.
-    // For now, we'll return true as a placeholder.
-    return true;
+    // Simple move validation - length change max 1
+    return Math.abs(fromWord.length - toWord.length) <= 1;
   }
 };
 
 /**
  * Node.js bot dependencies implementation
  */
-const nodeBotDependencies: BotDependencies = {
+const nodeBotDependencies: GameStateBotDependencies = {
   generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
-    // Create combined dependencies for bot
-    const botDeps: BotDependencies = {
-      ...nodeDictionaryDependencies,
-      ...nodeScoringDependencies,
+    // Create combined dependencies for bot (adapting to bot interface expectations)
+    const botDeps = {
+      validateWord: nodeDictionaryDependencies.validateWord,
       isValidDictionaryWord: (word: string): boolean => {
-        return nodeDictionaryDependencies.validateWord(word, {}).isValid;
-      }
+        return nodeWordData.hasWord(word);
+      },
+      getRandomWordByLength: nodeDictionaryDependencies.getRandomWordByLength,
+      getWordCount: () => nodeWordData.wordCount,
+      getTimestamp: () => Date.now(),
+      random: () => Math.random(),
+      getScoreForMove: nodeScoringDependencies.getScoreForMove,
+      calculateScore: nodeScoringDependencies.calculateScore
     };
     
-    return generateBotMoveWithDependencies(word, botDeps, options);
+    const result = await generateBotMoveWithDependencies(word, botDeps, options);
+    
+    // Ensure result has required properties for the interface
+    return {
+      move: result.move,
+      analysis: result.analysis || [],
+      executionTime: result.executionTime || 0
+    };
   }
 };
 
 /**
  * Complete Node.js dependencies for game state management
  */
-const nodeGameDependencies: GameDependencies = {
+const nodeGameDependencies: GameStateDependencies = {
   ...nodeDictionaryDependencies,
   ...nodeScoringDependencies,
   ...nodeBotDependencies
@@ -241,9 +239,6 @@ export class NodeAdapter {
     this.wordData = nodeWordData;
   }
 
-  /**
-   * Get the singleton Node.js adapter instance
-   */
   static getInstance(): NodeAdapter {
     if (!NodeAdapter.instance) {
       NodeAdapter.instance = new NodeAdapter();
@@ -259,14 +254,14 @@ export class NodeAdapter {
       return;
     }
 
-    await this.wordData.loadDictionaryInternal();
+    // The word data loads dictionary in constructor, just wait for it to complete
     this.initialized = true;
   }
 
   /**
-   * Get game state dependencies for Node.js environment
+   * Get all game dependencies for the game state manager
    */
-  getGameDependencies(): GameDependencies {
+  getGameDependencies(): GameStateDependencies {
     if (!this.initialized) {
       console.warn('NodeAdapter not initialized. Call initialize() first.');
     }
@@ -274,23 +269,23 @@ export class NodeAdapter {
   }
 
   /**
-   * Get dictionary dependencies only
+   * Get dictionary dependencies
    */
-  getDictionaryDependencies(): WordDataDependencies {
+  getDictionaryDependencies(): GameStateDictionaryDependencies {
     return nodeDictionaryDependencies;
   }
 
   /**
-   * Get scoring dependencies only
+   * Get scoring dependencies
    */
-  getScoringDependencies(): GameDependencies {
+  getScoringDependencies(): GameStateScoringDependencies {
     return nodeScoringDependencies;
   }
 
   /**
-   * Get bot dependencies only
+   * Get bot dependencies
    */
-  getBotDependencies(): BotDependencies {
+  getBotDependencies(): GameStateBotDependencies {
     return nodeBotDependencies;
   }
 
@@ -307,7 +302,7 @@ export class NodeAdapter {
   getDictionaryStatus(): { loaded: boolean; wordCount: number } {
     return {
       loaded: this.wordData.isLoaded(),
-      wordCount: this.wordData.enableWords.size
+      wordCount: this.wordData.wordCount
     };
   }
 
@@ -315,8 +310,16 @@ export class NodeAdapter {
    * Force reload dictionary (for debugging)
    */
   async reloadDictionary(): Promise<void> {
-    this.wordData['isLoaded'] = false;
-    await this.wordData.loadDictionaryInternal();
+    // Create new word data instance to reload
+    this.wordData = new NodeWordData();
+    this.initialized = false;
+  }
+
+  /**
+   * Get word data for direct access (useful for validation)
+   */
+  getWordData(): WordDataDependencies {
+    return this.wordData;
   }
 }
 
@@ -334,24 +337,17 @@ export async function createNodeAdapter(): Promise<NodeAdapter> {
 }
 
 /**
- * Quick access to Node.js game dependencies (requires initialization)
+ * Get game dependencies for Node.js environment
  */
-export function getNodeGameDependencies(): GameDependencies {
-  return NodeAdapter.getInstance().getGameDependencies();
+export function getNodeGameDependencies(): GameStateDependencies {
+  return nodeGameDependencies;
 }
 
 /**
- * Quick validation using Node.js dependencies
+ * Validate word using Node.js adapter (convenience function)
  */
 export function validateWordNode(word: string, options?: any): ValidationResult {
   return nodeDictionaryDependencies.validateWord(word, options);
-}
-
-/**
- * Quick scoring using Node.js dependencies
- */
-export function scoreMovesNode(fromWord: string, toWord: string, keyLetters?: string[]): number {
-  return nodeScoringDependencies.getScoreForMove(fromWord, toWord, keyLetters);
 }
 
 // =============================================================================
@@ -363,6 +359,4 @@ export {
   nodeDictionaryDependencies,
   nodeScoringDependencies,
   nodeBotDependencies
-};
-
-export default NodeAdapter; 
+}; 

@@ -19,27 +19,29 @@
  * - NARD→YARN: +3 points (remove D, add Y, move N-A-R to A-R-N)
  */
 
+// Import interfaces for dependency injection support
+import type { ScoringResult, WordAnalysis } from './interfaces';
+
+// Export types for external usage
+export type { ScoringResult, WordAnalysis };
+
 // Types for scoring operations
 export interface ScoringOptions {
   keyLetters?: string[];
 }
 
-export interface ScoringResult {
-  totalScore: number;
-  breakdown: {
-    addLetterPoints: number;
-    removeLetterPoints: number;
-    movePoints: number;
-    keyLetterUsagePoints: number;
-  };
-  actions: string[];
-  keyLettersUsed: string[];
+// Legacy types for backward compatibility
+export interface ScoringBreakdown {
+  addLetterPoints: number;
+  removeLetterPoints: number;
+  movePoints: number;
+  keyLetterUsagePoints: number;
 }
 
-export interface WordAnalysis {
-  addedLetters: string[];
-  removedLetters: string[];
-  isMoved: boolean;
+export interface LegacyScoringResult {
+  totalScore: number;
+  breakdown: ScoringBreakdown;
+  actions: string[];
   keyLettersUsed: string[];
 }
 
@@ -481,3 +483,58 @@ export function isValidMove(previousWord: string, currentWord: string): boolean 
   
   return true;
 } 
+
+// =============================================================================
+// DEPENDENCY INJECTION WRAPPER FUNCTIONS
+// =============================================================================
+
+/**
+ * Calculate score with dependency injection for adapters
+ * @param fromWord - Starting word
+ * @param toWord - Ending word
+ * @param options - Scoring options including keyLetters
+ * @returns Scoring result compatible with new interface
+ */
+export function calculateScoreWithDependencies(
+  fromWord: string,
+  toWord: string,
+  options: { keyLetters?: string[] } = {}
+): ScoringResult {
+  const legacyResult = calculateScore(fromWord, toWord, options);
+  
+  // Convert legacy result to new interface format
+  return {
+    score: legacyResult.totalScore,
+    totalScore: legacyResult.totalScore,
+    breakdown: legacyResult.actions,
+    actions: legacyResult.actions.map(action => ({
+      type: action.includes('Added') ? 'add' : 
+            action.includes('Removed') ? 'remove' :
+            action.includes('Moved') ? 'rearrange' :
+            action.includes('key letter') ? 'key-letter' : 'substitute',
+      score: 1
+    })),
+    keyLetterScore: legacyResult.breakdown.keyLetterUsagePoints,
+    baseScore: legacyResult.totalScore - legacyResult.breakdown.keyLetterUsagePoints
+  };
+}
+
+/**
+ * Get score for move with dependency injection for adapters
+ * @param fromWord - Starting word
+ * @param toWord - Ending word
+ * @param keyLetters - Available key letters
+ * @returns Simple numerical score
+ */
+export function getScoreForMoveWithDependencies(
+  fromWord: string,
+  toWord: string,
+  keyLetters: string[] = []
+): number {
+  const result = calculateScore(fromWord, toWord, { keyLetters });
+  return result.totalScore;
+}
+
+// =============================================================================
+// CORE SCORING IMPLEMENTATION
+// ============================================================================= 
