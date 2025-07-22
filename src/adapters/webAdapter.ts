@@ -5,12 +5,15 @@
  * dictionary loading via HTTP requests, along with scoring and bot AI functions.
  */
 
-import type { 
+import type {
   WordDataDependencies
 } from '../../packages/engine/interfaces';
 
 // Import centralized profanity management
 import { getComprehensiveProfanityWords } from '../../packages/engine/profanity';
+
+// Ensure correct imports
+import { calculateScore, getScoreForMove, isValidMove } from '../../packages/engine/scoring';
 
 /**
  * Web-specific word data implementation
@@ -51,7 +54,7 @@ class WebWordData implements WordDataDependencies {
       const response = await fetch('/enable1.txt');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
+        }
       
       const text = await response.text();
       const wordList = text
@@ -130,6 +133,61 @@ class WebWordData implements WordDataDependencies {
 // WEB ADAPTER CLASS
 // =============================================================================
 
+// Singleton instance for web word data
+let webWordData: WebWordData | null = null;
+
+function getWebWordData(): WebWordData {
+  if (!webWordData) {
+    console.log('Creating new WebWordData instance'); // Log instance creation
+    webWordData = new WebWordData();
+  }
+  return webWordData;
+}
+
+// Centralize dependency creation
+const webDictionaryDependencies: GameStateDictionaryDependencies = {
+  validateWord: (word: string, options?: any): ValidationResult => {
+    return validateWordWithDependencies(word, getWebWordData(), options);
+  },
+
+  getRandomWordByLength: (length: number): string | null => {
+    return getWebWordData().getRandomWordByLength(length);
+  }
+};
+
+const webScoringDependencies: GameStateScoringDependencies = {
+  calculateScore: (fromWord: string, toWord: string, options?: any): ScoringResult => {
+    return calculateScore(fromWord, toWord, options);
+  },
+
+  getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]): number => {
+    return getScoreForMove(fromWord, toWord, keyLetters);
+  },
+
+  isValidMove: (fromWord: string, toWord: string): boolean => {
+    return isValidMove(fromWord, toWord);
+  }
+};
+
+const webBotDependencies: GameStateBotDependencies = {
+  generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
+    const botDeps: BotDependencies = {
+      ...webDictionaryDependencies,
+      ...webScoringDependencies,
+      isValidDictionaryWord: (word: string): boolean => {
+        return isValidDictionaryWordWithDependencies(word, getWebWordData());
+      }
+    };
+    return generateBotMoveWithDependencies(word, botDeps, options);
+  }
+};
+
+const webGameDependencies: GameStateDependencies = {
+  ...webDictionaryDependencies,
+  ...webScoringDependencies,
+  ...webBotDependencies
+};
+
 /**
  * Web platform adapter - provides all game dependencies for browser environments
  */
@@ -139,7 +197,7 @@ export class WebAdapter {
   private initialized: boolean = false;
 
   private constructor() {
-    this.wordData = new WebWordData();
+    this.wordData = getWebWordData();
   }
 
   /**
@@ -156,9 +214,9 @@ export class WebAdapter {
    * Initialize the adapter (load dictionaries)
    */
   async initialize(): Promise<void> {
-    if (this.initialized) return;
-    
-    await this.wordData.loadDictionary();
+    if (this.initialized) {
+      return;
+    }
     this.initialized = true;
   }
 
@@ -166,56 +224,31 @@ export class WebAdapter {
    * Get all game dependencies for the game state manager
    */
   getGameDependencies(): GameStateDependencies {
-    const dictionaryDeps = this.getDictionaryDependencies();
-    const scoringDeps = this.getScoringDependencies();
-    const botDeps = this.getBotDependencies();
-    
-    return {
-      ...dictionaryDeps,
-      ...scoringDeps,
-      ...botDeps
-    };
+    if (!this.initialized) {
+      console.warn('WebAdapter not initialized. Call initialize() first.');
+    }
+    return webGameDependencies;
   }
 
   /**
    * Get dictionary dependencies
    */
   getDictionaryDependencies(): GameStateDictionaryDependencies {
-    return {
-      validateWord: (word: string, options?: any) => validateWordWithDependencies(word, this.wordData, options),
-      getRandomWordByLength: (length: number) => getRandomWordByLengthWithDependencies(length, this.wordData)
-    };
+    return webDictionaryDependencies;
   }
 
   /**
    * Get scoring dependencies
    */
   getScoringDependencies(): GameStateScoringDependencies {
-    return {
-      calculateScore,
-      getScoreForMove,
-      isValidMove
-    };
+    return webScoringDependencies;
   }
 
   /**
    * Get bot dependencies
    */
   getBotDependencies(): GameStateBotDependencies {
-    const botDeps: BotDependencies = {
-      validateWord: (word: string, options?: any) => validateWordWithDependencies(word, this.wordData, options),
-      isValidDictionaryWord: (word: string) => isValidDictionaryWordWithDependencies(word, this.wordData),
-      getScoreForMove,
-      calculateScore
-    };
-
-    return {
-      generateBotMove: async (word: string, options?: any) => 
-        generateBotMoveWithDependencies(word, botDeps, {
-          keyLetters: options?.keyLetters || [],
-          lockedLetters: options?.lockedLetters || []
-        })
-    };
+    return webBotDependencies;
   }
 
   /**
@@ -230,8 +263,8 @@ export class WebAdapter {
    */
   getDictionaryStatus(): { loaded: boolean; wordCount: number } {
     return {
-      loaded: this.wordData.loaded,
-      wordCount: this.wordData.wordCount
+      loaded: this.wordData.isLoaded(),
+      wordCount: this.wordData.enableWords.size
     };
   }
 
@@ -239,8 +272,8 @@ export class WebAdapter {
    * Reload dictionary (useful for development)
    */
   async reloadDictionary(): Promise<void> {
-    this.wordData = new WebWordData();
-    await this.wordData.loadDictionary();
+    this.wordData = getWebWordData();
+    this.initialized = false;
   }
 
   /**

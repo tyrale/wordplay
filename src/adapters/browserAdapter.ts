@@ -55,6 +55,8 @@ class BrowserWordData implements WordDataDependencies {
   }
 
   private async loadDictionary(): Promise<void> {
+    if (this.isLoaded) return; // Prevent multiple loads
+    console.log('Loading dictionary...'); // Log dictionary loading
     try {
       // Load the full ENABLE dictionary (172,819 words)
       const response = await fetch('/enable1.txt');
@@ -112,7 +114,7 @@ class BrowserWordData implements WordDataDependencies {
       }
       
       this.isLoaded = true;
-      
+      console.log('Dictionary loaded successfully.'); // Log successful load
     } catch (error) {
       console.error('Failed to load dictionary:', error);
       this.initializeFallback();
@@ -142,26 +144,27 @@ class BrowserWordData implements WordDataDependencies {
 // =============================================================================
 
 // Singleton instance for browser word data
-const browserWordData = new BrowserWordData();
+let browserWordData: BrowserWordData | null = null;
 
-/**
- * Browser dictionary dependencies implementation
- */
+function getBrowserWordData(): BrowserWordData {
+  if (!browserWordData) {
+    console.log('Creating new BrowserWordData instance'); // Log instance creation
+    browserWordData = new BrowserWordData();
+  }
+  return browserWordData;
+}
+
+// Centralize dependency creation
 const browserDictionaryDependencies: GameStateDictionaryDependencies = {
   validateWord: (word: string, options?: any): ValidationResult => {
-    // Use the enhanced validation function with user-friendly messages
-    return validateWordWithDependencies(word, browserWordData, options);
+    return validateWordWithDependencies(word, getBrowserWordData(), options);
   },
 
   getRandomWordByLength: (length: number): string | null => {
-    return browserWordData.getRandomWordByLength(length);
+    return getBrowserWordData().getRandomWordByLength(length);
   }
 };
 
-/**
- * Browser scoring dependencies implementation
- * Uses direct imports from scoring module since it's platform-agnostic
- */
 const browserScoringDependencies: GameStateScoringDependencies = {
   calculateScore: (fromWord: string, toWord: string, options?: any): ScoringResult => {
     return calculateScore(fromWord, toWord, options);
@@ -176,27 +179,19 @@ const browserScoringDependencies: GameStateScoringDependencies = {
   }
 };
 
-/**
- * Browser bot dependencies implementation
- */
 const browserBotDependencies: GameStateBotDependencies = {
   generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
-    // Create combined dependencies for bot
     const botDeps: BotDependencies = {
       ...browserDictionaryDependencies,
       ...browserScoringDependencies,
       isValidDictionaryWord: (word: string): boolean => {
-        return isValidDictionaryWordWithDependencies(word, browserWordData);
+        return isValidDictionaryWordWithDependencies(word, getBrowserWordData());
       }
     };
-    
     return generateBotMoveWithDependencies(word, botDeps, options);
   }
 };
 
-/**
- * Complete browser dependencies for game state management
- */
 const browserGameDependencies: GameStateDependencies = {
   ...browserDictionaryDependencies,
   ...browserScoringDependencies,
@@ -217,7 +212,7 @@ export class BrowserAdapter {
   private initialized: boolean = false;
 
   private constructor() {
-    this.wordData = new BrowserWordData(); // Initialize the new BrowserWordData
+    this.wordData = getBrowserWordData();
   }
 
   /**
@@ -237,8 +232,6 @@ export class BrowserAdapter {
     if (this.initialized) {
       return;
     }
-
-    // The new BrowserWordData constructor now handles loading
     this.initialized = true;
   }
 
@@ -294,8 +287,7 @@ export class BrowserAdapter {
    * Force reload dictionary (for debugging)
    */
   async reloadDictionary(): Promise<void> {
-    // The new BrowserWordData constructor now handles loading
-    this.wordData = new BrowserWordData();
+    this.wordData = getBrowserWordData();
     this.initialized = false; // Reset initialized flag
   }
 }

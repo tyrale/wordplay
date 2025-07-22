@@ -313,7 +313,7 @@ describe('Challenge Engine', () => {
       const patterns = challengeEngine.generateSharingPattern(wordSequence);
       
       expect(patterns).toHaveLength(2); // Two transformations
-      expect(patterns[0]).toMatch(/[🀫*]+/); // Should contain emoji and asterisks
+      expect(patterns[0]).toMatch(/[🀫*]+/u); // Should contain emoji and asterisks
     });
 
     test('should generate complete sharing text with checkmark for completed challenges', async () => {
@@ -366,7 +366,7 @@ describe('Challenge Engine', () => {
   describe('Debug Functions', () => {
     test('should reset daily challenge', async () => {
       const date = '2024-01-15';
-      const challenge1 = await challengeEngine.getDailyChallengeState(date);
+      await challengeEngine.getDailyChallengeState(date);
       
       await challengeEngine.resetDailyChallenge(date);
       const challenge2 = await challengeEngine.getDailyChallengeState(date);

@@ -127,11 +127,17 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   // Initialize web adapter for dictionary validation
   useEffect(() => {
-    initializeWebAdapter().then(() => {
-      console.log('Web adapter initialized successfully');
-    }).catch((error) => {
-      console.error('Failed to initialize web adapter:', error);
-    });
+    const initializeGameDependencies = async () => {
+      try {
+        const adapter = await createWebAdapter();
+        const dependencies = adapter.getGameDependencies();
+        // Use dependencies as needed
+      } catch (err) {
+        console.error('Failed to initialize game dependencies:', err);
+      }
+    };
+
+    initializeGameDependencies();
   }, []);
 
 

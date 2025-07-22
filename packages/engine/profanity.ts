@@ -120,14 +120,8 @@ export function isProfanity(word: string, providedWords: string[] = [], config: 
     return false;
   }
   
-  const comprehensive = getComprehensiveProfanityWords(providedWords);
-  
-  if (config.level === 'basic') {
-    const basicWords = getBasicProfanityWords(providedWords);
-    return basicWords.includes(word.toUpperCase());
-  }
-  
-  return comprehensive.has(word.toUpperCase());
+  const profanityWords = getProfanityWords(providedWords, config);
+  return profanityWords.has(word.toUpperCase());
 }
 
 /**

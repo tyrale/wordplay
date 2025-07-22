@@ -50,7 +50,7 @@ class TestWordData implements WordDataDependencies {
       'CAT', 'DOG', 'BAT', 'RAT', 'HAT', 'MAT', 'SAT', 'FAT',
       'COW', 'HOW', 'NOW', 'WOW', 'BOW', 'ROW', 'TOW', 'LOW',
       
-      // 4-letter words  
+      // 4-letter words
       'CATS', 'DOGS', 'BATS', 'RATS', 'HATS', 'MATS', 'FAST', 'LAST',
       'GAME', 'NAME', 'SAME', 'CAME', 'FAME', 'TAME', 'LAME', 'DAME',
       'PLAY', 'CLAY', 'STAY', 'SLAY', 'GRAY', 'PRAY', 'FRAY', 'TRAY',
@@ -58,7 +58,7 @@ class TestWordData implements WordDataDependencies {
       'WORD', 'CORD', 'LORD', 'FORD', 'WARD', 'HARD', 'CARD', 'YARD',
       'HELLO', 'WORLD', 'HOUSE', 'MOUSE', 'HORSE', 'NURSE', 'PURSE', 'CURSE',
       
-      // 5-letter words
+      // 5-letter words  
       'GAMES', 'NAMES', 'TESTS', 'WORDS', 'PLAYS', 'HELLO', 'WORLD',
       'HOUSE', 'MOUSE', 'HORSE', 'HEART', 'START', 'SMART', 'CHART', 
       
@@ -67,7 +67,7 @@ class TestWordData implements WordDataDependencies {
     ];
 
     this.enableWords = new Set(testWords);
-    
+
     // Build words-by-length map for random selection
     this.wordsByLength.clear();
     for (const word of testWords) {
@@ -109,7 +109,7 @@ class TestWordData implements WordDataDependencies {
       this.wordsByLength.set(length, []);
     }
     if (!this.wordsByLength.get(length)!.includes(upperWord)) {
-      this.wordsByLength.get(length)!.push(upperWord);
+    this.wordsByLength.get(length)!.push(upperWord);
     }
   }
 

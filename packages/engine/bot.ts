@@ -33,7 +33,7 @@
  * Dictionary validation interface for agnostic usage
  */
 export interface DictionaryValidation {
-  validateWord: (word: string, options?: any) => { isValid: boolean; reason?: string; word: string };
+  validateWord: (word: string, options?: { isBot?: boolean }) => { isValid: boolean; reason?: string; word: string };
   isValidDictionaryWord: (word: string) => boolean;
 }
 
@@ -42,7 +42,7 @@ export interface DictionaryValidation {
  */
 export interface ScoringDependencies {
   getScoreForMove: (previousWord: string, currentWord: string, keyLetters?: string[]) => number;
-  calculateScore?: (fromWord: string, toWord: string, options?: any) => any;
+  calculateScore?: (fromWord: string, toWord: string, options?: { keyLetters?: string[] }) => { score: number; breakdown: string[] };
 }
 
 /**
@@ -290,8 +290,7 @@ export function generateBotMoveWithDependencies(
   const { 
     keyLetters = [], 
     lockedLetters = [],
-    maxCandidates = 200, 
-    timeLimit = 100 
+    maxCandidates = 200
   } = options;
 
   // Combine key and locked letters into a single protected set
@@ -303,7 +302,7 @@ export function generateBotMoveWithDependencies(
   const rearrangeMoves = generateRearrangeMoves(currentWord);
   const substituteMoves = generateSubstituteMoves(currentWord, protectedLetters);
 
-  let allCandidates = [
+  const allCandidates = [
     ...addMoves, 
     ...removeMoves, 
     ...rearrangeMoves, 
@@ -343,7 +342,7 @@ async function getNodeDictionary() {
   if (!nodeDictionary) {
     try {
       nodeDictionary = await import('./dictionary');
-    } catch (error) {
+    } catch {
       throw new Error('Node.js dictionary not available in this environment');
     }
   }
@@ -355,7 +354,7 @@ async function getNodeScoring() {
   if (!nodeScoring) {
     try {
       nodeScoring = await import('./scoring');
-    } catch (error) {
+    } catch {
       throw new Error('Node.js scoring not available in this environment');
     }
   }
@@ -390,7 +389,7 @@ export async function filterValidCandidates(candidates: MoveCandidate[]): Promis
 export function scoreCandidates(
   candidates: MoveCandidate[], 
   currentWord: string, 
-  keyLetters: string[] = []
+  _keyLetters: string[] = []
 ): BotMove[] {
   // Legacy implementation that doesn't use dependency injection
   // Note: This won't work without direct imports, but kept for API compatibility
@@ -416,7 +415,7 @@ export function generateBotMoveAgnostic(
   const dependencies: BotDependencies = {
     ...dictionaryValidation,
     getScoreForMove: () => 1, // Default scoring when no scoring dependency
-    calculateScore: () => ({ score: 1 })
+    calculateScore: () => ({ score: 1, breakdown: ['Default scoring'] })
   };
   
   return generateBotMoveWithDependencies(currentWord, dependencies, options);
@@ -449,8 +448,8 @@ export async function generateBotMove(
  */
 export function simulateBotGame(
   initialWord: string, 
-  turns: number = 100, 
-  keyLetters: string[] = []
+  _turns: number = 100, 
+  _keyLetters: string[] = []
 ): {
   success: boolean;
   completedTurns: number;
@@ -477,7 +476,7 @@ export function simulateBotGame(
  * Note: This function is deprecated because it relies on async generateBotMove.
  * Use performanceTestBotWithDependencies for new code.
  */
-export function performanceTestBot(iterations = 100): {
+export function performanceTestBot(_iterations = 100): {
   averageTime: number;
   totalTime: number;
   successRate: number;
@@ -499,8 +498,8 @@ export function performanceTestBot(iterations = 100): {
  */
 export function explainBotMove(
   currentWord: string, 
-  keyLetters: string[] = [],
-  showTop = 5
+  _keyLetters: string[] = [],
+  _showTop = 5
 ): {
   analysis: string;
   topMoves: BotMove[];

@@ -70,7 +70,7 @@ class NodeWordData implements WordDataDependencies {
     try {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = dirname(__filename);
-
+      
       // Try different possible paths for the dictionary file
       const dictionaryPaths = [
         join(__dirname, '../../packages/engine/enable1.txt'),

@@ -17,7 +17,6 @@ import {
   type MoveCandidate,
   type BotDependencies
 } from './bot';
-import { validateWordWithDependencies } from './dictionary';
 import { createTestAdapter, type TestAdapter } from '../../src/adapters/testAdapter';
 
 describe('Bot AI Module', () => {
@@ -297,7 +296,7 @@ describe('Bot AI Module', () => {
           } else {
             break; // No valid moves found or same word
           }
-        } catch (error) {
+        } catch {
           break; // Error occurred
         }
       }
@@ -317,7 +316,7 @@ describe('Bot AI Module', () => {
             currentWord = result.move.word;
           }
         }
-      } catch (error) {
+      } catch {
         success = false;
       }
       
