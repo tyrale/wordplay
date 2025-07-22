@@ -143,8 +143,7 @@ let webWordData: WebWordData | null = null;
 
 function getWebWordData(): WebWordData {
   if (!webWordData) {
-    console.log('Creating new WebWordData instance'); // Log instance creation
-    webWordData = new WebWordData();
+        webWordData = new WebWordData();
   }
   return webWordData;
 }

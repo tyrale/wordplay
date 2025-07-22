@@ -34,8 +34,6 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
     onStartGame('bot', botId);
   }, [onStartGame]);
 
-
-
   const handleMenuOpen = useCallback(() => {
     setIsMenuOpen(true);
   }, []);

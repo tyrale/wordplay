@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import './ResponsiveTest.css';
 
 // Temporary placeholder until dependency injection implemented
-const getDictionarySize = () => 0; // TODO: Replace with dependency injection in Step 3
+const getDictionarySize = () => 0; // Placeholder for testing interface
 
 interface ResponsiveTestProps {
   children: React.ReactNode;

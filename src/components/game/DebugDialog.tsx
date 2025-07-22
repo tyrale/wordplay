@@ -3,7 +3,7 @@ import React from 'react';
 import './DebugDialog.css';
 
 // Temporary placeholder until dependency injection implemented
-const getDictionarySize = () => 0; // TODO: Replace with dependency injection in Step 3
+const getDictionarySize = () => 0; // Placeholder for debugging interface
 
 export interface DebugDialogProps {
   isOpen: boolean;

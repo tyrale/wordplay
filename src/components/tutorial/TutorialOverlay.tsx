@@ -167,7 +167,6 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
   const [tutorialComplete, setTutorialComplete] = useState<boolean>(false);
   
 
-
   const currentTutorialStep = TUTORIAL_STEPS.find(step => step.id === currentStep);
 
   // Enhanced game state change handler that tracks submitted words
@@ -273,8 +272,6 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
     // Allow resignation from tutorial
     onComplete();
   }, [onComplete]);
-
-
 
   if (!currentTutorialStep) {
     return null;

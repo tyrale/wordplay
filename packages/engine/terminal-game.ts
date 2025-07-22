@@ -207,25 +207,13 @@ export class TerminalGame {
     }
     
     if (command === 'DEBUG') {
-      console.log(`${colors.yellow}[DEBUG] Testing LOCK and CLOCK validation...${colors.reset}`);
-      
-      // Test the exact words from the bug report
+            // Test the exact words from the bug report
       const testWords = ['LOCK', 'CLOCK'];
       const currentState = this.gameManager.getState();
       
-      console.log(`${colors.yellow}[DEBUG] Current state:${colors.reset}`);
-      console.log(`${colors.yellow}[DEBUG] - Current word: ${currentState.currentWord}${colors.reset}`);
-      console.log(`${colors.yellow}[DEBUG] - All used words: [${currentState.usedWords.join(', ')}]${colors.reset}`);
-      console.log(`${colors.yellow}[DEBUG] - Recent words (last 5): [${currentState.usedWords.slice(-5).join(', ')}]${colors.reset}`);
-      
-      testWords.forEach(word => {
-        console.log(`${colors.yellow}[DEBUG] Testing: ${word}${colors.reset}`);
-        const attempt = this.gameManager.attemptMove(word);
-        console.log(`${colors.yellow}[DEBUG] - Valid: ${attempt.isValid}${colors.reset}`);
-        console.log(`${colors.yellow}[DEBUG] - Reason: ${attempt.validationResult.reason}${colors.reset}`);
-        console.log(`${colors.yellow}[DEBUG] - User message: ${attempt.validationResult.userMessage}${colors.reset}`);
-        console.log(`${colors.yellow}[DEBUG] - In used words: ${currentState.usedWords.includes(word)}${colors.reset}`);
-      });
+                              testWords.forEach(word => {
+                const attempt = this.gameManager.attemptMove(word);
+                                      });
       return;
     }
     
@@ -250,13 +238,7 @@ export class TerminalGame {
     // DEBUG: Add detailed validation debugging for the reported issue
     if (!moveAttempt.isValid) {
       const currentState = this.gameManager.getState();
-      console.log(`${colors.yellow}[DEBUG] Validation failed for: ${command}${colors.reset}`);
-      console.log(`${colors.yellow}[DEBUG] Current word: ${currentState.currentWord}${colors.reset}`);
-      console.log(`${colors.yellow}[DEBUG] All used words: [${currentState.usedWords.join(', ')}]${colors.reset}`);
-      console.log(`${colors.yellow}[DEBUG] Is '${command}' in used words? ${currentState.usedWords.includes(command)}${colors.reset}`);
-      console.log(`${colors.yellow}[DEBUG] Validation reason: ${moveAttempt.validationResult.reason}${colors.reset}`);
-      console.log(`${colors.yellow}[DEBUG] User message: ${moveAttempt.validationResult.userMessage}${colors.reset}`);
-    }
+                                        }
     
     if (moveAttempt.canApply) {
       const success = this.gameManager.applyMove(moveAttempt);

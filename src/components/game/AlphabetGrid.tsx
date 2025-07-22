@@ -126,8 +126,6 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
     onLetterDragEnd?.();
   }, [onLetterDragEnd]);
 
-
-
   const getAriaLabel = (content: string): string => {
     if (ACTION_BUTTONS.includes(content)) {
       switch (content) {

@@ -56,8 +56,6 @@ export class KeyLetterLogger {
     }
   }
 
-
-
   private static async sendToEndpoint(letter: string): Promise<void> {
     // In development, disable logging server requests entirely to avoid console errors
     if (this.isDevelopmentEnvironment()) {

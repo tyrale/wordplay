@@ -11,7 +11,7 @@ import { Menu } from '../ui/Menu';
 import { createWebAdapter } from '../../adapters/webAdapter';
 import { getBotDisplayName } from '../../data/botRegistry';
 
-// Temporary placeholder types until dependency injection implemented - TODO: Replace in Step 3
+// Game configuration and state interfaces
 interface GameConfig {
   maxTurns?: number;
   startingWord?: string;
@@ -140,8 +140,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     initializeGameDependencies();
   }, []);
 
-
-
   // Initialize pending word with current word
   useEffect(() => {
     setPendingWord(wordState.currentWord);
@@ -166,13 +164,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     let timeoutId: NodeJS.Timeout;
     
     if (isBotTurn && isGameActive && !isBotThinking) {
-      console.log('[DEBUG] Bot move useEffect: Triggering bot move - isBotTurn:', isBotTurn, 'isGameActive:', isGameActive, 'isBotThinking:', isBotThinking);
-      // Add delay for better UX
+            // Add delay for better UX
       timeoutId = setTimeout(async () => {
-        console.log('[DEBUG] Bot move useEffect: Timeout fired, calling makeBotMove');
-        const botMove = await actions.makeBotMove();
-        console.log('[DEBUG] Bot move useEffect: makeBotMove completed with result:', botMove);
-        if (botMove) {
+                const botMove = await actions.makeBotMove();
+                if (botMove) {
           // setBotMoveHistory(prev => [...prev, botMove]);
         }
       }, 1000); // 1 second delay to show bot is "thinking"
@@ -180,8 +175,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     
     return () => {
       if (timeoutId) {
-        console.log('[DEBUG] Bot move useEffect: Cleaning up timeout');
-        clearTimeout(timeoutId);
+                clearTimeout(timeoutId);
       }
     };
   }, [isBotTurn, isGameActive, isBotThinking, actions.makeBotMove]); // Removed gameState.players to prevent retriggering
@@ -290,12 +284,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   // Word trail with move details
   const wordTrailMoves: WordMove[] = React.useMemo(() => {
-    console.log('[DEBUG] WordTrail: gameState keys:', Object.keys(gameState));
-    console.log('[DEBUG] WordTrail: gameStatus:', gameState.gameStatus);
-    console.log('[DEBUG] WordTrail: currentTurn:', gameState.currentTurn);
-    console.log('[DEBUG] WordTrail: turnHistory length:', gameState.turnHistory.length);
-    console.log('[DEBUG] WordTrail: turnHistory:', gameState.turnHistory);
-    
     const moves = gameState.turnHistory.map((turn) => {
       // Handle both legacy and new ScoringResult formats
       const scoringBreakdown = turn.scoringBreakdown;
@@ -327,8 +315,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       };
     });
     
-    console.log('[DEBUG] WordTrail: processed moves:', moves);
-    return moves;
+        return moves;
   }, [gameState, config?.botId]); // Use full gameState instead of just turnHistory
 
   // Event handlers
@@ -539,8 +526,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       onResign();
     }
   }, [onResign]);
-
-
 
   return (
     <div className="interactive-game">

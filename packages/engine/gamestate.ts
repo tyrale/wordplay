@@ -160,8 +160,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       usedWords: Array.from(this.state.usedWords) as any, // Convert Set to Array for React state
       usedKeyLetters: Array.from(this.state.usedKeyLetters) as any // Convert Set to Array for React state
     };
-    console.log('[DEBUG] getState: Returning state with turnHistory length:', stateToReturn.turnHistory.length);
-    return stateToReturn;
+        return stateToReturn;
   }
 
   /**
@@ -182,11 +181,8 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * Start the game
    */
   public startGame(): void {
-    console.log('[DEBUG] startGame: Called');
-    
-    if (this.state.gameStatus === 'waiting') {
-      console.log('[DEBUG] startGame: Starting game, current keyLetters:', this.state.keyLetters);
-      this.state.gameStatus = 'playing';
+        if (this.state.gameStatus === 'waiting') {
+            this.state.gameStatus = 'playing';
       this.state.gameStartTime = Date.now();
       
       // Add initial word to used words set
@@ -197,9 +193,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       this.generateRandomKeyLetter();
       }
       
-      console.log('[DEBUG] startGame: Game started, final keyLetters:', this.state.keyLetters);
-      
-      this.notifyListeners({
+            this.notifyListeners({
         type: 'game_finished',
         data: { gameStatus: this.state.gameStatus },
         timestamp: Date.now()
@@ -339,22 +333,16 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * Apply a move attempt to the game state
    */
   private applyMoveAttempt(moveAttempt: MoveAttempt): boolean {
-    console.log('[DEBUG] applyMove: Called with word:', moveAttempt.newWord);
-    
-    if (!moveAttempt.canApply || !moveAttempt.scoringResult) {
-      console.log('[DEBUG] applyMove: Cannot apply move - canApply:', moveAttempt.canApply, 'scoringResult:', !!moveAttempt.scoringResult);
-      return false;
+        if (!moveAttempt.canApply || !moveAttempt.scoringResult) {
+            return false;
     }
 
     const currentPlayer = this.getCurrentPlayer();
     if (!currentPlayer) {
-      console.log('[DEBUG] applyMove: No current player found');
-      return false;
+            return false;
     }
 
-    console.log('[DEBUG] applyMove: Applying move for player:', currentPlayer.name, 'Current key letters before:', this.state.keyLetters);
-
-    const previousWord = this.state.currentWord;
+        const previousWord = this.state.currentWord;
 
     // Update game state
     this.state.currentWord = moveAttempt.newWord;
@@ -380,10 +368,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     };
 
     this.state.turnHistory.push(turnRecord);
-    console.log('[DEBUG] applyMoveAttempt: Added turn record to history. New length:', this.state.turnHistory.length);
-    console.log('[DEBUG] applyMoveAttempt: Turn record:', turnRecord);
-
-    // KEY LETTER LOCKING FEATURE
+            // KEY LETTER LOCKING FEATURE
     // Clear any existing locked key letters since this player has now completed their turn with them
     this.state.lockedKeyLetters = [];
     
@@ -400,22 +385,15 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
 
     // Automatic key letter generation - maintain exactly 1 key letter per turn
     if (this.state.config.enableKeyLetters) {
-      console.log('[DEBUG] applyMove: Key letters enabled, processing key letter generation');
-      console.log('[DEBUG] applyMove: Current keyLetters before processing:', this.state.keyLetters);
-      
-      // Track the current key letter as used (since it was active for this turn)
+                  // Track the current key letter as used (since it was active for this turn)
       this.state.keyLetters.forEach(letter => {
-        console.log('[DEBUG] applyMove: Marking key letter as used:', letter);
-        this.state.usedKeyLetters.add(letter);
+                this.state.usedKeyLetters.add(letter);
       });
       
       // Clear current key letters and generate exactly 1 new key letter
-      console.log('[DEBUG] applyMove: Clearing key letters. Current keyLetters:', this.state.keyLetters);
-      this.state.keyLetters = [];
-      console.log('[DEBUG] applyMove: Calling generateRandomKeyLetter');
-      this.generateRandomKeyLetter();
-      console.log('[DEBUG] applyMove: After generateRandomKeyLetter, keyLetters:', this.state.keyLetters);
-    }
+            this.state.keyLetters = [];
+            this.generateRandomKeyLetter();
+          }
 
     // Notify listeners of word change
     this.notifyListeners({
@@ -432,56 +410,41 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       this.finishGame();
     }
 
-    console.log('[DEBUG] applyMove: Completed successfully');
-    return true;
+        return true;
   }
 
   /**
    * Make a bot move (if current player is bot)
    */
   public async makeBotMove(): Promise<BotMove | null> {
-    console.log('[DEBUG] makeBotMove: Called. botMoveInProgress:', this.botMoveInProgress);
-    
-    // Prevent concurrent bot moves
+        // Prevent concurrent bot moves
     if (this.botMoveInProgress) {
-      console.log('[DEBUG] makeBotMove: Bot move already in progress, returning null');
-      return null;
+            return null;
     }
     
     const currentPlayer = this.getCurrentPlayer();
     
     if (!currentPlayer || !currentPlayer.isBot) {
-      console.log('[DEBUG] makeBotMove: Current player is not a bot, returning null');
-      return null;
+            return null;
     }
 
     if (this.state.gameStatus !== 'playing') {
-      console.log('[DEBUG] makeBotMove: Game not in playing status, returning null');
-      return null;
+            return null;
     }
 
     try {
-      console.log('[DEBUG] makeBotMove: Setting botMoveInProgress to true');
-      this.botMoveInProgress = true;
+            this.botMoveInProgress = true;
       
       // Combine all locked letters for bot constraints
       const allLockedLetters = [...this.state.lockedLetters, ...this.state.lockedKeyLetters];
-      console.log('[DEBUG] makeBotMove: Current word:', this.state.currentWord);
-      console.log('[DEBUG] makeBotMove: Key letters:', this.state.keyLetters);
-      console.log('[DEBUG] makeBotMove: Locked letters:', this.state.lockedLetters);
-      console.log('[DEBUG] makeBotMove: Locked key letters:', this.state.lockedKeyLetters);
-      console.log('[DEBUG] makeBotMove: All locked letters passed to bot:', allLockedLetters);
-      
-      // Generate bot move
+                                    // Generate bot move
       const botResult: BotResult = await this.dependencies.generateBotMove(this.state.currentWord, {
         keyLetters: this.state.keyLetters,
         lockedLetters: allLockedLetters,
         maxCandidates: 500 // Reasonable limit for responsive gameplay
       });
 
-      console.log('[DEBUG] Bot move generation completed:', botResult.move?.word);
-
-      if (!botResult.move) {
+            if (!botResult.move) {
         console.warn('Bot could not generate a valid move, passing turn');
         // Automatically pass when bot can't find a valid move
         this.passTurn();
@@ -494,16 +457,12 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       }
 
       // Attempt and apply the bot's move
-      console.log('[DEBUG] Attempting bot move:', botResult.move.word, 'from word:', this.state.currentWord);
-      const moveAttempt = this.attemptMove(botResult.move.word);
+            const moveAttempt = this.attemptMove(botResult.move.word);
       
       if (moveAttempt.canApply) {
-        console.log('[DEBUG] Bot move can be applied, calling applyMoveAttempt');
-        const success = this.applyMoveAttempt(moveAttempt);
-        console.log('[DEBUG] applyMoveAttempt result:', success);
-        if (success) {
-          console.log('[DEBUG] Bot move successfully applied, returning botResult.move');
-          return botResult.move;
+                const success = this.applyMoveAttempt(moveAttempt);
+                if (success) {
+                    return botResult.move;
         }
       }
 
@@ -527,8 +486,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
         reasoning: ['PASS - Error in move generation']
       };
     } finally {
-      console.log('[DEBUG] makeBotMove: Setting botMoveInProgress to false');
-      this.botMoveInProgress = false;
+            this.botMoveInProgress = false;
     }
   }
 
@@ -678,8 +636,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * Reset game to initial state
    */
   public resetGame(newConfig?: GameConfig): void {
-    console.log('[DEBUG] resetGame: Called');
-    const configToUse = newConfig ? { ...this.state.config, ...newConfig } : this.state.config;
+        const configToUse = newConfig ? { ...this.state.config, ...newConfig } : this.state.config;
     this.state = this.initializeGameState(configToUse);
     this.botMoveInProgress = false; // Reset bot move flag
 
@@ -794,12 +751,9 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * and is not already present in the current word
    */
   private generateRandomKeyLetter(): void {
-    console.log('[DEBUG] generateRandomKeyLetter: Called. Current keyLetters.length:', this.state.keyLetters.length);
-    
-    // Ensure we don't have any existing key letters before generating
+        // Ensure we don't have any existing key letters before generating
     if (this.state.keyLetters.length > 0) {
-      console.log('[DEBUG] generateRandomKeyLetter: Already have key letters, returning early');
-      return; // Silent return, no warning needed
+            return; // Silent return, no warning needed
     }
     
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -811,13 +765,10 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       !currentWordLetters.has(letter) // NEW: Don't use letters already in the current word
     );
     
-    console.log('[DEBUG] generateRandomKeyLetter: Available letters:', availableLetters.length, availableLetters);
-    
-    if (availableLetters.length > 0) {
+        if (availableLetters.length > 0) {
       const randomIndex = Math.floor(Math.random() * availableLetters.length);
       const newKeyLetter = availableLetters[randomIndex];
-      console.log('[DEBUG] generateRandomKeyLetter: Generated new key letter:', newKeyLetter);
-      this.state.keyLetters.push(newKeyLetter);
+            this.state.keyLetters.push(newKeyLetter);
       // Note: We'll track this letter as used when the next move is made
       
               // Log key letter statistics across all games
@@ -835,10 +786,8 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
         timestamp: Date.now()
       });
       
-      console.log('[DEBUG] generateRandomKeyLetter: Key letter successfully added, final keyLetters:', this.state.keyLetters);
-    } else {
-      console.log('[DEBUG] generateRandomKeyLetter: No available letters to use as key letter');
-    }
+          } else {
+          }
   }
 
   /**

@@ -36,8 +36,6 @@ export const useAnimations = (component: AnimationComponent): AnimationHookRetur
     [createAnimationTrigger]
   );
 
-
-
   const animateLetterPress = useCallback(
     (element: HTMLElement) => createAnimationTrigger('letterPress')(element),
     [createAnimationTrigger]

@@ -72,8 +72,7 @@ class BrowserWordData implements WordDataDependencies {
 
   private async loadDictionary(): Promise<void> {
     if (this.loaded) return; // Prevent multiple loads
-    console.log('Loading dictionary...'); // Log dictionary loading
-    try {
+        try {
       // Load the full ENABLE dictionary (172,819 words)
       const response = await fetch('/enable1.txt');
       if (!response.ok) {
@@ -166,8 +165,7 @@ let browserWordData: BrowserWordData | null = null;
 
 function getBrowserWordData(): BrowserWordData {
   if (!browserWordData) {
-    console.log('Creating new BrowserWordData instance'); // Log instance creation
-    browserWordData = new BrowserWordData();
+        browserWordData = new BrowserWordData();
   }
   return browserWordData;
 }
