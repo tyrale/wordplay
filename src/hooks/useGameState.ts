@@ -33,6 +33,7 @@ interface MoveAttempt {
 interface GameConfig {
   maxTurns?: number;
   startingWord?: string;
+  botId?: string;
   [key: string]: any;
 }
 
@@ -128,6 +129,13 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
         const browserAdapter = BrowserAdapter.getInstance();
         await browserAdapter.initialize();
         
+        // CRITICAL: Wait for dictionary to fully load before creating game manager
+        const wordData = browserAdapter.getWordData();
+        if (wordData && typeof wordData.waitForLoad === 'function') {
+          await wordData.waitForLoad();
+          console.log('[DEBUG] useGameState: Dictionary fully loaded before game creation');
+        }
+        
         if (isMounted) {
           const dependencies = browserAdapter.getGameDependencies();
           gameManagerRef.current = createGameStateManagerWithDependencies(dependencies, config);
@@ -194,15 +202,16 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
     console.log('[DEBUG] useGameState: Subscribing to game state changes');
     const unsubscribe = gameManager.subscribe(() => {
       const newState = gameManager.getState();
-      console.log('[DEBUG] useGameState: Game state updated', newState);
-      setGameState(newState);
-      onGameStateChangeRef.current?.(newState);
+      console.log('[DEBUG] useGameState: Game state updated, turnHistory length:', newState.turnHistory?.length || 0);
+      console.log('[DEBUG] useGameState: About to call setGameState with:', newState);
+      setGameState(newState as unknown as PublicGameState);
+      onGameStateChangeRef.current?.(newState as unknown as PublicGameState);
     });
     
     // Initialize state when game manager is ready
     const initialState = gameManager.getState();
     console.log('[DEBUG] useGameState: Initial game state', initialState);
-    setGameState(initialState);
+    setGameState(initialState as unknown as PublicGameState);
     
     return () => {
       console.log('[DEBUG] useGameState: Unsubscribing from game state changes');
