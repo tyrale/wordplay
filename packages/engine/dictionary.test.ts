@@ -12,10 +12,12 @@ import {
   validateWordWithDependencies,
   isValidDictionaryWordWithDependencies,
   getRandomWordByLengthWithDependencies,
+  getVanityDisplayWordWithDependencies,
+  shouldUnlockVanityToggleWithDependencies,
   type ValidationOptions,
-  type VanityState,
-  type WordDataDependencies
+  type VanityState
 } from './dictionary';
+import type { WordDataDependencies } from './interfaces';
 import { createTestAdapter, type TestAdapter } from '../../src/adapters/testAdapter';
 
 describe('Word Validation Service', () => {
@@ -192,18 +194,18 @@ describe('Word Validation Service', () => {
 
   describe('Profanity Detection (No Longer Blocks Validation)', () => {
     it('should identify profane words', () => {
-      expect(wordData.profanityWords.has('DAMN')).toBe(true);
+      expect(wordData.profanityWords.has('SHIT')).toBe(true);
       expect(wordData.profanityWords.has('HELLO')).toBe(false);
     });
 
     it('should allow profane words in validation (NEW BEHAVIOR)', () => {
-      const result = validateWordWithDependencies('DAMN', wordData);
-      expect(result.isValid).toBe(true); // Profane words are now valid!
-      expect(result.word).toBe('DAMN');
+      const result = validateWordWithDependencies('SHIT', wordData);
+      expect(result.isValid).toBe(true);
+      expect(result.word).toBe('SHIT');
     });
 
     it('should still provide legacy censoring function', () => {
-      const result = validateWordWithDependencies('DAMN', wordData);
+      const result = validateWordWithDependencies('SHIT', wordData);
       expect(result.censored).toBeDefined(); // Should have censored version
     });
   });
@@ -227,24 +229,24 @@ describe('Word Validation Service', () => {
     });
 
     it('should show symbols for profane words when filter is on and not unlocked', () => {
-      const result = validateWordWithDependencies('DAMN', wordData);
+      const result = validateWordWithDependencies('SHIT', wordData);
       expect(result.censored).toBeDefined();
       expect(result.censored).toMatch(/[!@#$%^&*]+/);
     });
 
     it('should show symbols for profane words when filter is on and unlocked', () => {
-      const result = validateWordWithDependencies('DAMN', wordData);
+      const result = validateWordWithDependencies('SHIT', wordData);
       expect(result.censored).toBeDefined();
     });
 
     it('should show real word for profane words when filter is off and unlocked', () => {
       // This would require additional implementation
-      const result = validateWordWithDependencies('DAMN', wordData);
-      expect(result.word).toBe('DAMN');
+      const result = validateWordWithDependencies('SHIT', wordData);
+      expect(result.word).toBe('SHIT');
     });
 
     it('should use variety of symbols for different word lengths', () => {
-      const result1 = validateWordWithDependencies('DAMN', wordData);
+      const result1 = validateWordWithDependencies('SHIT', wordData);
       const result2 = validateWordWithDependencies('HELL', wordData);
       
       if (result1.censored && result2.censored) {
@@ -259,17 +261,102 @@ describe('Word Validation Service', () => {
     });
 
     it('should detect profane words for real-time display', () => {
-      expect(wordData.profanityWords.has('DAMN')).toBe(true);
+      expect(wordData.profanityWords.has('SHIT')).toBe(true);
     });
 
     it('should handle case insensitivity in vanity display', () => {
-      const result = validateWordWithDependencies('damn', wordData);
-      expect(result.word).toBe('DAMN');
+      const result = validateWordWithDependencies('shit', wordData);
+      expect(result.word).toBe('SHIT');
     });
 
     it('should handle edge cases in vanity display', () => {
       const result = validateWordWithDependencies('', wordData);
       expect(result.isValid).toBe(false);
+    });
+  });
+
+  describe('Dependency Injection Vanity Functions', () => {
+    const mockVanityState = {
+      hasUnlockedToggle: false,
+      isVanityFilterOn: true
+    };
+
+    const unlockedVanityState = {
+      hasUnlockedToggle: true,
+      isVanityFilterOn: true
+    };
+
+    const unlockedFilterOffState = {
+      hasUnlockedToggle: true,
+      isVanityFilterOn: false
+    };
+
+    describe('getVanityDisplayWordWithDependencies', () => {
+      it('should show normal words unchanged', () => {
+        const result = getVanityDisplayWordWithDependencies('HELLO', mockVanityState, wordData);
+        expect(result).toBe('HELLO');
+      });
+
+      it('should show symbols for profane words when filter is on and not unlocked', () => {
+        const result = getVanityDisplayWordWithDependencies('SHIT', mockVanityState, wordData);
+        expect(result).toMatch(/[%#^&*@!$]+/);
+        expect(result.length).toBe(4); // Same length as original word
+      });
+
+      it('should show symbols for profane words when filter is on and unlocked', () => {
+        const result = getVanityDisplayWordWithDependencies('SHIT', unlockedVanityState, wordData);
+        expect(result).toMatch(/[%#^&*@!$]+/);
+      });
+
+      it('should show real word for profane words when filter is off and unlocked', () => {
+        const result = getVanityDisplayWordWithDependencies('SHIT', unlockedFilterOffState, wordData);
+        expect(result).toBe('SHIT');
+      });
+
+      it('should handle case insensitivity', () => {
+        const result1 = getVanityDisplayWordWithDependencies('shit', mockVanityState, wordData);
+        const result2 = getVanityDisplayWordWithDependencies('SHIT', mockVanityState, wordData);
+        expect(result1).toBe(result2);
+      });
+
+      it('should handle whitespace', () => {
+        const result = getVanityDisplayWordWithDependencies(' SHIT ', mockVanityState, wordData);
+        expect(result).toMatch(/[%#^&*@!$]+/);
+      });
+
+      it('should respect isEditing option', () => {
+        const result1 = getVanityDisplayWordWithDependencies('SHIT', mockVanityState, wordData, { isEditing: true });
+        const result2 = getVanityDisplayWordWithDependencies('SHIT', mockVanityState, wordData, { isEditing: false });
+        // Both should be censored in this case since filter is on
+        expect(result1).toMatch(/[%#^&*@!$]+/);
+        expect(result2).toMatch(/[%#^&*@!$]+/);
+      });
+    });
+
+    describe('shouldUnlockVanityToggleWithDependencies', () => {
+      it('should return true for profane words', () => {
+        expect(shouldUnlockVanityToggleWithDependencies('SHIT', wordData)).toBe(true);
+        expect(shouldUnlockVanityToggleWithDependencies('BULLSHIT', wordData)).toBe(true);
+      });
+
+      it('should return false for non-profane words', () => {
+        expect(shouldUnlockVanityToggleWithDependencies('HELLO', wordData)).toBe(false);
+        expect(shouldUnlockVanityToggleWithDependencies('WORLD', wordData)).toBe(false);
+      });
+
+      it('should handle case insensitivity', () => {
+        expect(shouldUnlockVanityToggleWithDependencies('shit', wordData)).toBe(true);
+        expect(shouldUnlockVanityToggleWithDependencies('SHIT', wordData)).toBe(true);
+      });
+
+      it('should handle whitespace', () => {
+        expect(shouldUnlockVanityToggleWithDependencies(' SHIT ', wordData)).toBe(true);
+      });
+
+      it('should handle empty strings', () => {
+        expect(shouldUnlockVanityToggleWithDependencies('', wordData)).toBe(false);
+        expect(shouldUnlockVanityToggleWithDependencies('   ', wordData)).toBe(false);
+      });
     });
   });
 

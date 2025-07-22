@@ -5,13 +5,16 @@
  * - Whether user has unlocked the vanity toggle feature
  * - Whether the vanity filter is currently on/off
  * - localStorage persistence
- * - Integration with existing vanity display system
+ * - Integration with platform-agnostic vanity display system
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { getVanityDisplayWord, shouldUnlockVanityToggle } from '../../packages/engine/dictionary';
+import { 
+  getVanityDisplayWordWithDependencies, 
+  shouldUnlockVanityToggleWithDependencies 
+} from '../../packages/engine/dictionary';
 import { createBrowserAdapter } from '../adapters/browserAdapter';
-import type { VanityState, VanityDisplayOptions } from '../../packages/engine/dictionary';
+import type { VanityState } from '../../packages/engine/dictionary';
 import type { WordDataDependencies } from '../../packages/engine/interfaces';
 
 export interface UseVanityFilterReturn {
@@ -137,13 +140,13 @@ export function useVanityFilter(): UseVanityFilterReturn {
 
   // Display helper function
   const getDisplayWord = useCallback((word: string, options: { isEditing?: boolean } = {}): string => {
-    const displayOptions: VanityDisplayOptions = {
-      vanityState,
-      isEditing: options.isEditing
-    };
+    if (!wordData) {
+      // Return word unchanged if wordData not loaded yet
+      return word.trim().toUpperCase();
+    }
     
-    return getVanityDisplayWord(word, displayOptions);
-  }, [vanityState]);
+    return getVanityDisplayWordWithDependencies(word, vanityState, wordData, options);
+  }, [vanityState, wordData]);
 
   // Reset function for testing/debug
   const resetVanityState = useCallback((): void => {

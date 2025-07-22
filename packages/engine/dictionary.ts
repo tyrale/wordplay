@@ -138,8 +138,51 @@ class WordDictionary {
   }
 }
 
-// Legacy singleton dictionary instance (for backward compatibility)
-const dictionary = new WordDictionary();
+// =============================================================================
+// PLATFORM-AGNOSTIC ARCHITECTURE NOTE
+// =============================================================================
+// The legacy singleton dictionary instance has been removed as part of the
+// multi-platform dependency injection migration. All dictionary functionality
+// now uses dependency injection for true platform-agnostic support.
+//
+// For platform-specific usage:
+// - Web/Browser: Use createBrowserAdapter().getWordData()
+// - Node.js: Use createNodeAdapter().getWordData()  
+// - Tests: Use createTestAdapter().getWordData()
+// - React Native/iOS/Android: Create platform-specific adapters
+//
+// Legacy functions below are deprecated and will be removed in a future version.
+// =============================================================================
+
+// =============================================================================
+// VANITY DISPLAY SYSTEM
+// =============================================================================
+
+export interface VanityState {
+  hasUnlockedToggle: boolean;
+  isVanityFilterOn: boolean;
+}
+
+export interface VanityDisplayOptions {
+  vanityState: VanityState;
+  isEditing?: boolean;
+}
+
+/**
+ * Transforms a profane word into symbols
+ * Uses a variety of symbols to make it look like censoring
+ */
+function transformToSymbols(word: string): string {
+  const symbols = ['%', '#', '^', '&', '*', '@', '!', '$'];
+  let result = '';
+  
+  for (let i = 0; i < word.length; i++) {
+    // Use different symbols in a pattern for variety
+    result += symbols[i % symbols.length];
+  }
+  
+  return result;
+}
 
 // =============================================================================
 // DEPENDENCY-INJECTED FUNCTIONS (NEW ARCHITECTURE)
@@ -270,177 +313,9 @@ export function getRandomWordByLengthWithDependencies(length: number, wordData: 
   return wordsOfLength[randomIndex];
 }
 
-// =============================================================================
-// LEGACY FUNCTIONS (BACKWARD COMPATIBILITY)
-// =============================================================================
-
 /**
- * Validates a word according to game rules (LEGACY - uses Node.js file system)
- */
-export function validateWord(word: string, options: ValidationOptions = {}): ValidationResult {
-  // Use legacy dictionary singleton
-  const {
-    isBot = false,
-    allowSlang = true,
-    checkLength = true,
-    previousWord
-  } = options;
-
-  // Handle null/undefined gracefully
-  if (word == null) {
-    return {
-      isValid: false,
-      reason: 'Word cannot be empty',
-      word: '',
-      userMessage: 'word cannot be empty'
-    };
-  }
-
-  const normalizedWord = word.trim().toUpperCase();
-
-  // Bots can bypass all validation rules - early return
-  if (isBot) {
-    return {
-      isValid: true,
-      word: normalizedWord
-    };
-  }
-
-  // Early validation: empty or invalid characters
-  if (!normalizedWord) {
-    return {
-      isValid: false,
-      reason: 'Word cannot be empty',
-      word: normalizedWord,
-      userMessage: 'word cannot be empty'
-    };
-  }
-
-  // Character validation (alphabetic only for humans)
-  if (!/^[A-Z]+$/.test(normalizedWord)) {
-    return {
-      isValid: false,
-      reason: 'Word must contain only alphabetic characters',
-      word: normalizedWord,
-      userMessage: 'only letters allowed'
-    };
-  }
-
-  // Length validation (minimum 3 letters)
-  if (checkLength && normalizedWord.length < 3) {
-    return {
-      isValid: false,
-      reason: 'Word must be at least 3 letters long',
-      word: normalizedWord,
-      userMessage: 'too short'
-    };
-  }
-
-  // Length change validation (max ±1 letter change)
-  if (previousWord && checkLength) {
-    const lengthDiff = Math.abs(normalizedWord.length - previousWord.length);
-    if (lengthDiff > 1) {
-      return {
-        isValid: false,
-        reason: `Word length can only change by 1 letter (was ${previousWord.length}, now ${normalizedWord.length})`,
-        word: normalizedWord,
-        userMessage: 'illegal action'
-      };
-    }
-  }
-
-  // Dictionary validation
-  const isInEnable = dictionary.isInEnable(normalizedWord);
-  const isSlang = dictionary.isSlang(normalizedWord);
-  const isProfanity = dictionary.isProfanity(normalizedWord);
-
-  // Word must be in dictionary or accepted slang
-  if (!isInEnable && !(allowSlang && isSlang)) {
-    return {
-      isValid: false,
-      reason: 'Word not found in dictionary',
-      word: normalizedWord,
-      userMessage: 'not a word'
-    };
-  }
-
-  // Profanity is valid for play but may be displayed differently
-  return {
-    isValid: true,
-    word: normalizedWord,
-    censored: isProfanity ? transformToSymbols(normalizedWord) : undefined
-  };
-}
-
-// Legacy functions already exist below - no duplicates needed
-
-/**
- * Checks if a word exists in the ENABLE dictionary
- */
-export function isValidDictionaryWord(word: string): boolean {
-  return dictionary.isInEnable(word.trim().toUpperCase());
-}
-
-/**
- * Checks if a word is considered slang
- */
-export function isSlangWord(word: string): boolean {
-  return dictionary.isSlang(word.trim().toUpperCase());
-}
-
-/**
- * Checks if a word contains profanity
- */
-export function containsProfanity(word: string): boolean {
-  return dictionary.isProfanity(word.trim().toUpperCase());
-}
-
-/**
- * Gets the total number of words in the dictionary
- */
-export function getDictionarySize(): number {
-  return dictionary.getWordCount();
-}
-
-/**
- * Performance test helper
- */
-export function performanceTest(iterations = 1000): { averageTime: number; totalTime: number } {
-  const testWords = ['HELLO', 'WORLD', 'JAVASCRIPT', 'TYPESCRIPT', 'BRUH', 'INVALID123', 'CATS', 'DOGS'];
-  
-  const startTime = performance.now();
-  
-  for (let i = 0; i < iterations; i++) {
-    const word = testWords[i % testWords.length];
-    validateWord(word);
-  }
-  
-  const endTime = performance.now();
-  const totalTime = endTime - startTime;
-  const averageTime = totalTime / iterations;
-  
-  return {
-    averageTime,
-    totalTime
-  };
-}
-
-// =============================================================================
-// VANITY DISPLAY SYSTEM
-// =============================================================================
-
-export interface VanityState {
-  hasUnlockedToggle: boolean;
-  isVanityFilterOn: boolean;
-}
-
-export interface VanityDisplayOptions {
-  vanityState: VanityState;
-  isEditing?: boolean;
-}
-
-/**
- * Transforms a word for display based on vanity filter settings
+ * Transforms a word for display based on vanity filter settings using dependency injection
+ * This is the new platform-agnostic approach for multi-platform support
  * 
  * Rules:
  * 1. If word is not profane → always show real word
@@ -449,15 +324,16 @@ export interface VanityDisplayOptions {
  * 4. If word is profane AND user has unlocked toggle AND filter is off → show real word
  * 5. During editing, behavior depends on current word composition
  */
-export function getVanityDisplayWord(
-  word: string, 
-  options: VanityDisplayOptions
+export function getVanityDisplayWordWithDependencies(
+  word: string,
+  vanityState: VanityState,
+  wordData: WordDataDependencies,
+  options: { isEditing?: boolean } = {}
 ): string {
   const normalizedWord = word.trim().toUpperCase();
-  const { vanityState } = options;
   
   // If word is not profane, always show real word
-  if (!dictionary.isProfanity(normalizedWord)) {
+  if (!wordData.profanityWords.has(normalizedWord)) {
     return normalizedWord;
   }
   
@@ -472,58 +348,104 @@ export function getVanityDisplayWord(
 }
 
 /**
- * Transforms a profane word into symbols
- * Uses a variety of symbols to make it look like censoring
+ * Checks if submitting this word should unlock the vanity toggle feature using dependency injection
+ * This is the new platform-agnostic approach for multi-platform support
  */
-function transformToSymbols(word: string): string {
-  const symbols = ['%', '#', '^', '&', '*', '@', '!', '$'];
-  let result = '';
-  
-  for (let i = 0; i < word.length; i++) {
-    // Use different symbols in a pattern for variety
-    result += symbols[i % symbols.length];
-  }
-  
-  return result;
-}
-
-/**
- * Checks if submitting this word should unlock the vanity toggle feature
- */
-export function shouldUnlockVanityToggle(word: string): boolean {
-  return dictionary.isProfanity(word.trim().toUpperCase());
-}
-
-/**
- * Helper function for game state management
- * Checks if the current word composition is profane (for real-time display)
- */
-export function isCurrentWordProfane(word: string): boolean {
-  return dictionary.isProfanity(word.trim().toUpperCase());
+export function shouldUnlockVanityToggleWithDependencies(
+  word: string,
+  wordData: WordDataDependencies
+): boolean {
+  const normalizedWord = word.trim().toUpperCase();
+  return wordData.profanityWords.has(normalizedWord);
 }
 
 // =============================================================================
-// BACKWARD COMPATIBILITY & LEGACY FUNCTIONS
+// LEGACY FUNCTIONS (BACKWARD COMPATIBILITY - DEPRECATED)
+// =============================================================================
+// NOTE: Legacy functions have been removed as part of the multi-platform
+// dependency injection migration. These functions relied on a singleton
+// dictionary instance which is no longer compatible with platform-agnostic
+// architecture.
+//
+// Migration guide:
+// - validateWord() → validateWordWithDependencies()
+// - isValidDictionaryWord() → isValidDictionaryWordWithDependencies()
+// - getVanityDisplayWord() → getVanityDisplayWordWithDependencies()
+// - shouldUnlockVanityToggle() → shouldUnlockVanityToggleWithDependencies()
+// - containsProfanity() → wordData.profanityWords.has()
+// - isSlangWord() → wordData.slangWords.has()
+// - getDictionarySize() → wordData.wordCount
+// - getRandomWordByLength() → getRandomWordByLengthWithDependencies()
+//
+// All legacy functions now throw errors directing users to the new API.
 // =============================================================================
 
 /**
- * @deprecated Use getVanityDisplayWord instead
- * Returns a censored version of profane words (legacy function)
+ * @deprecated Removed - Use validateWordWithDependencies for platform-agnostic support
  */
-export function censorProfanity(word: string): string {
-  return dictionary.censorWord(word);
+export function validateWord(): never {
+  throw new Error('validateWord() has been removed. Use validateWordWithDependencies() with dependency injection for platform-agnostic support.');
 }
 
 /**
- * Gets a random word of specified length from the dictionary
+ * @deprecated Removed - Use isValidDictionaryWordWithDependencies for platform-agnostic support
  */
-export function getRandomWordByLength(length: number): string | null {
-  return dictionary.getRandomWordByLength(length);
+export function isValidDictionaryWord(): never {
+  throw new Error('isValidDictionaryWord() has been removed. Use isValidDictionaryWordWithDependencies() with dependency injection for platform-agnostic support.');
 }
 
 /**
- * Gets multiple random words of specified length from the dictionary
+ * @deprecated Removed - Use getVanityDisplayWordWithDependencies for platform-agnostic support
  */
-export function getRandomWordsByLength(length: number, count: number = 1): string[] {
-  return dictionary.getRandomWordsByLength(length, count);
+export function getVanityDisplayWord(): never {
+  throw new Error('getVanityDisplayWord() has been removed. Use getVanityDisplayWordWithDependencies() with dependency injection for platform-agnostic support.');
+}
+
+/**
+ * @deprecated Removed - Use shouldUnlockVanityToggleWithDependencies for platform-agnostic support
+ */
+export function shouldUnlockVanityToggle(): never {
+  throw new Error('shouldUnlockVanityToggle() has been removed. Use shouldUnlockVanityToggleWithDependencies() with dependency injection for platform-agnostic support.');
+}
+
+/**
+ * @deprecated Removed - Use wordData.slangWords.has() with dependency injection for platform-agnostic support
+ */
+export function isSlangWord(): never {
+  throw new Error('isSlangWord() has been removed. Use wordData.slangWords.has() with dependency injection for platform-agnostic support.');
+}
+
+/**
+ * @deprecated Removed - Use wordData.profanityWords.has() with dependency injection for platform-agnostic support
+ */
+export function containsProfanity(): never {
+  throw new Error('containsProfanity() has been removed. Use wordData.profanityWords.has() with dependency injection for platform-agnostic support.');
+}
+
+/**
+ * @deprecated Removed - Use wordData.wordCount with dependency injection for platform-agnostic support
+ */
+export function getDictionarySize(): never {
+  throw new Error('getDictionarySize() has been removed. Use wordData.wordCount with dependency injection for platform-agnostic support.');
+}
+
+/**
+ * @deprecated Removed - Use getVanityDisplayWordWithDependencies for platform-agnostic support
+ */
+export function censorProfanity(): never {
+  throw new Error('censorProfanity() has been removed. Use getVanityDisplayWordWithDependencies() with dependency injection for platform-agnostic support.');
+}
+
+/**
+ * @deprecated Removed - Use getRandomWordByLengthWithDependencies with dependency injection for platform-agnostic support
+ */
+export function getRandomWordByLength(): never {
+  throw new Error('getRandomWordByLength() has been removed. Use getRandomWordByLengthWithDependencies() with dependency injection for platform-agnostic support.');
+}
+
+/**
+ * @deprecated Removed - Use multiple calls to getRandomWordByLengthWithDependencies with dependency injection for platform-agnostic support
+ */
+export function getRandomWordsByLength(): never {
+  throw new Error('getRandomWordsByLength() has been removed. Use multiple calls to getRandomWordByLengthWithDependencies() with dependency injection for platform-agnostic support.');
 } 

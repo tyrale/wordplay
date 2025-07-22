@@ -104,8 +104,11 @@ class TestWordData implements WordDataDependencies {
       const profanityData = JSON.parse(fs.readFileSync(profanityPath, 'utf-8'));
       this.profanityWords = new Set(profanityData.words || []);
     } catch (error) {
-      console.warn('Test adapter: Failed to load profanity words, using empty set');
-      this.profanityWords = new Set();
+      console.warn('Test adapter: Failed to load profanity words, using test set');
+      // Basic test profanity words for testing vanity filter functionality
+      this.profanityWords = new Set([
+        'DAMN', 'HELL', 'CRAP', 'PISS', 'SHIT', 'FUCK', 'BITCH', 'ASSHOLE'
+      ]);
     }
 
     // loaded property is already set to true in constructor
