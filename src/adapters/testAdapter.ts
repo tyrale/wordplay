@@ -29,7 +29,7 @@ class TestWordData implements WordDataDependencies {
   public slangWords: Set<string> = new Set();
   public profanityWords: Set<string> = new Set();
   private wordsByLength: Map<number, string[]> = new Map();
-  private isLoaded = true; // Always loaded for tests
+  private loaded = true; // Always loaded for tests
 
   constructor() {
     this.initializeTestWords();
@@ -50,7 +50,7 @@ class TestWordData implements WordDataDependencies {
   }
 
   public isLoaded(): boolean {
-    return this.isLoaded;
+    return this.loaded;
   }
 
   private initializeTestWords(): void {

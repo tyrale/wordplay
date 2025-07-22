@@ -232,14 +232,18 @@ export function calculateScore(
   const totalScore = addLetterPoints + removeLetterPoints + movePoints + keyLetterUsagePoints;
 
   return {
+    score: totalScore,
     totalScore,
-    breakdown: {
-      addLetterPoints,
-      removeLetterPoints,
-      movePoints,
-      keyLetterUsagePoints,
-    },
-    actions,
+    breakdown: actions,
+    actions: actions.map(action => ({
+      type: action.includes('Added') ? 'add' : 
+            action.includes('Removed') ? 'remove' :
+            action.includes('Moved') ? 'rearrange' :
+            action.includes('key letter') ? 'key-letter' : 'substitute',
+      score: 1
+    })),
+    keyLetterScore: keyLetterUsagePoints,
+    baseScore: addLetterPoints + removeLetterPoints + movePoints,
     keyLettersUsed: analysis.keyLettersUsed
   };
 }

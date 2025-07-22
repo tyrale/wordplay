@@ -135,6 +135,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       keyLetters: [],
       lockedLetters: [],
       players,
+      currentPlayerIndex: 0,
       currentTurn: 1,
       maxTurns: defaultConfig.maxTurns!,
       gameStatus: 'waiting',
@@ -367,6 +368,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       previousWord,
       newWord: moveAttempt.newWord,
       score: moveAttempt.scoringResult.totalScore,
+      keyLettersUsed: moveAttempt.scoringResult.keyLettersUsed || [],
       scoringBreakdown: moveAttempt.scoringResult,
       timestamp: Date.now()
     };

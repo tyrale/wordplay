@@ -290,6 +290,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   // Word trail with move details
   const wordTrailMoves: WordMove[] = React.useMemo(() => {
+    console.log('[DEBUG] WordTrail: turnHistory length:', gameState.turnHistory.length);
+    console.log('[DEBUG] WordTrail: turnHistory:', gameState.turnHistory);
+    
     const moves = gameState.turnHistory.map((turn) => {
       // Handle both legacy and new ScoringResult formats
       const scoringBreakdown = turn.scoringBreakdown;
@@ -321,6 +324,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       };
     });
     
+    console.log('[DEBUG] WordTrail: processed moves:', moves);
     return moves;
   }, [gameState.turnHistory, config?.botId]);
 

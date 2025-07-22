@@ -27,6 +27,7 @@ export interface ScoringResult {
   actions: ScoringAction[];
   keyLetterScore: number;
   baseScore: number;
+  keyLettersUsed: string[];
 }
 
 export interface ScoringAction {
@@ -512,7 +513,7 @@ export function createMockDependencies(): GameEngineDependencies {
     random: () => Math.random(),
     
          calculateScore: (fromWord: string, toWord: string, keyLetters: string[] = []) => {
-       return { score: 1, totalScore: 1, breakdown: ['Base score: 1'], actions: [], keyLetterScore: 0, baseScore: 1 };
+       return { score: 1, totalScore: 1, breakdown: ['Base score: 1'], actions: [], keyLetterScore: 0, baseScore: 1, keyLettersUsed: [] };
      },
     
     getScoreForMove: (fromWord: string, toWord: string, keyLetters: string[] = []) => {

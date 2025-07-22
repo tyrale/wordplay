@@ -274,7 +274,11 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   }
 
   // Early return for regular mode when no data
+  console.log('[DEBUG] WordTrail: displayData.length:', displayData.length);
+  console.log('[DEBUG] WordTrail: displayData:', displayData);
+  
   if (displayData.length === 0) {
+    console.log('[DEBUG] WordTrail: Returning null - no data');
     return null;
   }
 
