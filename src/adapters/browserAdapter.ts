@@ -9,6 +9,14 @@ import type { WordDataDependencies, ValidationResult } from '../../packages/engi
 import { validateWordWithDependencies, isValidDictionaryWordWithDependencies } from '../../packages/engine/dictionary';
 import { calculateScore, getScoreForMove, isValidMove } from '../../packages/engine/scoring';
 import type { ScoringResult } from '../../packages/engine/scoring';
+import { generateBotMoveWithDependencies } from '../../packages/engine/bot';
+import type { BotDependencies, BotResult, BotMove, BotOptions } from '../../packages/engine/bot';
+import type { 
+  GameStateDictionaryDependencies, 
+  GameStateScoringDependencies, 
+  GameStateBotDependencies,
+  GameStateDependencies
+} from '../../packages/engine/gamestate';
 
 // Import centralized profanity management
 import { getComprehensiveProfanityWords } from '../../packages/engine/profanity';
