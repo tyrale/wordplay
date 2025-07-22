@@ -1,102 +1,74 @@
 /**
- * Test Platform Adapter
+ * Test Adapter for WordPlay Game Engine
  * 
- * This adapter provides minimal, predictable dependencies for unit testing.
- * It uses controlled word lists and deterministic behavior to ensure
- * consistent test results across different environments.
- * 
- * ARCHITECTURE: This is a test adapter that implements the dependency
- * interfaces with minimal, controlled implementations suitable for testing.
+ * Platform-specific implementation for testing environments that provides
+ * predictable word data and deterministic behavior for test scenarios.
  */
 
-import type { 
-  GameStateDependencies, 
-  GameStateDictionaryDependencies, 
-  GameStateScoringDependencies, 
-  GameStateBotDependencies,
-  ValidationResult,
-  ScoringResult,
-  BotResult
-} from '../../packages/engine/gamestate';
+import type { WordDataDependencies } from '../../packages/engine/dictionary';
 
-import type {
-  WordDataDependencies
-} from '../../packages/engine/dictionary';
-
-import type {
-  BotDependencies
-} from '../../packages/engine/bot';
-
-// Import the dependency-injected functions from engine
-import { 
-  validateWordWithDependencies,
-  isValidDictionaryWordWithDependencies,
-  getRandomWordByLengthWithDependencies
-} from '../../packages/engine/dictionary';
-
-import {
-  generateBotMoveWithDependencies
-} from '../../packages/engine/bot';
-
-import {
-  calculateScore,
-  getScoreForMove,
-  isValidMove
-} from '../../packages/engine/scoring';
-
-// =============================================================================
-// TEST DICTIONARY SERVICE
-// =============================================================================
+// Import centralized profanity management
+import { getComprehensiveProfanityWords, getBasicProfanityWords } from '../../packages/engine/profanity';
 
 /**
  * Test-specific word data implementation
- * Uses minimal, controlled word sets for predictable testing
+ * Provides controllable word sets for testing
  */
 class TestWordData implements WordDataDependencies {
-  // WordDataDependencies interface implementation
   public enableWords: Set<string> = new Set();
   public slangWords: Set<string> = new Set();
   public profanityWords: Set<string> = new Set();
-  
   private wordsByLength: Map<number, string[]> = new Map();
-  private isLoaded: boolean = false;
+  private isLoaded = true; // Always loaded for tests
 
   constructor() {
     this.initializeTestWords();
   }
 
+  public hasWord(word: string): boolean {
+    const upperWord = word.toUpperCase();
+    return this.enableWords.has(upperWord) || this.slangWords.has(upperWord);
+  }
+
+  public getRandomWordByLength(length: number): string | null {
+    const words = this.wordsByLength.get(length);
+    if (!words || words.length === 0) {
+      return null;
+    }
+    const randomIndex = Math.floor(Math.random() * words.length);
+    return words[randomIndex];
+  }
+
+  public isLoaded(): boolean {
+    return this.isLoaded;
+  }
+
   private initializeTestWords(): void {
-    // Minimal test dictionary for predictable testing
+    // Predictable test words for deterministic testing
     const testWords = [
       // 3-letter words
-      'CAT', 'DOG', 'BAT', 'HAT', 'COT', 'HOT', 'COW', 'HOW', 'BOW', 'ROW',
-      'RUN', 'SUN', 'FUN', 'GUN', 'BUN', 'NUN', 'PUN', 'TUN', 'WON', 'SON',
-      'TWO', 'TOO', 'TOP', 'TAP', 'TIP', 'TEN', 'TEA', 'SEA', 'BEE', 'SEE',
+      'CAT', 'DOG', 'BAT', 'RAT', 'HAT', 'MAT', 'SAT', 'FAT',
+      'COW', 'HOW', 'NOW', 'WOW', 'BOW', 'ROW', 'TOW', 'LOW',
       
-      // 4-letter words
-      'CATS', 'DOGS', 'BATS', 'HATS', 'COTS', 'HOTS', 'COWS', 'HOWS', 'BOWS', 'ROWS',
-      'RUNS', 'SUNS', 'FUNS', 'GUNS', 'BUNS', 'NUNS', 'PUNS', 'TUNS', 'WONS', 'SONS',
-      'WORD', 'WORK', 'WALK', 'TALK', 'TAKE', 'MAKE', 'CAKE', 'LAKE', 'WAKE', 'BAKE',
-      'COAT', 'BOAT', 'GOAT', 'BEAT', 'HEAT', 'NEAT', 'SEAT', 'MEAT', 'FEAT', 'PEAT',
-      'TOWS', 'TOWN', 'GOWN', 'DOWN', 'DOWS', 'COWS', 'BOWS', 'ROWS', 'SOWS', 'LOWS',
-      'SOWN', 'SEWN', 'DAWN', 'LAWN', 'PAWN', 'YAWN', 'FAWN', 'DRAWN', 'BRAWN', 'SPAWN',
+      // 4-letter words  
+      'CATS', 'DOGS', 'BATS', 'RATS', 'HATS', 'MATS', 'FAST', 'LAST',
+      'GAME', 'NAME', 'SAME', 'CAME', 'FAME', 'TAME', 'LAME', 'DAME',
+      'PLAY', 'CLAY', 'STAY', 'SLAY', 'GRAY', 'PRAY', 'FRAY', 'TRAY',
+      'TEST', 'BEST', 'REST', 'NEST', 'WEST', 'PEST', 'VEST', 'GUEST',
+      'WORD', 'CORD', 'LORD', 'FORD', 'WARD', 'HARD', 'CARD', 'YARD',
+      'HELLO', 'WORLD', 'HOUSE', 'MOUSE', 'HORSE', 'NURSE', 'PURSE', 'CURSE',
       
-      // 5-letter words  
-      'WORDS', 'WORKS', 'WALKS', 'TALKS', 'TAKES', 'MAKES', 'CAKES', 'LAKES', 'WAKES', 'BAKES',
-      'COATS', 'BOATS', 'GOATS', 'BEATS', 'HEATS', 'NEATS', 'SEATS', 'MEATS', 'FEATS', 'PEATS',
-      'TOWNS', 'GOWNS', 'DOWNS', 'BOWLS', 'FOWLS', 'HOWLS', 'JOWLS', 'COWLS', 'YOWLS', 'POWLS',
-      'SOWN', 'SEWN', 'DAWN', 'LAWN', 'PAWN', 'YAWN', 'FAWN', 'DRAWN', 'BRAWN', 'SPAWN',
-      'HOUSE', 'MOUSE', 'LOUSE', 'ROUSE', 'DOUSE', 'SOUSE', 'TOUSE', 'COUSE', 'BOUSE', 'NOUSE',
-      'BROWN', 'CROWN', 'DROWN', 'FROWN', 'GROWN', 'SHOWN', 'THROWN', 'CLOWN', 'BLOWN', 'FLOWN',
+      // 5-letter words
+      'GAMES', 'NAMES', 'TESTS', 'WORDS', 'PLAYS', 'HELLO', 'WORLD',
+      'HOUSE', 'MOUSE', 'HORSE', 'HEART', 'START', 'SMART', 'CHART', 
       
-      // 6-letter words
-      'HOUSES', 'MOUSES', 'LOUSES', 'ROUSES', 'DOUSES', 'SOUSES', 'TOUSES', 'COUSES', 'BOUSES', 'NOUSES',
-      'BROWNS', 'CROWNS', 'DROWNS', 'FROWNS', 'GROWNS', 'SHOWNS', 'CLOWNS', 'BLOWNS', 'FLOWNS', 'THROWNS'
+      // 6+ letter words
+      'TESTING', 'PLAYING', 'WORKING', 'TALKING', 'WALKING', 'RUNNING'
     ];
 
     this.enableWords = new Set(testWords);
-
-    // Build words-by-length map
+    
+    // Build words-by-length map for random selection
     this.wordsByLength.clear();
     for (const word of testWords) {
       const length = word.length;
@@ -111,72 +83,15 @@ class TestWordData implements WordDataDependencies {
       'BRUH', 'YEAH', 'NOPE', 'YEET', 'FOMO', 'SELFIE', 'EMOJI', 'BLOG'
     ]);
 
-    // Initialize test profanity words
-    this.profanityWords = new Set([
-      'DAMN', 'HELL', 'CRAP', 'PISS'
-    ]);
+    // Use centralized profanity management for testing
+    // Use basic profanity for more predictable tests
+    this.profanityWords = getBasicProfanityWords();
 
     this.isLoaded = true;
   }
 
-  /**
-   * Check if a word exists in the dictionary
-   */
-  hasWord(word: string): boolean {
-    return this.enableWords.has(word.toUpperCase());
-  }
-
-  /**
-   * Get a predictable "random" word of specified length for testing
-   * Always returns the first word of the specified length for predictability
-   */
-  getRandomWordByLength(length: number): string | null {
-    const wordsOfLength = this.wordsByLength.get(length);
-    if (!wordsOfLength || wordsOfLength.length === 0) {
-      return null;
-    }
-    
-    // Return first word for predictable testing
-    return wordsOfLength[0];
-  }
-
-  /**
-   * Get a specific word by index for testing
-   */
-  getWordByIndex(length: number, index: number): string | null {
-    const wordsOfLength = this.wordsByLength.get(length);
-    if (!wordsOfLength || wordsOfLength.length === 0 || index >= wordsOfLength.length) {
-      return null;
-    }
-    
-    return wordsOfLength[index];
-  }
-
-  /**
-   * Get all words of a specific length for testing
-   */
-  getWordsOfLength(length: number): string[] {
-    return this.wordsByLength.get(length) || [];
-  }
-
-  /**
-   * Check if dictionary is loaded
-   */
-  get loaded(): boolean {
-    return this.isLoaded;
-  }
-
-  /**
-   * Get word count for debugging
-   */
-  get wordCount(): number {
-    return this.enableWords.size;
-  }
-
-  /**
-   * Add a word to the test dictionary (for dynamic testing)
-   */
-  addWord(word: string): void {
+  // Test-specific methods for controlling word data during tests
+  public addWord(word: string): void {
     const upperWord = word.toUpperCase();
     this.enableWords.add(upperWord);
     
@@ -184,13 +99,12 @@ class TestWordData implements WordDataDependencies {
     if (!this.wordsByLength.has(length)) {
       this.wordsByLength.set(length, []);
     }
-    this.wordsByLength.get(length)!.push(upperWord);
+    if (!this.wordsByLength.get(length)!.includes(upperWord)) {
+      this.wordsByLength.get(length)!.push(upperWord);
+    }
   }
 
-  /**
-   * Remove a word from the test dictionary (for dynamic testing)
-   */
-  removeWord(word: string): void {
+  public removeWord(word: string): void {
     const upperWord = word.toUpperCase();
     this.enableWords.delete(upperWord);
     
@@ -204,15 +118,26 @@ class TestWordData implements WordDataDependencies {
     }
   }
 
-  /**
-   * Reset to default test words
-   */
-  reset(): void {
+  public clearWords(): void {
     this.enableWords.clear();
-    this.wordsByLength.clear();
     this.slangWords.clear();
-    this.profanityWords.clear();
-    this.initializeTestWords();
+    this.wordsByLength.clear();
+  }
+
+  public addProfanityWord(word: string): void {
+    this.profanityWords.add(word.toUpperCase());
+  }
+
+  public removeProfanityWord(word: string): void {
+    this.profanityWords.delete(word.toUpperCase());
+  }
+
+  public switchToComprehensiveProfanity(): void {
+    this.profanityWords = getComprehensiveProfanityWords();
+  }
+
+  public switchToBasicProfanity(): void {
+    this.profanityWords = getBasicProfanityWords();
   }
 }
 
@@ -366,8 +291,8 @@ export class TestAdapter {
    */
   getDictionaryStatus(): { loaded: boolean; wordCount: number } {
     return {
-      loaded: this.wordData.loaded,
-      wordCount: this.wordData.wordCount
+      loaded: this.wordData.isLoaded(),
+      wordCount: this.wordData.enableWords.size
     };
   }
 
@@ -375,7 +300,7 @@ export class TestAdapter {
    * Reset test data to defaults
    */
   reset(): void {
-    this.wordData.reset();
+    this.wordData.clearWords();
   }
 
   /**
@@ -446,7 +371,7 @@ export function scoreMoveTest(fromWord: string, toWord: string, keyLetters?: str
  */
 export function createCustomTestDependencies(words: string[]): GameStateDependencies {
   const customWordData = new TestWordData();
-  customWordData.reset();
+  customWordData.clearWords(); // Clear default words
   
   // Add custom words
   for (const word of words) {

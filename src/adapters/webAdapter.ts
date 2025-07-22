@@ -1,122 +1,70 @@
 /**
- * Web Platform Adapter
+ * Web Adapter for WordPlay Game Engine
  * 
- * This adapter provides all necessary dependencies for running the WordPlay engine
- * in web browser environments. It handles HTTP dictionary loading, browser-specific
- * optimizations, and provides the same interface as the Node.js adapter.
- * 
- * ARCHITECTURE: This is a platform adapter that implements the dependency
- * interfaces defined in the engine modules. It bridges web-specific
- * functionality with the platform-agnostic engine.
+ * Platform-specific implementation for web environments that provides
+ * dictionary loading via HTTP requests, along with scoring and bot AI functions.
  */
 
 import type { 
-  GameStateDependencies, 
-  GameStateDictionaryDependencies, 
-  GameStateScoringDependencies, 
-  GameStateBotDependencies,
-  ValidationResult,
-  ScoringResult,
-  BotResult
-} from '../../packages/engine/gamestate';
-
-import type {
   WordDataDependencies
-} from '../../packages/engine/dictionary';
+} from '../../packages/engine/interfaces';
 
-// Import the dependency-injected functions from engine
-import { 
-  validateWordWithDependencies,
-  isValidDictionaryWordWithDependencies,
-  getRandomWordByLengthWithDependencies
-} from '../../packages/engine/dictionary';
-
-import {
-  generateBotMoveWithDependencies
-} from '../../packages/engine/bot';
-
-import type {
-  BotDependencies
-} from '../../packages/engine/bot';
-
-import {
-  calculateScore,
-  getScoreForMove,
-  isValidMove
-} from '../../packages/engine/scoring';
-
-// =============================================================================
-// WEB DICTIONARY SERVICE
-// =============================================================================
+// Import centralized profanity management
+import { getComprehensiveProfanityWords } from '../../packages/engine/profanity';
 
 /**
  * Web-specific word data implementation
- * Loads dictionary from HTTP requests and provides fast lookup
+ * Loads dictionary via HTTP and provides word validation
  */
 class WebWordData implements WordDataDependencies {
-  // WordDataDependencies interface implementation
   public enableWords: Set<string> = new Set();
   public slangWords: Set<string> = new Set();
   public profanityWords: Set<string> = new Set();
-  
-  // Additional web-specific features
   private wordsByLength: Map<number, string[]> = new Map();
-  private isLoaded: boolean = false;
-  private loadPromise: Promise<void> | null = null;
+  private isLoaded = false;
 
-  /**
-   * Load dictionaries from HTTP requests
-   */
-  async loadDictionary(): Promise<void> {
-    if (this.loadPromise) {
-      return this.loadPromise;
-    }
-
-    this.loadPromise = this.loadDictionaryInternal();
-    return this.loadPromise;
+  constructor() {
+    this.loadDictionary();
   }
 
-  private async loadDictionaryInternal(): Promise<void> {
+  public hasWord(word: string): boolean {
+    const upperWord = word.toUpperCase();
+    return this.enableWords.has(upperWord) || this.slangWords.has(upperWord);
+  }
+
+  public getRandomWordByLength(length: number): string | null {
+    const words = this.wordsByLength.get(length);
+    if (!words || words.length === 0) {
+      return null;
+    }
+    const randomIndex = Math.floor(Math.random() * words.length);
+    return words[randomIndex];
+  }
+
+  public isLoaded(): boolean {
+    return this.isLoaded;
+  }
+
+  private async loadDictionary(): Promise<void> {
     try {
-      // Try to load the full ENABLE dictionary from public folder
-      const possiblePaths = [
-        '/enable1.txt',
-        '/public/enable1.txt',
-        '/data/enable1.txt',
-        '/assets/enable1.txt'
-      ];
-
-      let dictionaryContent: string | null = null;
+      // Load dictionary file via HTTP request
+      const response = await fetch('/enable1.txt');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       
-      for (const path of possiblePaths) {
-        try {
-          const response = await fetch(path);
-          if (response.ok) {
-            dictionaryContent = await response.text();
-            console.log(`Dictionary loaded from: ${path}`);
-            break;
-          }
-        } catch (error) {
-          // Continue to next path
-          console.warn(`Failed to load dictionary from ${path}:`, error);
-        }
-      }
-
-      if (!dictionaryContent) {
-        throw new Error('Dictionary file not found at any expected URL');
-      }
-
-      // Parse ENABLE dictionary
-      const enableWords = dictionaryContent
+      const text = await response.text();
+      const wordList = text
         .split('\n')
         .map(word => word.trim().toUpperCase())
         .filter(word => word.length > 0);
 
-      this.enableWords = new Set(enableWords);
+      // Build word set for fast lookup
+      this.enableWords = new Set(wordList);
 
       // Build words-by-length map for random selection
       this.wordsByLength.clear();
-      for (const word of enableWords) {
+      for (const word of wordList) {
         const length = word.length;
         if (!this.wordsByLength.has(length)) {
           this.wordsByLength.set(length, []);
@@ -124,7 +72,7 @@ class WebWordData implements WordDataDependencies {
         this.wordsByLength.get(length)!.push(word);
       }
 
-      // Initialize slang words (same as Node adapter for consistency)
+      // Initialize slang words
       this.slangWords = new Set([
         'BRUH', 'YEAH', 'NOPE', 'YEET', 'FOMO', 'SELFIE', 'EMOJI', 'BLOG',
         'VLOG', 'WIFI', 'UBER', 'GOOGLE', 'TWEET', 'UNFRIEND', 'HASHTAG',
@@ -133,11 +81,8 @@ class WebWordData implements WordDataDependencies {
         'NOOB', 'PWNED', 'EPIC', 'FAIL', 'WIN', 'OWNED', 'LEET', 'HAXOR'
       ]);
 
-      // Initialize profanity words (same as Node adapter for consistency)
-      this.profanityWords = new Set([
-        'DAMN', 'HELL', 'CRAP', 'PISS', 'SHIT', 'FUCK', 'BITCH', 'ASSHOLE',
-        'BASTARD', 'WHORE', 'SLUT', 'FART', 'POOP', 'BUTT', 'ASS'
-      ]);
+      // Use centralized profanity management for comprehensive word list
+      this.profanityWords = getComprehensiveProfanityWords();
 
       this.isLoaded = true;
       console.log(`Dictionary loaded successfully: ${this.enableWords.size} words`);
@@ -160,42 +105,11 @@ class WebWordData implements WordDataDependencies {
     
     this.enableWords = new Set(fallbackWords);
     this.slangWords = new Set(['BRUH', 'YEAH', 'YEET', 'SELFIE']);
-    this.profanityWords = new Set(['DAMN', 'HELL']);
-    this.isLoaded = true;
-  }
-
-  /**
-   * Check if a word exists in the dictionary
-   */
-  hasWord(word: string): boolean {
-    return this.enableWords.has(word.toUpperCase());
-  }
-
-  /**
-   * Get a random word of specified length
-   */
-  getRandomWordByLength(length: number): string | null {
-    const wordsOfLength = this.wordsByLength.get(length);
-    if (!wordsOfLength || wordsOfLength.length === 0) {
-      return null;
-    }
     
-    const randomIndex = Math.floor(Math.random() * wordsOfLength.length);
-    return wordsOfLength[randomIndex];
-  }
-
-  /**
-   * Check if dictionary is loaded
-   */
-  get loaded(): boolean {
-    return this.isLoaded;
-  }
-
-  /**
-   * Get word count for debugging
-   */
-  get wordCount(): number {
-    return this.enableWords.size;
+    // Use centralized profanity management even for fallback
+    this.profanityWords = getComprehensiveProfanityWords();
+    
+    this.isLoaded = true;
   }
 }
 
