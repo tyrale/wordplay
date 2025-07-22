@@ -10,8 +10,8 @@ import { ScoreDisplay } from './ScoreDisplay';
 import { WordBuilder } from './WordBuilder';
 import { DebugDialog } from './DebugDialog';
 import { Menu } from '../ui/Menu';
-import { createWebAdapter } from '../../adapters/webAdapter';
 import { getBotDisplayName } from '../../data/botRegistry';
+import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import type { WordDataDependencies } from '../../../packages/engine/interfaces';
 
 // Game configuration and state interfaces
@@ -37,7 +37,7 @@ function useDictionaryValidation() {
   useEffect(() => {
     const initializeWordData = async () => {
       try {
-        const adapter = await createWebAdapter();
+        const adapter = await createBrowserAdapter();
         const adapterWordData = adapter.getWordData();
         setWordData(adapterWordData);
       } catch (error) {
