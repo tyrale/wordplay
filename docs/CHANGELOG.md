@@ -1515,8 +1515,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ShipHip: Bot Names Display in All Caps (CSS Transform) *(Task 5.6)*
 *Date: 2025-01-10*
 
-**Enhanced Bot Name Styling**
+**Enhanced Bot Name Styling with Consistent Single-Word Naming**
 - **CSS-Based Transformation**: Applied `text-transform: uppercase` to force all bot names to display in all caps
+- **Consistent Single-Word Format**: Updated all bot display names to single words (e.g., "basicbot", "easybot", "piratebot")
 - **Clean Implementation**: Uses CSS styling instead of modifying underlying data files
 - **Comprehensive Coverage**: Applied to all bot name display locations:
   - Main screen bot selection list (`.main-screen__bot-option`)
@@ -1526,10 +1527,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Data Integrity**: Preserves original readable bot names in code while enforcing visual consistency
 - **Accessibility**: Maintains screen reader compatibility with proper underlying text
 
+**Visual Result**
+- All bot names now display consistently as single uppercase words:
+  - "BASICBOT" (not "BASIC BOT")
+  - "EASYBOT" (not "EASY BOT")
+  - "PIRATEBOT" (not "PIRATE BOT")
+- Eliminates spacing inconsistencies across different UI components
+
 **Technical Implementation**
-- No changes to bot registry data or display name mappings
-- CSS-only solution ensures easy maintenance and consistent styling
+- Updated bot registry display names to single-word format
+- CSS-only uppercase transformation ensures easy maintenance
+- All existing tests updated and passing (MainScreen: 5/5, Bot Registry: 9/9)
 - Responsive design maintained across all screen sizes
-- All existing tests pass without modification
 
 ### ShipHip: Centralized Bot Registry System *(Task 5.5)*

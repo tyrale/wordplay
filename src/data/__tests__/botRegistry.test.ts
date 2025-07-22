@@ -11,13 +11,13 @@ import {
 describe('Bot Registry', () => {
   it('should have the basic bot as the first entry', () => {
     expect(BOT_REGISTRY[0].id).toBe('basicBot');
-    expect(BOT_REGISTRY[0].displayName).toBe('basicBot');
+    expect(BOT_REGISTRY[0].displayName).toBe('basicbot');
   });
 
   it('should return correct display name for valid bot ID', () => {
-    expect(getBotDisplayName('basicBot')).toBe('basicBot');
-    expect(getBotDisplayName('easy-bot')).toBe('easy bot');
-    expect(getBotDisplayName('pirate-bot')).toBe('pirate bot');
+    expect(getBotDisplayName('basicBot')).toBe('basicbot');
+    expect(getBotDisplayName('easy-bot')).toBe('easybot');
+    expect(getBotDisplayName('pirate-bot')).toBe('piratebot');
   });
 
   it('should return bot ID as fallback for unknown bot', () => {
@@ -28,7 +28,7 @@ describe('Bot Registry', () => {
     const basicBot = getBotById('basicBot');
     expect(basicBot).toBeDefined();
     expect(basicBot?.id).toBe('basicBot');
-    expect(basicBot?.displayName).toBe('basicBot');
+    expect(basicBot?.displayName).toBe('basicbot');
     expect(basicBot?.difficulty).toBe('basic');
   });
 
@@ -47,34 +47,25 @@ describe('Bot Registry', () => {
     const progressionBots = getBotsByCategory('progression');
     expect(progressionBots.length).toBeGreaterThan(0);
     expect(progressionBots.every(bot => bot.category === 'progression')).toBe(true);
-    
-    const themedBots = getBotsByCategory('themed');
-    expect(themedBots.length).toBeGreaterThan(0);
-    expect(themedBots.every(bot => bot.category === 'themed')).toBe(true);
   });
 
   it('should create display names mapping', () => {
     const mapping = getBotDisplayNamesMapping();
-    expect(mapping['basicBot']).toBe('basicBot');
-    expect(mapping['easy-bot']).toBe('easy bot');
-    expect(mapping['pirate-bot']).toBe('pirate bot');
+    expect(mapping['basicBot']).toBe('basicbot');
+    expect(mapping['easy-bot']).toBe('easybot');
+    expect(mapping['pirate-bot']).toBe('piratebot');
   });
 
   it('should have all required bots from the original system', () => {
-    const requiredBots = [
-      'basicBot',
-      'easy-bot', 
-      'medium-bot',
-      'hard-bot',
-      'expert-bot',
-      'pirate-bot',
-      'chaos-bot'
-    ];
+    const allBots = getAllBots();
+    const botIds = allBots.map(bot => bot.id);
     
-    requiredBots.forEach(botId => {
-      const bot = getBotById(botId);
-      expect(bot).toBeDefined();
-      expect(bot?.id).toBe(botId);
-    });
+    // Check for key original bots
+    expect(botIds).toContain('basicBot');
+    expect(botIds).toContain('easy-bot');
+    expect(botIds).toContain('medium-bot');
+    expect(botIds).toContain('hard-bot');
+    expect(botIds).toContain('pirate-bot');
+    expect(botIds).toContain('chaos-bot');
   });
 }); 

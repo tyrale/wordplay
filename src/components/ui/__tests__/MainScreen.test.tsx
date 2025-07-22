@@ -68,7 +68,7 @@ describe('MainScreen Component', () => {
     expect(screen.getByRole('button', { name: 'Open menu' })).toBeInTheDocument();
     
     // Should show at least the Basic Bot bot (always unlocked)
-    expect(screen.getByText('Basic Bot')).toBeInTheDocument();
+    expect(screen.getByText('basicbot')).toBeInTheDocument();
   });
 
   it('should only show unlocked bots in fresh user state', async () => {
@@ -86,11 +86,11 @@ describe('MainScreen Component', () => {
 
     // Wait for unlock system to initialize
     await waitFor(() => {
-      expect(screen.getByText('Basic Bot')).toBeInTheDocument();
+      expect(screen.getByText('basicbot')).toBeInTheDocument();
     });
 
     // In fresh user state, should only show Basic Bot bot
-    expect(screen.getByText('Basic Bot')).toBeInTheDocument();
+    expect(screen.getByText('basicbot')).toBeInTheDocument();
     
     // Should not show locked bots like easy bot (until unlocked)
     expect(screen.queryByText('easy bot')).not.toBeInTheDocument();
@@ -113,10 +113,10 @@ describe('MainScreen Component', () => {
 
     // Wait for Basic Bot to appear and click it
     await waitFor(() => {
-      expect(screen.getByText('Basic Bot')).toBeInTheDocument();
+      expect(screen.getByText('basicbot')).toBeInTheDocument();
     });
 
-    const basicBotButton = screen.getByText('Basic Bot');
+    const basicBotButton = screen.getByText('basicbot');
     fireEvent.click(basicBotButton);
 
     // Should call onStartGame with correct parameters
@@ -138,7 +138,7 @@ describe('MainScreen Component', () => {
 
     // Wait for bot selection screen
     await waitFor(() => {
-      expect(screen.getByText('Basic Bot')).toBeInTheDocument();
+      expect(screen.getByText('basicbot')).toBeInTheDocument();
     });
 
     // Should show menu button for navigation (current app pattern)
@@ -147,6 +147,6 @@ describe('MainScreen Component', () => {
     expect(menuButton.textContent).toBe('≡');
 
     // Should show bot selection content
-    expect(screen.getByText('Basic Bot')).toBeInTheDocument();
+    expect(screen.getByText('basicbot')).toBeInTheDocument();
   });
 }); 

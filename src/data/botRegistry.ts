@@ -22,7 +22,7 @@ export const BOT_REGISTRY: Bot[] = [
   // Default/Starter Bot
   { 
     id: 'basicBot', 
-    displayName: 'Basic Bot', 
+    displayName: 'basicbot', 
     difficulty: 'basic',
     category: 'progression',
     description: 'Basic bot for new players'
@@ -31,28 +31,28 @@ export const BOT_REGISTRY: Bot[] = [
   // Progression Bots (unlocked by achievements)
   { 
     id: 'easy-bot', 
-    displayName: 'easy bot', 
+    displayName: 'easybot', 
     difficulty: 'easy',
     category: 'progression',
     description: 'Unlocked by beating basicBot'
   },
   { 
     id: 'medium-bot', 
-    displayName: 'medium bot', 
+    displayName: 'mediumbot', 
     difficulty: 'medium',
     category: 'progression',
     description: 'Unlocked by beating easy bot'
   },
   { 
     id: 'hard-bot', 
-    displayName: 'hard bot', 
+    displayName: 'hardbot', 
     difficulty: 'hard',
     category: 'progression',
     description: 'Unlocked by beating medium bot'
   },
   { 
     id: 'expert-bot', 
-    displayName: 'expert bot', 
+    displayName: 'expertbot', 
     difficulty: 'expert',
     category: 'progression',
     description: 'Unlocked by beating hard bot'
@@ -61,176 +61,192 @@ export const BOT_REGISTRY: Bot[] = [
   // Themed Bots (unlocked by playing specific words)
   { 
     id: 'pirate-bot', 
-    displayName: 'pirate bot', 
+    displayName: 'piratebot', 
     theme: 'pirate',
     category: 'themed',
     description: 'Unlocked by playing "pirate"'
   },
   { 
     id: 'chaos-bot', 
-    displayName: 'chaos bot', 
+    displayName: 'chaosbot', 
     theme: 'chaos',
     category: 'themed',
     description: 'Unlocked by playing "chaos"'
   },
   { 
     id: 'puzzle-bot', 
-    displayName: 'puzzle bot', 
+    displayName: 'puzzlebot', 
     theme: 'puzzle',
     category: 'themed',
     description: 'Unlocked by playing "puzzle"'
   },
   { 
     id: 'speed-bot', 
-    displayName: 'speed bot', 
+    displayName: 'speedbot', 
     theme: 'speed',
     category: 'themed',
     description: 'Unlocked by playing "speed"'
   },
   { 
     id: 'creative-bot', 
-    displayName: 'creative bot', 
+    displayName: 'creativebot', 
     theme: 'creative',
     category: 'themed',
     description: 'Unlocked by playing "creative"'
   },
   { 
     id: 'vowel-bot', 
-    displayName: 'vowel bot', 
+    displayName: 'vowelbot', 
     theme: 'vowel',
     category: 'themed',
     description: 'Unlocked by playing "vowel"'
   },
   { 
     id: 'rhyme-bot', 
-    displayName: 'rhyme bot', 
+    displayName: 'rhymebot', 
     theme: 'rhyme',
     category: 'themed',
     description: 'Unlocked by playing "rhyme"'
   },
 
-  // Behavior-Based Bots
+  // Behavior Bots (unlocked by various means)
   { 
     id: 'aggressive-bot', 
-    displayName: 'aggressive bot', 
+    displayName: 'aggressivebot', 
     category: 'behavior',
-    description: 'High-risk, high-reward strategy'
+    description: 'High-risk, high-reward strategies'
   },
   { 
     id: 'defensive-bot', 
-    displayName: 'defensive bot', 
+    displayName: 'defensivebot', 
     category: 'behavior',
-    description: 'Focuses on blocking player moves'
+    description: 'Conservative, blocking strategies'
   },
   { 
     id: 'learning-bot', 
-    displayName: 'learning bot', 
+    displayName: 'learningbot', 
     category: 'behavior',
-    description: 'Adapts to player strategies'
+    description: 'Adapts strategy based on player behavior'
   },
   { 
-    id: 'memory-bot', 
-    displayName: 'memory bot', 
+    id: 'random-bot', 
+    displayName: 'randombot', 
     category: 'behavior',
-    description: 'Remembers and counters patterns'
+    description: 'Completely unpredictable moves'
   },
   { 
-    id: 'pattern-bot', 
-    displayName: 'pattern bot', 
+    id: 'mirror-bot', 
+    displayName: 'mirrorbot', 
     category: 'behavior',
-    description: 'Uses advanced pattern recognition'
+    description: 'Mirrors player strategies'
+  },
+  { 
+    id: 'blitz-bot', 
+    displayName: 'blitzbot', 
+    category: 'behavior',
+    description: 'Lightning-fast aggressive play'
+  },
+  { 
+    id: 'zen-bot', 
+    displayName: 'zenbot', 
+    category: 'behavior',
+    description: 'Calm, methodical strategies'
+  },
+  { 
+    id: 'trickster-bot', 
+    displayName: 'tricksterbot', 
+    category: 'behavior',
+    description: 'Uses unexpected and clever moves'
+  },
+  { 
+    id: 'scholar-bot', 
+    displayName: 'scholarbot', 
+    category: 'behavior',
+    description: 'Focuses on rare and unusual words'
   },
   { 
     id: 'minimalist-bot', 
-    displayName: 'minimalist bot', 
+    displayName: 'minimalistbot', 
     category: 'behavior',
-    description: 'Prefers simple, efficient moves'
+    description: 'Uses the fewest moves possible'
   },
   { 
     id: 'maximalist-bot', 
-    displayName: 'maximalist bot', 
+    displayName: 'maximalistbot', 
     category: 'behavior',
-    description: 'Goes for maximum scoring moves'
+    description: 'Uses complex, multi-step strategies'
   },
   { 
-    id: 'consonant-bot', 
-    displayName: 'consonant bot', 
+    id: 'perfectionist-bot', 
+    displayName: 'perfectionistbot', 
     category: 'behavior',
-    description: 'Favors consonant-heavy words'
+    description: 'Never makes suboptimal moves'
   },
   { 
-    id: 'alliteration-bot', 
-    displayName: 'alliteration bot', 
+    id: 'wildcard-bot', 
+    displayName: 'wildcardbot', 
     category: 'behavior',
-    description: 'Prefers alliterative words'
+    description: 'Completely unpredictable behavior'
   },
   { 
-    id: 'length-bot', 
-    displayName: 'length bot', 
+    id: 'tactical-bot', 
+    displayName: 'tacticalbot', 
     category: 'behavior',
-    description: 'Focuses on word length optimization'
-  },
-  { 
-    id: 'suffix-bot', 
-    displayName: 'suffix bot', 
-    category: 'behavior',
-    description: 'Specializes in suffix transformations'
-  },
-  { 
-    id: 'prefix-bot', 
-    displayName: 'prefix bot', 
-    category: 'behavior',
-    description: 'Specializes in prefix transformations'
-  },
-  { 
-    id: 'compound-bot', 
-    displayName: 'compound bot', 
-    category: 'behavior',
-    description: 'Prefers compound words'
-  },
-  { 
-    id: 'analytical-bot', 
-    displayName: 'analytical bot', 
-    category: 'behavior',
-    description: 'Uses deep analysis for moves'
-  },
-  { 
-    id: 'intuitive-bot', 
-    displayName: 'intuitive bot', 
-    category: 'behavior',
-    description: 'Makes quick, instinctive moves'
-  },
-  { 
-    id: 'experimental-bot', 
-    displayName: 'experimental bot', 
-    category: 'behavior',
-    description: 'Tries unconventional strategies'
-  },
-  { 
-    id: 'classic-bot', 
-    displayName: 'classic bot', 
-    category: 'behavior',
-    description: 'Uses traditional word game strategies'
-  },
-  { 
-    id: 'modern-bot', 
-    displayName: 'modern bot', 
-    category: 'behavior',
-    description: 'Uses contemporary word patterns'
-  },
-
-  // Special/Advanced Bots
-  { 
-    id: 'adaptive-bot', 
-    displayName: 'adaptive bot', 
-    category: 'behavior',
-    description: 'Adapts strategy mid-game'
+    description: 'Focuses on tactical letter placement'
   },
   { 
     id: 'strategic-bot', 
-    displayName: 'strategic bot', 
+    displayName: 'strategicbot', 
     category: 'behavior',
     description: 'Long-term strategic planning'
+  },
+  { 
+    id: 'adaptive-bot', 
+    displayName: 'adaptivebot', 
+    category: 'behavior',
+    description: 'Changes strategy mid-game'
+  },
+  { 
+    id: 'comeback-bot', 
+    displayName: 'comebackbot', 
+    category: 'behavior',
+    description: 'Stronger when behind in score'
+  },
+  { 
+    id: 'guardian-bot', 
+    displayName: 'guardianbot', 
+    category: 'behavior',
+    description: 'Protects and nurtures key letters'
+  },
+  { 
+    id: 'hunter-bot', 
+    displayName: 'hunterbot', 
+    category: 'behavior',
+    description: 'Aggressively pursues key letters'
+  },
+  { 
+    id: 'ninja-bot', 
+    displayName: 'ninjabot', 
+    category: 'behavior',
+    description: 'Silent, precise, strategic moves'
+  },
+  { 
+    id: 'wizard-bot', 
+    displayName: 'wizardbot', 
+    category: 'behavior',
+    description: 'Uses magical word transformations'
+  },
+  { 
+    id: 'robot-bot', 
+    displayName: 'robotbot', 
+    category: 'behavior',
+    description: 'Pure algorithmic precision'
+  },
+  { 
+    id: 'beast-bot', 
+    displayName: 'beastbot', 
+    category: 'behavior',
+    description: 'Raw power and aggression'
   }
 ];
 
