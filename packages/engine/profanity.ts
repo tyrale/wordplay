@@ -80,61 +80,86 @@ export function getProfanityWords(providedWords: string[], config: ProfanityConf
 }
 
 /**
- * Get comprehensive profanity words - loads from HTTP for web/browser environments
- * @returns Promise<Set<string>> - Set of profanity words
+ * Get comprehensive profanity words from provided data
+ * @param providedWords - Profanity words loaded by platform adapter
+ * @returns Set of profanity words for efficient lookup
  */
-export function getComprehensiveProfanityWords(): Set<string> {
-  // For backward compatibility, return empty set and warn
-  console.warn('getComprehensiveProfanityWords() deprecated - use loadProfanityFromHTTP() in adapters');
-  return new Set<string>();
+export function getComprehensiveProfanityWords(providedWords: string[] = []): Set<string> {
+  if (providedWords.length === 0) {
+    console.warn('No profanity words provided to getComprehensiveProfanityWords');
+    return new Set();
+  }
+  const cleaned = cleanProfanityWords(providedWords).map(w => w.toUpperCase());
+  return new Set(cleaned);
 }
 
 /**
- * Get basic profanity words - loads from HTTP for web/browser environments  
+ * Get basic profanity words (3-5 letters) from provided data
+ * @param providedWords - Profanity words loaded by platform adapter
  * @returns Array of basic profanity words
  */
-export function getBasicProfanityWords(): string[] {
-  // For backward compatibility, return empty array and warn
-  console.warn('getBasicProfanityWords() deprecated - use loadProfanityFromHTTP() in adapters');
-  return [];
+export function getBasicProfanityWords(providedWords: string[] = []): string[] {
+  if (providedWords.length === 0) {
+    console.warn('No profanity words provided to getBasicProfanityWords');
+    return [];
+  }
+  const cleaned = cleanProfanityWords(providedWords).map(w => w.toUpperCase());
+  return filterWordsByLength(cleaned, 3, 5);
 }
 
 /**
- * Check if a word is profanity based on provided word list
+ * Check if a word is profanity using provided word data
  * @param word - Word to check
- * @param providedWords - Base profanity words provided by platform adapter
- * @param config - Profanity configuration options
+ * @param providedWords - Profanity words loaded by platform adapter
+ * @param config - Profanity configuration options (optional)
  * @returns true if word is profanity
  */
-export function isProfanity(word: string, providedWords: string[], config: ProfanityConfig = { level: 'comprehensive' }): boolean {
-  const profanitySet = getProfanityWords(providedWords, config);
-  return profanitySet.has(word.toUpperCase());
+export function isProfanity(word: string, providedWords: string[] = [], config: ProfanityConfig = { level: 'comprehensive' }): boolean {
+  if (providedWords.length === 0) {
+    console.warn('No profanity words provided to isProfanity');
+    return false;
+  }
+  
+  const comprehensive = getComprehensiveProfanityWords(providedWords);
+  
+  if (config.level === 'basic') {
+    const basicWords = getBasicProfanityWords(providedWords);
+    return basicWords.includes(word.toUpperCase());
+  }
+  
+  return comprehensive.has(word.toUpperCase());
 }
 
 /**
- * Get statistics about profanity words
- * @param providedWords - Base profanity words provided by platform adapter
+ * Get statistics about profanity words from provided data
+ * @param providedWords - Profanity words loaded by platform adapter
  * @returns Statistics object
  */
-export function getProfanityStats(providedWords: string[]): {
+export function getProfanityStats(providedWords: string[] = []): {
   total: number;
   basic: number;
   comprehensive: number;
   byLength: Record<number, number>;
 } {
-  const comprehensive = providedWords.length;
-  const basic = filterWordsByLength(providedWords, 3, 5).length;
+  if (providedWords.length === 0) {
+    console.warn('No profanity words provided to getProfanityStats');
+    return { total: 0, basic: 0, comprehensive: 0, byLength: {} };
+  }
+  
+  const comprehensiveSet = getComprehensiveProfanityWords(providedWords);
+  const comprehensiveWords = Array.from(comprehensiveSet);
+  const basicWords = getBasicProfanityWords(providedWords);
   
   const byLength: Record<number, number> = {};
-  for (const word of providedWords) {
+  for (const word of comprehensiveWords) {
     const length = word.length;
     byLength[length] = (byLength[length] || 0) + 1;
   }
   
   return {
-    total: comprehensive,
-    basic,
-    comprehensive,
+    total: comprehensiveWords.length,
+    basic: basicWords.length,
+    comprehensive: comprehensiveWords.length,
     byLength
   };
 }

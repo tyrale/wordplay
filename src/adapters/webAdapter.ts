@@ -81,8 +81,21 @@ class WebWordData implements WordDataDependencies {
         'NOOB', 'PWNED', 'EPIC', 'FAIL', 'WIN', 'OWNED', 'LEET', 'HAXOR'
       ]);
 
-      // Use centralized profanity management for comprehensive word list
-      this.profanityWords = getComprehensiveProfanityWords();
+      // Load profanity words from shared data file
+      try {
+        const profanityResponse = await fetch('/data/profanity-words.json');
+        if (profanityResponse.ok) {
+          const profanityData = await profanityResponse.json();
+          this.profanityWords = new Set(profanityData.words || []);
+          console.log(`Profanity words loaded: ${this.profanityWords.size} words`);
+        } else {
+          console.warn('Failed to load profanity words, using empty set');
+          this.profanityWords = new Set();
+        }
+      } catch (profanityError) {
+        console.warn('Error loading profanity words:', profanityError);
+        this.profanityWords = new Set();
+      }
 
       this.isLoaded = true;
       console.log(`Dictionary loaded successfully: ${this.enableWords.size} words`);
@@ -106,8 +119,8 @@ class WebWordData implements WordDataDependencies {
     this.enableWords = new Set(fallbackWords);
     this.slangWords = new Set(['BRUH', 'YEAH', 'YEET', 'SELFIE']);
     
-    // Use centralized profanity management even for fallback
-    this.profanityWords = getComprehensiveProfanityWords();
+    // Use empty profanity set for fallback
+    this.profanityWords = new Set();
     
     this.isLoaded = true;
   }

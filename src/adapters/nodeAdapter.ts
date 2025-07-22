@@ -123,8 +123,16 @@ class NodeWordData implements WordDataDependencies {
         'NOOB', 'PWNED', 'EPIC', 'FAIL', 'WIN', 'OWNED', 'LEET', 'HAXOR'
       ]);
 
-      // Use centralized profanity management for comprehensive word list
-      this.profanityWords = getComprehensiveProfanityWords();
+      // Load profanity words from shared data file
+      try {
+        const profanityPath = join(__dirname, '../../public/data/profanity-words.json');
+        const profanityData = JSON.parse(readFileSync(profanityPath, 'utf-8'));
+        this.profanityWords = new Set(profanityData.words || []);
+        console.log(`✅ Profanity words loaded: ${this.profanityWords.size} words`);
+      } catch (profanityError) {
+        console.warn('⚠️  Failed to load profanity words:', profanityError);
+        this.profanityWords = new Set();
+      }
 
       this.isLoaded = true;
       
@@ -142,8 +150,8 @@ class NodeWordData implements WordDataDependencies {
     
     this.enableWords = new Set(fallbackWords);
     this.slangWords = new Set(['BRUH', 'YEAH']);
-    // Use centralized profanity management even in fallback mode
-    this.profanityWords = new Set(getComprehensiveProfanityWords());
+    // Use empty profanity set for fallback
+    this.profanityWords = new Set();
     this.isLoaded = true;
   }
 }

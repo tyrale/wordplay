@@ -83,9 +83,18 @@ class TestWordData implements WordDataDependencies {
       'BRUH', 'YEAH', 'NOPE', 'YEET', 'FOMO', 'SELFIE', 'EMOJI', 'BLOG'
     ]);
 
-    // Use centralized profanity management for testing
-    // Use comprehensive profanity for complete coverage
-    this.profanityWords = new Set(getComprehensiveProfanityWords());
+    // Load profanity words from shared data file for testing
+    try {
+      // In test environment, load from file system
+      const fs = require('fs');
+      const path = require('path');
+      const profanityPath = path.join(process.cwd(), 'public/data/profanity-words.json');
+      const profanityData = JSON.parse(fs.readFileSync(profanityPath, 'utf-8'));
+      this.profanityWords = new Set(profanityData.words || []);
+    } catch (error) {
+      console.warn('Test adapter: Failed to load profanity words, using empty set');
+      this.profanityWords = new Set();
+    }
 
     this.isLoaded = true;
   }
@@ -133,11 +142,31 @@ class TestWordData implements WordDataDependencies {
   }
 
   public switchToComprehensiveProfanity(): void {
-    this.profanityWords = new Set(getComprehensiveProfanityWords());
+    // Reload from shared data file
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const profanityPath = path.join(process.cwd(), 'public/data/profanity-words.json');
+      const profanityData = JSON.parse(fs.readFileSync(profanityPath, 'utf-8'));
+      this.profanityWords = new Set(profanityData.words || []);
+    } catch (error) {
+      this.profanityWords = new Set();
+    }
   }
 
   public switchToBasicProfanity(): void {
-    this.profanityWords = new Set(getBasicProfanityWords());
+    // Load basic subset from shared data file
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const profanityPath = path.join(process.cwd(), 'public/data/profanity-words.json');
+      const profanityData = JSON.parse(fs.readFileSync(profanityPath, 'utf-8'));
+      // Filter to 3-5 letter words for basic mode
+      const basicWords = (profanityData.words || []).filter((word: string) => word.length >= 3 && word.length <= 5);
+      this.profanityWords = new Set(basicWords);
+    } catch (error) {
+      this.profanityWords = new Set();
+    }
   }
 }
 

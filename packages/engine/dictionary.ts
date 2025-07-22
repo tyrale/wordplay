@@ -82,8 +82,8 @@ class WordDictionary {
     ];
     slangWords.forEach(word => this.slangWords.add(word.toUpperCase()));
 
-    // Use centralized profanity source instead of hardcoded list
-    this.profanityWords = new Set(getComprehensiveProfanityWords());
+    // Use empty profanity set for fallback - real data should come via dependency injection
+    this.profanityWords = new Set();
 
     this.initialized = true;
     console.warn('Dictionary: Using minimal word set. For full functionality, use dependency injection with complete word data.');

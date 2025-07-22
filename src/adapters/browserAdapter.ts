@@ -70,11 +70,35 @@ class BrowserWordData implements WordDataDependencies {
         this.wordsByLength.get(length)!.push(word);
       }
 
-      // Initialize slang and profanity sets with basic examples
-      this.slangWords = new Set(); // Could be extended with slang list
+      // Load slang words from shared data file
+      try {
+        const slangResponse = await fetch('/data/slang-words.json');
+        if (slangResponse.ok) {
+          const slangData = await slangResponse.json();
+          this.slangWords = new Set(slangData.words || []);
+          console.log(`Slang words loaded: ${this.slangWords.size} words`);
+        } else {
+          this.slangWords = new Set();
+        }
+      } catch (slangError) {
+        console.warn('Error loading slang words:', slangError);
+        this.slangWords = new Set();
+      }
       
-      // Use centralized profanity management for comprehensive word list
-      this.profanityWords = getComprehensiveProfanityWords();
+      // Load profanity words from shared data file
+      try {
+        const profanityResponse = await fetch('/data/profanity-words.json');
+        if (profanityResponse.ok) {
+          const profanityData = await profanityResponse.json();
+          this.profanityWords = new Set(profanityData.words || []);
+          console.log(`Profanity words loaded: ${this.profanityWords.size} words`);
+        } else {
+          this.profanityWords = new Set();
+        }
+      } catch (profanityError) {
+        console.warn('Error loading profanity words:', profanityError);
+        this.profanityWords = new Set();
+      }
       
       this.isLoaded = true;
       
@@ -95,8 +119,8 @@ class BrowserWordData implements WordDataDependencies {
     this.enableWords = new Set(fallbackWords);
     this.slangWords = new Set(['BRUH', 'YEAH', 'YEET', 'SELFIE']);
     
-    // Use centralized profanity management even for fallback
-    this.profanityWords = getComprehensiveProfanityWords();
+    // Use empty profanity set for fallback
+    this.profanityWords = new Set();
     
     this.isLoaded = true;
   }
