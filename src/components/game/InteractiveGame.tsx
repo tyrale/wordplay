@@ -252,16 +252,36 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   // Word trail with move details
   const wordTrailMoves: WordMove[] = React.useMemo(() => {
-    const moves = gameState.turnHistory.map((turn) => ({
-      word: turn.newWord,
-      score: turn.score,
-      player: turn.playerId,
-      opponentName: turn.playerId === 'bot' && config?.botId ? getBotDisplayName(config.botId) : undefined,
-      turnNumber: turn.turnNumber,
-      actions: turn.scoringBreakdown.actions,
-      keyLetters: turn.scoringBreakdown.keyLettersUsed || [],
-      scoreBreakdown: turn.scoringBreakdown.breakdown
-    }));
+    const moves = gameState.turnHistory.map((turn) => {
+      // Handle both legacy and new ScoringResult formats
+      const scoringBreakdown = turn.scoringBreakdown;
+      const actions = Array.isArray(scoringBreakdown.breakdown) 
+        ? scoringBreakdown.breakdown 
+        : scoringBreakdown.actions || [];
+      
+      const keyLettersUsed = scoringBreakdown.keyLettersUsed || 
+                            (scoringBreakdown as any).keyLettersUsed || 
+                            [];
+      
+      // Create scoreBreakdown object for WordTrail compatibility
+      const scoreBreakdown = {
+        addLetterPoints: scoringBreakdown.baseScore || 0,
+        removeLetterPoints: 0, 
+        movePoints: 0,
+        keyLetterUsagePoints: scoringBreakdown.keyLetterScore || 0
+      };
+      
+      return {
+        word: turn.newWord,
+        score: turn.score,
+        player: turn.playerId,
+        opponentName: turn.playerId === 'bot' && config?.botId ? getBotDisplayName(config.botId) : undefined,
+        turnNumber: turn.turnNumber,
+        actions,
+        keyLetters: keyLettersUsed,
+        scoreBreakdown
+      };
+    });
     
     return moves;
   }, [gameState.turnHistory, config?.botId]);

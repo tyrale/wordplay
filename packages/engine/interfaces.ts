@@ -594,6 +594,7 @@ export interface TurnHistory {
   newWord: string;
   score: number;
   keyLettersUsed: string[];
+  scoringBreakdown: ScoringResult;
   timestamp: number;
 }
 
