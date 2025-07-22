@@ -5,12 +5,13 @@
  * dictionary loading via fetch API and caching strategies.
  */
 
-import type { WordDataDependencies, ValidationResult } from '../../packages/engine/dictionary';
+import type { WordDataDependencies, ValidationResult } from '../../packages/engine/interfaces';
 import { validateWordWithDependencies, isValidDictionaryWordWithDependencies } from '../../packages/engine/dictionary';
 import { calculateScore, getScoreForMove, isValidMove } from '../../packages/engine/scoring';
 import type { ScoringResult } from '../../packages/engine/scoring';
 import { generateBotMoveWithDependencies } from '../../packages/engine/bot';
-import type { BotDependencies, BotResult, BotMove, BotOptions } from '../../packages/engine/bot';
+import type { BotDependencies, BotOptions } from '../../packages/engine/bot';
+import type { BotMove, BotResult } from '../../packages/engine/interfaces';
 import type { 
   GameStateDictionaryDependencies, 
   GameStateScoringDependencies, 
@@ -29,11 +30,13 @@ class BrowserWordData implements WordDataDependencies {
   public enableWords: Set<string> = new Set();
   public slangWords: Set<string> = new Set();
   public profanityWords: Set<string> = new Set();
+  public wordCount: number = 0;
   private wordsByLength: Map<number, string[]> = new Map();
   private loaded = false;
+  private loadingPromise: Promise<void> | null = null;
 
   constructor() {
-    this.loadDictionary();
+    this.loadingPromise = this.loadDictionary();
   }
 
   public hasWord(word: string): boolean {
@@ -41,17 +44,30 @@ class BrowserWordData implements WordDataDependencies {
     return this.enableWords.has(upperWord) || this.slangWords.has(upperWord);
   }
 
+  public isLoaded(): boolean {
+    return this.loaded;
+  }
+
+  /**
+   * Wait for dictionary to be loaded
+   */
+  public async waitForLoad(): Promise<void> {
+    if (this.loadingPromise) {
+      await this.loadingPromise;
+    }
+  }
+
   public getRandomWordByLength(length: number): string | null {
+    if (!this.loaded) {
+      console.warn('BrowserWordData: Dictionary not loaded yet, returning null');
+      return null;
+    }
     const words = this.wordsByLength.get(length);
     if (!words || words.length === 0) {
       return null;
     }
     const randomIndex = Math.floor(Math.random() * words.length);
     return words[randomIndex];
-  }
-
-  public isLoaded(): boolean {
-    return this.loaded;
   }
 
   private async loadDictionary(): Promise<void> {
@@ -72,6 +88,7 @@ class BrowserWordData implements WordDataDependencies {
 
       // Build word set for fast lookup
       this.enableWords = new Set(wordList);
+      this.wordCount = this.enableWords.size;
 
       // Build words-by-length map for random selection
       this.wordsByLength.clear();
@@ -130,6 +147,7 @@ class BrowserWordData implements WordDataDependencies {
     ];
     
     this.enableWords = new Set(fallbackWords);
+    this.wordCount = this.enableWords.size;
     this.slangWords = new Set(['BRUH', 'YEAH', 'YEET', 'SELFIE']);
     
     // Use empty profanity set for fallback
@@ -232,6 +250,10 @@ export class BrowserAdapter {
     if (this.initialized) {
       return;
     }
+    
+    // Wait for dictionary to load before marking as initialized
+    await this.wordData.waitForLoad();
+    
     this.initialized = true;
   }
 
@@ -289,6 +311,13 @@ export class BrowserAdapter {
   async reloadDictionary(): Promise<void> {
     this.wordData = getBrowserWordData();
     this.initialized = false; // Reset initialized flag
+  }
+
+  /**
+   * Get word data for direct access (useful for ensuring dictionary is loaded)
+   */
+  getWordData(): BrowserWordData {
+    return this.wordData;
   }
 }
 
