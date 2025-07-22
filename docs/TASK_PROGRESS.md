@@ -6,10 +6,10 @@
 
 | Metric | Status | Details |
 |--------|--------|---------|
-| **Overall Progress** | 18/32 tasks (56%) | [Phase Overview](#-phase-overview) |
+| **Overall Progress** | 19/33 tasks (58%) | [Phase Overview](#-phase-overview) |
 | **Current Phase** | Phase 4 - Online Multiplayer | [Current Sprint](#-current-sprint) |
 | **Production Ready** | ✅ Single-player web game | [Playable Now](#-ready-for-production) |
-| **Test Status** | 288 tests passing | [Testing Reports](TESTING_REPORTS.md) |
+| **Test Status** | 305 tests passing | [Testing Reports](TESTING_REPORTS.md) |
 | **Bundle Size** | 228.64 kB JS, 29.30 kB CSS | [Performance Metrics](TESTING_REPORTS.md#build-and-bundle-testing) |
 
 ## 🎯 Current Sprint
@@ -36,6 +36,7 @@
 | **Phase 4** - Online Multiplayer | 0/4 | 0% | ⏳ **PENDING** | Auth, CRUD API, Realtime, Profiles |
 | **Phase 5** - Themes & Unlocks | 2/3 | 67% | 🔄 **IN PROGRESS** | Framework ✅, Themes ✅, Six-letter ⏳ |
 | **Phase 5.5** - Tutorials | 2/2 | 100% | ✅ **COMPLETE** | Base tutorial Steps 1-5 ✅, Opponent names ✅ |
+| **Phase 5.6** - Content Enhancement | 1/1 | 100% | ✅ **COMPLETE** | Comprehensive profanity dictionary ✅ |
 | **Phase 6** - Web Polish | 0/3 | 0% | ⏳ **PENDING** | Accessibility, Audio, E2E testing |
 | **Phase 7** - Web Release | 0/4 | 0% | ⏳ **PENDING** | PWA, Performance, Analytics, Launch |
 | **Phase 8** - Monetization | 0/3 | 0% | ⏳ **PENDING** | Payments, Leaderboard, Admin |
@@ -83,6 +84,9 @@
 ### Phase 5.5 - Tutorials ✅ **COMPLETE**
 - **5.5** ✅ Base Tutorial - Step-by-step tutorial building UI for each step (Steps 1-5 implemented, complete tutorial system)
 - **5.6** ✅ Opponent Names Display - Word trail shows opponent names for bot moves with accent color and uppercase styling
+
+### Phase 5.6 - Content Enhancement ✅ **COMPLETE**
+- **5.6.1** ✅ Comprehensive Profanity Dictionary - Centralized platform-agnostic profanity system with 400+ words (26x increase from 15 basic words)
 
 ### Phase 6 - Web Polish & Accessibility ⏳ **PENDING**
 - **6.1** ⏳ Colour-blind Palettes - Accessibility improvements

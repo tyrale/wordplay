@@ -11,6 +11,9 @@
 // import { join, dirname } from 'path';
 // import { fileURLToPath } from 'url';
 
+// Import centralized profanity management
+import { getBasicProfanityWords } from './profanity';
+
 // Types for validation
 export interface ValidationOptions {
   isBot?: boolean;
@@ -22,10 +25,10 @@ export interface ValidationOptions {
 
 export interface ValidationResult {
   isValid: boolean;
-  reason?: string;
   word: string;
-  censored?: string;
+  reason?: string;
   userMessage?: string;
+  censored?: string;
 }
 
 // Dependency interface for word data
@@ -79,12 +82,8 @@ class WordDictionary {
     ];
     slangWords.forEach(word => this.slangWords.add(word.toUpperCase()));
 
-    // Basic profanity list (used for vanity display only)
-    const profanityWords = [
-      'DAMN', 'HELL', 'CRAP', 'PISS', 'SHIT', 'FUCK', 'BITCH', 'ASSHOLE',
-      'BASTARD', 'WHORE', 'SLUT', 'FART', 'POOP', 'BUTT', 'ASS'
-    ];
-    profanityWords.forEach(word => this.profanityWords.add(word.toUpperCase()));
+    // Use centralized profanity source instead of hardcoded list
+    this.profanityWords = getBasicProfanityWords();
 
     this.initialized = true;
     console.warn('Dictionary: Using minimal word set. For full functionality, use dependency injection with complete word data.');
