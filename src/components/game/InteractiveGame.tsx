@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useGameState, useGameStats, useWordState } from '../../hooks/useGameState';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { useVanityFilter } from '../../hooks/useVanityFilter';
+import { useToast } from '../ui/ToastManager';
 import { AlphabetGrid } from './AlphabetGrid';
 import { WordTrail } from './WordTrail';
 
@@ -78,6 +80,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 }) => {
   // Unlock system integration
   const { handleWordSubmission, handleGameCompletion } = useUnlockSystem();
+  const { shouldWordUnlockVanity, unlockVanityToggle, isVanityFilterUnlocked } = useVanityFilter();
+  const { showToast } = useToast();
   
   // Game state management
   const {
@@ -440,12 +444,24 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         // Check for unlock triggers when word is successfully submitted
         await handleWordSubmission(pendingMoveAttempt.newWord);
         
+        // Check if this word should unlock the vanity filter
+        if (!isVanityFilterUnlocked() && shouldWordUnlockVanity(pendingMoveAttempt.newWord)) {
+          unlockVanityToggle();
+          console.log(`[VanityFilter] Word "${pendingMoveAttempt.newWord}" unlocked vanity filter toggle`);
+          showToast({
+            type: 'unlock',
+            title: 'Bad Word Filter Unlocked!',
+            message: 'You can now toggle the bad word filter in the menu.',
+            duration: 5000
+          });
+        }
+        
         setPendingWord(pendingMoveAttempt.newWord);
         setPendingMoveAttempt(null);
         setShowValidationError(false);
       }
     }
-  }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission]);
+  }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, isVanityFilterUnlocked, shouldWordUnlockVanity, unlockVanityToggle, showToast]);
 
   const handleStartGame = useCallback(async () => {
     await actions.startGame();
@@ -608,6 +624,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                     disabled={isProcessingMove}
                     maxLength={10}
                     minLength={3}
+                    isEditing={true}
                   />
                 </div>
               </div>

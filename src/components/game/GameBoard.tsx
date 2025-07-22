@@ -14,6 +14,8 @@ export interface GameBoardProps {
   wordTrail: string[];
   currentWord: string;
   wordHighlights?: LetterHighlight[];
+  /** Whether the current word is being actively edited (affects vanity filtering) */
+  isEditingWord?: boolean;
   
   // Actions and scoring
   actions: ActionState;
@@ -37,6 +39,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   wordTrail,
   currentWord,
   wordHighlights,
+  isEditingWord = false,
   actions,
   score,
   isValidWord,
@@ -56,7 +59,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
       {/* Current Word Display */}
       <div className="game-board__word">
-        <CurrentWord word={currentWord} highlights={wordHighlights} />
+        <CurrentWord word={currentWord} highlights={wordHighlights} isEditing={isEditingWord} />
       </div>
 
       {/* Action Controls - Centered Layout */}

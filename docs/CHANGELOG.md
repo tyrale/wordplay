@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Vanity Filter System** - Complete bad word filtering with user toggle control
+  - `useVanityFilter` hook for state management with localStorage persistence
+  - Real-time word filtering in CurrentWord and WordTrail components
+  - Menu toggle integration (appears in themes section when unlocked)
+  - Automatic unlock when playing profane words
+  - Toast notifications for unlock events
+  - Editing mode shows uncensored words for user clarity
+  - Cross-game mode compatibility (vs-bot and challenge modes)
+  - Comprehensive test suite (11/11 tests passing)
+
+### Added
 
 - **ShipHip: Tutorial Integration with Dramatic Winner/Loser Overlays** ✅ **IMPLEMENTED**
   - **Purpose**: Use the same dramatic winner/loser overlays for tutorial completion as VS bot games

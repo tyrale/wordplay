@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { LetterHighlight } from './CurrentWord';
 import './WordBuilder.css';
 import { LockIcon } from '../ui/LockIcon';
+import { useVanityFilter } from '../../hooks/useVanityFilter';
 
 export interface WordBuilderProps {
   currentWord: string;
@@ -11,6 +12,8 @@ export interface WordBuilderProps {
   disabled?: boolean;
   maxLength?: number;
   minLength?: number;
+  /** Whether the word is currently being edited (affects vanity filtering) */
+  isEditing?: boolean;
 }
 
 export const WordBuilder: React.FC<WordBuilderProps> = ({
@@ -20,8 +23,10 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   onLetterClick,
   disabled = false,
   maxLength = 10,
-  minLength = 3
+  minLength = 3,
+  isEditing = true
 }) => {
+  const { getDisplayWord } = useVanityFilter();
   // Suppress unused variable warnings - kept for interface compatibility
   void maxLength;
   void minLength;
@@ -261,7 +266,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {currentWord.split('').map((letter, index) => {
+      {getDisplayWord(currentWord, { isEditing }).split('').map((letter, index) => {
         const highlight = wordHighlights.find(h => h.index === index);
         const isKey = highlight?.type === 'key';
         const isLocked = highlight?.type === 'locked';

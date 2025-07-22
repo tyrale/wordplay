@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import './WordTrail.css';
+import { useVanityFilter } from '../../hooks/useVanityFilter';
 
 export interface WordMove {
   word: string;
@@ -46,6 +47,8 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   // Unused parameters to avoid TS warnings
   void showTurnNumbers;
   void maxVisible;
+  
+  const { getDisplayWord } = useVanityFilter();
   // Use moves if available, otherwise fall back to simple words
   const displayData = moves.length > 0 
     ? moves.map((move, index) => ({
@@ -77,7 +80,9 @@ export const WordTrail: React.FC<WordTrailProps> = ({
 
   // Render a word with key letter highlighting
   const renderWordWithHighlights = (word: string, keyLetters: string[]) => {
-    const letters = word.toUpperCase().split('');
+    // Apply vanity filtering - completed words in trail are not being edited
+    const displayWord = getDisplayWord(word, { isEditing: false });
+    const letters = displayWord.toUpperCase().split('');
     
     return (
       <span className="word-trail__word-container">

@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useTheme } from '../theme/ThemeProvider';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { useVanityFilter } from '../../hooks/useVanityFilter';
 import { getBotDisplayNamesMapping } from '../../data/botRegistry';
 import './Menu.css';
 
@@ -50,7 +51,9 @@ const getMenuItems = (
   isInGame: boolean = false,
   unlockedMechanics: string[] = [],
   availableBots: string[] = [],
-  currentGameMode?: string
+  currentGameMode?: string,
+  vanityFilterUnlocked: boolean = false,
+  vanityFilterOn: boolean = true
 ): MenuTier1Item[] => [
   // Only include resign if user is in an active game
   ...(isInGame ? [{
@@ -72,6 +75,8 @@ const getMenuItems = (
     title: 'themes', 
     children: [
       { id: 'inverted', title: 'dark mode', isSelected: isInverted },
+      // Only show vanity filter toggle if unlocked
+      ...(vanityFilterUnlocked ? [{ id: 'vanity-filter', title: 'bad word filter', isSelected: vanityFilterOn }] : []),
       ...availableThemes.map(theme => ({
         id: theme.name.toLowerCase().replace(/\s+/g, '-'),
         title: theme.name.toLowerCase(),
@@ -132,6 +137,11 @@ export const Menu: React.FC<MenuProps> = ({
   
   // Get unlock state
   const { getUnlockedItems, resetUnlocksToFresh, isLoading } = useUnlockSystem();
+  
+  // Get vanity filter state
+  const { isVanityFilterUnlocked, isVanityFilterOn, toggleVanityFilter } = useVanityFilter();
+  const vanityFilterUnlocked = isVanityFilterUnlocked();
+  const vanityFilterOn = isVanityFilterOn();
   const unlockedThemeIds = getUnlockedItems('theme');
   const unlockedMechanics = getUnlockedItems('mechanic');
   const unlockedBots = getUnlockedItems('bot');
@@ -153,7 +163,7 @@ export const Menu: React.FC<MenuProps> = ({
     }
   }, []);
 
-  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode);
+  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, vanityFilterUnlocked, vanityFilterOn);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -247,6 +257,10 @@ export const Menu: React.FC<MenuProps> = ({
         // Toggle inverted theme
         toggleInverted();
         // Don't close menu after toggle
+      } else if (tier2Id === 'vanity-filter') {
+        // Toggle vanity filter
+        toggleVanityFilter();
+        // Don't close menu after toggle
       } else {
         // Find and set the selected theme
         const selectedTheme = unlockedThemes.find(theme => 
@@ -285,7 +299,7 @@ export const Menu: React.FC<MenuProps> = ({
     
     // For other items (challenge, mechanics, other about items), keep menu open
     // These are placeholder items that don't have functionality yet
-  }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, resetUnlocksToFresh, resetDailyChallenge]);
+  }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, toggleVanityFilter, resetUnlocksToFresh, resetDailyChallenge]);
 
   if (!isOpen) return null;
 

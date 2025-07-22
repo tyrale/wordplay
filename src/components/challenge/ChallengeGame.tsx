@@ -17,6 +17,7 @@ import { useChallenge } from '../../hooks/useChallenge';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import { shareChallengeResult, getShareResultMessage } from '../../utils/shareUtils';
 import { useToast } from '../ui/ToastManager';
+import { useVanityFilter } from '../../hooks/useVanityFilter';
 import type { GameStateDependencies } from '../../../packages/engine/gamestate';
 
 export interface ChallengeGameProps {
@@ -58,6 +59,9 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
 
   // Toast notifications
   const { showToast } = useToast();
+  
+  // Vanity filter integration
+  const { getDisplayWord } = useVanityFilter();
 
   // Local UI state
   const [pendingWord, setPendingWord] = useState('');
@@ -494,6 +498,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
                   disabled={isProcessingMove}
                   maxLength={10}
                   minLength={3}
+                  isEditing={false}
                 />
               </div>
             </div>

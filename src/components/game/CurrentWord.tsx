@@ -1,6 +1,7 @@
 import React from 'react';
 import './CurrentWord.css';
 import { LockIcon } from '../ui/LockIcon';
+import { useVanityFilter } from '../../hooks/useVanityFilter';
 
 export interface LetterHighlight {
   index: number;
@@ -11,14 +12,21 @@ export interface CurrentWordProps {
   word: string;
   highlights?: LetterHighlight[];
   className?: string;
+  /** Whether the word is currently being edited (shows uncensored during editing) */
+  isEditing?: boolean;
 }
 
 export const CurrentWord: React.FC<CurrentWordProps> = ({ 
   word, 
   highlights = [], 
-  className = '' 
+  className = '',
+  isEditing = false
 }) => {
-  const letters = word.toUpperCase().split('');
+  const { getDisplayWord } = useVanityFilter();
+  
+  // Apply vanity filtering - show uncensored word when editing for user clarity
+  const displayWord = getDisplayWord(word, { isEditing });
+  const letters = displayWord.toUpperCase().split('');
   
   // Create a map for quick lookup of highlights
   const highlightMap = highlights.reduce((acc, { index, type }) => {
@@ -27,7 +35,7 @@ export const CurrentWord: React.FC<CurrentWordProps> = ({
   }, {} as Record<number, 'key' | 'locked' | 'lockedKey'>);
 
   return (
-    <div className={`current-word ${className}`.trim()} role="status" aria-label={`Current word: ${word}`}>
+    <div className={`current-word ${className}`.trim()} role="status" aria-label={`Current word: ${displayWord}`}>
       {letters.map((letter, index) => {
         const highlightType = highlightMap[index];
         
