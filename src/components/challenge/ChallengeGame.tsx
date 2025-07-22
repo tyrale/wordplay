@@ -157,15 +157,15 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
 
     // Extract action states from scoring result
     const actionState: ActionState = {
-      add: scoringResult.actions.some((action: string) => action.startsWith('Added letter')),
-      remove: scoringResult.actions.some((action: string) => action.startsWith('Removed letter')),
-      move: scoringResult.actions.some((action: string) => action === 'Moved letters')
+      add: scoringResult.actions.some((action) => action.type === 'add'),
+      remove: scoringResult.actions.some((action) => action.type === 'remove'),
+      move: scoringResult.actions.some((action) => action.type === 'rearrange')
     };
 
     // Create score breakdown (not displayed but needed for consistency)
     const scoreBreakdown: ScoreBreakdown = {
-      base: scoringResult.breakdown.addLetterPoints + scoringResult.breakdown.removeLetterPoints + scoringResult.breakdown.movePoints,
-      keyBonus: 0, // No key letter bonus in challenge mode
+      base: scoringResult.baseScore || 0,
+      keyBonus: scoringResult.keyLetterScore || 0,
       total: 0 // Don't show total score in challenge mode
     };
 
