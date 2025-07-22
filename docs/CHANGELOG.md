@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## ⚠️ **DOCUMENTATION NOTICE (Updated 2025-01-22)**
+
+**This changelog contains historical development entries that may not reflect current codebase reality.** For accurate current status, refer to:
+
+- **Current Test Status**: 264/307 tests passing (86%) - See [TESTING_REPORTS.md](TESTING_REPORTS.md)
+- **Current Features**: Single-player game with 2 animation themes - See [QUICK_START.md](QUICK_START.md)
+- **Current Architecture**: Platform-agnostic with dependency injection - See [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Project Status**: Core game complete, no active development - See [TASK_PROGRESS.md](TASK_PROGRESS.md)
+
+**Historical entries below reflect development notes and may contain aspirational or outdated claims.**
+
 ## [Unreleased]
 
 ### Added
