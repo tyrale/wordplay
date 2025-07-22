@@ -421,11 +421,15 @@ export async function generateBotMove(
     validateWord: dictionary.validateWord,
     isValidDictionaryWord: dictionary.isValidDictionaryWord,
     getRandomWordByLength: dictionary.getRandomWordByLength || (() => null),
-    getWordCount: dictionary.getWordCount || (() => 0),
+    getWordCount: () => 0, // Legacy fallback - use 0 for word count
     getTimestamp: () => Date.now(),
     random: () => Math.random(),
-    getScoreForMove: scoring.getScoreForMove,
-    calculateScore: scoring.calculateScore
+    getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]) => {
+      return scoring.getScoreForMove(fromWord, toWord, keyLetters || []);
+    },
+    calculateScore: (fromWord: string, toWord: string, keyLetters?: string[]) => {
+      return scoring.calculateScore(fromWord, toWord, { keyLetters: keyLetters || [] });
+    }
   };
   
   return generateBotMoveWithDependencies(currentWord, dependencies, options);

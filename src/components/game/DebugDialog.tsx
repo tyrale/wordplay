@@ -1,9 +1,28 @@
-import React from 'react';
-// import { getDictionarySize } from '../../utils/engineExports'; // REMOVED: Part of Step 2 cleanup
+import React, { useState, useEffect } from 'react';
+import { createBrowserAdapter } from '../../adapters/browserAdapter';
+import type { WordDataDependencies } from '../../../packages/engine/interfaces';
 import './DebugDialog.css';
 
-// Temporary placeholder until dependency injection implemented
-const getDictionarySize = () => 0; // Placeholder for debugging interface
+// Hook to get dictionary size using dependency injection
+function useDictionarySize(): number {
+  const [wordCount, setWordCount] = useState(0);
+  
+  useEffect(() => {
+    const initializeWordData = async () => {
+      try {
+        const adapter = await createBrowserAdapter();
+        const wordData = adapter.getWordData();
+        setWordCount(wordData.wordCount);
+      } catch (error) {
+        console.warn('Failed to load dictionary size:', error);
+      }
+    };
+    
+    initializeWordData();
+  }, []);
+  
+  return wordCount;
+}
 
 export interface DebugDialogProps {
   isOpen: boolean;
@@ -34,7 +53,11 @@ export const DebugDialog: React.FC<DebugDialogProps> = ({
   onWordChange,
   isProcessingMove
 }) => {
-  if (!isOpen) return null;
+  const dictionarySize = useDictionarySize();
+  
+  if (!isOpen) {
+    return null;
+  }
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -43,8 +66,8 @@ export const DebugDialog: React.FC<DebugDialogProps> = ({
   };
 
   return (
-    <div className="debug-dialog-overlay" onClick={handleOverlayClick}>
-      <div className="debug-dialog">
+    <div className="debug-dialog__overlay" onClick={onClose}>
+      <div className="debug-dialog__modal" onClick={(e) => e.stopPropagation()}>
         <div className="debug-dialog__header">
           <h2>Debug Information</h2>
           <button 
@@ -59,7 +82,7 @@ export const DebugDialog: React.FC<DebugDialogProps> = ({
         <div className="debug-dialog__content">
           <div className="debug-dialog__section">
             <h3>Dictionary Status</h3>
-            <p><strong>Total words available:</strong> {getDictionarySize()}</p>
+            <p><strong>Total words available:</strong> {dictionarySize}</p>
             <p><strong>Current word:</strong> {wordState.currentWord}</p>
             <p><strong>Used words:</strong> {wordState.usedWords.join(', ')}</p>
           </div>
