@@ -181,7 +181,11 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
   const [isProcessingMove, setIsProcessingMove] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   
-  // React state changes (debug logs removed for cleaner console)
+  // Debug React state changes
+  useEffect(() => {
+    console.log('[DEBUG] useGameState: React gameState updated, turnHistory length:', gameState.turnHistory?.length || 0);
+    console.log('[DEBUG] useGameState: React gameState.turnHistory:', gameState.turnHistory);
+  }, [gameState]);
   
   // Use refs to avoid dependency issues
   const onGameStateChangeRef = useRef(onGameStateChange);
