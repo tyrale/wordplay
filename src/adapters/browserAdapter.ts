@@ -5,7 +5,8 @@
  * dictionary loading via fetch API and caching strategies.
  */
 
-import type { WordDataDependencies } from '../../packages/engine/dictionary';
+import type { WordDataDependencies, ValidationResult } from '../../packages/engine/dictionary';
+import { validateWordWithDependencies, isValidDictionaryWordWithDependencies } from '../../packages/engine/dictionary';
 
 // Import centralized profanity management
 import { getComprehensiveProfanityWords } from '../../packages/engine/profanity';
