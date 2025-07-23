@@ -21,6 +21,7 @@ export interface UseVanityFilterReturn {
   
   // Query functions
   isVanityFilterUnlocked: () => boolean;
+  isVanityFilterOn: () => boolean;
   shouldWordUnlockVanity: (word: string) => boolean;
 }
 
@@ -66,6 +67,10 @@ export function useVanityFilter(): UseVanityFilterReturn {
     return vanityState.hasUnlockedToggle;
   }, [vanityState.hasUnlockedToggle]);
 
+  const isVanityFilterOn = useCallback((): boolean => {
+    return vanityState.isVanityFilterOn;
+  }, [vanityState.isVanityFilterOn]);
+
   const getDisplayWord = useCallback((word: string, options: { isEditing?: boolean } = {}): string => {
     if (!wordData || !isLoaded) {
       // Return word as-is if word data not loaded yet
@@ -101,6 +106,7 @@ export function useVanityFilter(): UseVanityFilterReturn {
     toggleVanityFilter,
     unlockVanityToggle,
     isVanityFilterUnlocked,
+    isVanityFilterOn,
     shouldWordUnlockVanity
   };
 } 
