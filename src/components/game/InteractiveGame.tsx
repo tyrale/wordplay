@@ -13,6 +13,7 @@ import { Menu } from '../ui/Menu';
 import { getBotDisplayName } from '../../data/botRegistry';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import type { WordDataDependencies } from '../../../packages/engine/interfaces';
+import { useBrowserAdapter } from '../../hooks/useBrowserAdapter';
 
 // Game configuration and state interfaces
 interface GameConfig {
@@ -32,24 +33,10 @@ interface MoveAttempt {
 
 // Dictionary validation using proper dependency injection
 function useDictionaryValidation() {
-  const [wordData, setWordData] = useState<WordDataDependencies | null>(null);
-  
-  useEffect(() => {
-    const initializeWordData = async () => {
-      try {
-        const adapter = await createBrowserAdapter();
-        const adapterWordData = adapter.getWordData();
-        setWordData(adapterWordData);
-      } catch (error) {
-        console.error('Failed to initialize word data:', error);
-      }
-    };
-    
-    initializeWordData();
-  }, []);
+  const { wordData, isLoaded } = useBrowserAdapter();
   
   const isValidDictionaryWord = useCallback((word: string): boolean => {
-    if (!wordData) {
+    if (!wordData || !isLoaded) {
       console.warn('Dictionary not loaded yet, validation failed');
       return false;
     }
@@ -61,7 +48,7 @@ function useDictionaryValidation() {
       console.warn('Dictionary validation error:', error);
       return false;
     }
-  }, [wordData]);
+  }, [wordData, isLoaded]);
   
   return { isValidDictionaryWord, wordData };
 }

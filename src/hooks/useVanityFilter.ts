@@ -1,40 +1,27 @@
 /**
- * React Hook for Vanity Filter Management
- * 
- * Manages vanity filter state including:
- * - Whether user has unlocked the vanity toggle feature
- * - Whether the vanity filter is currently on/off
- * - localStorage persistence
- * - Integration with platform-agnostic vanity display system
+ * React Hook for Vanity Filter State Management
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  getVanityDisplayWordWithDependencies, 
-  shouldUnlockVanityToggleWithDependencies 
-} from '../../packages/engine/dictionary';
-import { createBrowserAdapter } from '../adapters/browserAdapter';
-import type { VanityState } from '../../packages/engine/dictionary';
+import { getVanityDisplayWordWithDependencies, shouldUnlockVanityToggleWithDependencies, type VanityState } from '../../packages/engine/dictionary';
 import type { WordDataDependencies } from '../../packages/engine/interfaces';
+import { useBrowserAdapter } from './useBrowserAdapter';
 
 export interface UseVanityFilterReturn {
-  // Current state
+  // State
   vanityState: VanityState;
   isLoading: boolean;
   
-  // Queries
-  isVanityFilterUnlocked: () => boolean;
-  isVanityFilterOn: () => boolean;
-  shouldWordUnlockVanity: (word: string) => boolean;
-  
-  // Actions
-  unlockVanityToggle: () => void;
-  toggleVanityFilter: () => void;
-  setVanityFilter: (enabled: boolean) => void;
-  
-  // Display helpers
+  // Display functions
   getDisplayWord: (word: string, options?: { isEditing?: boolean }) => string;
-  resetVanityState: () => void;
+  
+  // Toggle functions
+  toggleVanityFilter: () => void;
+  unlockVanityToggle: () => void;
+  
+  // Query functions
+  isVanityFilterUnlocked: () => boolean;
+  shouldWordUnlockVanity: (word: string) => boolean;
 }
 
 const STORAGE_KEY_UNLOCKED = 'wordplay-vanity-unlocked';
@@ -44,6 +31,8 @@ const STORAGE_KEY_FILTER = 'wordplay-vanity-filter';
  * Hook for managing vanity filter state in React components
  */
 export function useVanityFilter(): UseVanityFilterReturn {
+  const { wordData, isLoaded } = useBrowserAdapter();
+  
   const [vanityState, setVanityState] = useState<VanityState>(() => {
     // Initialize from localStorage
     try {
@@ -62,24 +51,6 @@ export function useVanityFilter(): UseVanityFilterReturn {
     }
   });
   
-  const [isLoading] = useState(false);
-  const [wordData, setWordData] = useState<WordDataDependencies | null>(null);
-
-  // Initialize browser adapter and get word data
-  useEffect(() => {
-    const initializeWordData = async () => {
-      try {
-        const adapter = await createBrowserAdapter();
-        const adapterWordData = adapter.getWordData();
-        setWordData(adapterWordData);
-      } catch (error) {
-        console.warn('Failed to initialize word data for vanity filter:', error);
-      }
-    };
-
-    initializeWordData();
-  }, []);
-
   // Persist state to localStorage whenever it changes
   useEffect(() => {
     try {
@@ -95,77 +66,41 @@ export function useVanityFilter(): UseVanityFilterReturn {
     return vanityState.hasUnlockedToggle;
   }, [vanityState.hasUnlockedToggle]);
 
-  const isVanityFilterOn = useCallback((): boolean => {
-    return vanityState.isVanityFilterOn;
-  }, [vanityState.isVanityFilterOn]);
+  const getDisplayWord = useCallback((word: string, options: { isEditing?: boolean } = {}): string => {
+    if (!wordData || !isLoaded) {
+      // Return word as-is if word data not loaded yet
+      return word.trim().toUpperCase();
+    }
+    return getVanityDisplayWordWithDependencies(word, vanityState, wordData, options);
+  }, [vanityState, wordData, isLoaded]);
 
   const shouldWordUnlockVanity = useCallback((word: string): boolean => {
-    if (!wordData) return false;
-    // Check if word is profane using browser adapter data
-    const normalizedWord = word.trim().toUpperCase();
-    return wordData.profanityWords.has(normalizedWord);
-  }, [wordData]);
+    if (!wordData || !isLoaded) return false;
+    return shouldUnlockVanityToggleWithDependencies(word, wordData);
+  }, [wordData, isLoaded]);
 
-  // Action functions
-  const unlockVanityToggle = useCallback((): void => {
-    setVanityState(prev => ({
+  // Toggle functions
+  const toggleVanityFilter = useCallback(() => {
+    setVanityState((prev: VanityState) => ({
+      ...prev,
+      isVanityFilterOn: !prev.isVanityFilterOn
+    }));
+  }, []);
+
+  const unlockVanityToggle = useCallback(() => {
+    setVanityState((prev: VanityState) => ({
       ...prev,
       hasUnlockedToggle: true
     }));
   }, []);
 
-  const toggleVanityFilter = useCallback((): void => {
-    if (!vanityState.hasUnlockedToggle) {
-      console.warn('Cannot toggle vanity filter - feature not unlocked yet');
-      return;
-    }
-    
-    setVanityState(prev => ({
-      ...prev,
-      isVanityFilterOn: !prev.isVanityFilterOn
-    }));
-  }, [vanityState.hasUnlockedToggle]);
-
-  const setVanityFilter = useCallback((enabled: boolean): void => {
-    if (!vanityState.hasUnlockedToggle) {
-      console.warn('Cannot set vanity filter - feature not unlocked yet');
-      return;
-    }
-    
-    setVanityState(prev => ({
-      ...prev,
-      isVanityFilterOn: enabled
-    }));
-  }, [vanityState.hasUnlockedToggle]);
-
-  // Display helper function
-  const getDisplayWord = useCallback((word: string, options: { isEditing?: boolean } = {}): string => {
-    if (!wordData) {
-      // Return word unchanged if wordData not loaded yet
-      return word.trim().toUpperCase();
-    }
-    
-    return getVanityDisplayWordWithDependencies(word, vanityState, wordData, options);
-  }, [vanityState, wordData]);
-
-  // Reset function for testing/debug
-  const resetVanityState = useCallback((): void => {
-    setVanityState({
-      hasUnlockedToggle: false,
-      isVanityFilterOn: true
-    });
-  }, []);
-
   return {
     vanityState,
-    isLoading,
-    isVanityFilterUnlocked,
-    isVanityFilterOn,
-    shouldWordUnlockVanity,
-    unlockVanityToggle,
-    toggleVanityFilter,
-    setVanityFilter,
+    isLoading: !isLoaded,
     getDisplayWord,
-    resetVanityState
+    toggleVanityFilter,
+    unlockVanityToggle,
+    isVanityFilterUnlocked,
+    shouldWordUnlockVanity
   };
 } 
