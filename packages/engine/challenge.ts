@@ -104,13 +104,11 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
   const { dictionary, utilities, loadState, saveState } = dependencies;
 
   /**
-   * Initialize the challenge engine
+   * Initialize challenge engine
    */
   async function initialize(): Promise<void> {
-    // Ensure dictionary is initialized
-    if (!dependencies.dictionary.getDictionaryInfo().isLoaded) {
-      throw new Error('Dictionary must be initialized before challenge engine');
-    }
+    // Dependencies are already initialized by the adapters
+    // No additional initialization needed for dependency injection
   }
 
   /**
@@ -163,7 +161,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     
     // Try to get a valid start word (no repeating letters)
     while (!startWord && attempts < maxAttempts) {
-      const candidateWord = dependencies.dictionary.getRandomWordByLength(startLength);
+      const candidateWord = dictionary.getRandomWordByLength(startLength);
       
       if (candidateWord && isValidStartWord(candidateWord)) {
         // Use the RNG to vary selection even with deterministic mock
@@ -196,7 +194,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     
     // Try to get a valid target word with all constraints
     while ((!targetWord || !isValidTargetWord(startWord, targetWord)) && attempts < maxTargetAttempts) {
-      targetWord = dependencies.dictionary.getRandomWordByLength(finalTargetLength);
+      targetWord = dictionary.getRandomWordByLength(finalTargetLength);
       attempts++;
       
       // Use the RNG to vary selection
@@ -373,7 +371,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     if (lengthDiff > 1) return false;
     
     // Must be valid dictionary words
-    if (!dependencies.dictionary.isValidDictionaryWord(to)) return false;
+    if (!dictionary.isValidDictionaryWord(to)) return false;
     
     return true;
   }
@@ -586,7 +584,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     
     // Try to get a valid start word (no repeating letters)
     while (!startWord && attempts < maxAttempts) {
-      const candidateWord = dependencies.dictionary.getRandomWordByLength(startLength);
+      const candidateWord = dictionary.getRandomWordByLength(startLength);
       
       if (candidateWord && isValidStartWord(candidateWord)) {
         // Use the RNG to vary selection
@@ -617,7 +615,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     
     // Try to get a valid target word with all constraints
     while ((!targetWord || !isValidTargetWord(startWord, targetWord)) && targetAttempts < maxTargetAttempts) {
-      targetWord = dependencies.dictionary.getRandomWordByLength(finalTargetLength);
+      targetWord = dictionary.getRandomWordByLength(finalTargetLength);
       targetAttempts++;
       
       // Use the RNG to vary selection
