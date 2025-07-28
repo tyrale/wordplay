@@ -24,7 +24,6 @@
 | ✅ **DONE** | Vanity Filter System | **COMPLETE** | Bad word filtering with user toggle control |
 | ✅ **DONE** | Complete Dependency Injection Migration | **COMPLETE** | Full platform-agnostic architecture for iOS/Android |
 | 🔄 **Active** | Test Suite Improvement | **IN PROGRESS** | 288/330 tests passing (legacy test cleanup needed) |
-| ✅ **DONE** | Challenge Mode Word Trail Fix | **COMPLETE** | Target word now remains visible after first word submission |
 
 **Current Focus**: The game engine is now 100% platform-agnostic and ready for multi-platform deployment including iOS and Android apps without any revisiting of core game logic.
 

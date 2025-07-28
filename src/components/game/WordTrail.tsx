@@ -198,6 +198,47 @@ export const WordTrail: React.FC<WordTrailProps> = ({
     );
   };
 
+  // Render a word with both start and target words positioned around it (for single-word case)
+  const renderWordWithBothStartAndTargetWord = (word: string, keyLetters: string[], startWord: string, targetWord: string) => {
+    // Apply vanity filtering to the main word
+    const displayWord = getDisplayWord(word, { isEditing: false });
+    const letters = displayWord.toUpperCase().split('');
+    
+    return (
+      <span className="word-trail__word-container">
+        {letters.map((letter, index) => {
+          const isKeyLetter = keyLetters.includes(letter);
+          const isFirstLetter = index === 0;
+          const isLastLetter = index === letters.length - 1;
+          return (
+            <span
+              key={index}
+              className={`word-trail__letter ${isKeyLetter ? 'word-trail__letter--key' : ''} ${isFirstLetter ? 'word-trail__letter--first' : ''} ${isLastLetter ? 'word-trail__letter--last' : ''}`}
+            >
+              {isFirstLetter && (
+                <div className="word-trail__start-word">
+                  <span className="word-trail__word word-trail__word--start">
+                    {renderWordWithHighlights(startWord, [])}
+                  </span>
+                  <span className="word-trail__arrow word-trail__arrow--right">→</span>
+                </div>
+              )}
+              {letter}
+              {isLastLetter && (
+                <div className="word-trail__target-word">
+                  <span className="word-trail__arrow word-trail__arrow--left">←</span>
+                  <span className="word-trail__word word-trail__word--target">
+                    {renderWordWithHighlights(targetWord, [])}
+                  </span>
+                </div>
+              )}
+            </span>
+          );
+        })}
+      </span>
+    );
+  };
+
   // Challenge mode rendering
   if (isChallengeMode && startWord && targetWord) {
     return (
@@ -209,6 +250,7 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                 <div className="word-trail__container">
                   {reversedPlayedMoves.map((item, index) => {
                     const isFirstWord = index === reversedPlayedMoves.length - 1;
+                    const isLastWord = index === 0;
                     
                     return (
                       <div 
@@ -217,7 +259,8 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                           'word-trail__line',
                           onWordClick && 'word-trail__line--clickable',
                           item.player && `word-trail__line--player-${item.player}`,
-                          isFirstWord && 'word-trail__line--first'
+                          isFirstWord && 'word-trail__line--first',
+                          isLastWord && 'word-trail__line--last'
                         ].filter(Boolean).join(' ')}
                         role="listitem"
                       >
@@ -235,8 +278,12 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                           tabIndex={onWordClick ? 0 : undefined}
                           aria-label={`Word: ${item.word}${showScores ? `, ${item.score} points` : ''}`}
                         >
-                          {isFirstWord 
+                          {isFirstWord && isLastWord
+                            ? renderWordWithBothStartAndTargetWord(item.word, item.keyLetters, startWord, targetWord)
+                            : isFirstWord 
                             ? renderWordWithStartWord(item.word, item.keyLetters, startWord)
+                            : isLastWord
+                            ? renderWordWithTargetWord(item.word, item.keyLetters, targetWord)
                             : renderWordWithHighlights(item.word, item.keyLetters)
                           }
                         </span>
@@ -262,13 +309,6 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                       </div>
                     );
                   })}
-                  
-                  {/* Always show target word at the bottom when there are played words */}
-                  <div className="word-trail__line word-trail__line--target">
-                    <span className="word-trail__word word-trail__word--target">
-                      {renderWordWithHighlights(targetWord, [])}
-                    </span>
-                  </div>
                 </div>
               ) : (
                 // Empty state - start and target words centered

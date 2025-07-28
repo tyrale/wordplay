@@ -57,10 +57,6 @@
   color: var(--theme-accent);
 }
 
-.word-trail__line--target {
-  color: var(--theme-accent);
-}
-
 .word-trail__word {
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
@@ -76,10 +72,6 @@
 }
 
 .word-trail__line--player-target .word-trail__word {
-  color: inherit;
-}
-
-.word-trail__line--target .word-trail__word {
   color: inherit;
 }
 
@@ -292,6 +284,17 @@
   white-space: nowrap;
   z-index: 10;
   text-align: left; /* Left-justify the content */
+}
+
+/* Special handling for letters that are both first and last (single-word case) */
+.word-trail__letter--first.word-trail__letter--last .word-trail__start-word {
+  /* Ensure start word appears above target word in z-index */
+  z-index: 11;
+}
+
+.word-trail__letter--first.word-trail__letter--last .word-trail__target-word {
+  /* Target word gets default z-index */
+  z-index: 10;
 }
 
 .word-trail__played-words::-webkit-scrollbar {
