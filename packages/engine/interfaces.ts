@@ -23,7 +23,7 @@ export interface ValidationResult {
 export interface ScoringResult {
   score: number;
   totalScore: number;
-  breakdown: string[];
+  breakdown: string[] | Record<string, number>; // Support both old and new formats
   actions: ScoringAction[];
   keyLetterScore: number;
   baseScore: number;
@@ -169,6 +169,9 @@ export interface ScoringDependencies {
  */
 export interface BotDependencies extends DictionaryDependencies, UtilityDependencies, ScoringDependencies {
   // Bot-specific dependencies can be added here
+  getWordCount: () => number;
+  getTimestamp: () => number;
+  random: () => number;
 }
 
 /**
@@ -658,23 +661,37 @@ export interface UnlockResult {
   name: string;
   description: string;
   isNew: boolean; // true if this is a new unlock, false if already unlocked
+  target?: string; // Old format compatibility
+  immediateEffect?: {
+    type: string;
+    value: string;
+  }; // Old format compatibility
+  unlockId?: string; // Old format compatibility
 }
 
 export interface UnlockTrigger {
   type: 'word' | 'achievement';
-  condition: string;
-  unlocks: Array<{
+  condition?: string; // New format
+  value?: string; // Old format compatibility
+  timing?: string; // Old format compatibility
+  unlocks?: Array<{
     category: 'theme' | 'mechanic' | 'bot';
     itemId: string;
-  }>;
+  }>; // New format
 }
 
 export interface UnlockDefinition {
+  id?: string; // Old format compatibility
   trigger: UnlockTrigger;
   category: 'theme' | 'mechanic' | 'bot';
-  itemId: string;
-  name: string;
-  description: string;
+  itemId?: string; // Made optional for backward compatibility
+  name?: string; // Made optional for backward compatibility
+  description?: string; // Made optional for backward compatibility
+  target?: string; // Old format compatibility
+  immediate_effect?: {
+    type: string;
+    value: string;
+  }; // Old format compatibility
 }
 
 export interface UnlockDependencies {

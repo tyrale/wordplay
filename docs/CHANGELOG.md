@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Challenge Mode Word Trail Target Word Visibility** - Target word now remains visible throughout challenge
+  - **Problem**: Target word disappeared after first word submission in challenge mode
+  - **Solution**: Modified WordTrail component to always show target word at bottom when words are played
+  - **Implementation**: Added dedicated target word line that appears after played words in challenge mode
+  - **CSS Styling**: Added `.word-trail__line--target` class with accent color styling
+  - **User Experience**: Players can now always see the target word as visual reference during challenge
+
 ### Added
 - **Complete Multi-Platform Dependency Injection Migration** - 100% platform-agnostic architecture
   - Eliminated all singleton patterns from game engine for true multi-platform support
@@ -33,15 +41,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Cross-platform verification: Web (✅), Node.js (✅), Tests (✅), Mobile (🚀 Ready)
   - Comprehensive testing: 288/330 tests passing (42 legacy tests expected to fail)
 
-- **Vanity Filter System** - Complete bad word filtering with user toggle control
-  - `useVanityFilter` hook for state management with localStorage persistence
-  - Real-time word filtering in CurrentWord and WordTrail components
-  - Menu toggle integration (appears in themes section when unlocked)
-  - Automatic unlock when playing profane words
-  - Toast notifications for unlock events
-  - Editing mode shows uncensored words for user clarity
-  - Cross-game mode compatibility (vs-bot and challenge modes)
-  - Comprehensive test suite (11/11 tests passing)
+- **Vanity Filter System - Live Toggle Implementation** - Real-time bad word filtering with shared state
+  - **Context Provider**: `VanityFilterProvider` centralizes all vanity filter state
+  - **Live Updates**: Toggle changes apply immediately to all displayed words without page refresh
+  - **Shared State**: All components use the same context for consistent behavior
+  - **Menu Integration**: Toggle appears in mechanics section when unlocked
+  - **Automatic Unlock**: Playing profane words unlocks the filter toggle feature
+  - **Toast Notifications**: User feedback when feature becomes available
+  - **Editing Mode**: Uncensored display during word editing for clarity
+  - **Cross-game Mode**: Works in both vs-bot and challenge modes
+  - **Persistence**: Settings saved to localStorage and restored on page load
+  - **Performance**: Single state source, no duplicate initialization
 
 ### Added
 

@@ -57,6 +57,10 @@
   color: var(--theme-accent);
 }
 
+.word-trail__line--target {
+  color: var(--theme-accent);
+}
+
 .word-trail__word {
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
@@ -72,6 +76,10 @@
 }
 
 .word-trail__line--player-target .word-trail__word {
+  color: inherit;
+}
+
+.word-trail__line--target .word-trail__word {
   color: inherit;
 }
 

@@ -1,18 +1,23 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import type { LetterHighlight } from './CurrentWord';
+import { useVanityFilter } from '../../hooks/useVanityFilter';
 import './WordBuilder.css';
 import { LockIcon } from '../ui/LockIcon';
-import { useVanityFilter } from '../../hooks/useVanityFilter';
+
+export interface LetterClickInfo {
+  letter: string;
+  index: number;
+  isFirstOccurrence?: boolean;
+}
 
 export interface WordBuilderProps {
   currentWord: string;
-  wordHighlights?: LetterHighlight[];
-  onWordChange?: (word: string) => void;
-  onLetterClick?: (index: number) => void;
+  wordHighlights?: Array<{ index: number; type: 'key' | 'locked' | 'lockedKey' }>;
+  onWordChange?: (newWord: string) => void;
+  onLetterClick?: (info: LetterClickInfo) => void;
   disabled?: boolean;
   maxLength?: number;
   minLength?: number;
-  /** Whether the word is currently being edited (affects vanity filtering) */
+  className?: string;
   isEditing?: boolean;
 }
 
@@ -24,7 +29,8 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   disabled = false,
   maxLength = 10,
   minLength = 3,
-  isEditing = true
+  className = '',
+  isEditing = false
 }) => {
   const { getDisplayWord } = useVanityFilter();
   // Suppress unused variable warnings - kept for interface compatibility
@@ -85,9 +91,9 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     }
 
     if (onLetterClick) {
-      onLetterClick(index);
+      onLetterClick({ letter: currentWord[index], index: index });
     }
-  }, [disabled, isDragging, onLetterClick, wordHighlights]);
+  }, [disabled, isDragging, onLetterClick, currentWord, wordHighlights]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent, index: number) => {
     if (disabled) return;

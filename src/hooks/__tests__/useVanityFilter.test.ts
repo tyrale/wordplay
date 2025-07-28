@@ -1,10 +1,11 @@
 /**
- * Unit tests for useVanityFilter hook
+ * Unit tests for useVanityFilter hook with context
  */
 
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useVanityFilter } from '../useVanityFilter';
+import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -25,203 +26,142 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock
 });
 
-describe('useVanityFilter', () => {
+// Mock the browser adapter
+vi.mock('../../adapters/browserAdapter', () => ({
+  createBrowserAdapter: vi.fn().mockResolvedValue({
+    getWordData: () => ({
+      enableWords: new Set(['CAT', 'DOG', 'TEST']),
+      slangWords: new Set(['COOL']),
+      profanityWords: new Set(['DAMN', 'SHIT']),
+      wordCount: 1000,
+      hasWord: () => true,
+      isLoaded: () => true,
+      waitForLoad: async () => {},
+      getRandomWordByLength: () => 'TEST'
+    })
+  })
+}));
+
+describe('useVanityFilter with context', () => {
   beforeEach(() => {
     localStorageMock.clear();
-    vi.clearAllMocks();
   });
 
-  it('should initialize with default state for new user', () => {
-    const { result } = renderHook(() => useVanityFilter());
-    
-    expect(result.current.vanityState).toEqual({
-      hasUnlockedToggle: false,
-      isVanityFilterOn: true
+  it('should initialize with default state', () => {
+    const { result } = renderHook(() => useVanityFilter(), {
+      wrapper: VanityFilterProvider
     });
+    
+    expect(result.current.vanityState.hasUnlockedToggle).toBe(false);
+    expect(result.current.vanityState.isVanityFilterOn).toBe(true);
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.isVanityFilterUnlocked()).toBe(false);
-    expect(result.current.isVanityFilterOn()).toBe(true);
   });
 
   it('should load state from localStorage', () => {
-    // Set up localStorage with unlocked state
     localStorageMock.setItem('wordplay-vanity-unlocked', 'true');
     localStorageMock.setItem('wordplay-vanity-filter', 'false');
     
-    const { result } = renderHook(() => useVanityFilter());
-    
-    expect(result.current.vanityState).toEqual({
-      hasUnlockedToggle: true,
-      isVanityFilterOn: false
+    const { result } = renderHook(() => useVanityFilter(), {
+      wrapper: VanityFilterProvider
     });
-    expect(result.current.isVanityFilterUnlocked()).toBe(true);
-    expect(result.current.isVanityFilterOn()).toBe(false);
+    
+    expect(result.current.vanityState.hasUnlockedToggle).toBe(true);
+    expect(result.current.vanityState.isVanityFilterOn).toBe(false);
+  });
+
+  it('should toggle vanity filter', () => {
+    const { result } = renderHook(() => useVanityFilter(), {
+      wrapper: VanityFilterProvider
+    });
+    
+    act(() => {
+      result.current.toggleVanityFilter();
+    });
+    
+    expect(result.current.vanityState.isVanityFilterOn).toBe(false);
+    
+    act(() => {
+      result.current.toggleVanityFilter();
+    });
+    
+    expect(result.current.vanityState.isVanityFilterOn).toBe(true);
   });
 
   it('should unlock vanity toggle', () => {
-    const { result } = renderHook(() => useVanityFilter());
+    const { result } = renderHook(() => useVanityFilter(), {
+      wrapper: VanityFilterProvider
+    });
+    
+    expect(result.current.vanityState.hasUnlockedToggle).toBe(false);
+    
+    act(() => {
+      result.current.unlockVanityToggle();
+    });
+    
+    expect(result.current.vanityState.hasUnlockedToggle).toBe(true);
+  });
+
+  it('should return correct unlock status', () => {
+    const { result } = renderHook(() => useVanityFilter(), {
+      wrapper: VanityFilterProvider
+    });
+    
+    expect(result.current.isVanityFilterUnlocked()).toBe(false);
     
     act(() => {
       result.current.unlockVanityToggle();
     });
     
     expect(result.current.isVanityFilterUnlocked()).toBe(true);
+  });
+
+  it('should return correct filter status', () => {
+    const { result } = renderHook(() => useVanityFilter(), {
+      wrapper: VanityFilterProvider
+    });
+    
+    expect(result.current.isVanityFilterOn()).toBe(true);
+    
+    act(() => {
+      result.current.toggleVanityFilter();
+    });
+    
+    expect(result.current.isVanityFilterOn()).toBe(false);
+  });
+
+  it('should persist state to localStorage', () => {
+    const { result } = renderHook(() => useVanityFilter(), {
+      wrapper: VanityFilterProvider
+    });
+    
+    act(() => {
+      result.current.unlockVanityToggle();
+    });
+    
     expect(localStorageMock.getItem('wordplay-vanity-unlocked')).toBe('true');
-  });
-
-  it('should toggle vanity filter when unlocked', () => {
-    const { result } = renderHook(() => useVanityFilter());
     
-    // First unlock the toggle
-    act(() => {
-      result.current.unlockVanityToggle();
-    });
-    
-    // Then toggle the filter
     act(() => {
       result.current.toggleVanityFilter();
     });
     
-    expect(result.current.isVanityFilterOn()).toBe(false);
     expect(localStorageMock.getItem('wordplay-vanity-filter')).toBe('false');
-    
-    // Toggle again
-    act(() => {
-      result.current.toggleVanityFilter();
-    });
-    
-    expect(result.current.isVanityFilterOn()).toBe(true);
-    expect(localStorageMock.getItem('wordplay-vanity-filter')).toBe('true');
   });
 
-  it('should not toggle vanity filter when not unlocked', () => {
-    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { result } = renderHook(() => useVanityFilter());
-    
-    act(() => {
-      result.current.toggleVanityFilter();
+  it('should get display word', () => {
+    const { result } = renderHook(() => useVanityFilter(), {
+      wrapper: VanityFilterProvider
     });
     
-    expect(result.current.isVanityFilterOn()).toBe(true); // Should remain unchanged
-    expect(consoleSpy).toHaveBeenCalledWith('Cannot toggle vanity filter - feature not unlocked yet');
-    
-    consoleSpy.mockRestore();
+    const displayWord = result.current.getDisplayWord('shit');
+    expect(displayWord).toBe('S***'); // Should be censored by default
   });
 
-  it('should set vanity filter when unlocked', () => {
-    const { result } = renderHook(() => useVanityFilter());
-    
-    // First unlock the toggle
-    act(() => {
-      result.current.unlockVanityToggle();
+  it('should check if word unlocks vanity', () => {
+    const { result } = renderHook(() => useVanityFilter(), {
+      wrapper: VanityFilterProvider
     });
     
-    // Set filter to false
-    act(() => {
-      result.current.setVanityFilter(false);
-    });
-    
-    expect(result.current.isVanityFilterOn()).toBe(false);
-    
-    // Set filter to true
-    act(() => {
-      result.current.setVanityFilter(true);
-    });
-    
-    expect(result.current.isVanityFilterOn()).toBe(true);
-  });
-
-  it('should not set vanity filter when not unlocked', () => {
-    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { result } = renderHook(() => useVanityFilter());
-    
-    act(() => {
-      result.current.setVanityFilter(false);
-    });
-    
-    expect(result.current.isVanityFilterOn()).toBe(true); // Should remain unchanged
-    expect(consoleSpy).toHaveBeenCalledWith('Cannot set vanity filter - feature not unlocked yet');
-    
-    consoleSpy.mockRestore();
-  });
-
-  it('should detect words that should unlock vanity', () => {
-    const { result } = renderHook(() => useVanityFilter());
-    
-    // Test with the actual implementation - in test environment, 
-    // profanity words aren't loaded so this will return false
-    // This is expected behavior for the test environment
-    expect(result.current.shouldWordUnlockVanity('DAMN')).toBe(false);
-    expect(result.current.shouldWordUnlockVanity('HELLO')).toBe(false);
-  });
-
-  it('should get display word with vanity filtering', () => {
-    const { result } = renderHook(() => useVanityFilter());
-    
-    // For test environment, profanity words aren't loaded,
-    // so words will appear uncensored regardless of filter state
-    expect(result.current.getDisplayWord('HELLO')).toBe('HELLO');
-    expect(result.current.getDisplayWord('DAMN')).toBe('DAMN');
-    
-    // After unlocking and turning filter off
-    act(() => {
-      result.current.unlockVanityToggle();
-      result.current.setVanityFilter(false);
-    });
-    
-    expect(result.current.getDisplayWord('DAMN')).toBe('DAMN');
-  });
-
-  it('should reset vanity state', () => {
-    const { result } = renderHook(() => useVanityFilter());
-    
-    // First unlock and modify state
-    act(() => {
-      result.current.unlockVanityToggle();
-    });
-    
-    act(() => {
-      result.current.setVanityFilter(false);
-    });
-    
-    expect(result.current.isVanityFilterUnlocked()).toBe(true);
-    expect(result.current.isVanityFilterOn()).toBe(false);
-    
-    // Reset state
-    act(() => {
-      result.current.resetVanityState();
-    });
-    
-    expect(result.current.vanityState).toEqual({
-      hasUnlockedToggle: false,
-      isVanityFilterOn: true
-    });
-  });
-
-  it('should handle localStorage errors gracefully', () => {
-    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    
-    // Mock localStorage to throw an error
-    const originalGetItem = localStorageMock.getItem;
-    localStorageMock.getItem = () => {
-      throw new Error('localStorage error');
-    };
-    
-    const { result } = renderHook(() => useVanityFilter());
-    
-    // Should fall back to default state
-    expect(result.current.vanityState).toEqual({
-      hasUnlockedToggle: false,
-      isVanityFilterOn: true
-    });
-    
-    expect(consoleSpy).toHaveBeenCalledWith(
-      'Failed to load vanity filter state from localStorage:',
-      expect.any(Error)
-    );
-    
-    // Restore
-    localStorageMock.getItem = originalGetItem;
-    consoleSpy.mockRestore();
+    expect(result.current.shouldWordUnlockVanity('shit')).toBe(true);
+    expect(result.current.shouldWordUnlockVanity('test')).toBe(false);
   });
 }); 

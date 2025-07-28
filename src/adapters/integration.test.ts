@@ -183,7 +183,10 @@ describe('Platform Adapter Integration Tests', () => {
       
       const dependencies = {
         ...testAdapter.getGameDependencies(),
-        isValidDictionaryWord: (word: string) => testAdapter.getWordData().hasWord(word)
+        isValidDictionaryWord: (word: string) => testAdapter.getWordData().hasWord(word),
+        getWordCount: () => testAdapter.getWordData().wordCount,
+        getTimestamp: () => Date.now(),
+        random: () => Math.random()
       };
       
              const botResult = await generateBotMoveWithDependencies('CAT', dependencies);

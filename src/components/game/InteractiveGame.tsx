@@ -13,7 +13,6 @@ import { Menu } from '../ui/Menu';
 import { getBotDisplayName } from '../../data/botRegistry';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import type { WordDataDependencies } from '../../../packages/engine/interfaces';
-import { useBrowserAdapter } from '../../hooks/useBrowserAdapter';
 
 // Game configuration and state interfaces
 interface GameConfig {
@@ -31,9 +30,38 @@ interface MoveAttempt {
   reason?: string;
 }
 
-// Dictionary validation using proper dependency injection
+// Dictionary validation using pure dependency injection
 function useDictionaryValidation() {
-  const { wordData, isLoaded } = useBrowserAdapter();
+  const [wordData, setWordData] = useState<WordDataDependencies | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  
+  useEffect(() => {
+    let mounted = true;
+    
+    const initializeAdapter = async () => {
+      try {
+        const adapter = await createBrowserAdapter();
+        const data = adapter.getWordData();
+        
+        if (data && typeof data.waitForLoad === 'function') {
+          await data.waitForLoad();
+        }
+        
+        if (mounted) {
+          setWordData(data);
+          setIsLoaded(true);
+        }
+      } catch (error) {
+        console.error('Failed to initialize dictionary validation:', error);
+      }
+    };
+    
+    initializeAdapter();
+    
+    return () => {
+      mounted = false;
+    };
+  }, []);
   
   const isValidDictionaryWord = useCallback((word: string): boolean => {
     if (!wordData || !isLoaded) {
@@ -50,7 +78,7 @@ function useDictionaryValidation() {
     }
   }, [wordData, isLoaded]);
   
-  return { isValidDictionaryWord, wordData };
+  return { isValidDictionaryWord, wordData, isLoaded };
 }
 
 import type { LetterState, ScoreBreakdown, LetterHighlight, WordMove } from '../index';
@@ -79,7 +107,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   disableLetterRemoval = false
 }) => {
   // Initialize dictionary validation hook
-  const { isValidDictionaryWord } = useDictionaryValidation();
+  const { isValidDictionaryWord, wordData, isLoaded } = useDictionaryValidation();
   
   // Unlock system integration
   const { handleWordSubmission, handleGameCompletion } = useUnlockSystem();
@@ -384,7 +412,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     setDraggedLetter(null);
   }, [draggedLetter, pendingWord, handleWordChange]);
 
-  const handleLetterRemove = useCallback((index: number) => {
+  const handleLetterRemove = useCallback((info: { letter: string; index: number }) => {
     if (!isPlayerTurn || isProcessingMove) {
       return;
     }
@@ -394,12 +422,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       return;
     }
     
-    if (index < 0 || index >= pendingWord.length) {
+    if (info.index < 0 || info.index >= pendingWord.length) {
       return;
     }
     
     const letters = pendingWord.split('');
-    letters.splice(index, 1);
+    letters.splice(info.index, 1);
     const newWord = letters.join('');
     
     handleWordChange(newWord);

@@ -49,6 +49,12 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   void maxVisible;
   
   const { getDisplayWord } = useVanityFilter();
+  
+  // ALWAYS declare all hooks at the top level - no conditional hooks!
+  const playedWordsRef = useRef<HTMLDivElement>(null);
+  const challengeContainerRef = useRef<HTMLDivElement>(null);
+  const regularContainerRef = useRef<HTMLDivElement>(null);
+  
   // Use moves if available, otherwise fall back to simple words
   const displayData = moves.length > 0 
     ? moves.map((move, index) => ({
@@ -71,6 +77,33 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         keyLetters: [],
         scoreBreakdown: undefined
       }));
+
+  // Challenge mode data processing
+  const playedMoves = isChallengeMode 
+    ? displayData.filter(item => item.player !== 'start' && item.player !== 'target')
+    : [];
+  const hasPlayedWords = playedMoves.length > 0;
+  const reversedPlayedMoves = [...playedMoves].reverse();
+  const reversedDisplayData = [...displayData].reverse();
+
+  // ALWAYS call useEffect hooks - make the logic inside conditional
+  useEffect(() => {
+    if (isChallengeMode && playedWordsRef.current && hasPlayedWords) {
+      const container = playedWordsRef.current;
+      requestAnimationFrame(() => {
+        container.scrollTop = 0;
+      });
+    }
+  }, [isChallengeMode, playedMoves.length, hasPlayedWords]);
+
+  useEffect(() => {
+    if (!isChallengeMode && regularContainerRef.current && displayData.length > 0) {
+      const container = regularContainerRef.current;
+      requestAnimationFrame(() => {
+        container.scrollTop = 0;
+      });
+    }
+  }, [isChallengeMode, displayData.length]);
 
   const handleWordClick = (word: string, index: number) => {
     if (onWordClick) {
@@ -103,7 +136,9 @@ export const WordTrail: React.FC<WordTrailProps> = ({
 
   // Render a word with start word positioned inside the first letter
   const renderWordWithStartWord = (word: string, keyLetters: string[], startWord: string) => {
-    const letters = word.toUpperCase().split('');
+    // Apply vanity filtering to the main word
+    const displayWord = getDisplayWord(word, { isEditing: false });
+    const letters = displayWord.toUpperCase().split('');
     
     return (
       <span className="word-trail__word-container">
@@ -133,7 +168,9 @@ export const WordTrail: React.FC<WordTrailProps> = ({
 
   // Render a word with target word positioned inside the last letter
   const renderWordWithTargetWord = (word: string, keyLetters: string[], targetWord: string) => {
-    const letters = word.toUpperCase().split('');
+    // Apply vanity filtering to the main word
+    const displayWord = getDisplayWord(word, { isEditing: false });
+    const letters = displayWord.toUpperCase().split('');
     
     return (
       <span className="word-trail__word-container">
@@ -161,34 +198,9 @@ export const WordTrail: React.FC<WordTrailProps> = ({
     );
   };
 
-  // Challenge mode uses new layout with positioned start/target words
-  // Handle challenge mode BEFORE early return to allow empty state rendering
+  // Challenge mode rendering
   if (isChallengeMode && startWord && targetWord) {
-    // Filter out start and target words from played moves
-    const playedMoves = displayData.filter(item => 
-      item.player !== 'start' && item.player !== 'target'
-    );
-
-    const hasPlayedWords = playedMoves.length > 0;
-    const playedWordsRef = useRef<HTMLDivElement>(null);
-    const challengeContainerRef = useRef<HTMLDivElement>(null);
-
-    // Auto-scroll to top to show newest words (with column-reverse, newest at bottom)
-    useEffect(() => {
-      if (playedWordsRef.current && hasPlayedWords) {
-        const container = playedWordsRef.current;
-        // Use requestAnimationFrame for smooth scrolling
-        requestAnimationFrame(() => {
-          // With column-reverse, scroll to top (0) to show newest words at bottom
-          container.scrollTop = 0;
-        });
-      }
-    }, [playedMoves.length, hasPlayedWords]);
-
-    // Reverse data order for column-reverse layout (newest items appear at bottom)
-    const reversedPlayedMoves = [...playedMoves].reverse();
-
-          return (
+    return (
         <div className={`word-trail word-trail--challenge ${className}`.trim()} role="region" aria-label="Challenge word trail">
           <div className="word-trail__challenge-container" ref={challengeContainerRef}>
             {/* Played words trail with absolutely positioned start/target words */}
@@ -197,7 +209,6 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                 <div className="word-trail__container">
                   {reversedPlayedMoves.map((item, index) => {
                     const isFirstWord = index === reversedPlayedMoves.length - 1;
-                    const isLastWord = index === 0;
                     
                     return (
                       <div 
@@ -206,8 +217,7 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                           'word-trail__line',
                           onWordClick && 'word-trail__line--clickable',
                           item.player && `word-trail__line--player-${item.player}`,
-                          isFirstWord && 'word-trail__line--first',
-                          isLastWord && 'word-trail__line--last'
+                          isFirstWord && 'word-trail__line--first'
                         ].filter(Boolean).join(' ')}
                         role="listitem"
                       >
@@ -227,8 +237,6 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                         >
                           {isFirstWord 
                             ? renderWordWithStartWord(item.word, item.keyLetters, startWord)
-                            : isLastWord
-                            ? renderWordWithTargetWord(item.word, item.keyLetters, targetWord)
                             : renderWordWithHighlights(item.word, item.keyLetters)
                           }
                         </span>
@@ -254,6 +262,13 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                       </div>
                     );
                   })}
+                  
+                  {/* Always show target word at the bottom when there are played words */}
+                  <div className="word-trail__line word-trail__line--target">
+                    <span className="word-trail__word word-trail__word--target">
+                      {renderWordWithHighlights(targetWord, [])}
+                    </span>
+                  </div>
                 </div>
               ) : (
                 // Empty state - start and target words centered
@@ -284,23 +299,6 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   }
 
   // Regular mode - with auto-scroll support
-  const regularContainerRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll to top to show newest words (with column-reverse, newest at bottom)
-  useEffect(() => {
-    if (regularContainerRef.current && displayData.length > 0) {
-      const container = regularContainerRef.current;
-      // Use requestAnimationFrame for smooth scrolling
-      requestAnimationFrame(() => {
-        // With column-reverse, scroll to top (0) to show newest words at bottom
-        container.scrollTop = 0;
-      });
-    }
-  }, [displayData.length]);
-
-  // Reverse data order for column-reverse layout (newest items appear at bottom)
-  const reversedDisplayData = [...displayData].reverse();
-
   return (
     <div className={`word-trail ${className}`.trim()} role="region" aria-label="Game word history">
       <div className="word-trail__container" ref={regularContainerRef}>

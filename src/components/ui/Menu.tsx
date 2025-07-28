@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { useTheme } from '../theme/ThemeProvider';
-import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { useVanityFilter } from '../../hooks/useVanityFilter';
+import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
 import { getBotDisplayNamesMapping } from '../../data/botRegistry';
 import './Menu.css';
 
@@ -19,18 +19,6 @@ interface MenuTier1Item {
   title: string;
   children?: MenuTier2Item[]; // Made optional for standalone tier 1 items
   onClick?: () => void;
-}
-
-interface MenuProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onDebugOpen?: () => void;
-  onResign?: () => void;
-  onStartGame?: (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => void;
-  onNavigateHome?: () => void;
-  className?: string;
-  isInGame?: boolean; // Whether user is currently in an active game
-  currentGameMode?: string; // 'bot', 'challenge', or undefined
 }
 
 // Map mechanic IDs to display names
@@ -75,8 +63,6 @@ const getMenuItems = (
     title: 'themes', 
     children: [
       { id: 'inverted', title: 'dark mode', isSelected: isInverted },
-      // Only show vanity filter toggle if unlocked
-      ...(vanityFilterUnlocked ? [{ id: 'vanity-filter', title: 'bad word filter', isSelected: vanityFilterOn }] : []),
       ...availableThemes.map(theme => ({
         id: theme.name.toLowerCase().replace(/\s+/g, '-'),
         title: theme.name.toLowerCase(),
@@ -89,10 +75,20 @@ const getMenuItems = (
   ...(unlockedMechanics.length > 0 ? [{
     id: 'mechanics',
     title: 'mechanics',
-    children: unlockedMechanics.map(mechanicId => ({
-      id: mechanicId,
-      title: mechanicDisplayNames[mechanicId] || mechanicId
-    }))
+    children: unlockedMechanics.map(mechanicId => {
+      // Special handling for vanity filter - make it a toggle
+      if (mechanicId === 'vanity-filter') {
+        return {
+          id: mechanicId,
+          title: 'bad word filter',
+          isSelected: vanityFilterOn
+        };
+      }
+      return {
+        id: mechanicId,
+        title: mechanicDisplayNames[mechanicId] || mechanicId
+      };
+    })
   }] : []),
   // Show bots section if there are available bots
   ...(availableBots.length > 0 ? [{
@@ -120,6 +116,18 @@ const getMenuItems = (
   },
 ];
 
+export interface MenuProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onDebugOpen?: () => void;
+  onResign?: () => void;
+  onStartGame?: (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => void;
+  onNavigateHome?: () => void;
+  className?: string;
+  isInGame?: boolean;
+  currentGameMode?: string;
+}
+
 export const Menu: React.FC<MenuProps> = ({ 
   isOpen, 
   onClose, 
@@ -140,8 +148,6 @@ export const Menu: React.FC<MenuProps> = ({
   
   // Get vanity filter state
   const { isVanityFilterUnlocked, isVanityFilterOn, toggleVanityFilter } = useVanityFilter();
-  const vanityFilterUnlocked = isVanityFilterUnlocked();
-  const vanityFilterOn = isVanityFilterOn();
   const unlockedThemeIds = getUnlockedItems('theme');
   const unlockedMechanics = getUnlockedItems('mechanic');
   const unlockedBots = getUnlockedItems('bot');
@@ -163,7 +169,7 @@ export const Menu: React.FC<MenuProps> = ({
     }
   }, []);
 
-  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, vanityFilterUnlocked, vanityFilterOn);
+  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn());
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -201,7 +207,7 @@ export const Menu: React.FC<MenuProps> = ({
   }, [onNavigateHome, onResign, handleClose]);
 
   // Helper function to render theme name with color preview
-  const renderThemeName = useCallback((item: MenuTier2Item) => {
+  const renderThemeName = useCallback((item: any) => { // Changed type to any as MenuTier2Item is removed
     if (!item.theme) {
       return item.title;
     }
@@ -210,7 +216,7 @@ export const Menu: React.FC<MenuProps> = ({
     const title = item.title;
     
     // Pick a deterministic letter to highlight based on theme name hash
-    const hash = title.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const hash = title.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
     const accentIndex = hash % title.length;
     
     // Apply dark mode inversion if toggled
@@ -224,7 +230,7 @@ export const Menu: React.FC<MenuProps> = ({
     
     return (
       <span style={{ color: displayColors.text }}>
-        {title.split('').map((char, index) => (
+        {title.split('').map((char: string, index: number) => (
           <span
             key={index}
             style={{
@@ -257,10 +263,6 @@ export const Menu: React.FC<MenuProps> = ({
         // Toggle inverted theme
         toggleInverted();
         // Don't close menu after toggle
-      } else if (tier2Id === 'vanity-filter') {
-        // Toggle vanity filter
-        toggleVanityFilter();
-        // Don't close menu after toggle
       } else {
         // Find and set the selected theme
         const selectedTheme = unlockedThemes.find(theme => 
@@ -291,6 +293,13 @@ export const Menu: React.FC<MenuProps> = ({
       // Reset daily challenge for testing
       resetDailyChallenge();
       // Keep menu open for testing workflow
+    } else if (tier1Id === 'mechanics') {
+      if (tier2Id === 'vanity-filter') {
+        // Toggle vanity filter
+        toggleVanityFilter();
+        // Don't close menu after toggle
+      }
+      // For other mechanics, keep menu open (no functionality yet)
     } else if (tier1Id === 'bots') {
       // Bot selection - this will trigger confirmation in App.tsx
       onStartGame?.('bot', tier2Id);
@@ -316,7 +325,7 @@ export const Menu: React.FC<MenuProps> = ({
           <div className="menu-main">
             <div className="menu-spacer"></div>
             <div className="menu-list">
-            {menuItems.map((tier1Item: MenuTier1Item, tier1Index: number) => (
+                         {menuItems.map((tier1Item: MenuTier1Item, tier1Index: number) => (
               <div key={tier1Item.id} className="menu-tier1-section">
                 <button
                   className={`menu-tier1-item ${isClosing ? 'menu-tier1-item--closing' : ''}`}
@@ -349,8 +358,8 @@ export const Menu: React.FC<MenuProps> = ({
                         {/* Dark mode toggle on its own row */}
                         <div className="menu-tier2-darkmode-row">
                           {tier1Item.children
-                            .filter((item: MenuTier2Item) => item.id === 'inverted')
-                            .map((tier2Item: MenuTier2Item, tier2Index: number) => {
+                                                         .filter((item: MenuTier2Item) => item.id === 'inverted')
+                             .map((tier2Item: MenuTier2Item, tier2Index: number) => {
                               const isDarkModeToggle = true;
                               
                               return (
@@ -379,8 +388,8 @@ export const Menu: React.FC<MenuProps> = ({
                         {/* Theme items in wrapped rows */}
                         <div className="menu-tier2-themes-grid">
                           {tier1Item.children
-                            .filter((item: MenuTier2Item) => item.id !== 'inverted')
-                            .map((tier2Item: MenuTier2Item, tier2Index: number) => {
+                                                         .filter((item: MenuTier2Item) => item.id !== 'inverted')
+                             .map((tier2Item: MenuTier2Item, tier2Index: number) => {
                               const isThemeItem = true;
                               
                               // For theme items, use the theme's colors for styling
@@ -423,23 +432,33 @@ export const Menu: React.FC<MenuProps> = ({
                       </>
                     ) : (
                       // Regular handling for non-themes menus
-                      tier1Item.children.map((tier2Item: MenuTier2Item, tier2Index: number) => (
-                        <button
-                          key={tier2Item.id}
-                          className={`menu-tier2-item ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleTier2Click(tier1Item.id, tier2Item.id);
-                          }}
-                          style={{
-                            animationDelay: isClosing 
-                              ? `${(menuItems.length - tier1Index - 1) * 0.05 + (tier1Item.children!.length - tier2Index - 1) * 0.02}s`
-                              : `${(tier1Index * 0.1) + 0.05 + (tier2Index * 0.02)}s`
-                          }}
-                        >
-                          {tier2Item.title}
-                        </button>
-                      ))
+                      tier1Item.children.map((tier2Item: MenuTier2Item, tier2Index: number) => {
+                        // Check if this is a toggle item (has isSelected property)
+                        const isToggle = tier2Item.isSelected !== undefined;
+                        
+                        return (
+                          <button
+                            key={tier2Item.id}
+                            className={`menu-tier2-item ${isToggle ? 'menu-tier2-item--toggle' : ''} ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTier2Click(tier1Item.id, tier2Item.id);
+                            }}
+                            style={{
+                              animationDelay: isClosing 
+                                ? `${(menuItems.length - tier1Index - 1) * 0.05 + (tier1Item.children!.length - tier2Index - 1) * 0.02}s`
+                                : `${(tier1Index * 0.1) + 0.05 + (tier2Index * 0.02)}s`
+                            }}
+                          >
+                            {tier2Item.title}
+                            {isToggle && (
+                              <div className={`dark-mode-toggle ${tier2Item.isSelected ? 'dark-mode-toggle--active' : ''}`}>
+                                <div className="dark-mode-toggle__slider"></div>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })
                     )}
                   </div>
                 )}

@@ -1,7 +1,7 @@
 import React from 'react';
-import './CurrentWord.css';
 import { LockIcon } from '../ui/LockIcon';
 import { useVanityFilter } from '../../hooks/useVanityFilter';
+import './CurrentWord.css';
 
 export interface LetterHighlight {
   index: number;
@@ -12,7 +12,6 @@ export interface CurrentWordProps {
   word: string;
   highlights?: LetterHighlight[];
   className?: string;
-  /** Whether the word is currently being edited (shows uncensored during editing) */
   isEditing?: boolean;
 }
 

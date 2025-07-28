@@ -24,6 +24,7 @@
 | ✅ **DONE** | Vanity Filter System | **COMPLETE** | Bad word filtering with user toggle control |
 | ✅ **DONE** | Complete Dependency Injection Migration | **COMPLETE** | Full platform-agnostic architecture for iOS/Android |
 | 🔄 **Active** | Test Suite Improvement | **IN PROGRESS** | 288/330 tests passing (legacy test cleanup needed) |
+| ✅ **DONE** | Challenge Mode Word Trail Fix | **COMPLETE** | Target word now remains visible after first word submission |
 
 **Current Focus**: The game engine is now 100% platform-agnostic and ready for multi-platform deployment including iOS and Android apps without any revisiting of core game logic.
 
@@ -212,47 +213,59 @@
 **Last Updated**: 2025-01-22 - Reflects verified current implementation  
 **Next Milestone**: Project is feature-complete for intended scope
 
-## 🎭 **Recent Addition: Vanity Filter System**
+## 🎭 **Vanity Filter System - Live Toggle Implementation**
 
 ### **Implementation Complete** ✅
-**What**: Comprehensive bad word filtering system with user toggle control  
-**Status**: Fully implemented and tested across all game modes  
-**Components**: State management, UI integration, unlock system, persistence
+**What**: Live vanity filter system with real-time toggle control and shared state  
+**Status**: Fully implemented with live updates across all game modes  
+**Components**: Context provider, centralized state, live UI updates, unlock system
 
-### **Technical Features**
-- **Hook-based Architecture**: `useVanityFilter` manages all state and logic
+### **Technical Architecture**
+- **Context Provider**: `VanityFilterProvider` centralizes all vanity filter state
+- **Shared State**: All components use the same context for consistent behavior
+- **Live Updates**: Toggle changes apply immediately without page refresh
 - **localStorage Persistence**: Settings survive browser refreshes and sessions
-- **Component Integration**: CurrentWord and WordTrail components apply filtering
-- **Menu Integration**: Toggle appears in themes section when unlocked
-- **Unlock System**: Playing profane words unlocks the toggle feature
-- **Toast Notifications**: User feedback when feature becomes available
 - **Cross-platform Ready**: Works with existing dependency injection system
+
+### **Live Toggle Features**
+1. **Real-time Updates**: Toggle changes apply instantly to all displayed words
+2. **Shared State**: All components (CurrentWord, WordTrail, WordBuilder) use same state
+3. **No Page Refresh**: Changes are live and immediate
+4. **Consistent Behavior**: Same filter state across all game modes
+5. **Performance Optimized**: Single state source, no duplicate initialization
 
 ### **User Experience**
 1. **New Users**: Bad words automatically censored (filter locked ON)
 2. **Unlock Trigger**: Playing a profane word unlocks filter toggle
-3. **User Control**: Toggle filter on/off in menu (themes section)
+3. **Live Control**: Toggle filter on/off in menu (mechanics section) with immediate effect
 4. **Visual Feedback**: Toast notification when feature unlocks
 5. **Persistent Choice**: Filter preference saved across sessions
 6. **Editing Mode**: Uncensored display during word editing for clarity
 
 ### **Files Modified**
-- `src/hooks/useVanityFilter.ts` - Core state management hook
-- `src/hooks/__tests__/useVanityFilter.test.ts` - Comprehensive test suite
-- `src/components/game/CurrentWord.tsx` - Real-time word filtering
-- `src/components/game/WordBuilder.tsx` - Word building interface filtering (both modes)
-- `src/components/game/WordTrail.tsx` - Historical word filtering  
-- `src/components/game/GameBoard.tsx` - Editing mode integration
-- `src/components/ui/Menu.tsx` - Toggle control in menu
-- `src/components/game/InteractiveGame.tsx` - Unlock detection and notifications
-- `src/components/challenge/ChallengeGame.tsx` - Challenge mode integration
+- `src/contexts/VanityFilterContext.tsx` - **NEW**: Centralized context provider
+- `src/hooks/useVanityFilter.ts` - Updated to use shared context
+- `src/App.tsx` - Wrapped with VanityFilterProvider
+- `src/components/game/CurrentWord.tsx` - Uses shared context
+- `src/components/game/WordBuilder.tsx` - Uses shared context
+- `src/components/game/WordTrail.tsx` - Uses shared context
+- `src/components/ui/Menu.tsx` - Uses shared context, toggle in mechanics section
+- `src/components/game/InteractiveGame.tsx` - Uses shared context
+- `src/components/challenge/ChallengeGame.tsx` - Uses shared context
 
 ### **Testing Status**
-- ✅ Unit Tests: 11/11 passing for useVanityFilter hook
-- ✅ State Management: localStorage persistence verified
-- ✅ Component Integration: Word filtering applied correctly
-- ✅ Menu Integration: Toggle visibility and functionality
+- ✅ Live Updates: Toggle changes apply immediately to all words
+- ✅ Shared State: All components use same vanity filter state
+- ✅ Context Provider: Centralized state management working
+- ✅ Menu Integration: Toggle in mechanics section with live updates
 - ✅ Unlock System: Profane word detection and unlock trigger
 - ✅ Cross-game Mode: Works in both vs-bot and challenge modes
+- ✅ Persistence: Settings saved to localStorage and restored
 
-**Implementation**: Feature-complete and production-ready ✨
+### **How It Works**
+1. **Context Provider**: `VanityFilterProvider` manages all vanity filter state
+2. **Shared State**: All components consume the same context via `useVanityFilter()`
+3. **Live Updates**: When `toggleVanityFilter()` is called, all components re-render
+4. **Persistence**: State automatically saved to localStorage and restored on load
+
+**Implementation**: Feature-complete with live updates ✨

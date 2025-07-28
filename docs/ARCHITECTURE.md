@@ -26,6 +26,14 @@ src/adapters/             # Platform-specific implementations (main adapters)
 ├── nodeAdapter.ts        # Node.js file system, performance.now()
 └── testAdapter.ts        # Mocks, deterministic random
 
+src/contexts/             # React context providers for shared state
+├── VanityFilterContext.tsx  # Vanity filter state management
+└── [Future filters follow same pattern]
+
+src/hooks/                # React hooks for component state
+├── useVanityFilter.ts    # Vanity filter hook (consumes context)
+└── [Future filter hooks follow same pattern]
+
 packages/adapters/        # Specialized feature adapters
 ├── browser/              # Browser-specific challenge/unlock implementations
 ├── node/                 # Node.js-specific unlock implementations
@@ -648,6 +656,47 @@ This section documents major architectural decisions made during the WordPlay pr
 2. **Test Interface Mismatches**: 43 failing tests due to scoring interface changes
 3. **Debug Log Cleanup**: Remove development debugging statements
 4. **Documentation Alignment**: Update docs to match current implementation
+
+## **Filter System Architecture**
+
+### **Vanity Filter System (Reference Implementation)**
+
+The vanity filter system demonstrates the **reference architecture** for all filter implementations:
+
+#### **Core Components**
+- **Context Provider**: `VanityFilterProvider` centralizes state management
+- **Hook**: `useVanityFilter` consumes context and provides component API
+- **App Integration**: Wrapped in `App.tsx` for global access
+- **Engine Integration**: Uses dependency injection for word data
+
+#### **Key Features**
+- **Live Updates**: Toggle changes apply immediately without page refresh
+- **Shared State**: All components use same context for consistency
+- **Persistence**: Settings saved to localStorage and restored
+- **Unlock System**: Triggered through gameplay with toast notifications
+- **Menu Integration**: Toggle appears in mechanics section when unlocked
+
+#### **Architecture Pattern**
+```
+VanityFilterProvider (Context)
+    ↓
+useVanityFilter (Hook)
+    ↓
+Components (CurrentWord, WordTrail, Menu, etc.)
+    ↓
+Engine Functions (getVanityDisplayWordWithDependencies)
+```
+
+#### **Template for Future Filters**
+All future filters should follow this exact pattern:
+1. Create context provider with shared state
+2. Implement hook that consumes context
+3. Wrap app with provider
+4. Update components to use shared hook
+5. Add unlock triggers and menu integration
+6. Include comprehensive tests
+
+**Reference**: See `docs/VANITY_FILTER_SYSTEM.md` for complete implementation guide.
 
 **Future Considerations**:
 1. **React Native Support**: Architecture ready for mobile app development

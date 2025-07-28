@@ -1,12 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { useBrowserAdapter } from '../../hooks/useBrowserAdapter';
+import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import './DebugDialog.css';
 
-// Hook to get dictionary size using dependency injection
+// Hook to get dictionary size using pure dependency injection
 function useDictionarySize(): number {
-  const { wordData, isLoaded } = useBrowserAdapter();
+  const [wordCount, setWordCount] = useState(0);
   
-  return isLoaded && wordData ? wordData.wordCount : 0;
+  useEffect(() => {
+    let mounted = true;
+    
+    const initializeAdapter = async () => {
+      try {
+        const adapter = await createBrowserAdapter();
+        const wordData = adapter.getWordData();
+        
+        if (wordData && typeof wordData.waitForLoad === 'function') {
+          await wordData.waitForLoad();
+        }
+        
+        if (mounted && wordData) {
+          setWordCount(wordData.wordCount);
+        }
+      } catch (error) {
+        console.error('Failed to initialize dictionary for debug:', error);
+      }
+    };
+    
+    initializeAdapter();
+    
+    return () => {
+      mounted = false;
+    };
+  }, []);
+  
+  return wordCount;
 }
 
 export interface DebugDialogProps {

@@ -46,25 +46,25 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
   const showUnlockNotification = useCallback((results: UnlockResult[]) => {
     for (const result of results) {
       // Get user-friendly name for the unlocked item
-      let itemName = result.target;
+      let itemName = result.target || result.itemId || result.name || 'Unknown Item';
       
       // Format theme names nicely
-      if (result.category === 'theme') {
-        itemName = result.target.split(' ').map(word => 
+      if (result.category === 'theme' && result.target) {
+        itemName = result.target.split(' ').map((word: string) => 
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
       }
       
       // Format bot names nicely
-      if (result.category === 'bot') {
-        itemName = result.target.replace('-bot', '').split('-').map(word => 
+      if (result.category === 'bot' && result.target) {
+        itemName = result.target.replace('-bot', '').split('-').map((word: string) => 
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ') + ' Bot';
       }
       
       // Format mechanic names nicely
-      if (result.category === 'mechanic') {
-        itemName = result.target.replace('-', ' ').split(' ').map(word => 
+      if (result.category === 'mechanic' && result.target) {
+        itemName = result.target.replace('-', ' ').split(' ').map((word: string) => 
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
       }
@@ -85,7 +85,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
         }
       }
     }
-  }, [setTheme]);
+  }, [setTheme, availableThemes]);
 
   // Enhanced word submission handler
   const handleWordSubmission = useCallback(async (word: string): Promise<UnlockResult[]> => {

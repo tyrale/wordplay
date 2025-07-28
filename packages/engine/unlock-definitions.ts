@@ -44,6 +44,9 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
   {
     id: 'unlock_red_theme',
     category: 'theme',
+    itemId: 'red',
+    name: 'Red Theme',
+    description: 'Unlock the red color theme by playing the word "red"',
     trigger: { type: 'word', value: 'red', timing: 'word_submission' },
     target: 'red',
     immediate_effect: { type: 'apply_theme', value: 'red' }
@@ -410,6 +413,15 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
 
   // Mechanic unlocks - triggered by playing specific words
   {
+    id: 'unlock_vanity_filter',
+    category: 'mechanic',
+    itemId: 'vanity-filter',
+    name: 'Vanity Filter',
+    description: 'Unlock the vanity filter by playing a profanity word',
+    trigger: { type: 'word', value: 'shit', timing: 'word_submission' },
+    target: 'vanity-filter'
+  },
+  {
     id: 'unlock_five_letter_start',
     category: 'mechanic',
     trigger: { type: 'word', value: 'five', timing: 'word_submission' },
@@ -535,6 +547,6 @@ export function getUnlocksByCategory(category: 'theme' | 'mechanic' | 'bot'): Un
 export function findUnlockByTrigger(triggerType: 'word' | 'achievement', value: string): UnlockDefinition[] {
   return UNLOCK_DEFINITIONS.filter(unlock => 
     unlock.trigger.type === triggerType && 
-    unlock.trigger.value.toLowerCase() === value.toLowerCase()
+    unlock.trigger.value?.toLowerCase() === value.toLowerCase()
   );
 } 

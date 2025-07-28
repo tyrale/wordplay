@@ -5,6 +5,7 @@ import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
 import { ConfirmationDialog } from './components/ui/ConfirmationDialog';
 import { AnimationProvider } from './animations';
 import { UnlockProvider } from './components/unlock/UnlockProvider';
+import { VanityFilterProvider } from './contexts/VanityFilterContext';
 import ResponsiveTest from './components/game/ResponsiveTest';
 import { QuitterOverlay } from './components/ui/QuitterOverlay';
 import { WinnerOverlay } from './components/ui/WinnerOverlay';
@@ -192,8 +193,9 @@ function App() {
     <ThemeProvider>
       <ToastProvider>
         <UnlockProvider>
-          <AnimationProvider initialTheme="default">
-            <ResponsiveTest>
+          <VanityFilterProvider>
+            <AnimationProvider initialTheme="default">
+              <ResponsiveTest>
               {appState === 'main' && (
                 <MainScreen onStartGame={handleStartGame} />
               )}
@@ -260,8 +262,9 @@ function App() {
                 finalScores={gameResults?.finalScores}
                 botName={gameResults?.botName}
               />
-            </ResponsiveTest>
-          </AnimationProvider>
+                          </ResponsiveTest>
+            </AnimationProvider>
+          </VanityFilterProvider>
         </UnlockProvider>
       </ToastProvider>
     </ThemeProvider>

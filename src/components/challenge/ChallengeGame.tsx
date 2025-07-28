@@ -18,6 +18,7 @@ import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import { shareChallengeResult, getShareResultMessage } from '../../utils/shareUtils';
 import { useToast } from '../ui/ToastManager';
 import { useVanityFilter } from '../../hooks/useVanityFilter';
+import { useUnlockSystem } from '../unlock/UnlockProvider';
 import type { GameStateDependencies } from '../../../packages/engine/gamestate';
 
 export interface ChallengeGameProps {
@@ -59,9 +60,9 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
 
   // Toast notifications
   const { showToast } = useToast();
-  
-  // Vanity filter integration
-  const { getDisplayWord } = useVanityFilter();
+
+  // Unlock system integration
+  const { handleWordSubmission } = useUnlockSystem();
 
   // Local UI state
   const [pendingWord, setPendingWord] = useState('');
@@ -71,6 +72,11 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   const [isProcessingMove, setIsProcessingMove] = useState(false);
   const [gameDependencies, setGameDependencies] = useState<GameStateDependencies | null>(null);
+  const [wordData, setWordData] = useState<any>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  
+  // Vanity filter integration (using centralized context)
+  const { } = useVanityFilter();
   
   // Overlay state
   const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
@@ -85,7 +91,15 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       try {
         const adapter = await createBrowserAdapter();
         const dependencies = adapter.getGameDependencies();
+        const data = adapter.getWordData();
+        
+        if (data && typeof data.waitForLoad === 'function') {
+          await data.waitForLoad();
+        }
+        
         setGameDependencies(dependencies);
+        setWordData(data);
+        setIsLoaded(true);
       } catch (err) {
         console.error('Failed to initialize game dependencies:', err);
       }
@@ -206,10 +220,10 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     }
   }, [pendingWord, isProcessingMove, challengeState, handleWordChange]);
 
-  const handleLetterRemove = useCallback((index: number) => {
+  const handleLetterRemove = useCallback((info: { letter: string; index: number }) => {
     if (isProcessingMove) return;
     
-    const newWord = pendingWord.slice(0, index) + pendingWord.slice(index + 1);
+    const newWord = pendingWord.slice(0, info.index) + pendingWord.slice(info.index + 1);
     handleWordChange(newWord);
   }, [pendingWord, isProcessingMove, handleWordChange]);
 
@@ -288,6 +302,9 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
           setValidationResult(null);
           setShowValidationError(false);
           
+          // Check for unlocks triggered by this word
+          await handleWordSubmission(pendingWord);
+          
           // Check if challenge is complete (challengeState will be updated by useChallenge)
           // The completion check will happen in the next render cycle
         } else {
@@ -299,7 +316,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         setIsProcessingMove(false);
       }
     }
-  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord]);
+  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord, handleWordSubmission]);
 
   const handleMenuClose = useCallback(() => {
     setIsMenuOpen(false);

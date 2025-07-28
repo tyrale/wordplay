@@ -69,28 +69,34 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
   async function checkWordTriggers(word: string): Promise<UnlockResult[]> {
     const state = await ensureStateLoaded();
     const wordUnlocks = findUnlockByTrigger('word', word);
+    console.log(`[Unlock] Checking word "${word}" for unlocks, found ${wordUnlocks.length} potential unlocks:`, wordUnlocks);
     const results: UnlockResult[] = [];
 
     for (const unlock of wordUnlocks) {
       // Check if this unlock is already achieved
-      const wasAlreadyUnlocked = isItemUnlocked(state, unlock.category, unlock.target);
+      const target = unlock.target || unlock.itemId || '';
+      const wasAlreadyUnlocked = isItemUnlocked(state, unlock.category, target);
+      console.log(`[Unlock] Unlock "${unlock.id}" (${unlock.category}:${target}) - already unlocked: ${wasAlreadyUnlocked}`);
       
-      if (!wasAlreadyUnlocked) {
+      if (!wasAlreadyUnlocked && target) {
         // Add to appropriate category
         if (unlock.category === 'theme') {
-          state.themes.push(unlock.target);
+          state.themes.push(target);
         } else if (unlock.category === 'mechanic') {
-          state.mechanics.push(unlock.target);
+          state.mechanics.push(target);
         } else if (unlock.category === 'bot') {
-          state.bots.push(unlock.target);
+          state.bots.push(target);
         }
 
         // Create result
         const result: UnlockResult = {
           unlockId: unlock.id,
           category: unlock.category,
+          itemId: unlock.target || unlock.itemId || '',
+          name: unlock.name || unlock.target || '',
+          description: unlock.description || `Unlocked ${unlock.target}`,
+          isNew: true,
           target: unlock.target,
-          wasAlreadyUnlocked: false,
           immediateEffect: unlock.immediate_effect
         };
 
@@ -123,24 +129,28 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
 
     for (const unlock of achievementUnlocks) {
       // Check if this unlock is already achieved
-      const wasAlreadyUnlocked = isItemUnlocked(state, unlock.category, unlock.target);
+      const target = unlock.target || unlock.itemId || '';
+      const wasAlreadyUnlocked = isItemUnlocked(state, unlock.category, target);
       
-      if (!wasAlreadyUnlocked) {
+      if (!wasAlreadyUnlocked && target) {
         // Add to appropriate category
         if (unlock.category === 'theme') {
-          state.themes.push(unlock.target);
+          state.themes.push(target);
         } else if (unlock.category === 'mechanic') {
-          state.mechanics.push(unlock.target);
+          state.mechanics.push(target);
         } else if (unlock.category === 'bot') {
-          state.bots.push(unlock.target);
+          state.bots.push(target);
         }
 
         // Create result
         const result: UnlockResult = {
           unlockId: unlock.id,
           category: unlock.category,
+          itemId: unlock.target || unlock.itemId || '',
+          name: unlock.name || unlock.target || '',
+          description: unlock.description || `Unlocked ${unlock.target}`,
+          isNew: true,
           target: unlock.target,
-          wasAlreadyUnlocked: false,
           immediateEffect: unlock.immediate_effect
         };
 
@@ -266,9 +276,13 @@ export function getAllUnlockTriggers(): { word: string[], achievement: string[] 
 
   for (const unlock of UNLOCK_DEFINITIONS) {
     if (unlock.trigger.type === 'word') {
-      wordTriggers.push(unlock.trigger.value);
-    } else if (unlock.trigger.type === 'achievement') {
-      achievementTriggers.push(unlock.trigger.value);
+      if (unlock.trigger.value) {
+        wordTriggers.push(unlock.trigger.value);
+      }
+          } else if (unlock.trigger.type === 'achievement') {
+        if (unlock.trigger.value) {
+          achievementTriggers.push(unlock.trigger.value);
+        }
     }
   }
 

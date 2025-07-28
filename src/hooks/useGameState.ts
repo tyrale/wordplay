@@ -4,7 +4,7 @@ import {
   createGameStateManagerWithDependencies,
   type GameStateDependencies
 } from '../../packages/engine/gamestate';
-import { BrowserAdapter } from '../adapters/browserAdapter';
+import { createBrowserAdapter } from '../adapters/browserAdapter';
 
 // Game configuration interface
 interface PublicGameState {
@@ -100,7 +100,7 @@ export interface UseGameStateReturn {
 export function useGameState(options: UseGameStateOptions = {}): UseGameStateReturn {
   const { config, onGameStateChange, onMoveAttempt, onBotMove } = options;
   
-  // Initialize game manager using browser adapter (Step 4 completion)
+  // Initialize game manager using browser adapter (pure dependency injection)
   const gameManagerRef = useRef<LocalGameStateManagerWithDependencies | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   
@@ -119,14 +119,14 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
     configRef.current = config;
   }, [config?.botId]);
   
-  // Initialize browser adapter and create game manager
+  // Initialize browser adapter and create game manager (pure dependency injection)
   useEffect(() => {
     let isMounted = true;
     
     async function initializeGameManager() {
       try {
-        const browserAdapter = BrowserAdapter.getInstance();
-        await browserAdapter.initialize();
+        // Create new adapter instance per component (not singleton)
+        const browserAdapter = await createBrowserAdapter();
         
         // CRITICAL: Wait for dictionary to fully load before creating game manager
         const wordData = browserAdapter.getWordData();

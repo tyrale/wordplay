@@ -325,7 +325,7 @@ export function getRandomWordByLengthWithDependencies(length: number, wordData: 
  * 5. During editing, behavior depends on current word composition
  */
 export function getVanityDisplayWordWithDependencies(
-  word: string,
+  word: string, 
   vanityState: VanityState,
   wordData: WordDataDependencies,
   options: { isEditing?: boolean } = {}
@@ -338,9 +338,8 @@ export function getVanityDisplayWordWithDependencies(
   }
   
   // Word is profane - check vanity filter settings
-  const shouldShowSymbols = !vanityState.hasUnlockedToggle || vanityState.isVanityFilterOn;
-  
-  if (shouldShowSymbols) {
+  // Only show symbols if the filter is ON
+  if (vanityState.isVanityFilterOn) {
     return transformToSymbols(normalizedWord);
   } else {
     return normalizedWord;
