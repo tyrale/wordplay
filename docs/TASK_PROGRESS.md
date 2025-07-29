@@ -278,7 +278,7 @@
 
 ### **Bot Personalities Implemented**
 
-1. **Trainer Bot** (renamed from basicBot)
+1. **Basic Bot**
    - **Strategy**: 1-2 point moves, ignores key letters completely
    - **Behavior**: Doesn't consider key letters in scoring or selection
    - **Purpose**: Teaching basic gameplay without key letter complexity
@@ -286,7 +286,7 @@
 2. **Easy Bot**
    - **Strategy**: 1-2 point moves, actively avoids key letters
    - **Behavior**: Filters out any moves that would use key letters
-   - **Unlock**: Beat trainer-bot
+   - **Unlock**: Beat basicBot
 
 3. **Medium Bot**
    - **Strategy**: 1-3 point moves, can use key letters
@@ -298,7 +298,7 @@
    - **Behavior**: Full gameplay capability with no restrictions
    - **Unlock**: Beat medium-bot
 
-5. **Boss Bot** (renamed from expert-bot)
+5. **Expert Bot**
    - **Strategy**: 3-4 point moves only, prioritizes key letters
    - **Behavior**: Only plays high-scoring moves, seeks key letter usage
    - **Unlock**: Beat hard-bot
@@ -308,7 +308,7 @@
 - **Strategy Selection**: Bot ID flows through dependency injection chain
 - **Point Filtering**: Candidates filtered by strategy rules before selection
 - **Key Letter Handling**: Four behaviors - ignore, avoid, allow, prioritize
-- **Fallback Strategy**: Unknown bots default to trainer-bot behavior
+- **Fallback Strategy**: Unknown bots default to basicBot behavior
 
 ### **Integration Points**
 - **Bot Registry**: Updated with new names and descriptions
@@ -323,11 +323,11 @@
 - ✅ **Cross-Platform**: Works on all supported platforms
 
 ### **Gameplay Impact**
-1. **Progressive Difficulty**: Clear skill progression from trainer to boss
-2. **Educational Value**: Trainer bot teaches without key letter confusion
+1. **Progressive Difficulty**: Clear skill progression from basic to expert
+2. **Educational Value**: Basic bot teaches without key letter confusion
 3. **Strategic Variety**: Each bot presents unique challenges
 4. **Unlock Motivation**: Players must master each level to progress
-5. **Key Letter Mastery**: Boss bot forces advanced key letter strategy
+5. **Key Letter Mastery**: Expert bot forces advanced key letter strategy
 
 ### **Files Created**
 - `packages/engine/bot-strategies.ts` - Strategy system implementation

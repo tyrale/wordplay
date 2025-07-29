@@ -442,7 +442,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
         keyLetters: this.state.keyLetters,
         lockedLetters: allLockedLetters,
         maxCandidates: 500, // Reasonable limit for responsive gameplay
-        botId: this.state.config.botId || 'trainer-bot' // Pass botId from config
+        botId: this.state.config.botId || 'basicBot' // Pass botId from config
       });
 
             if (!botResult.move) {

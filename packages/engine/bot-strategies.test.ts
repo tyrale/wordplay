@@ -11,9 +11,9 @@ import type { BotMove } from './interfaces';
 describe('Bot Strategy System', () => {
   
   describe('getBotStrategy', () => {
-    it('should return trainer-bot strategy for trainer-bot', () => {
-      const strategy = getBotStrategy('trainer-bot');
-      expect(strategy.id).toBe('trainer-bot');
+    it('should return basicBot strategy for basicBot', () => {
+      const strategy = getBotStrategy('basicBot');
+      expect(strategy.id).toBe('basicBot');
       expect(strategy.maxPoints).toBe(2);
       expect(strategy.keyLetterBehavior).toBe('ignore');
     });
@@ -25,17 +25,17 @@ describe('Bot Strategy System', () => {
       expect(strategy.keyLetterBehavior).toBe('avoid');
     });
 
-    it('should return boss-bot strategy for boss-bot', () => {
-      const strategy = getBotStrategy('boss-bot');
-      expect(strategy.id).toBe('boss-bot');
+    it('should return expert-bot strategy for expert-bot', () => {
+      const strategy = getBotStrategy('expert-bot');
+      expect(strategy.id).toBe('expert-bot');
       expect(strategy.minPoints).toBe(3);
       expect(strategy.maxPoints).toBe(4);
       expect(strategy.keyLetterBehavior).toBe('prioritize');
     });
 
-    it('should fallback to trainer-bot for unknown bot', () => {
+    it('should fallback to basicBot for unknown bot', () => {
       const strategy = getBotStrategy('unknown-bot');
-      expect(strategy.id).toBe('trainer-bot');
+      expect(strategy.id).toBe('basicBot');
     });
   });
 
@@ -47,8 +47,8 @@ describe('Bot Strategy System', () => {
       { word: 'BEAST', score: 4, confidence: 0.6, reasoning: ['Remove C', 'Add B', 'Add E', 'Used key letter B'] }
     ];
 
-    it('should filter by max points for trainer-bot', () => {
-      const strategy = BOT_STRATEGIES['trainer-bot'];
+    it('should filter by max points for basicBot', () => {
+      const strategy = BOT_STRATEGIES['basicBot'];
       const filtered = filterCandidatesByStrategy(mockCandidates, strategy, ['S', 'B']);
       
       // Should only include moves with 1-2 points
@@ -66,8 +66,8 @@ describe('Bot Strategy System', () => {
       expect(filtered.length).toBe(1); // Only CAT should remain
     });
 
-    it('should prioritize key letters for boss-bot', () => {
-      const strategy = BOT_STRATEGIES['boss-bot'];
+    it('should prioritize key letters for expert-bot', () => {
+      const strategy = BOT_STRATEGIES['expert-bot'];
       const filtered = filterCandidatesByStrategy(mockCandidates, strategy, ['S', 'B']);
       
       // Should only include moves with 3-4 points
@@ -90,20 +90,20 @@ describe('Bot Strategy System', () => {
 
   describe('All Bot Strategies', () => {
     it('should have all required bot strategies defined', () => {
-      expect(BOT_STRATEGIES['trainer-bot']).toBeDefined();
+      expect(BOT_STRATEGIES['basicBot']).toBeDefined();
       expect(BOT_STRATEGIES['easy-bot']).toBeDefined();
       expect(BOT_STRATEGIES['medium-bot']).toBeDefined();
       expect(BOT_STRATEGIES['hard-bot']).toBeDefined();
-      expect(BOT_STRATEGIES['boss-bot']).toBeDefined();
+      expect(BOT_STRATEGIES['expert-bot']).toBeDefined();
     });
 
     it('should have correct point limits for all bots', () => {
-      expect(BOT_STRATEGIES['trainer-bot'].maxPoints).toBe(2);
+      expect(BOT_STRATEGIES['basicBot'].maxPoints).toBe(2);
       expect(BOT_STRATEGIES['easy-bot'].maxPoints).toBe(2);
       expect(BOT_STRATEGIES['medium-bot'].maxPoints).toBe(3);
       expect(BOT_STRATEGIES['hard-bot'].maxPoints).toBe(4);
-      expect(BOT_STRATEGIES['boss-bot'].maxPoints).toBe(4);
-      expect(BOT_STRATEGIES['boss-bot'].minPoints).toBe(3);
+      expect(BOT_STRATEGIES['expert-bot'].maxPoints).toBe(4);
+      expect(BOT_STRATEGIES['expert-bot'].minPoints).toBe(3);
     });
   });
 }); 

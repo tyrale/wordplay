@@ -21,9 +21,9 @@ export interface BotStrategy {
  * All available bot strategies
  */
 export const BOT_STRATEGIES: Record<string, BotStrategy> = {
-  'trainer-bot': {
-    id: 'trainer-bot',
-    displayName: 'trainerbot',
+  'basicBot': {
+    id: 'basicBot',
+    displayName: 'basicbot',
     maxPoints: 2,
     keyLetterBehavior: 'ignore',
     description: 'Plays 1-2 point moves, completely ignores key letters'
@@ -49,9 +49,9 @@ export const BOT_STRATEGIES: Record<string, BotStrategy> = {
     keyLetterBehavior: 'allow',
     description: 'Plays 1-4 point moves, can use key letters'
   },
-  'boss-bot': {
-    id: 'boss-bot',
-    displayName: 'bossbot',
+  'expert-bot': {
+    id: 'expert-bot',
+    displayName: 'expertbot',
     minPoints: 3,
     maxPoints: 4,
     keyLetterBehavior: 'prioritize', 
@@ -60,10 +60,10 @@ export const BOT_STRATEGIES: Record<string, BotStrategy> = {
 };
 
 /**
- * Get strategy for a bot ID, fallback to trainer-bot if not found
+ * Get strategy for a bot ID, fallback to basicBot if not found
  */
 export function getBotStrategy(botId: string): BotStrategy {
-  return BOT_STRATEGIES[botId] || BOT_STRATEGIES['trainer-bot'];
+  return BOT_STRATEGIES[botId] || BOT_STRATEGIES['basicBot'];
 }
 
 /**

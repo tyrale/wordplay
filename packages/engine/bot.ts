@@ -266,7 +266,7 @@ export function generateBotMoveWithDependencies(
     keyLetters = [], 
     lockedLetters = [],
     maxCandidates = 200,
-    botId = 'trainer-bot'  // Default to trainer-bot if no botId provided
+    botId = 'basicBot'     // Default to basicBot if no botId provided
   } = options;
 
   // Get bot strategy
