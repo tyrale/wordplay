@@ -40,6 +40,9 @@ export interface DictionaryValidation {
 // Import dependency interfaces from central location
 import type { ScoringDependencies, BotDependencies } from './interfaces';
 
+// Import new bot strategy system
+import { getBotStrategy, filterCandidatesByStrategy, applyStrategyScoring } from './bot-strategies';
+
 // =============================================================================
 // TYPES FOR BOT OPERATIONS
 // =============================================================================
@@ -50,6 +53,7 @@ export interface BotOptions {
   difficulty?: 'easy' | 'medium' | 'hard';
   maxCandidates?: number;
   timeLimit?: number; // ms
+  botId?: string;
 }
 
 // Import standard interfaces from central location
@@ -250,19 +254,23 @@ export function scoreCandidatesWithDependencies(
 }
 
 /**
- * Generates bot move using dependency injection (NEW ARCHITECTURE)
+ * Generates bot move using dependency injection with strategy support (NEW ARCHITECTURE)
  */
 export function generateBotMoveWithDependencies(
   currentWord: string,
   dependencies: BotDependencies,
-  options: BotOptions = {}
+  options: BotOptions & { botId?: string } = {}
 ): BotResult {
   const startTime = performance.now();
   const { 
     keyLetters = [], 
     lockedLetters = [],
-    maxCandidates = 200
+    maxCandidates = 200,
+    botId = 'trainer-bot'  // Default to trainer-bot if no botId provided
   } = options;
+
+  // Get bot strategy
+  const strategy = getBotStrategy(botId);
 
   // Combine key and locked letters into a single protected set
   const protectedLetters = [...keyLetters, ...lockedLetters];
@@ -288,16 +296,25 @@ export function generateBotMoveWithDependencies(
   const validCandidates = filterValidCandidatesWithDependencies(candidatesToCheck, dependencies);
   
   // Score valid candidates using dependency injection
-  const scoredCandidates = scoreCandidatesWithDependencies(validCandidates, currentWord, dependencies, keyLetters);
+  let scoredCandidates = scoreCandidatesWithDependencies(validCandidates, currentWord, dependencies, keyLetters);
   
-  // Choose best move
-  const bestMove = scoredCandidates.length > 0 ? scoredCandidates[0] : null;
+  // Apply strategy-specific scoring adjustments
+  scoredCandidates = applyStrategyScoring(scoredCandidates, strategy, keyLetters);
+  
+  // Filter candidates based on bot strategy
+  const strategyCandidates = filterCandidatesByStrategy(scoredCandidates, strategy, keyLetters);
+  
+  // Re-sort after strategy filtering to ensure best move is first
+  strategyCandidates.sort((a: BotMove, b: BotMove) => b.score - a.score);
+  
+  // Choose best move that fits strategy
+  const bestMove = strategyCandidates.length > 0 ? strategyCandidates[0] : null;
   
   const processingTime = performance.now() - startTime;
   
   return {
     move: bestMove,
-    candidates: scoredCandidates.slice(0, 10), // Top 10 candidates
+    candidates: strategyCandidates.slice(0, 10), // Top 10 candidates that fit strategy
     processingTime,
     totalCandidatesGenerated
   };

@@ -14,7 +14,7 @@ import type { UnlockDefinition, UnlockState } from './interfaces';
 const _INITIAL_UNLOCK_STATE = {
   themes: ['classic blue'],  // Only default theme unlocked initially
   mechanics: [],             // No special mechanics unlocked
-  bots: ['basicBot'],         // Only basic test bot unlocked
+  bots: ['trainer-bot'],     // Only trainer bot unlocked initially
   achievements: []          // No achievements earned
 } as const;
 
@@ -462,7 +462,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
   {
     id: 'unlock_easy_bot',
     category: 'bot',
-    trigger: { type: 'achievement', value: 'beat_basicBot', timing: 'game_completion' },
+    trigger: { type: 'achievement', value: 'beat_trainer-bot', timing: 'game_completion' },
     target: 'easy-bot'
   },
   {
@@ -484,10 +484,10 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     target: 'hard-bot'
   },
   {
-    id: 'unlock_expert_bot',
+    id: 'unlock_boss_bot',
     category: 'bot',
     trigger: { type: 'achievement', value: 'beat_hard_bot', timing: 'game_completion' },
-    target: 'expert-bot'
+    target: 'boss-bot'
   },
   {
     id: 'unlock_chaos_bot',

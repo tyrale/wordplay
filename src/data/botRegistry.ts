@@ -21,11 +21,11 @@ export interface Bot {
 export const BOT_REGISTRY: Bot[] = [
   // Default/Starter Bot
   { 
-    id: 'basicBot', 
-    displayName: 'basicbot', 
+    id: 'trainer-bot', 
+    displayName: 'trainerbot', 
     difficulty: 'basic',
     category: 'progression',
-    description: 'Basic bot for new players'
+    description: 'Trainer bot for new players - ignores key letters'
   },
 
   // Progression Bots (unlocked by achievements)
@@ -34,28 +34,28 @@ export const BOT_REGISTRY: Bot[] = [
     displayName: 'easybot', 
     difficulty: 'easy',
     category: 'progression',
-    description: 'Unlocked by beating basicBot'
+    description: 'Unlocked by beating trainer-bot - never uses key letters'
   },
   { 
     id: 'medium-bot', 
     displayName: 'mediumbot', 
     difficulty: 'medium',
     category: 'progression',
-    description: 'Unlocked by beating easy bot'
+    description: 'Unlocked by beating easy bot - plays 1-3 point moves'
   },
   { 
     id: 'hard-bot', 
     displayName: 'hardbot', 
     difficulty: 'hard',
     category: 'progression',
-    description: 'Unlocked by beating medium bot'
+    description: 'Unlocked by beating medium bot - plays 1-4 point moves'
   },
   { 
-    id: 'expert-bot', 
-    displayName: 'expertbot', 
+    id: 'boss-bot', 
+    displayName: 'bossbot', 
     difficulty: 'expert',
     category: 'progression',
-    description: 'Unlocked by beating hard bot'
+    description: 'Unlocked by beating hard bot - plays 3-4 point moves, prioritizes key letters'
   },
 
   // Themed Bots (unlocked by playing specific words)
