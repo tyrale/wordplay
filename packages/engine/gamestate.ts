@@ -441,8 +441,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       const botResult: BotResult = await this.dependencies.generateBotMove(this.state.currentWord, {
         keyLetters: this.state.keyLetters,
         lockedLetters: allLockedLetters,
-        maxCandidates: 500, // Reasonable limit for responsive gameplay
-        botId: this.state.config.botId || 'basicBot' // Pass botId from config
+        maxCandidates: 500 // Reasonable limit for responsive gameplay
       });
 
             if (!botResult.move) {

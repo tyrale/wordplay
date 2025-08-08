@@ -40,9 +40,6 @@ export interface DictionaryValidation {
 // Import dependency interfaces from central location
 import type { ScoringDependencies, BotDependencies } from './interfaces';
 
-// Import new bot strategy system
-import { getBotStrategy, filterCandidatesByStrategy, applyStrategyScoring } from './bot-strategies';
-
 // =============================================================================
 // TYPES FOR BOT OPERATIONS
 // =============================================================================
@@ -53,7 +50,7 @@ export interface BotOptions {
   difficulty?: 'easy' | 'medium' | 'hard';
   maxCandidates?: number;
   timeLimit?: number; // ms
-  botId?: string;
+  botId?: string; // Added for easy bot strategy
 }
 
 // Import standard interfaces from central location
@@ -253,24 +250,45 @@ export function scoreCandidatesWithDependencies(
   }).sort((a, b) => b.score - a.score);
 }
 
+// Add a new strategy for easy bot
+function filterEasyBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string, keyLetters: string[]): MoveCandidate[] {
+  return candidates.filter(candidate => {
+    const score = dependencies.getScoreForMove(currentWord, candidate.word);
+    return score <= 2 && !keyLetters.some(letter => candidate.word.includes(letter));
+  });
+}
+
+// Add a new strategy for medium bot
+function filterMediumBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string): MoveCandidate[] {
+  return candidates.filter(candidate => {
+    const score = dependencies.getScoreForMove(currentWord, candidate.word);
+    return score <= 3;
+  });
+}
+
+// Add a new strategy for hard bot
+function filterHardBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string): MoveCandidate[] {
+  return candidates.filter(candidate => {
+    const score = dependencies.getScoreForMove(currentWord, candidate.word);
+    return score <= 4;
+  });
+}
+
 /**
- * Generates bot move using dependency injection with strategy support (NEW ARCHITECTURE)
+ * Generates bot move using dependency injection (NEW ARCHITECTURE)
  */
 export function generateBotMoveWithDependencies(
   currentWord: string,
   dependencies: BotDependencies,
-  options: BotOptions & { botId?: string } = {}
+  options: BotOptions = {}
 ): BotResult {
   const startTime = performance.now();
   const { 
     keyLetters = [], 
     lockedLetters = [],
     maxCandidates = 200,
-    botId = 'basicBot'     // Default to basicBot if no botId provided
+    botId
   } = options;
-
-  // Get bot strategy
-  const strategy = getBotStrategy(botId);
 
   // Combine key and locked letters into a single protected set
   const protectedLetters = [...keyLetters, ...lockedLetters];
@@ -294,27 +312,28 @@ export function generateBotMoveWithDependencies(
   
   // Filter valid candidates using dependency injection
   const validCandidates = filterValidCandidatesWithDependencies(candidatesToCheck, dependencies);
-  
+
+  // Apply bot strategy if applicable
+  let filteredCandidates = validCandidates;
+  if (botId === 'easy-bot') {
+    filteredCandidates = filterEasyBotCandidates(validCandidates, dependencies, currentWord, keyLetters);
+  } else if (botId === 'medium-bot') {
+    filteredCandidates = filterMediumBotCandidates(validCandidates, dependencies, currentWord);
+  } else if (botId === 'hard-bot') {
+    filteredCandidates = filterHardBotCandidates(validCandidates, dependencies, currentWord);
+  }
+
   // Score valid candidates using dependency injection
-  let scoredCandidates = scoreCandidatesWithDependencies(validCandidates, currentWord, dependencies, keyLetters);
-  
-  // Apply strategy-specific scoring adjustments
-  scoredCandidates = applyStrategyScoring(scoredCandidates, strategy, keyLetters);
-  
-  // Filter candidates based on bot strategy
-  const strategyCandidates = filterCandidatesByStrategy(scoredCandidates, strategy, keyLetters);
-  
-  // Re-sort after strategy filtering to ensure best move is first
-  strategyCandidates.sort((a: BotMove, b: BotMove) => b.score - a.score);
-  
-  // Choose best move that fits strategy
-  const bestMove = strategyCandidates.length > 0 ? strategyCandidates[0] : null;
-  
+  const scoredCandidates = scoreCandidatesWithDependencies(filteredCandidates, currentWord, dependencies, keyLetters);
+
+  // Choose best move
+  const bestMove = scoredCandidates.length > 0 ? scoredCandidates[0] : null;
+
   const processingTime = performance.now() - startTime;
-  
+
   return {
     move: bestMove,
-    candidates: strategyCandidates.slice(0, 10), // Top 10 candidates that fit strategy
+    candidates: scoredCandidates.slice(0, 10), // Top 10 candidates
     processingTime,
     totalCandidatesGenerated
   };

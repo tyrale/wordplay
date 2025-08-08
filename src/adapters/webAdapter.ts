@@ -205,7 +205,6 @@ const webBotDependencies: GameStateBotDependencies = {
         return calculateScore(fromWord, toWord, { keyLetters });
       }
     };
-    // Pass through botId and other options to bot generation
     return generateBotMoveWithDependencies(word, botDeps, options);
   }
 };

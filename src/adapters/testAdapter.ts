@@ -272,7 +272,6 @@ const testBotDependencies: GameStateBotDependencies = {
       }
     };
     
-    // Pass through botId and other options to bot generation
     return generateBotMoveWithDependencies(word, botDeps, options);
   }
 };
@@ -495,7 +494,6 @@ export function createCustomTestDependencies(words: string[]): GameStateDependen
         }
       };
       
-      // Pass through botId and other options to bot generation
       return generateBotMoveWithDependencies(word, botDeps, options);
     }
   };

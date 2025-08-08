@@ -14,7 +14,7 @@ import type { UnlockDefinition, UnlockState } from './interfaces';
 const _INITIAL_UNLOCK_STATE = {
   themes: ['classic blue'],  // Only default theme unlocked initially
   mechanics: [],             // No special mechanics unlocked
-  bots: ['basicBot'],        // Only basic bot unlocked initially
+  bots: ['basicBot'],         // Only basic test bot unlocked
   achievements: []          // No achievements earned
 } as const;
 

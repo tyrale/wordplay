@@ -209,7 +209,6 @@ const nodeBotDependencies: GameStateBotDependencies = {
       calculateScore: nodeScoringDependencies.calculateScore
     };
     
-    // Pass through botId and other options to bot generation
     return await generateBotMoveWithDependencies(word, botDeps, options);
   }
 };

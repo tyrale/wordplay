@@ -598,7 +598,6 @@ export interface GameConfig {
   enableKeyLetters?: boolean;
   enableLockedLetters?: boolean;
   allowProfanity?: boolean;
-  botId?: string;
 }
 
 export interface TurnHistory {
