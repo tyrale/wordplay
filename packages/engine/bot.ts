@@ -274,6 +274,26 @@ function filterHardBotCandidates(candidates: MoveCandidate[], dependencies: BotD
   });
 }
 
+// Add a new strategy for pirate bot - prioritizes profanity/bad words
+function filterPirateBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string): MoveCandidate[] {
+  // First, look for candidates that result in profanity words
+  const profanityCandidates = candidates.filter(candidate => {
+    // Check if the candidate word is profanity using dependency injection
+    return dependencies.isProfanity ? dependencies.isProfanity(candidate.word) : false;
+  });
+
+  // If we found profanity words, prioritize them regardless of score
+  if (profanityCandidates.length > 0) {
+    return profanityCandidates;
+  }
+
+  // Fallback: If no profanity words available, use medium bot strategy (score <= 3)
+  return candidates.filter(candidate => {
+    const score = dependencies.getScoreForMove(currentWord, candidate.word);
+    return score <= 3;
+  });
+}
+
 /**
  * Generates bot move using dependency injection (NEW ARCHITECTURE)
  */
@@ -321,6 +341,8 @@ export function generateBotMoveWithDependencies(
     filteredCandidates = filterMediumBotCandidates(validCandidates, dependencies, currentWord);
   } else if (botId === 'hard-bot') {
     filteredCandidates = filterHardBotCandidates(validCandidates, dependencies, currentWord);
+  } else if (botId === 'pirate-bot') {
+    filteredCandidates = filterPirateBotCandidates(validCandidates, dependencies, currentWord);
   }
 
   // Score valid candidates using dependency injection

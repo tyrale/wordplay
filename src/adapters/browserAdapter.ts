@@ -220,6 +220,11 @@ const browserBotDependencies: GameStateBotDependencies = {
       },
       calculateScore: (fromWord: string, toWord: string, keyLetters: string[], lockedLetters: string[]): ScoringResult => {
         return calculateScore(fromWord, toWord, { keyLetters });
+      },
+      
+      // Bot-specific profanity checking
+      isProfanity: (word: string): boolean => {
+        return getBrowserWordData().profanityWords.has(word.toUpperCase());
       }
     };
     return generateBotMoveWithDependencies(word, botDeps, { ...options, botId: options.botId });

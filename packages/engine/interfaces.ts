@@ -172,6 +172,13 @@ export interface BotDependencies extends DictionaryDependencies, UtilityDependen
   getWordCount: () => number;
   getTimestamp: () => number;
   random: () => number;
+  
+  /**
+   * Check if a word is profanity
+   * @param word - Word to check for profanity
+   * @returns true if word is profanity
+   */
+  isProfanity?: (word: string) => boolean;
 }
 
 /**
