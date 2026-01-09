@@ -21,8 +21,8 @@ packages/engine/           # Pure game logic (platform-agnostic)
 └── interfaces.ts         # All engine dependency contracts
 
 src/adapters/             # Platform-specific implementations (main adapters)
-├── browserAdapter.ts     # Browser HTTP fetch, performance.now()
-├── webAdapter.ts         # Alternative web implementation 
+├── browserAdapter.ts     # Unified web adapter (HTTP fetch, performance.now)
+├── webAdapter.ts         # Thin alias to browserAdapter for compatibility
 ├── nodeAdapter.ts        # Node.js file system, performance.now()
 └── testAdapter.ts        # Mocks, deterministic random
 
@@ -40,14 +40,21 @@ packages/adapters/        # Specialized feature adapters
 └── test/                 # Test-specific unlock implementations
 ```
 
-### **Current Dual Adapter System**
+### **Web Adapter System (Unified Implementation)**
 
-The codebase currently uses **two different adapters** for different components:
+Historically the codebase used **two different web adapters** for different components:
 
 - **`browserAdapter.ts`**: Used by challenge mode (`ChallengeGame`) and hooks (`useGameState`)
 - **`webAdapter.ts`**: Used by interactive game mode (`InteractiveGame`)
 
-Both provide the same `GameStateDependencies` interface but with slightly different implementations.
+Both provided the same `GameStateDependencies` interface but with separate implementations, which created duplication and confusion.
+
+The architecture has now been **simplified** so that:
+
+- `browserAdapter.ts` contains the **single, canonical web implementation**.
+- `webAdapter.ts` is a **thin alias** that re-exports the browser adapter under the `WebAdapter` / `createWebAdapter` names for compatibility with existing code and documentation.
+
+New web code should import from `browserAdapter.ts` directly; `webAdapter.ts` exists only as a compatibility layer.
 
 ### **Data Flow**
 
@@ -393,11 +400,6 @@ const result = await deps.generateBotMove('CAT');
 
 ## **Current Architecture Issues**
 
-### **Dual Adapter Problem**
-- Currently maintains two similar adapters (`browserAdapter` vs `webAdapter`)
-- Should consolidate to single web adapter for consistency
-- Different components use different adapters causing maintenance overhead
-
 ### **Interface Mismatches** 
 - Tests expect `result.breakdown.addLetterPoints` but get different structure
 - Scoring module interfaces need alignment between engine and consumers
@@ -583,7 +585,7 @@ This section documents major architectural decisions made during the WordPlay pr
 ### **ADR-006: Dual Adapter System (Phase 2)**
 
 **Date**: Phase 2 Development  
-**Status**: ⚠️ **NEEDS CONSOLIDATION**  
+**Status**: ✅ **CONSOLIDATED (VIA SINGLE IMPLEMENTATION)**  
 **Decision**: Implement both browserAdapter and webAdapter for different use cases
 
 **Context**:
@@ -604,7 +606,7 @@ This section documents major architectural decisions made during the WordPlay pr
 - ⚠️ **Negative**: Code duplication and maintenance overhead
 - ⚠️ **Negative**: Confusion about which adapter to use
 
-**Current Status**: Should be consolidated into single web adapter
+**Current Status**: Implemented via a single browser adapter implementation; `webAdapter.ts` now re-exports the browser adapter as a compatibility layer.
 
 ### **ADR-007: Profanity Management System (Phase 2)**
 
@@ -652,10 +654,9 @@ This section documents major architectural decisions made during the WordPlay pr
 4. **Performance Requirements**: Met through careful optimization and measurement
 
 **Current Technical Debt**:
-1. **Dual Adapter Consolidation**: Need to merge browserAdapter and webAdapter
-2. **Test Interface Mismatches**: 43 failing tests due to scoring interface changes
-3. **Debug Log Cleanup**: Remove development debugging statements
-4. **Documentation Alignment**: Update docs to match current implementation
+1. **Test Interface Mismatches**: 43 failing tests due to scoring interface changes
+2. **Debug Log Cleanup**: Remove development debugging statements
+3. **Documentation Alignment**: Update docs to match current implementation
 
 ## **Filter System Architecture**
 
