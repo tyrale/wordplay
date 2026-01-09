@@ -269,6 +269,11 @@ const testBotDependencies: GameStateBotDependencies = {
       },
       calculateScore: (fromWord: string, toWord: string, keyLetters: string[], lockedLetters: string[]): ScoringResult => {
         return calculateScore(fromWord, toWord, { keyLetters });
+      },
+      
+      // Bot-specific profanity checking
+      isProfanity: (word: string): boolean => {
+        return testWordData.profanityWords.has(word.toUpperCase());
       }
     };
     
@@ -491,6 +496,11 @@ export function createCustomTestDependencies(words: string[]): GameStateDependen
         },
         calculateScore: (fromWord: string, toWord: string, keyLetters: string[], lockedLetters: string[]): ScoringResult => {
           return calculateScore(fromWord, toWord, { keyLetters });
+        },
+        
+        // Bot-specific profanity checking
+        isProfanity: (word: string): boolean => {
+          return customWordData.profanityWords.has(word.toUpperCase());
         }
       };
       

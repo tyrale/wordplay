@@ -29,13 +29,13 @@ npm test -- --reporter=verbose
 
 **Known Working**: Core game functionality, challenge mode, theme system, unlock system
 
-### Architecture Dual Adapters
+### Architecture Web Adapter (Unified)
 
-**Problem**: `browserAdapter.ts` and `webAdapter.ts` provide similar functionality
+**Problem (Historical)**: `browserAdapter.ts` and `webAdapter.ts` previously provided similar functionality with separate implementations.
 
-**Impact**: Code duplication and maintenance overhead
+**Current Status**: `webAdapter.ts` is now a thin alias that re-exports the single canonical implementation from `browserAdapter.ts`.
 
-**Workaround**: Both adapters are functional; use `browserAdapter` for new features
+**Guidance**: New web code should import from `browserAdapter.ts`. Existing `webAdapter` imports continue to work via the alias.
 
 ### Storybook IndexedDB Issues
 

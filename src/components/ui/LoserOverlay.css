@@ -109,6 +109,18 @@
   animation: fadeInUp 0.4s ease-out 2.3s both;
 }
 
+/* Add missing fadeInUp animation */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  100% {
+    opacity: 0.8;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 @keyframes scoresFade {
   0% {
     opacity: 0;

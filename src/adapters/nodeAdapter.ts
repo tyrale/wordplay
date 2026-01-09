@@ -206,7 +206,12 @@ const nodeBotDependencies: GameStateBotDependencies = {
       
       // ScoringDependencies
       getScoreForMove: nodeScoringDependencies.getScoreForMove,
-      calculateScore: nodeScoringDependencies.calculateScore
+      calculateScore: nodeScoringDependencies.calculateScore,
+      
+      // Bot-specific profanity checking
+      isProfanity: (word: string): boolean => {
+        return nodeWordData.profanityWords.has(word.toUpperCase());
+      }
     };
     
     return await generateBotMoveWithDependencies(word, botDeps, options);

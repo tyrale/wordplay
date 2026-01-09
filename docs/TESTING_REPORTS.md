@@ -342,10 +342,10 @@ npm run play
 
 ### Architecture Issues
 
-**Dual Adapter Maintenance Overhead**:
-- **Issue**: Both `browserAdapter` and `webAdapter` provide similar functionality
-- **Impact**: Code duplication and maintenance complexity
-- **Recommendation**: Consolidate to single web adapter implementation
+**Web Adapter Maintenance (Unified)**:
+- **Issue (Historical)**: Both `browserAdapter` and `webAdapter` provided similar functionality with separate implementations
+- **Current**: `webAdapter.ts` now re-exports the single canonical implementation from `browserAdapter.ts`
+- **Recommendation**: Prefer `browserAdapter` for new web code; keep `webAdapter` only as a compatibility layer
 
 **Debug Code in Production**:
 - **Issue**: Development logging statements still present throughout codebase

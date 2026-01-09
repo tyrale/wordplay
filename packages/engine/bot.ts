@@ -50,6 +50,7 @@ export interface BotOptions {
   difficulty?: 'easy' | 'medium' | 'hard';
   maxCandidates?: number;
   timeLimit?: number; // ms
+  botId?: string; // Added for easy bot strategy
 }
 
 // Import standard interfaces from central location
@@ -249,6 +250,50 @@ export function scoreCandidatesWithDependencies(
   }).sort((a, b) => b.score - a.score);
 }
 
+// Add a new strategy for easy bot
+function filterEasyBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string, keyLetters: string[]): MoveCandidate[] {
+  return candidates.filter(candidate => {
+    const score = dependencies.getScoreForMove(currentWord, candidate.word);
+    return score <= 2 && !keyLetters.some(letter => candidate.word.includes(letter));
+  });
+}
+
+// Add a new strategy for medium bot
+function filterMediumBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string): MoveCandidate[] {
+  return candidates.filter(candidate => {
+    const score = dependencies.getScoreForMove(currentWord, candidate.word);
+    return score <= 3;
+  });
+}
+
+// Add a new strategy for hard bot
+function filterHardBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string): MoveCandidate[] {
+  return candidates.filter(candidate => {
+    const score = dependencies.getScoreForMove(currentWord, candidate.word);
+    return score <= 4;
+  });
+}
+
+// Add a new strategy for pirate bot - prioritizes profanity/bad words
+function filterPirateBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string): MoveCandidate[] {
+  // First, look for candidates that result in profanity words
+  const profanityCandidates = candidates.filter(candidate => {
+    // Check if the candidate word is profanity using dependency injection
+    return dependencies.isProfanity ? dependencies.isProfanity(candidate.word) : false;
+  });
+
+  // If we found profanity words, prioritize them regardless of score
+  if (profanityCandidates.length > 0) {
+    return profanityCandidates;
+  }
+
+  // Fallback: If no profanity words available, use medium bot strategy (score <= 3)
+  return candidates.filter(candidate => {
+    const score = dependencies.getScoreForMove(currentWord, candidate.word);
+    return score <= 3;
+  });
+}
+
 /**
  * Generates bot move using dependency injection (NEW ARCHITECTURE)
  */
@@ -261,7 +306,8 @@ export function generateBotMoveWithDependencies(
   const { 
     keyLetters = [], 
     lockedLetters = [],
-    maxCandidates = 200
+    maxCandidates = 200,
+    botId
   } = options;
 
   // Combine key and locked letters into a single protected set
@@ -286,15 +332,27 @@ export function generateBotMoveWithDependencies(
   
   // Filter valid candidates using dependency injection
   const validCandidates = filterValidCandidatesWithDependencies(candidatesToCheck, dependencies);
-  
+
+  // Apply bot strategy if applicable
+  let filteredCandidates = validCandidates;
+  if (botId === 'easy-bot') {
+    filteredCandidates = filterEasyBotCandidates(validCandidates, dependencies, currentWord, keyLetters);
+  } else if (botId === 'medium-bot') {
+    filteredCandidates = filterMediumBotCandidates(validCandidates, dependencies, currentWord);
+  } else if (botId === 'hard-bot') {
+    filteredCandidates = filterHardBotCandidates(validCandidates, dependencies, currentWord);
+  } else if (botId === 'pirate-bot') {
+    filteredCandidates = filterPirateBotCandidates(validCandidates, dependencies, currentWord);
+  }
+
   // Score valid candidates using dependency injection
-  const scoredCandidates = scoreCandidatesWithDependencies(validCandidates, currentWord, dependencies, keyLetters);
-  
+  const scoredCandidates = scoreCandidatesWithDependencies(filteredCandidates, currentWord, dependencies, keyLetters);
+
   // Choose best move
   const bestMove = scoredCandidates.length > 0 ? scoredCandidates[0] : null;
-  
+
   const processingTime = performance.now() - startTime;
-  
+
   return {
     move: bestMove,
     candidates: scoredCandidates.slice(0, 10), // Top 10 candidates

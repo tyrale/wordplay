@@ -102,7 +102,7 @@ interface WordDataDependencies {
 
 ### Browser Adapter
 
-For web applications using HTTP dictionary loading. **Currently used by challenge mode and hooks**.
+For web applications using HTTP dictionary loading. **Currently used by challenge mode and hooks**, and acts as the **single canonical web adapter implementation**.
 
 ```typescript
 import { BrowserAdapter, createBrowserAdapter } from '../adapters/browserAdapter';
@@ -131,7 +131,7 @@ const dependencies = adapter.getGameDependencies();
 
 ### Web Adapter
 
-Alternative web implementation. **Currently used by interactive game mode**.
+Compatibility layer that re-exports the browser adapter. **Historically used by interactive game mode**.
 
 ```typescript
 import { WebAdapter, createWebAdapter } from '../adapters/webAdapter';
@@ -146,13 +146,12 @@ const dependencies = adapter.getGameDependencies();
 ```
 
 **Features**:
-- Similar to BrowserAdapter but with different internal implementation
-- HTTP dictionary loading with caching strategies
-- Integrated profanity filtering system
-- Optimized for interactive game performance
+- Re-exports the `BrowserAdapter` implementation under the `WebAdapter` / `createWebAdapter` names
+- Preserves existing import paths while avoiding duplicate implementations
 
-**Used By**:
-- `InteractiveGame.tsx` component
+**Usage Notes**:
+- Existing code that imports `WebAdapter` or `createWebAdapter` will continue to work.
+- New web code should prefer importing from `browserAdapter.ts` to avoid confusion.
 
 ### Test Adapter
 
@@ -685,17 +684,17 @@ const mockDependencies: GameStateDependencies = {
 ### Choosing the Right Adapter
 
 ```typescript
-// For challenge mode or hooks
+// Preferred for all web usage (single canonical implementation)
 import { createBrowserAdapter } from '../adapters/browserAdapter';
 const adapter = await createBrowserAdapter();
 
-// For interactive game mode  
+// Existing code that imports from webAdapter continues to work via alias
 import { createWebAdapter } from '../adapters/webAdapter';
-const adapter = await createWebAdapter();
+const adapterAlias = await createWebAdapter();
 
 // For testing
 import { createTestAdapter } from '../adapters/testAdapter';
-const adapter = createTestAdapter();
+const testAdapter = createTestAdapter();
 ```
 
 ### From Legacy Direct Engine Imports
@@ -743,9 +742,8 @@ function GameComponent() {
 
 ### Known Issues (As of 2025-01-22)
 
-1. **Dual Adapter Overhead**: Both `browserAdapter` and `webAdapter` provide similar functionality
-2. **Test Interface Mismatches**: 43/307 tests failing due to scoring interface expectations
-3. **Debug Code**: Development logging statements still present in production code
+1. **Test Interface Mismatches**: 43/307 tests failing due to scoring interface expectations
+2. **Debug Code**: Development logging statements still present in production code
 
 ### Recommended Consolidation
 
