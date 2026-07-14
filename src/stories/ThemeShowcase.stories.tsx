@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import React from 'react';
 import { availableThemes } from '../types/theme';
 import { GridCell } from '../components/ui/GridCell';
@@ -21,7 +21,7 @@ const ThemeShowcase: React.FC = () => {
               style={{
                 '--theme-surface': theme.colors.surface,
                 '--theme-accent': theme.colors.accent,
-                '--theme-default': theme.colors.default,
+                '--theme-default': theme.colors.primary,
                 '--theme-text': theme.colors.text,
                 '--theme-background': theme.colors.background,
               } as React.CSSProperties}
@@ -37,25 +37,25 @@ const ThemeShowcase: React.FC = () => {
                 {/* Sample word with key/locked letters */}
                 <div className="theme-showcase__word">
                   <GridCell 
-                    letter="W" 
+                    content="W" 
                     state="normal" 
                     onClick={() => {}} 
                     disabled={false}
                   />
                   <GridCell 
-                    letter="O" 
+                    content="O" 
                     state="key" 
                     onClick={() => {}} 
                     disabled={false}
                   />
                   <GridCell 
-                    letter="R" 
+                    content="R" 
                     state="normal" 
                     onClick={() => {}} 
                     disabled={false}
                   />
                   <GridCell 
-                    letter="D" 
+                    content="D" 
                     state="locked" 
                     onClick={() => {}} 
                     disabled={false}
@@ -81,7 +81,7 @@ const ThemeShowcase: React.FC = () => {
                   />
                   <div 
                     className="theme-showcase__swatch" 
-                    style={{ backgroundColor: theme.colors.default }}
+                    style={{ backgroundColor: theme.colors.primary }}
                     title="Default"
                   />
                 </div>
