@@ -32,10 +32,10 @@ This document has two parts:
 ### 1.3 Structural / Organizational Issues
 
 **A. Duplicate/parallel engine adapter layers.** There are effectively three places implementing "adapters":
-- `src/adapters/` (`browserAdapter.ts`, `nodeAdapter.ts`, `testAdapter.ts`, `webAdapter.ts`, `integration.test.ts`) — **this is the one actually used by the app.**
+- `src/adapters/` (`browserAdapter.ts`, `nodeAdapter.ts`, `testAdapter.ts`, `integration.test.ts`) — **this is the one actually used by the app** (`webAdapter.ts` has since been removed, see step 2).
 - `packages/adapters/browser/` (`challenge.ts`, `unlocks.ts`) — used by `src/hooks/useUnlocks.ts` only.
-- `packages/adapters/node/unlocks.ts` and `packages/adapters/test/unlocks.ts` — **dead code, nothing imports them.**
-- `src/adapters/webAdapter.ts` is a thin re-export shim of `browserAdapter.ts` with **no consumers anywhere** — dead code.
+- `packages/adapters/node/unlocks.ts` — **dead code, nothing imported it** (removed, see step 2). `packages/adapters/test/unlocks.ts` is **not** dead — it's used by `packages/engine/__tests__/unlocks.test.ts` and `unlocks-integration.test.ts` (correction from initial pass).
+- `src/adapters/webAdapter.ts` was a thin re-export shim of `browserAdapter.ts` with **no consumers in actual code** (only stale docs referenced it) — removed, see step 2.
 
 **B. No module aliasing / monorepo tooling.** `src` imports `packages/engine` and `packages/adapters` via long relative paths (`../../../packages/engine/interfaces`), even though `packages/` isn't a real workspace package (no `package.json` inside it, not referenced in root `package.json` workspaces). This is a "fake monorepo" layout that adds path-depth pain for no benefit — everything is really one app.
 
@@ -76,8 +76,8 @@ This document has two parts:
 
 Execute in order. Each step is scoped to be doable and verifiable independently. Re-run `npm test`, `npx eslint .`, and `npx tsc -b` after each code-affecting step.
 
-1. **Baseline safety net**: confirm current `git status` is clean / commit any pending work, so cleanup steps are all independently revertible commits.
-2. **Delete dead adapter code**: remove `packages/adapters/node/unlocks.ts`, `packages/adapters/test/unlocks.ts`, and `src/adapters/webAdapter.ts` (verify zero imports first, already confirmed for these three).
+1. ~~**Baseline safety net**: confirm current `git status` is clean / commit any pending work, so cleanup steps are all independently revertible commits.~~ ✅ Done — working tree was clean (only this audit doc + stray untracked `tsc_errors.txt`); audit doc committed on `consolidate-web-arch` (`77f7e1a`).
+2. ~~**Delete dead adapter code**: remove `packages/adapters/node/unlocks.ts` and `src/adapters/webAdapter.ts`.~~ ✅ Done (`66d786d`). Correction: `packages/adapters/test/unlocks.ts` is actually used by `packages/engine/__tests__/unlocks*.test.ts` and was **not** deleted. Verified with `npx vite build` (still succeeds) and `npm test` (same 58 failed / 270 passed as baseline — no regression).
 3. **Consolidate adapters into one location**: merge `packages/adapters/browser/*` into `src/adapters/` (or vice versa) so there is a single adapters directory instead of two. Update the ~3 import sites (`useUnlocks.ts`, `challenge` usage) accordingly.
 4. **Remove Storybook boilerplate**: delete `src/stories/Button.*`, `Header.*`, `Page.*`, associated CSS, and unused generated assets under `src/stories/assets/`. Keep/fix `ThemeShowcase.stories.tsx`, `GridCell.stories.tsx`, `WordBuilder.stories.tsx`.
 5. **Fix `ThemeShowcase.stories.tsx` type errors** (or delete it if the underlying `GridCell` API changed and it's no longer worth maintaining) so `tsc -b` stops failing on it.
