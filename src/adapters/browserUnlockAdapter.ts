@@ -6,8 +6,8 @@
  * (survives cache clears and browser restarts).
  */
 
-import type { UnlockDependencies, UnlockState } from '../../engine/interfaces';
-import { INITIAL_UNLOCK_STATE } from '../../engine/unlock-definitions';
+import type { UnlockDependencies, UnlockState } from '../../packages/engine/interfaces';
+import { INITIAL_UNLOCK_STATE } from '../../packages/engine/unlock-definitions';
 
 const DB_NAME = 'wordplay-unlocks';
 const DB_VERSION = 1;

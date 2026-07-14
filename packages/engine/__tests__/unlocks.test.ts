@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createUnlockEngine, generateBotDefeatAchievement, getAllUnlockTriggers } from '../unlocks';
-import { createTestUnlockDependencies, createFailingTestUnlockDependencies, createControlledTestUnlockDependencies } from '../../adapters/test/unlocks';
+import { createTestUnlockDependencies, createFailingTestUnlockDependencies, createControlledTestUnlockDependencies } from './testUnlockAdapters';
 import type { UnlockEngine, UnlockState } from '../interfaces';
 import { INITIAL_UNLOCK_STATE } from '../unlock-definitions';
 

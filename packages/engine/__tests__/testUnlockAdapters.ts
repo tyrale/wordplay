@@ -5,8 +5,8 @@
  * Allows for controlled testing scenarios and state manipulation.
  */
 
-import type { UnlockDependencies, UnlockState } from '../../engine/interfaces';
-import { getInitialUnlockState } from '../../engine/unlock-definitions';
+import type { UnlockDependencies, UnlockState } from '../interfaces';
+import { getInitialUnlockState } from '../unlock-definitions';
 
 /**
  * Create test unlock dependencies with in-memory storage
