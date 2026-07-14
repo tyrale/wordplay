@@ -581,8 +581,8 @@ export interface GameState {
   currentPlayerIndex: number;
   currentTurn: number;
   maxTurns: number;
-  usedWords: Set<string>;
-  usedKeyLetters: Set<string>;
+  usedWords: string[];
+  usedKeyLetters: string[];
   turnHistory: TurnHistory[];
   gameStartTime: number | null;
   lastMoveTime: number | null;
