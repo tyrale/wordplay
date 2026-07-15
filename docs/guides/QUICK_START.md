@@ -1,5 +1,7 @@
 # Quick Start Guide
 
+> **Purpose**: Canonical step-by-step setup, running, and troubleshooting guide. For a high-level project overview, current status, and architecture summary, see the root [README.md](../../README.md). See [docs/README.md](../README.md) for the full documentation index.
+
 Get the WordPlay project up and running in minutes. This guide covers everything you need to start developing or playing the game.
 
 ## Prerequisites
@@ -135,7 +137,7 @@ wordplay/
 
 ### Web Interface
 - **Responsive Design**: Works on all devices
-- **Theme System**: 81 different color themes
+- **Theme System**: 75 color themes defined (53 of which are reachable via in-game unlocks; see `docs/features/UNLOCKS.md`)
 - **Drag & Drop**: Interactive letter placement
 - **Real-time Feedback**: Live scoring and validation
 - **Accessibility**: WCAG AA compliant
@@ -175,7 +177,7 @@ The development server supports hot module replacement (HMR). Changes to code wi
 
 ### Testing
 - Run `npm test` before committing changes
-- All tests should pass (252+ tests)
+- The suite has known failing tests (scoring/dictionary/unlock interface mismatches); check `docs/guides/TROUBLESHOOTING.md` and `docs/project/PROJECT_STATUS_AUDIT.md` for current status rather than a hardcoded count here
 - Add tests for new features
 
 ### Code Style
@@ -218,9 +220,8 @@ npm run build
 Run tests to check for issues:
 ```bash
 npm test
-# Current status: 264/307 tests passing (86% success rate)
-# Some failing tests are due to interface mismatches (documented in TESTING_REPORTS.md)
 ```
+Current known failure categories (interface mismatches, not regressions) are documented in [TROUBLESHOOTING.md](TROUBLESHOOTING.md) and [PROJECT_STATUS_AUDIT.md](../project/PROJECT_STATUS_AUDIT.md). Exact pass/fail counts change frequently — don't trust a hardcoded number in docs; run the command above.
 
 ## Next Steps
 
@@ -231,22 +232,22 @@ npm test
 - Challenge yourself against bot opponents
 
 ### For Developers
-- Read [ARCHITECTURE.md](ARCHITECTURE.md) for technical details
-- Check [TASK_PROGRESS.md](TASK_PROGRESS.md) for current status
-- Review [TESTING_REPORTS.md](TESTING_REPORTS.md) for test coverage
-- Explore [WEB_UI_DESIGN_SPEC.md](WEB_UI_DESIGN_SPEC.md) for UI guidelines
+- Read [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) for technical details
+- Check [TASK_PROGRESS.md](../project/TASK_PROGRESS.md) for current status
+- Review [TESTING_REPORTS.md](../project/TESTING_REPORTS.md) for test coverage
+- Explore [WEB_UI_DESIGN_SPEC.md](../architecture/WEB_UI_DESIGN_SPEC.md) for UI guidelines
 
 ### For Contributors
-- Follow the development workflow in [dev-plan.md](dev-plan.md)
-- Check [IMPLEMENTATION_HISTORY.md](IMPLEMENTATION_HISTORY.md) for context
+- Follow the development workflow in [dev-plan.md](../project/dev-plan.md)
+- Check [IMPLEMENTATION_HISTORY.md](../project/IMPLEMENTATION_HISTORY.md) for context
 - Use "ShipHip" prefix in commit messages
 
 ## Support
 
 ### Documentation
-- **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 - **Game Rules**: [GAME_RULES.md](GAME_RULES.md)
-- **UI Design**: [WEB_UI_DESIGN_SPEC.md](WEB_UI_DESIGN_SPEC.md)
+- **UI Design**: [WEB_UI_DESIGN_SPEC.md](../architecture/WEB_UI_DESIGN_SPEC.md)
 - **Troubleshooting**: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ### Getting Help

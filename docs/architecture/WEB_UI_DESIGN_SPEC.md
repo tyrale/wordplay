@@ -1,13 +1,10 @@
 # Web UI Design Specification
 
-## ✅ **IMPLEMENTATION STATUS: MATCHES CURRENT UI** (Updated 2025-01-22)
+## Implementation Status
 
-**Verification Results**: This design specification accurately reflects the current web interface implementation. Key specifications confirmed:
-- ✅ **Inter font with 900 weight**: Implemented in CSS variables and component styles
-- ✅ **Theme system**: Full theme provider with multiple color schemes working
-- ✅ **Typography system**: Font sizes and weights match specification  
-- ✅ **Layout patterns**: Current UI matches design patterns described
-- ✅ **Interaction model**: Mouse/touch-only implementation as specified
+**Accuracy note (2026-07-14)**: The banner below ("MATCHES CURRENT UI") previously contradicted the "Component Checklist" and "Implementation Verification" sections further down, which had every single item unchecked (`[ ]`) despite the banner claiming full verification. This document is best treated as a **design reference**, not a maintained status tracker — the checklists are not kept in sync with implementation and shouldn't be trusted as a literal completion record.
+
+What *is* re-confirmed as of this date: all of the named components in the "Must-Have Components" checklist below exist in `src/components/game/` and `src/components/ui/` (`ThemeProvider`, `WordTrail`, `ActionIndicators`, `SubmitButton`, `AlphabetGrid`, `GridCell`, `ScoreDisplay`, plus `GameBoard`) and the theme system (`ThemeProvider.tsx`, `types/theme.ts`) implements CSS-variable-driven theming with localStorage persistence, matching the general architecture described here. The more granular visual/interaction/functional parity checklists were **not** re-verified pixel-by-pixel against the original mockups and are left unchecked intentionally.
 
 > **Original Purpose**: This document provides the complete visual and interaction specification for the web UI components based on the provided screen designs for turn 4 and turn 5. This ensures pixel-perfect implementation matching the intended design.
 
@@ -301,14 +298,16 @@ const defaultTheme: GameTheme = {
 ## 📋 Component Checklist
 
 ### Must-Have Components (Phase 2.1):
-- [ ] **ThemeProvider**: Context provider for theme switching
-- [ ] **WordTrail**: Displays previous words (Inter Black 900, theme colors)
-- [ ] **CurrentWord**: Large centered word display with key letter highlighting
-- [ ] **ActionIndicators**: Display-only symbols showing user actions (−, +, ~)
-- [ ] **SubmitButton**: Interactive submit button (✓ valid, ✗ invalid)
-- [ ] **AlphabetGrid**: 6×5 grid with touch-only interaction
-- [ ] **GridCell**: Individual letter cell with theme color states
-- [ ] **ScoreDisplay**: Real-time scoring feedback (Inter Black 900)
+- [x] **ThemeProvider**: Context provider for theme switching (`src/components/theme/ThemeProvider.tsx`)
+- [x] **WordTrail**: Displays previous words (`src/components/game/WordTrail.tsx`)
+- [ ] **CurrentWord**: Large centered word display with key letter highlighting (no standalone `CurrentWord` component found by name; likely inlined in `GameBoard.tsx` — not independently verified)
+- [x] **ActionIndicators**: Display-only symbols showing user actions (`src/components/game/ActionIndicators.tsx`)
+- [x] **SubmitButton**: Interactive submit button (`src/components/game/SubmitButton.tsx`)
+- [x] **AlphabetGrid**: grid with touch-only interaction (`src/components/game/AlphabetGrid.tsx`)
+- [x] **GridCell**: Individual letter cell with theme color states (`src/components/ui/GridCell.tsx`)
+- [x] **ScoreDisplay**: Real-time scoring feedback (`src/components/game/ScoreDisplay.tsx`)
+
+(Existence of each file was confirmed 2026-07-14; exact visual/behavioral fidelity to the spec below was not re-verified.)
 
 ### Visual States to Implement:
 - [ ] **Normal Letter**: Theme surface color background

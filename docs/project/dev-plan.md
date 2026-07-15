@@ -1,12 +1,14 @@
 # Word‑Game Rebuild – **Cursor‑Ready Development Plan** (v2.1)
 
+> **Purpose**: Original roadmap and architecture-rules planning document (historical). The mandatory architectural rules (dependency injection, adapter pattern) below remain authoritative; the phase timeline/roadmap does not reflect current priorities — see [TASK_PROGRESS.md](TASK_PROGRESS.md).
+
 ## ⚠️ **DOCUMENTATION NOTICE (Updated 2025-01-22)**
 
 **This development plan contains aspirational roadmap phases that do not reflect current project reality.** For accurate current status, refer to:
 
 - **Current Project Status**: Core game complete, no active development - See [TASK_PROGRESS.md](TASK_PROGRESS.md)
-- **Actual Features**: Single-player game with challenge mode - See [QUICK_START.md](QUICK_START.md)
-- **Architecture Reality**: Platform-agnostic engine implemented - See [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Actual Features**: Single-player game with challenge mode - See [QUICK_START.md](../guides/QUICK_START.md)
+- **Architecture Reality**: Platform-agnostic engine implemented - See [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 - **Test Status**: 264/307 tests passing (86%) - See [TESTING_REPORTS.md](TESTING_REPORTS.md)
 
 **The phases below reflect historical planning and aspirational features, not current development priorities.**

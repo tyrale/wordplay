@@ -37,9 +37,9 @@ Challenge Mode is a daily puzzle game where all players worldwide receive the sa
 5. Game ends when target word is reached or player gives up
 
 ### Sharing System
-- Visual pattern using `···*` format
-- `·` represents unchanged letters (including rearranged)
-- `*` represents truly new letters only
+- Visual pattern generated character-by-character from `analyzeWordChange()` (see `packages/engine/challenge.ts`, `generatePatternFromAnalysis`)
+- `🀫` represents truly new (added) letters
+- `*` represents letters that existed before (unchanged or moved)
 - Failed attempts show red X symbols (❌) for final word
 - Uses engine's move calculation logic for accuracy
 
@@ -47,7 +47,7 @@ Challenge Mode is a daily puzzle game where all players worldwide receive the sa
 
 ### Phase 1: Core Challenge Engine (Cross-Platform)
 
-#### Challenge Engine Module (`packages/engine/challenge/`)
+#### Challenge Engine Module (`packages/engine/challenge.ts`)
 - Platform-agnostic challenge logic
 - Daily seed generation (deterministic from date)
 - Challenge state management
@@ -77,7 +77,7 @@ interface ChallengeState {
 #### Sharing Format Generator
 - Research and integrate existing move calculation logic
 - Distinguish new letters from rearranged letters
-- Generate accurate `···*` patterns
+- Generate accurate `🀫`/`*` patterns
 - Handle failed challenges with red X format
 - Pure function for cross-platform compatibility
 
@@ -135,13 +135,13 @@ interface ChallengeState {
 #### Accurate Pattern Generation
 - Leverage engine's move calculation for new letter identification
 - Correctly handle letter additions, removals, and rearrangements
-- Generate precise `···*` patterns based on actual transformations
+- Generate precise `🀫`/`*` patterns based on actual transformations
 
 #### Sharing Format Output
 ```
 FISH → REAMS
-····
-[accurate patterns based on engine move analysis]
+****
+[accurate patterns based on engine move analysis, using 🀫 for new letters and * for existing letters]
 ```
 
 #### Failed Challenge Handling
@@ -156,8 +156,7 @@ FISH → REAMS
 - Integrate with established game state patterns
 
 #### Persistent Storage Strategy
-- Research unlock storage system for persistence approach
-- Use same storage mechanism as unlocks (survives cache clearing)
+- Implemented using plain `localStorage` with date-based keys (`wordplay-challenge-${date}`), not the IndexedDB mechanism used by the unlock system
 - Save challenge state with date-based keys
 - Handle mid-game progress preservation
 
@@ -182,7 +181,7 @@ FISH → REAMS
 ## Architecture Principles
 
 ### Cross-Platform Design
-- Challenge logic in `packages/engine/challenge/` as platform-agnostic modules
+- Challenge logic in `packages/engine/challenge.ts` as a platform-agnostic module
 - Consistent behavior across web, mobile, and terminal platforms
 - Shared core logic with platform-specific adapters
 
@@ -243,7 +242,7 @@ FISH → REAMS
 - ✅ Target word constraints (min 5 letters, max 2 common letters with start)
 - ✅ Cross-platform challenge engine (`packages/engine/challenge.ts`)
 - ✅ Challenge-specific UI with word trail showing start/target words
-- ✅ Sharing system with `···*` pattern generation
+- ✅ Sharing system with `🀫`/`*` pattern generation
 - ✅ Menu integration ("vs world" with accent "vs" styling)
 - ✅ Persistent storage across browser sessions
 - ✅ Completion overlay with sharing functionality

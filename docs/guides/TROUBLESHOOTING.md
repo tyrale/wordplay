@@ -2,40 +2,41 @@
 
 Common issues and solutions for the WordPlay project. This guide helps resolve development, build, and runtime problems.
 
-## Current Known Issues (Updated 2025-01-22)
+## Current Known Issues (Verified against `npm test` output)
 
-### Test Suite Failures (264/307 tests passing)
+### Test Suite Failures
 
-**Problem**: Some tests are failing due to interface mismatches
+**Problem**: One remaining known category of tests fails due to an interface mismatch, not a functional regression. As of the latest fixes (see `docs/project/PROJECT_STATUS_AUDIT.md` steps 8/8a), only `packages/engine/scoring.test.ts` remains failing — dictionary, unlocks, and Storybook browser-mode failures documented in earlier revisions of this guide have all been fixed. Run `npm test` for the current count; don't trust a hardcoded ratio here.
 
-**Current Status**: 43 tests failing (14% failure rate)
+**Verified failure category**:
+1. **`packages/engine/scoring.test.ts`**: The test file expects `ScoringResult.breakdown` to be a structured `{addLetterPoints, removeLetterPoints, movePoints, keyLetterUsagePoints}` object, but `calculateScore()` in `packages/engine/scoring.ts` actually returns `breakdown` as a `string[]` of action descriptions. This is a real, unresolved shape mismatch (tracked in `docs/project/PROJECT_STATUS_AUDIT.md` step 7a) — total point *values* are still correct, only the breakdown object shape differs from what the tests assert. This is also why `npm run build` currently fails (`tsc -b` catches the same shape mismatch as a type error).
 
-**Primary Issues**:
-1. **Scoring Interface Mismatches** (35 failures): Tests expect old `ScoringResult` format
-2. **Profanity System Tests** (6 failures): Test environment profanity word loading
-3. **Storybook Component Tests** (5 failures): Test environment setup issues
+**Fixed since previous revisions of this guide** (kept here for history):
+- `packages/engine/dictionary.test.ts`: `'SHIT'` was missing from the test adapter's word list — fixed.
+- `packages/engine/__tests__/unlocks.test.ts` / `unlocks-integration.test.ts`: tests expected a `wasAlreadyUnlocked` field that didn't exist on `UnlockResult` — added to the interface and both result-construction sites.
+- Storybook component tests (`WordBuilder.stories.tsx`, `GridCell.stories.tsx`, `ThemeShowcase.stories.tsx`): fixed a `setupFiles` config-merging bug that ran Node-only polyfills inside the real browser test environment.
 
 **Solutions**:
 ```bash
 # Run tests to see current status
 npm test
 
-# Run specific test pattern
-npm test -- --testNamePattern="scoring"
+# Run a specific test file
+npm test -- scoring.test.ts
 
 # See detailed test results
 npm test -- --reporter=verbose
 ```
 
-**Known Working**: Core game functionality, challenge mode, theme system, unlock system
+**Known Working**: Core game functionality, challenge mode, theme system, unlock system (the failures above are interface/assertion mismatches, not broken gameplay)
 
 ### Architecture Web Adapter (Unified)
 
 **Problem (Historical)**: `browserAdapter.ts` and `webAdapter.ts` previously provided similar functionality with separate implementations.
 
-**Current Status**: `webAdapter.ts` is now a thin alias that re-exports the single canonical implementation from `browserAdapter.ts`.
+**Current Status**: `webAdapter.ts` has been deleted entirely (not just aliased). There is exactly one web adapter: `src/adapters/browserAdapter.ts`, used by every web component (`ChallengeGame.tsx`, `InteractiveGame.tsx`, `useGameState.ts`, `useChallenge.ts`, `DebugDialog.tsx`).
 
-**Guidance**: New web code should import from `browserAdapter.ts`. Existing `webAdapter` imports continue to work via the alias.
+**Guidance**: All web code should import from `browserAdapter.ts`. If you see an import from `../adapters/webAdapter` anywhere, it's stale/broken and should be updated to `browserAdapter`.
 
 ### Storybook IndexedDB Issues
 
@@ -189,14 +190,14 @@ npm test -- --coverage
 
 **Solutions**:
 ```bash
-# Check dictionary file exists
-ls -la packages/engine/enable1.txt
+# Check dictionary file exists (single source of truth)
+ls -la public/enable1.txt
 
 # Test dictionary loading in terminal
 npm run play
 
 # Verify word count (should be 172,819)
-wc -l packages/engine/enable1.txt
+wc -l public/enable1.txt
 ```
 
 **Browser Dictionary Issues**:
@@ -237,10 +238,10 @@ npm test -- scoring.test.ts
 # Use terminal game for manual verification
 npm run play
 
-# Check specific scoring scenarios
-node -e "
-const { calculateScore } = require('./packages/engine/scoring.ts');
-console.log(calculateScore('CAT', 'CATS', ['T']));
+# Check specific scoring scenarios (calculateScore takes options as an object: { keyLetters: [...] })
+npx tsx -e "
+import { calculateScore } from './packages/engine/scoring.ts';
+console.log(calculateScore('CAT', 'CATS', { keyLetters: ['T'] }));
 "
 ```
 

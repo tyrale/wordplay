@@ -6,6 +6,8 @@
 
 **Verification**: Deployment instructions below are accurate and current for the existing Vercel setup.
 
+> **Known issue**: `npm run build` (`tsc -b && vite build`) currently **fails** at the `tsc -b` step due to the `ScoringResult.breakdown` shape inconsistency tracked in [PROJECT_STATUS_AUDIT.md](../project/PROJECT_STATUS_AUDIT.md) step 7a. If Vercel's build step also runs `tsc -b` (per `vercel.json`/`package.json`), new deployments will fail until that's fixed — verify before relying on the checklist below.
+
 ## Vercel Deployment Setup
 
 ### Prerequisites
@@ -55,7 +57,7 @@ Later (when connecting to production Supabase):
 ### Verification Checklist
 - [x] Live URL accessible
 - [x] App loads without errors
-- [x] Build completes successfully
+- [ ] Build completes successfully — currently **failing** locally via `npm run build`, see known issue above; re-check before trusting this line
 - [x] Automatic deployment from main branch working
 - [x] Single-player game functional
 - [x] Challenge mode functional

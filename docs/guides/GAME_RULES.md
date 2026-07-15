@@ -49,33 +49,19 @@ The game awards points for different types of word transformations:
 - Display changes are cosmetic only - the actual word remains unchanged for gameplay
 - When editing a bad word, the filter is temporarily removed to show actual letters
 
-### 1337 Display
+### 1337 Display (Not Implemented)
 
-- Available after defeating the 1337 bot
-- When enabled, letters with 1337 equivalents display as numbers
-- Example: "LEET" displays as "1337"
-- Only affects display, not gameplay
-- The actual word remains in letters for gameplay continuity
-- Next player sees the 1337 display but interacts with letters
+> **Note**: No "1337 bot" or 1337/leetspeak display feature exists in the current codebase (`src/data/botRegistry.ts`, `packages/engine/unlock-definitions.ts`). This was an idea, not a shipped feature. Documented here for historical/planning reference only.
 
 ## Bot Players
 
-Bots can break normal game rules based on their personality, but must use valid letters for gameplay continuity:
+**Current reality**: Per `packages/engine/bot.ts` and `docs/features/UNLOCKS.md`, all bots share the same generic AI (greedy move selection) regardless of ID. There are no themed or personality-specific behaviors implemented yet — the 27 bots in `src/data/botRegistry.ts` differ only in display name/description, not in actual play behavior. The sections below describe planned/aspirational bot personalities that are **not implemented**.
 
-### Noob Bot
+### Noob Bot / 1337 Bot (Not Implemented)
 
-- Only adds "S" to the end of words
-- Can play invalid words
-- Example: "HELLO" → "HELLOS" (even if invalid)
-- Uses standard letters for gameplay
-
-### 1337 Bot
-
-- Uses leetspeak numbers in display only
-- Example: "HAND" displays as "H4ND" but is played as "HAND"
-- When bot plays letters that have leet number equivalents, they display as numbers (e.g., 'A' displays as '4', 'E' as '3')
-- Unlocks 1337 display attribute when defeated
-- Uses standard letters for gameplay
+- No bot with these IDs exists in `src/data/botRegistry.ts`
+- No leetspeak or "always add S" logic exists in `packages/engine/bot.ts`
+- These were design ideas, not shipped features
 
 ## Dictionary System
 
@@ -94,12 +80,12 @@ The game uses a comprehensive word validation system:
 
 Unlockable features that modify game display:
 
-- Bad Word Filter: Toggle bad word censoring
-- 1337 Display: Toggle leetspeak number display
+- Bad Word Filter: Toggle bad word censoring (implemented — see `docs/features/VANITY_FILTER_SYSTEM.md`)
+- ~~1337 Display~~: Not implemented (see note above)
 
 ## Display Mechanics
 
-- All display changes (bad words, 1337) are cosmetic only
+- Bad word display changes are cosmetic only
 - The actual word remains unchanged for gameplay
 - Next player always sees the display version but interacts with letters
 - When editing a word, display filters are temporarily removed

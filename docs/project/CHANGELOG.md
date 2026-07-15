@@ -1,5 +1,7 @@
 # Changelog
 
+> **Purpose**: Chronological, Keep-a-Changelog-style log of notable changes — append new entries here as features ship. Do not treat historical entries as a description of current app status (see notice below); for that, see [TASK_PROGRESS.md](TASK_PROGRESS.md).
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
@@ -10,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **This changelog contains historical development entries that may not reflect current codebase reality.** For accurate current status, refer to:
 
 - **Current Test Status**: 264/307 tests passing (86%) - See [TESTING_REPORTS.md](TESTING_REPORTS.md)
-- **Current Features**: Single-player game with 2 animation themes - See [QUICK_START.md](QUICK_START.md)
-- **Current Architecture**: Platform-agnostic with dependency injection - See [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Current Features**: Single-player game with 2 animation themes - See [QUICK_START.md](../guides/QUICK_START.md)
+- **Current Architecture**: Platform-agnostic with dependency injection - See [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 - **Project Status**: Core game complete, no active development - See [TASK_PROGRESS.md](TASK_PROGRESS.md)
 
 **Historical entries below reflect development notes and may contain aspirational or outdated claims.**
@@ -874,7 +876,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Maintained Compatibility**: All 15 legacy words preserved through backward compatibility system
 - **Quality Assurance**: Removed multi-word phrases and numeric combinations for cleaner word matching
 - **Production Ready**: Cleaned dictionary maintains profanity detection effectiveness while improving performance
-- **Technical Debt Documented**: Identified and cataloged adapter interface issues for future cleanup ([Technical Debt](TECHNICAL_DEBT.md))
+- **Technical Debt Documented**: Identified and cataloged adapter interface issues for future cleanup (previously tracked in `docs/archive/TECHNICAL_DEBT.md`, since deleted as stale/redundant — see `PROJECT_STATUS_AUDIT.md` for current debt)
 
 **Technical Details:**
 - **Before**: 403 total words (including "2 girls 1 cup", "alabama hot pocket", etc.)
@@ -899,5 +901,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BLOCKED**: Slang word adapter integration due to universal interface crisis
   - **Root Cause**: Pre-existing interface definition fragmentation affects ALL adapters
   - **Impact**: TypeScript compilation fails, development velocity severely impacted
-  - **Documented**: Comprehensive analysis in `docs/TECHNICAL_DEBT.md`
+  - **Documented**: Comprehensive analysis previously in `docs/archive/TECHNICAL_DEBT.md` (since deleted as stale/redundant — see `PROJECT_STATUS_AUDIT.md` for current debt)
   - **Recommendation**: Address interface crisis before continuing adapter improvements

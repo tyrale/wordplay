@@ -8,7 +8,7 @@ The WordPlay unlock system is a comprehensive feature progression system that al
 
 ### ✅ Fully Implemented
 
-**Themes (~80 unlocks)**
+**Themes (53 unlocks)**
 - Complete implementation with immediate application
 - Triggers: Playing color/theme names (e.g., "red", "blue", "midnight")
 - Immediately applies theme when unlocked and persists across sessions
@@ -24,11 +24,11 @@ The WordPlay unlock system is a comprehensive feature progression system that al
 - ❌ No difficulty differences between easy/medium/hard/expert
 - ❌ No themed behaviors for pirate/chaos/puzzle/etc bots
 
-**Mechanics (6 defined)**
+**Mechanics (7 defined)**
 - ✅ Unlock tracking works (playing trigger words unlocks mechanics)
 - ✅ Toast notifications and menu display work
 - ✅ Persistence across sessions works
-- ❌ GameConfig integration missing
+- ❌ GameConfig integration missing for the 6 gameplay mechanics (`vanity-filter` is the exception — it's fully wired into `Menu.tsx` as a working toggle, see `VANITY_FILTER_SYSTEM.md`)
 - ❌ UI controls to select mechanics missing
 - ❌ Actual game logic implementation missing
 
@@ -87,11 +87,11 @@ export interface GameConfig {
 ## Testing Status
 
 ### Comprehensive Test Coverage
-- ✅ 15 unlock-related tests passing
-- ✅ Core engine tests (7 integration tests)
-- ✅ React integration tests (3 component tests)
-- ✅ Theme filtering tests (5 test cases)
-- ✅ Toast notification tests (4 test cases)
+- ✅ Core engine unit tests: `packages/engine/__tests__/unlocks.test.ts` (26 tests)
+- ✅ Core engine integration tests: `packages/engine/__tests__/unlocks-integration.test.ts` (7 tests)
+- ✅ Additional React/component-level coverage exists under `src/components/unlock/__tests__/` and `src/hooks/`
+
+(Exact React/component test counts were not individually re-verified; see the test files above for current numbers rather than trusting a static count here.)
 
 ### Cross-Platform Verification
 - ✅ Browser: IndexedDB persistence working
@@ -176,7 +176,6 @@ const mechanicDisplayNames: Record<string, string> = {
 - [x] salmon - Salmon theme
 - [x] blues - Blues theme
 - [x] squash - Squash theme
-- [x] crimson - Crimson theme
 - [x] citrus - Citrus theme
 - [x] lagoon - Lagoon theme
 - [x] intense - Intense theme
@@ -255,6 +254,13 @@ const mechanicDisplayNames: Record<string, string> = {
 ### Currently Defined (Unlocks Work, Game Logic Missing)
 - 🟧 five - 5 Letter Start
 - 🟧 six - 6 Letter Start
+- 🟧 longer - Longer Words (`longer-words`)
+- 🟧 time - Time Pressure Mode (`time-pressure`) — has a display name in `Menu.tsx` but no actual timer logic
+- 🟧 double - Double Key Letters (`double-key-letters`)
+- 🟧 reverse - Reverse Scoring (`reverse-scoring`)
+
+### Currently Defined and Fully Working
+- ✅ shit - Vanity Filter (`vanity-filter`) — unlike the other mechanics above, this one is fully implemented as a working toggle in `Menu.tsx`; see `VANITY_FILTER_SYSTEM.md`
 
 ### Future Word Length Mechanics
 - [ ] three - 3 Letter Start

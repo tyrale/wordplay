@@ -1,5 +1,9 @@
 # WordPlay Game Architecture
 
+> **Purpose**: Explains the platform-agnostic engine + dependency injection design, current component layout, and integration patterns. This is the doc to read first when getting re-oriented on how the codebase fits together.
+>
+> **Accuracy note (2026-07-14)**: This document was rewritten after a full audit found it described a `webAdapter.ts` and `packages/adapters/{browser,node,test}/` layer that had already been removed from the codebase. All code paths, examples, and interface signatures below were re-verified against the current source (`packages/engine/interfaces.ts`, `src/adapters/*.ts`) as of this date. See `docs/project/PROJECT_STATUS_AUDIT.md` for the full list of known remaining issues (e.g. the `ScoringResult`/`breakdown` shape inconsistency, step 7a).
+
 ## **Engine Design Philosophy**
 
 The WordPlay engine follows **Platform-Agnostic Design** with **Dependency Injection**.
@@ -10,51 +14,39 @@ The WordPlay engine follows **Platform-Agnostic Design** with **Dependency Injec
 ## **Component Architecture**
 
 ```
-packages/engine/           # Pure game logic (platform-agnostic)
-├── bot.ts                # Bot AI (accepts dependencies)
-├── scoring.ts            # Scoring logic (accepts dependencies)  
-├── dictionary.ts         # Word validation (accepts dependencies)
-├── gamestate.ts          # Game state management (accepts dependencies)
-├── challenge.ts          # Challenge mode logic
-├── profanity.ts          # Profanity filtering system
-├── unlocks.ts            # Achievement/unlock system
-└── interfaces.ts         # All engine dependency contracts
+packages/engine/                # Pure game logic (platform-agnostic)
+├── bot.ts                      # Bot AI (accepts dependencies)
+├── scoring.ts                  # Scoring logic (accepts dependencies)
+├── dictionary.ts                # Word validation (accepts dependencies)
+├── gamestate.ts                 # Game state management (accepts dependencies)
+├── challenge.ts                  # Challenge mode logic (createChallengeEngine factory)
+├── profanity.ts                  # Profanity filtering system
+├── unlocks.ts / unlock-definitions.ts  # Achievement/unlock system
+├── keyLetterLogger.ts             # Key-letter analytics logging
+├── terminal-game.ts / terminal-demo.js / play-terminal.js  # CLI game runner(s)
+└── interfaces.ts                 # All engine dependency contracts
 
-src/adapters/             # Platform-specific implementations (main adapters)
-├── browserAdapter.ts     # Unified web adapter (HTTP fetch, performance.now)
-├── webAdapter.ts         # Thin alias to browserAdapter for compatibility
-├── nodeAdapter.ts        # Node.js file system, performance.now()
-└── testAdapter.ts        # Mocks, deterministic random
+src/adapters/                   # Platform-specific implementations — the ONLY adapters directory
+├── browserAdapter.ts            # The single, canonical web adapter (HTTP fetch, performance.now)
+├── browserUnlockAdapter.ts       # Web localStorage-backed unlock persistence adapter
+├── nodeAdapter.ts                 # Node.js file system, performance.now()
+└── testAdapter.ts                 # Mocks, deterministic random, used by unit/integration tests
 
-src/contexts/             # React context providers for shared state
-├── VanityFilterContext.tsx  # Vanity filter state management
+src/contexts/                    # React context providers for shared state
+├── VanityFilterContext.tsx        # Vanity filter state management
 └── [Future filters follow same pattern]
 
-src/hooks/                # React hooks for component state
-├── useVanityFilter.ts    # Vanity filter hook (consumes context)
+src/hooks/                       # React hooks for component state
+├── useVanityFilter.ts             # Vanity filter hook (consumes context)
+├── useGameState.ts / useChallenge.ts / useUnlocks.ts  # Game/challenge/unlock state hooks
 └── [Future filter hooks follow same pattern]
-
-packages/adapters/        # Specialized feature adapters
-├── browser/              # Browser-specific challenge/unlock implementations
-├── node/                 # Node.js-specific unlock implementations
-└── test/                 # Test-specific unlock implementations
 ```
 
-### **Web Adapter System (Unified Implementation)**
+**Note**: There is no `webAdapter.ts` and no `packages/adapters/` directory — both existed at one point and were removed during the cleanup tracked in `docs/project/PROJECT_STATUS_AUDIT.md` (steps 2–3). `src/adapters/browserAdapter.ts` is the single web adapter used by every web consumer (`ChallengeGame.tsx`, `InteractiveGame.tsx`, `useGameState.ts`, `useChallenge.ts`, `DebugDialog.tsx`) — there is no dual-adapter split. If you find a doc or comment referencing `webAdapter.ts`, `createWebAdapter`, or `packages/adapters/browser|node|test`, it is stale.
 
-Historically the codebase used **two different web adapters** for different components:
+### **Unlock System Adapters**
 
-- **`browserAdapter.ts`**: Used by challenge mode (`ChallengeGame`) and hooks (`useGameState`)
-- **`webAdapter.ts`**: Used by interactive game mode (`InteractiveGame`)
-
-Both provided the same `GameStateDependencies` interface but with separate implementations, which created duplication and confusion.
-
-The architecture has now been **simplified** so that:
-
-- `browserAdapter.ts` contains the **single, canonical web implementation**.
-- `webAdapter.ts` is a **thin alias** that re-exports the browser adapter under the `WebAdapter` / `createWebAdapter` names for compatibility with existing code and documentation.
-
-New web code should import from `browserAdapter.ts` directly; `webAdapter.ts` exists only as a compatibility layer.
+The unlock/achievement system (`packages/engine/unlocks.ts`, `unlock-definitions.ts`) is also dependency-injected. `src/adapters/browserUnlockAdapter.ts` provides the web (localStorage-backed) implementation consumed by `src/hooks/useUnlocks.ts`.
 
 ### **Data Flow**
 
@@ -140,12 +132,10 @@ export interface WordDataDependencies {
   slangWords: Set<string>;
   profanityWords: Set<string>;
   wordCount: number;
-  hasWord: (word: string) => boolean;
-  isLoaded: () => boolean;
-  waitForLoad: () => Promise<void>;
-  getRandomWordByLength: (length: number) => string | null;
 }
 ```
+
+**Note**: The `WordDataDependencies` *interface* only declares the four properties above. In practice, every concrete implementation (e.g. `BrowserWordData` in `src/adapters/browserAdapter.ts`) also implements `hasWord()`, `isLoaded()`, `waitForLoad()`, and `getRandomWordByLength()` — these extra methods are part of the concrete class contract that engine/dictionary functions rely on, but are not currently declared on the shared interface. If you're implementing a new adapter, implement all of these methods even though TypeScript won't force you to via `WordDataDependencies` alone.
 
 ## **Integration Examples**
 
@@ -164,18 +154,18 @@ useEffect(() => {
 }, []);
 ```
 
-### **✅ CORRECT: Interactive game uses web adapter**
+### **✅ CORRECT: Interactive game also uses browser adapter**
 ```typescript
 // InteractiveGame.tsx
-import { createWebAdapter } from '../../adapters/webAdapter';
+import { createBrowserAdapter } from '../../adapters/browserAdapter';
 
 useEffect(() => {
-  const initializeGameDependencies = async () => {
-    const adapter = await createWebAdapter();
-    const dependencies = adapter.getGameDependencies();
-    // Use dependencies as needed
+  const initializeAdapter = async () => {
+    const adapter = await createBrowserAdapter();
+    const data = adapter.getWordData();
+    // Use adapter/data as needed
   };
-  initializeGameDependencies();
+  initializeAdapter();
 }, []);
 ```
 
@@ -278,11 +268,9 @@ export async function createReactNativeAdapter(): Promise<ReactNativeAdapter> {
 - **Cross-platform tests**: Same test suite + different adapters
 - **Regression tests**: Verify all platforms produce identical results
 
-### **Current Test Results (Verified 2025-01-22)**
-- **Total Tests**: 307 tests
-- **Passing**: 264 tests (86%)
-- **Failing**: 43 tests (14%) - mainly scoring interface mismatches
-- **Test Files**: 17 passed, 7 failed
+### **Current Test Results**
+
+For up-to-date numbers, see `docs/project/PROJECT_STATUS_AUDIT.md` (updated per audit) rather than this file — test pass/fail counts drift quickly and are not maintained here. As of the most recent audit (2026-07-14): 270/328 tests passing (58 failing), tracked as step 8 in that audit's cleanup plan.
 
 ### **Example: Cross-Platform Test Pattern**
 
@@ -290,8 +278,7 @@ export async function createReactNativeAdapter(): Promise<ReactNativeAdapter> {
 describe('Bot Move Generation', () => {
   const adapters = [
     createTestAdapter(),    // Deterministic for unit tests
-    createBrowserAdapter(), // Real HTTP dictionary loading  
-    createWebAdapter()      // Alternative web implementation
+    createBrowserAdapter(), // Real HTTP dictionary loading — the only web adapter
   ];
   
   adapters.forEach((adapter, index) => {
@@ -400,16 +387,13 @@ const result = await deps.generateBotMove('CAT');
 
 ## **Current Architecture Issues**
 
-### **Interface Mismatches** 
-- Tests expect `result.breakdown.addLetterPoints` but get different structure
-- Scoring module interfaces need alignment between engine and consumers
-- 43 failing tests indicate API inconsistencies
+See `docs/project/PROJECT_STATUS_AUDIT.md` for the authoritative, maintained list of current issues and an ordered cleanup plan. As of the 2026-07-14 audit, the most relevant architecture-level items are:
+- **`ScoringResult`/`breakdown`/`actions` shape inconsistency** (audit step 7a) — `calculateScore()` and its consumers (`scoring.test.ts`, `formatScoreBreakdown()`, `terminal-game.ts`, React components) disagree on whether `breakdown` is a `string[]` or a structured `Record`, and whether `actions` holds strings or `ScoringAction` objects. Needs a deliberate reconciliation pass.
+- **`npm run build` (`tsc -b`) has real type errors** beyond simple unused-var lint issues (audit step 7).
+- The dual `browserAdapter`/`webAdapter` split described in ADR-006 below no longer exists — `webAdapter.ts` was removed; see the accuracy note at the top of this document.
 
 ### **Next Steps for Cleanup**
-1. Consolidate `browserAdapter` and `webAdapter` into single implementation
-2. Fix scoring interface mismatches causing test failures
-3. Update all consumers to use consistent adapter pattern
-4. Remove debug logging statements throughout codebase
+See the numbered action plan in `docs/project/PROJECT_STATUS_AUDIT.md` — do not track cleanup steps in this file, to avoid the same staleness this rewrite just fixed.
 
 ## **Compliance Checklist**
 
@@ -420,7 +404,7 @@ Before accepting any engine changes:
 - ✅ Update interface contracts if dependencies change
 - ✅ Add cross-platform tests for new functionality
 - ✅ Document any new dependency requirements
-- ✅ Verify test suite passes (currently 264/307 passing)
+- ✅ Verify test suite passes (see `docs/project/PROJECT_STATUS_AUDIT.md` for current pass rate)
 
 ---
 
@@ -585,7 +569,7 @@ This section documents major architectural decisions made during the WordPlay pr
 ### **ADR-006: Dual Adapter System (Phase 2)**
 
 **Date**: Phase 2 Development  
-**Status**: ✅ **CONSOLIDATED (VIA SINGLE IMPLEMENTATION)**  
+**Status**: ✅ **SUPERSEDED — `webAdapter.ts` removed entirely**  
 **Decision**: Implement both browserAdapter and webAdapter for different use cases
 
 **Context**:
@@ -606,7 +590,7 @@ This section documents major architectural decisions made during the WordPlay pr
 - ⚠️ **Negative**: Code duplication and maintenance overhead
 - ⚠️ **Negative**: Confusion about which adapter to use
 
-**Current Status**: Implemented via a single browser adapter implementation; `webAdapter.ts` now re-exports the browser adapter as a compatibility layer.
+**Current Status**: Fully superseded. `webAdapter.ts` (and the compatibility-alias intermediate step described above) has been deleted entirely. There is exactly one web adapter: `src/adapters/browserAdapter.ts`, used by every web consumer.
 
 ### **ADR-007: Profanity Management System (Phase 2)**
 
@@ -653,10 +637,7 @@ This section documents major architectural decisions made during the WordPlay pr
 3. **Scoring Algorithm Complexity**: Iterative refinement led to accurate implementation
 4. **Performance Requirements**: Met through careful optimization and measurement
 
-**Current Technical Debt**:
-1. **Test Interface Mismatches**: 43 failing tests due to scoring interface changes
-2. **Debug Log Cleanup**: Remove development debugging statements
-3. **Documentation Alignment**: Update docs to match current implementation
+**Current Technical Debt**: See `docs/project/PROJECT_STATUS_AUDIT.md` for the maintained, current list (test failures, `tsc -b` errors, ESLint errors, the `ScoringResult` shape inconsistency, etc.) rather than this historical section.
 
 ## **Filter System Architecture**
 
@@ -697,7 +678,7 @@ All future filters should follow this exact pattern:
 5. Add unlock triggers and menu integration
 6. Include comprehensive tests
 
-**Reference**: See `docs/VANITY_FILTER_SYSTEM.md` for complete implementation guide.
+**Reference**: See `docs/features/VANITY_FILTER_SYSTEM.md` for complete implementation guide.
 
 **Future Considerations**:
 1. **React Native Support**: Architecture ready for mobile app development

@@ -1,5 +1,7 @@
 # Task Progress Tracking
 
+> **Purpose**: Living dashboard of current project status and active tasks — the file to check for "where things stand right now." Detailed, phase-by-phase implementation notes live in [IMPLEMENTATION_HISTORY.md](IMPLEMENTATION_HISTORY.md) (frozen historical record); released/notable changes are logged in [CHANGELOG.md](CHANGELOG.md); original roadmap/architecture rules are in [dev-plan.md](dev-plan.md) (historical, rules still authoritative).
+
 > **Project Dashboard** - High-level progress tracking for the WordPlay game development. For detailed implementation notes, see [specialized documentation](#-detailed-documentation) below.
 
 ## 📊 Project Dashboard (UPDATED 2025-01-22)
@@ -9,8 +11,8 @@
 | **Overall Progress** | Core game complete, polish/refinement phase | [Phase Overview](#-phase-overview) |
 | **Current Phase** | Maintenance & Documentation | [Current Status](#-current-status) |
 | **Production Ready** | ✅ Single-player web game | [Playable Now](#-ready-for-production) |
-| **Test Status** | 264/307 tests passing (86%) | [Testing Reports](TESTING_REPORTS.md) |
-| **Architecture** | ✅ Platform-agnostic with dependency injection | [Architecture](ARCHITECTURE.md) |
+| **Test Status** | See [PROJECT_STATUS_AUDIT.md](PROJECT_STATUS_AUDIT.md) for the current count — it changes frequently and is actively maintained there | [Testing Reports](TESTING_REPORTS.md) |
+| **Architecture** | ✅ Platform-agnostic with dependency injection | [Architecture](../architecture/ARCHITECTURE.md) |
 
 ## �� Current Status
 
@@ -18,12 +20,12 @@
 
 | Priority | Task | Status | Notes |
 |----------|------|--------|--------|
-| ✅ **DONE** | Technical Debt Resolution | **COMPLETE** | All major technical debt resolved |
-| ✅ **DONE** | Documentation Accuracy | **COMPLETE** | Architecture, API, Testing docs updated |
+| ⚠️ **PARTIAL** | Technical Debt Resolution | **IN PROGRESS** | Contradicts this row's old "COMPLETE" claim — see [PROJECT_STATUS_AUDIT.md](PROJECT_STATUS_AUDIT.md) for the real, current list (ESLint errors, structural cleanup items 9-21 still open as of this writing) |
+| 🔄 **Active** | Documentation Accuracy | **ONGOING** | Multiple stale/incorrect claims found and fixed across `docs/guides/`, `docs/features/`, and this folder in ongoing review passes — not a one-time "complete" state |
 | ✅ **DONE** | Debug Log Cleanup | **COMPLETE** | Production-ready console output |
 | ✅ **DONE** | Vanity Filter System | **COMPLETE** | Bad word filtering with user toggle control |
 | ✅ **DONE** | Complete Dependency Injection Migration | **COMPLETE** | Full platform-agnostic architecture for iOS/Android |
-| 🔄 **Active** | Test Suite Improvement | **IN PROGRESS** | 288/330 tests passing (legacy test cleanup needed) |
+| 🔄 **Active** | Test Suite Improvement | **IN PROGRESS** | See [PROJECT_STATUS_AUDIT.md](PROJECT_STATUS_AUDIT.md) step 7a/8/8a for current status — do not trust a hardcoded number here, it's gone stale multiple times already |
 
 **Current Focus**: The game engine is now 100% platform-agnostic and ready for multi-platform deployment including iOS and Android apps without any revisiting of core game logic.
 
@@ -157,11 +159,9 @@
 - **Responsive design** optimized for desktop, tablet, and mobile
 - **Professional codebase** with dependency injection architecture
 
-### 📊 **Quality Metrics (VERIFIED 2025-01-22)**
-- **Tests**: 264/307 passing (86% success rate)
-- **Architecture**: Clean dependency injection with platform adapters
-- **Code Quality**: Production-ready with debug cleanup complete
-- **Documentation**: Accurate and comprehensive
+### 📊 **Quality Metrics**
+For current, maintained numbers see [PROJECT_STATUS_AUDIT.md](PROJECT_STATUS_AUDIT.md) rather than this section — test counts and doc-accuracy claims below went stale, more than once. Do not add a new hardcoded snapshot here; the audit doc is updated in-place as work progresses.
+- **Architecture**: Clean dependency injection with a single web platform adapter (`browserAdapter.ts` — `webAdapter.ts` was removed)
 - **Browser Support**: Modern browsers (Chrome, Firefox, Safari, Edge)
 
 ## 🚀 Current Technical Status
@@ -169,34 +169,27 @@
 ### ✅ **Completed Achievements**
 1. **Core Game Complete**: Fully functional word game with scoring and bot AI
 2. **Architecture Mature**: Platform-agnostic design ready for expansion
-3. **Documentation Accurate**: All docs now reflect actual implementation
+3. **Documentation Accuracy**: Actively maintained, not a finished/permanent state — see recent review passes across `docs/guides/`, `docs/features/`, and `docs/project/`
 4. **Code Quality High**: Debug cleanup and professional presentation
 
-### 🔧 **Known Issues (Honest Assessment)**
-1. **Test Suite**: 43 tests failing due to interface mismatches (documented in TESTING_REPORTS.md)
-2. **Dual Adapters**: browserAdapter and webAdapter provide similar functionality
-3. **Scoring Interface**: Tests expect old format, engine uses new ScoringResult structure
-4. **Profanity System**: Test environment doesn't load profanity words properly
+### 🔧 **Known Issues**
+See [PROJECT_STATUS_AUDIT.md](PROJECT_STATUS_AUDIT.md) for the current, maintained list and ordered cleanup plan (test failures, `ScoringResult`/`breakdown` shape inconsistency, `tsc -b`/ESLint errors, etc.). The "Dual Adapters" issue previously listed here is **resolved** — `webAdapter.ts` has been deleted; `browserAdapter.ts` is the only web adapter.
 
 ### 🎯 **Next Steps (If Continuing Development)**
-1. **Fix Scoring Test Interface Alignment**: Update tests to match current ScoringResult
-2. **Consolidate Adapter Architecture**: Merge browserAdapter and webAdapter
-3. **Resolve Profanity Test Issues**: Fix test adapter profanity word loading
-4. **Consider Feature Expansion**: Multiplayer, mobile, or additional game modes
+Follow the numbered action plan in [PROJECT_STATUS_AUDIT.md](PROJECT_STATUS_AUDIT.md) rather than the list that used to be here.
 
-### 🚫 **No Active Blockers**
-- All critical development blockers have been resolved
-- Codebase is stable and ready for production use
-- Remaining issues are quality improvements, not functionality blockers
+### ⚠️ **One Active Blocker**
+- `npm run build` (`tsc -b && vite build`) currently **fails** — verified via `npx tsc -b` — due to the unresolved `ScoringResult.breakdown` shape inconsistency (`packages/engine/scoring.ts`/`terminal-game.ts`, tracked as step 7a in [PROJECT_STATUS_AUDIT.md](PROJECT_STATUS_AUDIT.md))
+- `npm run dev` and gameplay itself are unaffected (Vite dev server doesn't type-check), so the game is playable, but a production build is not currently possible without fixing step 7a first
+- Other than that, no other blockers
 
 ## 📚 Detailed Documentation
 
-### 🔗 **Updated Documentation (All Accurate)**
-- **[Architecture](ARCHITECTURE.md)**: Complete system design with current file paths
-- **[API Reference](API_REFERENCE.md)**: All interfaces and examples work with current code
+### 🔗 **Documentation Index**
+- **[Architecture](../architecture/ARCHITECTURE.md)**: Complete system design with current file paths
+- **[API Reference](../architecture/API_REFERENCE.md)**: All interfaces and examples work with current code
 - **[Testing Reports](TESTING_REPORTS.md)**: Honest assessment with verified test results
-- **[Technical Debt](TECHNICAL_DEBT.md)**: All major technical debt resolved
-- **[Troubleshooting](TROUBLESHOOTING.md)**: Current issues and solutions
+- **[Troubleshooting](../guides/TROUBLESHOOTING.md)**: Current issues and solutions
 
 ### 🏗️ **Implementation History**
 - **Architecture Evolution**: From monolithic to dependency injection
@@ -207,10 +200,9 @@
 
 ---
 
-**Project Status**: ✅ **STABLE AND COMPLETE**  
-**Current Focus**: High-quality single-player word game with professional codebase  
-**Last Updated**: 2025-01-22 - Reflects verified current implementation  
-**Next Milestone**: Project is feature-complete for intended scope
+**Project Status**: Playable and feature-complete for its intended single-player scope, but **`npm run build` is currently broken** (see blocker above) — see [PROJECT_STATUS_AUDIT.md](PROJECT_STATUS_AUDIT.md) for the live, maintained status
+**Current Focus**: High-quality single-player word game with professional codebase
+**Next Milestone**: Resolve the `ScoringResult` shape inconsistency (audit step 7a) to unblock production builds
 
 ## 🎭 **Vanity Filter System - Live Toggle Implementation**
 

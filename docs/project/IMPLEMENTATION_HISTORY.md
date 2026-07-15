@@ -1,5 +1,7 @@
 # Implementation History
 
+> **Purpose**: Frozen, phase-by-phase historical record of implementation details and verification notes — not updated for new work. For current status see [TASK_PROGRESS.md](TASK_PROGRESS.md).
+
 This document contains the detailed implementation notes, bug fixes, and technical achievements from the WordPlay project development. This information was moved from TASK_PROGRESS.md to keep that file focused on task tracking.
 
 ## ✅ **IMPLEMENTATION STATUS VERIFIED** (Updated 2025-01-22)

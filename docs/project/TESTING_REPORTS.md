@@ -1,5 +1,7 @@
 # Testing Reports
 
+> **Purpose**: Historical/reference testing methodology (test matrix, manual QA checklists, accessibility/performance checklists) — largely still useful as *process* documentation. However, the specific numbers and per-file breakdowns below are a frozen snapshot from 2025-01-22 and are now stale in several verified ways (see inline notes). **For current, live test status, always check [PROJECT_STATUS_AUDIT.md](PROJECT_STATUS_AUDIT.md) instead of trusting the numbers in this file.**
+
 This document consolidates all testing information for the WordPlay project, including unit tests, integration tests, responsive design tests, and performance testing.
 
 ## Test Environment
@@ -11,11 +13,11 @@ This document consolidates all testing information for the WordPlay project, inc
 - **Browser Testing**: Playwright (Storybook components)
 - **Test Command**: `npm test --run`
 
-## Current Test Status (Verified 2025-01-22)
+## Test Status Snapshot (2025-01-22 — STALE, see banner above)
 
 ### Overall Test Results 
 
-**VERIFIED RESULTS**:
+**RESULTS AS OF 2025-01-22 (do not treat as current — many of the specific failures below have since been fixed, and new ones found; see `PROJECT_STATUS_AUDIT.md`)**:
 - **Total Tests**: 307 tests
 - **Passing**: 264 tests (86%)
 - **Failing**: 43 tests (14%)
@@ -42,12 +44,9 @@ This document consolidates all testing information for the WordPlay project, inc
 - ✅ **Unlock Integration Tests**: 3/3 passing
 - ✅ **Bot Registry Tests**: 9/9 passing
 
-**Storybook Tests** (Browser Components):
-- ❌ **Button Stories**: Failed (indexedDB setup issues)
-- ❌ **Header Stories**: Failed (indexedDB setup issues)
-- ❌ **Page Stories**: Failed (indexedDB setup issues)
-- ❌ **WordBuilder Stories**: Failed (indexedDB setup issues)
-- ❌ **GridCell Stories**: Failed (indexedDB setup issues)
+**Storybook Tests** (Browser Components) — STALE: `Button.stories`, `Header.stories`, and `Page.stories` no longer exist (Storybook boilerplate deleted, see `PROJECT_STATUS_AUDIT.md` step 4), and the indexedDB setup issue affecting the remaining story files has since been fixed (see `PROJECT_STATUS_AUDIT.md` step 8a):
+- ~~Button Stories~~ / ~~Header Stories~~ / ~~Page Stories~~: files deleted, no longer applicable
+- **WordBuilder Stories**, **GridCell Stories**, **ThemeShowcase Stories**: fixed — passing as of step 8a
 
 ### Primary Test Failures Analysis
 
@@ -57,17 +56,11 @@ This document consolidates all testing information for the WordPlay project, inc
 - **Impact**: All scoring breakdown tests failing
 - **Status**: Requires interface alignment
 
-**2. Dictionary Profanity System (6 failures)**:
-- **Issue**: Tests expect `wordData.profanityWords.has('DAMN')` to be true but returns false
-- **Root Cause**: Profanity words not loading properly in test environment
-- **Impact**: Profanity detection tests failing
-- **Status**: Test environment setup issue
+**2. Dictionary Profanity System — FIXED** (was 6 failures, see `PROJECT_STATUS_AUDIT.md` step 8):
+- Real root cause was narrower than originally diagnosed here: `'SHIT'` was present in the test adapter's `profanityWords` set but never added to `enableWords`, unlike its sibling test words (`DAMN`, `HELL`, `CRAP`, `PISS`). Fixed by adding `'SHIT'` to the test adapter's word list.
 
-**3. Storybook Component Tests (5 failures)**:
-- **Issue**: `TypeError: Cannot set property indexedDB of #<Window> which has only a getter`
-- **Root Cause**: fake-indexeddb setup conflict in test environment
-- **Impact**: All Storybook component tests failing
-- **Status**: Test configuration issue
+**3. Storybook Component Tests — FIXED** (see `PROJECT_STATUS_AUDIT.md` step 8a):
+- Root cause: `vitest.workspace.ts`'s `storybook` project extends the base Vite config, and Vitest concatenates rather than replaces `setupFiles`, so the Node/jsdom-only `fake-indexeddb` polyfill in `src/setupTests.ts` ran inside the real Playwright/Chromium browser, where `window.indexedDB` is already a native read-only getter. Fixed by guarding the polyfills behind an `isRealBrowser` check.
 
 ### Performance Test Results ✅ **TARGETS MET**
 
@@ -142,18 +135,18 @@ This document consolidates all testing information for the WordPlay project, inc
 
 ## Build and Bundle Testing
 
-### Build Status ✅ **SUCCESSFUL**
+### Build Status ❌ **CURRENTLY FAILING** (STALE — see `PROJECT_STATUS_AUDIT.md`)
 
 **Current Bundle Analysis**:
-- ✅ **TypeScript Compilation**: No errors
-- ✅ **Vite Build**: Successful production build
-- ✅ **Asset Optimization**: Images and fonts properly bundled
-- ✅ **Bundle Performance**: Build completes in reasonable time
+- ❌ **TypeScript Compilation**: `npx tsc -b` fails with real errors in `packages/engine/scoring.ts`/`terminal-game.ts` (the `ScoringResult.breakdown` shape inconsistency, audit step 7a) — verified failing, not passing
+- ❌ **Vite Build**: Cannot complete since `npm run build` is `tsc -b && vite build`, and `tsc -b` fails first
+- ✅ **Asset Optimization**: Images and fonts properly bundled (unaffected — this claim is about Vite's bundler behavior itself, not the current blocked build)
+- N/A **Bundle Performance**: Cannot measure until the build succeeds
 
 **Build Performance**:
-- ✅ **ESLint**: 0 errors, 0 warnings
+- ❌ **ESLint**: STALE claim — `PROJECT_STATUS_AUDIT.md` found 152 errors / 16 warnings at its most recent full audit; current count not re-verified here, run `npx eslint .`
 - ✅ **Prettier**: All files formatted correctly
-- ✅ **Build Time**: <60 seconds (includes comprehensive type checking)
+- ❌ **Build Time claim is misleading**: `npm run build` (`tsc -b && vite build`) currently **fails** at the `tsc -b` step (verified) — see `PROJECT_STATUS_AUDIT.md` step 7a
 
 ### Development Server Testing ✅ **VERIFIED**
 
@@ -175,11 +168,11 @@ This document consolidates all testing information for the WordPlay project, inc
 - ✅ **Dependency Injection**: All GameStateDependencies implemented
 - ✅ **Async Initialization**: Proper await patterns for dictionary loading
 
-**Web Adapter** (`src/adapters/webAdapter.ts`):
-- ✅ **Alternative Implementation**: Similar functionality to BrowserAdapter
-- ✅ **HTTP Dictionary Loading**: Full ENABLE dictionary support
-- ✅ **Singleton Pattern**: Proper instance management
-- ✅ **Game Integration**: Used by InteractiveGame component
+**Node Adapter** (`src/adapters/nodeAdapter.ts`):
+- ✅ **File System Dictionary Loading**: Used by the terminal/CLI game (`packages/engine/terminal-game.ts`)
+- ✅ **Dependency Injection**: All GameStateDependencies implemented
+
+**Note**: `src/adapters/webAdapter.ts` does not exist — there is no separate "Web Adapter." `browserAdapter.ts` above is used by every web component including `InteractiveGame.tsx`.
 
 **Test Adapter** (`src/adapters/testAdapter.ts`):
 - ✅ **Controlled Test Environment**: Deterministic word sets
@@ -276,11 +269,11 @@ This document consolidates all testing information for the WordPlay project, inc
 ### Continuous Integration Testing
 
 **Development Workflow**:
-- ✅ **Lint Check**: ESLint with 0 errors
+- ❌ **Lint Check**: STALE — see `PROJECT_STATUS_AUDIT.md` for current ESLint error/warning count
 - ✅ **Format Check**: Prettier validation
-- ✅ **Type Check**: TypeScript compilation (strict mode)
-- ⚠️ **Unit Tests**: 264/307 passing (86% success rate)
-- ✅ **Build Test**: Production bundle creation successful
+- ❌ **Type Check**: `npx tsc -b` currently fails (verified) — see `PROJECT_STATUS_AUDIT.md` step 7a
+- ⚠️ **Unit Tests**: STALE number — see `PROJECT_STATUS_AUDIT.md` for current pass/fail count
+- ❌ **Build Test**: `npm run build` currently fails at the `tsc -b` step (verified)
 
 ### Test Commands
 
@@ -320,32 +313,22 @@ npm run play
 
 ### Test Suite Issues (As of 2025-01-22)
 
-**Critical Issues Requiring Resolution**:
+**Critical Issues Requiring Resolution** (STALE — see `PROJECT_STATUS_AUDIT.md` for current, maintained status):
 
-1. **Scoring Interface Mismatch (35 failing tests)**:
-   - **Problem**: Tests expect old `ScoreResult.breakdown.addLetterPoints` format
-   - **Current**: Engine returns `ScoringResult` with different structure  
-   - **Solution Needed**: Align test expectations with current scoring interfaces
-   - **Priority**: High (affects core game testing)
+1. **Scoring Interface Mismatch — still open**, tracked as step 7a in `PROJECT_STATUS_AUDIT.md`:
+   - **Problem**: `calculateScore()` returns `breakdown: string[]`, but `scoring.test.ts` expects a structured `{addLetterPoints, removeLetterPoints, movePoints, keyLetterUsagePoints}` object
+   - **Priority**: High — this is the only remaining failing test file and the reason `npm run build` currently fails
 
-2. **Profanity System Test Failures (6 failing tests)**:
-   - **Problem**: `wordData.profanityWords.has('DAMN')` returns false in tests
-   - **Current**: Profanity words not properly loaded in test environment
-   - **Solution Needed**: Fix test adapter profanity word initialization
-   - **Priority**: Medium (affects content filtering testing)
+2. **Profanity System Test Failures — FIXED**: root cause was `'SHIT'` missing from the test adapter's `enableWords` list; fixed by adding it (`PROJECT_STATUS_AUDIT.md` step 8)
 
-3. **Storybook Test Configuration (5 failing tests)**:
-   - **Problem**: indexedDB setup conflicts in test environment
-   - **Current**: All Storybook component tests failing
-   - **Solution Needed**: Fix fake-indexeddb configuration
-   - **Priority**: Low (affects component development workflow)
+3. **Storybook Test Configuration — FIXED**: root cause was `setupFiles` array concatenation in `vitest.workspace.ts` running Node-only polyfills inside a real browser; fixed by guarding polyfills behind an `isRealBrowser` check (`PROJECT_STATUS_AUDIT.md` step 8a)
 
 ### Architecture Issues
 
 **Web Adapter Maintenance (Unified)**:
 - **Issue (Historical)**: Both `browserAdapter` and `webAdapter` provided similar functionality with separate implementations
-- **Current**: `webAdapter.ts` now re-exports the single canonical implementation from `browserAdapter.ts`
-- **Recommendation**: Prefer `browserAdapter` for new web code; keep `webAdapter` only as a compatibility layer
+- **Current**: `webAdapter.ts` has been deleted entirely. `browserAdapter.ts` is the single web adapter used by all web components.
+- **Recommendation**: All web code should use `browserAdapter`. There is no compatibility layer — if you find code that still imports `webAdapter`, update it.
 
 **Debug Code in Production**:
 - **Issue**: Development logging statements still present throughout codebase
@@ -362,8 +345,8 @@ npm run play
 ### Future Testing Improvements
 
 **Planned Enhancements**:
-- [ ] **Fix Scoring Test Interface Alignment**: Update tests to match current ScoringResult structure
-- [ ] **Resolve Profanity System Test Issues**: Fix test adapter profanity word loading
+- [ ] **Fix Scoring Test Interface Alignment**: Update tests to match current ScoringResult structure (still open, see `PROJECT_STATUS_AUDIT.md` step 7a)
+- [x] **Resolve Profanity System Test Issues**: Done, see `PROJECT_STATUS_AUDIT.md` step 8
 - [ ] **E2E Testing**: Playwright tests for complete user workflows
 - [ ] **Visual Regression Testing**: Screenshot comparison for UI consistency
 - [ ] **Performance Regression Testing**: Automated performance monitoring
@@ -386,4 +369,4 @@ npm run play
 
 ---
 
-*Last Updated: 2025-01-22 - Reflects verified current test results and known issues* 
+*Original snapshot: 2025-01-22. Numbers/specific-failure claims in this file are stale as of this review — see [PROJECT_STATUS_AUDIT.md](PROJECT_STATUS_AUDIT.md) for current status. The methodology/checklist sections (responsive design, accessibility, manual QA) remain valid as process documentation.*

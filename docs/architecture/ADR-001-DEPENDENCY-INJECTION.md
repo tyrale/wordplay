@@ -6,6 +6,8 @@
 
 **Implementation Status**: All architectural decisions in this ADR have been successfully implemented and are functioning as designed. The dependency injection pattern is working correctly across all platforms.
 
+**Current status note (2026-07-14)**: This ADR is historical and its narrative/decision rationale is still accurate — the DI pattern described here is exactly what's in place today. However, the "Success Metrics" checkmarks below (100% test coverage, zero code duplication, etc.) should not be read as current facts: as of this date there are known failing tests and at least one real interface-shape inconsistency (`ScoringResult.breakdown`). See `docs/project/PROJECT_STATUS_AUDIT.md` for the current, maintained status.
+
 ## Context
 Initial implementation created browser-specific engine files (`browserEngine.ts`, `engineExports.ts`) that duplicated core game logic, violating single source of truth principles. This led to:
 
