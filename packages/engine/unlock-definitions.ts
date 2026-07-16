@@ -524,6 +524,23 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     category: 'bot',
     trigger: { type: 'word', value: 'rhyme', timing: 'word_submission' },
     target: 'rhyme-bot'
+  },
+  {
+    id: 'unlock_noob_bot',
+    category: 'bot',
+    trigger: { type: 'word', value: 'noob', timing: 'word_submission' },
+    target: 'noob-bot'
+  },
+
+  // Easter egg - playing the founder's name unlocks dark mode
+  {
+    id: 'unlock_dark_mode',
+    category: 'mechanic',
+    itemId: 'dark-mode',
+    name: 'Dark Mode',
+    description: 'Unlock dark mode by playing "tyrale"',
+    trigger: { type: 'word', value: 'tyrale', timing: 'word_submission' },
+    target: 'dark-mode'
   }
 ];
 

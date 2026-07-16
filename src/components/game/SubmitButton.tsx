@@ -28,13 +28,6 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
     }
   };
 
-  const getButtonText = () => {
-    if (isPassMode) {
-      return 'pass turn';
-    }
-    return isValid ? '✓' : '✗';
-  };
-
   const getAriaLabel = () => {
     if (isPassMode) {
       return 'Pass turn';

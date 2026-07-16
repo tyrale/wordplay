@@ -1,9 +1,8 @@
 /// <reference types="vitest/globals" />
 import { describe, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import App from './App';
 import { createTestAdapter } from './adapters/testAdapter';
-import { BrowserAdapter } from './adapters/browserAdapter';
 
 // Mock the BrowserAdapter to use TestAdapter instead
 vi.mock('./adapters/browserAdapter', () => {
@@ -39,13 +38,13 @@ describe('App Component', () => {
     render(<TestApp />);
     
     // Check that the main screen is rendered with game options
-    expect(screen.getByText((content, element) => {
+    expect(screen.getByText((_content, element) => {
       return element?.textContent === 'vs world';
     })).toBeInTheDocument();
-    expect(screen.getByText((content, element) => {
+    expect(screen.getByText((_content, element) => {
       return element?.textContent === 'vs human';
     })).toBeInTheDocument();
-    expect(screen.getByText((content, element) => {
+    expect(screen.getByText((_content, element) => {
       return element?.textContent === 'vs bot';
     })).toBeInTheDocument();
     
@@ -57,19 +56,19 @@ describe('App Component', () => {
     render(<TestApp />);
     
     // Check for game selection buttons
-    const botButton = screen.getByText((content, element) => {
+    const botButton = screen.getByText((_content, element) => {
       return element?.textContent === 'vs bot';
     });
     expect(botButton).toBeInTheDocument();
     expect(botButton.tagName).toBe('BUTTON');
     
-    const worldButton = screen.getByText((content, element) => {
+    const worldButton = screen.getByText((_content, element) => {
       return element?.textContent === 'vs world';
     });
     expect(worldButton).toBeInTheDocument();
     expect(worldButton.tagName).toBe('BUTTON');
     
-    const humanButton = screen.getByText((content, element) => {
+    const humanButton = screen.getByText((_content, element) => {
       return element?.textContent === 'vs human';
     });
     expect(humanButton).toBeInTheDocument();
@@ -80,13 +79,13 @@ describe('App Component', () => {
     render(<TestApp />);
     
     // Check for main screen elements
-    expect(screen.getByText((content, element) => {
+    expect(screen.getByText((_content, element) => {
       return element?.textContent === 'vs world';
     })).toBeInTheDocument();
-    expect(screen.getByText((content, element) => {
+    expect(screen.getByText((_content, element) => {
       return element?.textContent === 'vs human';
     })).toBeInTheDocument();
-    expect(screen.getByText((content, element) => {
+    expect(screen.getByText((_content, element) => {
       return element?.textContent === 'vs bot';
     })).toBeInTheDocument();
     

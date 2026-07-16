@@ -288,9 +288,9 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                           }
                         </span>
                         
-                        {showScores && (item.score > 0 || (item.score === 0 && item.actions.includes('PASS'))) && (
-                          <span className="word-trail__score" aria-label={item.score === 0 && item.actions.includes('PASS') ? 'passed turn' : `${item.score} points`}>
-                            {item.score === 0 && item.actions.includes('PASS') ? 'pass' : 
+                        {showScores && (
+                          <span className="word-trail__score" aria-label={item.score === 0 ? 'passed turn' : `${item.score} points`}>
+                            {item.score === 0 ? 'pass' : 
                               item.scoreBreakdown ? 
                                 (() => {
                                   const base = item.scoreBreakdown.addLetterPoints + item.scoreBreakdown.removeLetterPoints + item.scoreBreakdown.movePoints;
@@ -369,9 +369,9 @@ export const WordTrail: React.FC<WordTrailProps> = ({
               {renderWordWithHighlights(item.word, item.keyLetters)}
             </span>
             
-            {showScores && (item.score > 0 || (item.score === 0 && item.actions.includes('PASS'))) && (
-              <span className="word-trail__score" aria-label={item.score === 0 && item.actions.includes('PASS') ? 'passed turn' : `${item.score} points`}>
-                {item.score === 0 && item.actions.includes('PASS') ? 'pass' : 
+            {showScores && (
+              <span className="word-trail__score" aria-label={item.score === 0 ? 'passed turn' : `${item.score} points`}>
+                {item.score === 0 ? 'pass' : 
                   item.scoreBreakdown ? 
                     (() => {
                       const base = item.scoreBreakdown.addLetterPoints + item.scoreBreakdown.removeLetterPoints + item.scoreBreakdown.movePoints;

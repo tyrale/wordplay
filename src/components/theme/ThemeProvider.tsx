@@ -46,11 +46,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     localStorage.setItem('wordplay-theme', JSON.stringify({ name: theme.name }));
   };
 
-  const toggleInverted = () => {
-    const newInverted = !isInverted;
-    setIsInverted(newInverted);
+  const setInverted = (value: boolean) => {
+    setIsInverted(value);
     // Save inverted setting to localStorage
-    localStorage.setItem('wordplay-inverted', newInverted.toString());
+    localStorage.setItem('wordplay-inverted', value.toString());
+  };
+
+  const toggleInverted = () => {
+    setInverted(!isInverted);
   };
 
   // Apply theme CSS custom properties
@@ -90,6 +93,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     availableThemes,
     isInverted,
     toggleInverted,
+    setInverted,
   };
 
   return (

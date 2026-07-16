@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { InteractiveGame } from '../game/InteractiveGame';
 import { TutorialInstructions } from './TutorialInstructions';
+import type { GameState, GameConfig } from '../../../packages/engine/interfaces';
 import './TutorialOverlay.css';
 
 interface TutorialStep {
   id: number;
   instructions: string | string[];
   constraints: TutorialConstraints;
-  completionCondition: (gameState: any, tutorialState: TutorialState) => boolean;
+  completionCondition: (gameState: GameState | null, tutorialState: TutorialState) => boolean;
 }
 
 interface TutorialConstraints {
   hiddenElements: string[];
   disabledActions: string[];
-  forcedGameConfig: any;
+  forcedGameConfig: GameConfig;
   letterOpacity: Record<string, number>;
   allowedLetters?: string[];
   disableLetterRemoval?: boolean;
@@ -52,7 +53,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     completionCondition: (gameState, tutorialState: TutorialState) => {
       // Step 1 completes when user has "WORDS" in their pending word
       return tutorialState.lastPendingWord === 'WORDS' || 
-             (gameState && gameState.currentWord === 'WORDS');
+             Boolean(gameState && gameState.currentWord === 'WORDS');
     }
   },
   {
@@ -75,7 +76,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     completionCondition: (gameState, tutorialState: TutorialState) => {
       // Step 2 completes when user has "WORS" in their pending word (removed D)
       return tutorialState.lastPendingWord === 'WORS' || 
-             (gameState && gameState.currentWord === 'WORS');
+             Boolean(gameState && gameState.currentWord === 'WORS');
     }
   },
   {
@@ -158,7 +159,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
   onGameEnd
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const [gameState, setGameState] = useState<any>(null);
+  const [gameState, setGameState] = useState<GameState | null>(null);
   const [tutorialState, setTutorialState] = useState<TutorialState>({
     lastPendingWord: '',
     submittedWords: [],
@@ -170,7 +171,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
   const currentTutorialStep = TUTORIAL_STEPS.find(step => step.id === currentStep);
 
   // Enhanced game state change handler that tracks submitted words
-  const handleGameStateChange = useCallback((newGameState: any) => {
+  const handleGameStateChange = useCallback((newGameState: GameState) => {
     setGameState(newGameState);
     
     // Track submitted words using turn history
@@ -181,8 +182,8 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
         // New word(s) have been submitted - only count human player moves
         const newSubmittedWords = newGameState.turnHistory
           .slice(tutorialState.lastTurnHistoryLength)
-          .filter((turn: any) => turn.playerId === 'human')
-          .map((turn: any) => turn.newWord);
+          .filter((turn) => turn.playerId === 'human')
+          .map((turn) => turn.newWord);
         
         // Track human word submissions for tutorial progression
         

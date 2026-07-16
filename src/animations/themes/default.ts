@@ -5,7 +5,7 @@
  * without being distracting. Focus on accessibility and performance.
  */
 
-import type { AnimationTheme } from '../types';
+import type { AnimationTheme, ComponentAnimations } from '../types';
 
 export const defaultTheme: AnimationTheme = {
   name: 'default',
@@ -185,11 +185,11 @@ export const defaultTheme: AnimationTheme = {
   },
   
   // Copy the same animations for other components (they can be customized per component)
-  wordBuilder: {} as any, // Will be populated below
-  scoreDisplay: {} as any,
-  wordTrail: {} as any,
-  alphabetGrid: {} as any,
-  background: {} as any
+  wordBuilder: {} as unknown as ComponentAnimations, // Will be populated below
+  scoreDisplay: {} as unknown as ComponentAnimations,
+  wordTrail: {} as unknown as ComponentAnimations,
+  alphabetGrid: {} as unknown as ComponentAnimations,
+  background: {} as unknown as ComponentAnimations
 };
 
 // Populate other components with similar animations (with component-specific tweaks)

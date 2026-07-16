@@ -494,7 +494,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
       
       if (isNewLetter) {
         // This is a new letter
-        pattern += '🀫';
+        pattern += '◼︎';
         // Consume one instance of this letter from added letters
         const index = analysis.addedLetters.indexOf(char);
         if (index > -1) {
@@ -502,7 +502,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
         }
       } else {
         // This letter existed before (either unchanged or moved)
-        pattern += '*';
+        pattern += '◻︎';
       }
     }
     
@@ -515,14 +515,15 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
   function generateSharingText(state: ChallengeState): string {
     const dayNumber = Math.floor((new Date(state.date).getTime() - new Date('2024-01-01').getTime()) / (1000 * 60 * 60 * 24)) + 1;
     
-    // Add checkmark for completed or red X for failed between challenge # and words
+    // Add checkmark for completed or red X for failed after the challenge #,
+    // then put the start/target words on their own line
     let result = `Challenge #${dayNumber}`;
     if (state.completed) {
-      result += ` ✓ ${state.startWord} → ${state.targetWord}`;
+      result += ` ✓\n${state.startWord} → ${state.targetWord}`;
     } else if (state.failed) {
-      result += ` ❌ ${state.startWord} → ${state.targetWord}`;
+      result += ` ❌\n${state.startWord} → ${state.targetWord}`;
     } else {
-      result += ` ${state.startWord} → ${state.targetWord}`;
+      result += `\n${state.startWord} → ${state.targetWord}`;
     }
     
     if (state.completed) {

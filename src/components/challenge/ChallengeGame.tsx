@@ -12,14 +12,16 @@ import { WordBuilder } from '../game/WordBuilder';
 import { type LetterHighlight } from '../game/CurrentWord';
 import { ScoreDisplay, type ScoreBreakdown, type ActionState } from '../game/ScoreDisplay';
 import { Menu } from '../ui/Menu';
-import { ChallengeCompletionOverlay } from '../ui/ChallengeCompletionOverlay';
+import { AlertOverlay } from '../ui/AlertOverlay';
+import { alertCopy } from '../../content/alertCopy';
 import { useChallenge } from '../../hooks/useChallenge';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import { shareChallengeResult, getShareResultMessage } from '../../utils/shareUtils';
-import { useToast } from '../ui/ToastManager';
-import { useVanityFilter } from '../../hooks/useVanityFilter';
+import { useAlert } from '../ui/AlertProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { getWordLegalityReason, fetchWordDefinition } from '../../utils/wordHelp';
 import type { GameStateDependencies } from '../../../packages/engine/gamestate';
+import type { WordDataDependencies } from '../../../packages/engine/interfaces';
 
 export interface ChallengeGameProps {
   onComplete?: (completed: boolean, stepCount: number) => void;
@@ -58,8 +60,8 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     error: challengeError
   } = useChallenge();
 
-  // Toast notifications
-  const { showToast } = useToast();
+  // Alert notifications
+  const { showAlert, showCustomAlert } = useAlert();
 
   // Unlock system integration
   const { handleWordSubmission } = useUnlockSystem();
@@ -72,11 +74,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   const [isProcessingMove, setIsProcessingMove] = useState(false);
   const [gameDependencies, setGameDependencies] = useState<GameStateDependencies | null>(null);
-  const [wordData, setWordData] = useState<any>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  
-  // Vanity filter integration (using centralized context)
-  const { } = useVanityFilter();
+  const [wordData, setWordData] = useState<WordDataDependencies | null>(null);
   
   // Overlay state
   const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
@@ -99,7 +97,6 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         
         setGameDependencies(dependencies);
         setWordData(data);
-        setIsLoaded(true);
       } catch (err) {
         console.error('Failed to initialize game dependencies:', err);
       }
@@ -250,6 +247,23 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     setDraggedLetter(null);
   }, [draggedLetter, pendingWord, handleWordChange]);
 
+  const handleHelp = useCallback(async () => {
+    const word = pendingWord.trim().toUpperCase();
+    if (!word) return;
+
+    const reason = getWordLegalityReason(word, wordData);
+    const definition = await fetchWordDefinition(word);
+
+    showCustomAlert([word], {
+      meta: (
+        <>
+          <div>{reason}</div>
+          {definition && <div className="alert-overlay__meta-definition">{definition}</div>}
+        </>
+      )
+    });
+  }, [pendingWord, wordData, showCustomAlert]);
+
   const handleActionClick = useCallback((action: string) => {
     if (isProcessingMove) return;
     
@@ -260,11 +274,14 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         setValidationResult(null);
         setShowValidationError(false);
         break;
+      case '?': // Help
+        handleHelp();
+        break;
       case '≡': // Settings
         setIsMenuOpen(true);
         break;
     }
-  }, [isProcessingMove, challengeState?.currentWord]);
+  }, [isProcessingMove, challengeState?.currentWord, handleHelp]);
 
   const handleSubmit = useCallback(async () => {
     if (isProcessingMove) return;
@@ -303,6 +320,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
           setShowValidationError(false);
           
           // Check for unlocks triggered by this word
+          // (the vanity filter mechanic unlock is handled here via UNLOCK_DEFINITIONS)
           await handleWordSubmission(pendingWord);
           
           // Check if challenge is complete (challengeState will be updated by useChallenge)
@@ -310,7 +328,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         } else {
           setShowValidationError(true);
         }
-      } catch (err) {
+      } catch {
         setShowValidationError(true);
       } finally {
         setIsProcessingMove(false);
@@ -356,23 +374,13 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const handleOverlayShare = useCallback(async (shareText: string) => {
     try {
       const result = await shareChallengeResult(shareText);
-      const message = getShareResultMessage(result);
-      
-      showToast({
-        type: result.success ? 'success' : 'error',
-        title: result.success ? 'Shared!' : 'Share Failed',
-        message,
-        duration: 3000
-      });
-    } catch (error) {
-      showToast({
-        type: 'error',
-        title: 'Share Failed',
-        message: 'Unable to share challenge result. Please try again.',
-        duration: 3000
-      });
+      getShareResultMessage(result); // Preserve message computation for potential future logging
+
+      showAlert('generic', result.success ? 'shareSuccess' : 'shareError');
+    } catch {
+      showAlert('generic', 'shareError');
     }
-  }, [showToast]);
+  }, [showAlert]);
 
   // Check for challenge completion or failure
   useEffect(() => {
@@ -436,6 +444,31 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   // Determine if submit is valid
   const isValidSubmit = validationResult?.canApply || false;
   const showInvalidX = !isValidSubmit;
+
+  // Parse challenge share text into meta content for the completion AlertOverlay
+  const renderShareLine = (line: string, index: number) => {
+    if (index === 0 && line.endsWith(' ✓')) {
+      const prefix = line.slice(0, -' ✓'.length);
+      return (
+        <div key={index}>
+          {prefix} <span style={{ color: 'var(--theme-accent)' }}>✓</span>
+        </div>
+      );
+    }
+    if (index === 0 && line.endsWith(' ❌')) {
+      const prefix = line.slice(0, -' ❌'.length);
+      return (
+        <div key={index}>
+          {prefix} <span style={{ color: '#ff4444' }}>❌</span>
+        </div>
+      );
+    }
+    return <div key={index}>{line}</div>;
+  };
+
+  const shareLines = (overlayData?.shareText || '').split('\n').filter(line => line.trim());
+  const shareContent = shareLines.slice(0, -1);
+  const stepCount = shareLines[shareLines.length - 1];
 
   if (isLoading) {
     return (
@@ -556,12 +589,18 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       />
 
       {/* Challenge Completion Overlay */}
-      <ChallengeCompletionOverlay
+      <AlertOverlay
         isVisible={showCompletionOverlay}
-        isWinner={overlayData?.isWinner || false}
-        shareText={overlayData?.shareText || ''}
-        onHome={handleOverlayHome}
-        onShare={handleOverlayShare}
+        lines={[...(overlayData?.isWinner ? alertCopy.challenge.win.lines : alertCopy.challenge.lose.lines)]}
+        variant={overlayData?.isWinner ? 'win' : 'lose'}
+        onClose={handleOverlayHome}
+        meta={
+          <>
+            {shareContent.map(renderShareLine)}
+            <div>{stepCount}</div>
+          </>
+        }
+        actions={[{ label: 'share', onClick: () => handleOverlayShare(overlayData?.shareText || '') }]}
       />
 
     </div>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
+import { useGameStats, useWordState } from '../../hooks/useGameState';
+import type { MoveAttempt } from '../../../packages/engine/interfaces';
 import './DebugDialog.css';
 
 // Hook to get dictionary size using pure dependency injection
@@ -39,10 +41,10 @@ function useDictionarySize(): number {
 export interface DebugDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  gameStats: any;
-  wordState: any;
+  gameStats: ReturnType<typeof useGameStats>;
+  wordState: ReturnType<typeof useWordState>;
   pendingWord: string;
-  pendingMoveAttempt: any;
+  pendingMoveAttempt: MoveAttempt | null;
   isPlayerTurn: boolean;
   isBotTurn: boolean;
   isBotThinking: boolean;
@@ -70,12 +72,6 @@ export const DebugDialog: React.FC<DebugDialogProps> = ({
   if (!isOpen) {
     return null;
   }
-
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
 
   return (
     <div className="debug-dialog__overlay" onClick={onClose}>

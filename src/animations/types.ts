@@ -14,7 +14,7 @@ export interface Keyframe {
   translateY?: string;
   rotate?: string;
   filter?: string;
-  [property: string]: any;
+  [property: string]: string | number | undefined;
 }
 
 export interface Animation {

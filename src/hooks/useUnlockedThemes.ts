@@ -7,7 +7,6 @@
 
 import { useMemo } from 'react';
 import { availableThemes } from '../types/theme';
-import type { GameTheme } from '../types/theme';
 
 interface UseUnlockedThemesProps {
   unlockedThemes: string[];

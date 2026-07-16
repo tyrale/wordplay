@@ -2,6 +2,8 @@
 
 A turn-based word game where players transform words by adding, removing, or rearranging letters to score points. Built with React, TypeScript, and a platform-agnostic game engine.
 
+> **Purpose**: High-level project overview, feature list, architecture summary, and current status. For full setup steps, troubleshooting, project structure, and dev workflow tips, see the canonical [Quick Start Guide](docs/guides/QUICK_START.md). See [docs/README.md](docs/README.md) for the full documentation index.
+
 ## 🎮 Play Now
 
 ### Web Game (Recommended)
@@ -18,7 +20,7 @@ npm run play
 ## ✨ Features
 
 - **Single-Player Game**: Play against an intelligent bot opponent
-- **81 Themes**: Extensive theme system with dark mode support
+- **75 Themes**: Extensive theme system with dark mode support (53 unlockable via gameplay, rest available by default; see `docs/features/UNLOCKS.md`)
 - **Responsive Design**: Works perfectly on desktop, tablet, and mobile
 - **Accessibility**: WCAG AA compliant with full touch support
 - **Real-Time Scoring**: Live feedback with detailed scoring breakdown
@@ -27,33 +29,13 @@ npm run play
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Node.js v18+ (recommended: v23.4.0)
-- npm v8+
-
-### Installation
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd wordplay
-
-# Install dependencies
+git clone <repository-url> && cd wordplay
 npm install
-
-# Start development server
 npm run dev
 ```
 
-### Development Commands
-```bash
-npm run dev          # Start development server
-npm test             # Run all tests
-npm run build        # Build for production
-npm run lint         # Lint code
-npm run format       # Format code
-npm run play         # Play terminal game
-npm run storybook    # Start component development
-```
+Requires Node.js v18+ and npm v8+. For full installation steps, all dev commands, project structure, and troubleshooting, see the **[Quick Start Guide](docs/guides/QUICK_START.md)**.
 
 ## 🎯 Game Rules
 
@@ -94,28 +76,31 @@ src/styles/         # CSS and themes
 
 ## 📚 Documentation
 
+See **[docs/README.md](docs/README.md)** for the full documentation index, organized by category (guides, architecture, features, deployment, project history).
+
 ### Getting Started
-- **[Quick Start Guide](docs/QUICK_START.md)** - Get up and running in minutes
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Quick Start Guide](docs/guides/QUICK_START.md)** - Get up and running in minutes
+- **[Troubleshooting](docs/guides/TROUBLESHOOTING.md)** - Common issues and solutions
 
 ### Development
-- **[Task Progress](docs/TASK_PROGRESS.md)** - Current development status
-- **[Architecture](docs/ARCHITECTURE.md)** - Technical design and decisions
-- **[API Reference](docs/API_REFERENCE.md)** - Engine interfaces and usage
-- **[Implementation History](docs/IMPLEMENTATION_HISTORY.md)** - Detailed development notes
+- **[Task Progress](docs/project/TASK_PROGRESS.md)** - Current development status
+- **[Architecture](docs/architecture/ARCHITECTURE.md)** - Technical design and decisions
+- **[API Reference](docs/architecture/API_REFERENCE.md)** - Engine interfaces and usage
+- **[Implementation History](docs/project/IMPLEMENTATION_HISTORY.md)** - Detailed development notes
 
 ### Testing & Quality
-- **[Testing Reports](docs/TESTING_REPORTS.md)** - Comprehensive test coverage
-- **[Game Rules](docs/GAME_RULES.md)** - Complete gameplay mechanics
-- **[UI Design Spec](docs/WEB_UI_DESIGN_SPEC.md)** - Interface guidelines
+- **[Testing Reports](docs/project/TESTING_REPORTS.md)** - Comprehensive test coverage
+- **[Game Rules](docs/guides/GAME_RULES.md)** - Complete gameplay mechanics
+- **[UI Design Spec](docs/architecture/WEB_UI_DESIGN_SPEC.md)** - Interface guidelines
 
 ### Project Management
-- **[Development Plan](docs/dev-plan.md)** - Roadmap and workflow
-- **[Changelog](docs/CHANGELOG.md)** - Version history
+- **[Development Plan](docs/project/dev-plan.md)** - Roadmap and workflow
+- **[Changelog](docs/project/CHANGELOG.md)** - Version history
 
 ## 🧪 Testing
 
-### Test Status: ✅ **252+ Tests Passing**
+### Test Status
+See [PROJECT_STATUS_AUDIT.md](docs/project/PROJECT_STATUS_AUDIT.md) for the current, maintained pass/fail count — it changes frequently. As of this writing, one test file (`scoring.test.ts`) has known failures due to a tracked interface mismatch (audit step 7a), which also currently blocks `npm run build`.
 
 ```bash
 # Run all tests
@@ -136,29 +121,26 @@ npm test -- dictionary.test.ts
 
 ## 📊 Current Status
 
-### ✅ **Production Ready**
-- **Web Application**: Fully functional single-player game
-- **Game Engine**: Complete with comprehensive testing
+### ⚠️ **Playable, but `npm run build` currently fails**
+- **Web Application**: Fully functional single-player game via `npm run dev` (Vite dev server doesn't type-check, so this is unaffected)
+- **Production Build**: `npm run build` (`tsc -b && vite build`) currently **fails** at the `tsc -b` step — see [PROJECT_STATUS_AUDIT.md](docs/project/PROJECT_STATUS_AUDIT.md) step 7a
+- **Game Engine**: Complete with substantial test coverage; one test file currently has known failures (same root cause as the build failure)
 - **UI/UX**: Polished interface with mobile support
 - **Architecture**: Scalable foundation for future features
 
 ### 📈 **Metrics**
-- **Bundle Size**: 228.64 kB JS, 29.30 kB CSS (<1MB total)
-- **Performance**: Lighthouse scores >90
+- **Bundle Size**: Not independently re-verified in this pass — treat as approximate
 - **Accessibility**: WCAG AA compliant
 - **Browser Support**: Chrome, Firefox, Safari, Edge
-- **Test Coverage**: 252+ passing tests
+- **Test Coverage**: See [PROJECT_STATUS_AUDIT.md](docs/project/PROJECT_STATUS_AUDIT.md) for the current, maintained count
 
 ### 🎯 **Completed Phases**
-- ✅ **Phase 0**: Web foundation and tooling
-- ✅ **Phase 1**: Core game engine (cross-platform)
-- ✅ **Phase 2**: Web UI foundation
-- 🔄 **Phase 4**: Theme system (81 themes implemented)
+This section's phase numbering previously conflicted with [TASK_PROGRESS.md](docs/project/TASK_PROGRESS.md) (e.g. this file called multiplayer "Phase 3", while TASK_PROGRESS.md's Phase 3 is the already-completed Challenge Mode). Deferring to TASK_PROGRESS.md as the canonical phase list rather than maintaining a second, conflicting one here — see its [Phase Overview](docs/project/TASK_PROGRESS.md#-phase-overview-realistic-assessment) for current phase status.
 
 ### ⏳ **Next Steps**
-- **Phase 3**: Online multiplayer functionality
-- **Phase 5**: Enhanced accessibility and testing
-- **Phase 6**: Production launch preparation
+- **Online multiplayer**: Not yet started
+- **Enhanced accessibility and testing**: Ongoing
+- **Production launch preparation**: Blocked on resolving the `npm run build` failure above
 
 ## 🛠️ Technology Stack
 
@@ -189,7 +171,7 @@ npm test -- dictionary.test.ts
 ## 🤝 Contributing
 
 ### Development Workflow
-1. Follow the [Development Plan](docs/dev-plan.md)
+1. Follow the [Development Plan](docs/project/dev-plan.md)
 2. Use "ShipHip" prefix in commit messages
 3. Run tests before committing: `npm test`
 4. Update documentation for significant changes
@@ -201,8 +183,8 @@ npm test -- dictionary.test.ts
 - Ensure cross-platform compatibility
 
 ### Getting Help
-- Check [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
-- Review [API Reference](docs/API_REFERENCE.md)
+- Check [Troubleshooting Guide](docs/guides/TROUBLESHOOTING.md)
+- Review [API Reference](docs/architecture/API_REFERENCE.md)
 - Examine existing code patterns
 - Run terminal game for engine testing: `npm run play`
 

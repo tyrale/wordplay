@@ -97,7 +97,8 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
           description: unlock.description || `Unlocked ${unlock.target}`,
           isNew: true,
           target: unlock.target,
-          immediateEffect: unlock.immediate_effect
+          immediateEffect: unlock.immediate_effect,
+          wasAlreadyUnlocked
         };
 
         results.push(result);
@@ -151,7 +152,8 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
           description: unlock.description || `Unlocked ${unlock.target}`,
           isNew: true,
           target: unlock.target,
-          immediateEffect: unlock.immediate_effect
+          immediateEffect: unlock.immediate_effect,
+          wasAlreadyUnlocked
         };
 
         results.push(result);

@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { createUnlockEngine } from '../unlocks';
-import { createTestUnlockDependencies } from '../../adapters/test/unlocks';
+import { createTestUnlockDependencies } from './testUnlockAdapters';
 
 describe('Unlock Engine Integration', () => {
   it('should unlock red theme when playing "red" and apply it immediately', async () => {

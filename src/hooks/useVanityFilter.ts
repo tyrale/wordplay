@@ -4,10 +4,12 @@
  */
 
 import { useVanityFilter as useVanityFilterContext } from '../contexts/VanityFilterContext';
+import type { VanityState } from '../../packages/engine/dictionary';
+import type { WordDataDependencies } from '../../packages/engine/interfaces';
 
 export interface UseVanityFilterReturn {
   // State
-  vanityState: any;
+  vanityState: VanityState;
   isLoading: boolean;
   
   // Display functions
@@ -24,7 +26,7 @@ export interface UseVanityFilterReturn {
 }
 
 export interface UseVanityFilterProps {
-  wordData?: any;
+  wordData?: WordDataDependencies;
   isLoaded?: boolean;
 }
 
@@ -33,7 +35,7 @@ export interface UseVanityFilterProps {
  * Now uses centralized context for shared state across all components
  * Legacy props are ignored - all state comes from context
  */
-export function useVanityFilter(props?: UseVanityFilterProps): UseVanityFilterReturn {
+export function useVanityFilter(_props?: UseVanityFilterProps): UseVanityFilterReturn {
   // Use the centralized context instead of local state
   return useVanityFilterContext();
 } 

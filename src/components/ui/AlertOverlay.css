@@ -1,0 +1,123 @@
+/**
+ * Alert Overlay Styles
+ *
+ * Universal full-screen alert/notification pattern. Flat design following
+ * the game's visual language - no containers, borders, or shadows.
+ */
+
+.alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--theme-background);
+  z-index: 20000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+}
+
+/* Line stack - 105% viewport width so text slightly overlaps the edges */
+.alert-overlay__lines {
+  width: 105vw;
+  max-width: 105vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.alert-overlay__line {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 14vw;
+  line-height: 0.8;
+  color: var(--theme-accent);
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.alert-overlay--lose .alert-overlay__line,
+.alert-overlay--error .alert-overlay__line {
+  color: var(--theme-text);
+}
+
+/* Optional supplementary content (e.g. scores) below the lines */
+.alert-overlay__meta {
+  margin-top: var(--spacing-xl);
+  font-family: var(--theme-font-family);
+  font-size: var(--theme-font-size-md);
+  color: var(--theme-text);
+  text-align: center;
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+/* Dictionary definition line — normal case/style to read naturally as a sentence */
+.alert-overlay__meta-definition {
+  margin-top: var(--spacing-sm);
+  max-width: 80vw;
+  text-transform: none;
+  font-style: italic;
+  opacity: 0.75;
+}
+
+/* Optional extra actions (e.g. Share) above the close button */
+.alert-overlay__actions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+}
+
+.alert-overlay__action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-lg);
+  color: var(--theme-accent);
+  text-transform: uppercase;
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.alert-overlay__action:hover {
+  opacity: 0.7;
+}
+
+/* Close X - always present, centered at the bottom */
+.alert-overlay__close {
+  position: absolute;
+  bottom: var(--spacing-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 32px;
+  line-height: 1;
+  color: var(--theme-text);
+  padding: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.alert-overlay__close:hover {
+  opacity: 0.7;
+}

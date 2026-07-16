@@ -5,7 +5,7 @@
  * a single source of truth for profanity words across all platforms.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   getProfanityWords,
   isProfanity,

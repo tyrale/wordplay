@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createUnlockEngine, generateBotDefeatAchievement, getAllUnlockTriggers } from '../unlocks';
-import { createTestUnlockDependencies, createFailingTestUnlockDependencies, createControlledTestUnlockDependencies } from '../../adapters/test/unlocks';
+import { createTestUnlockDependencies, createFailingTestUnlockDependencies, createControlledTestUnlockDependencies } from './testUnlockAdapters';
 import type { UnlockEngine, UnlockState } from '../interfaces';
 import { INITIAL_UNLOCK_STATE } from '../unlock-definitions';
 
@@ -97,6 +97,19 @@ describe('Unlock Engine', () => {
       });
 
       expect(unlockEngine.isUnlocked('bot', 'pirate-bot')).toBe(true);
+    });
+
+    it('should unlock dark mode when playing "tyrale"', async () => {
+      const results = await unlockEngine.checkWordTriggers('tyrale');
+
+      expect(results).toHaveLength(1);
+      expect(results[0]).toMatchObject({
+        category: 'mechanic',
+        target: 'dark-mode',
+        wasAlreadyUnlocked: false
+      });
+
+      expect(unlockEngine.isUnlocked('mechanic', 'dark-mode')).toBe(true);
     });
 
     it('should not unlock already unlocked items', async () => {

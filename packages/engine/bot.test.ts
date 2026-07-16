@@ -42,7 +42,10 @@ describe('Bot AI Module', () => {
     const gameDependencies = testAdapter.getGameDependencies();
     botDependencies = {
       ...gameDependencies,
-      isValidDictionaryWord: (word: string) => testAdapter.getWordData().hasWord(word)
+      isValidDictionaryWord: (word: string) => testAdapter.getWordData().hasWord(word),
+      getWordCount: () => testAdapter.getWordData().wordCount,
+      getTimestamp: () => Date.now(),
+      random: () => Math.random()
     };
   });
 
@@ -361,6 +364,21 @@ describe('Bot AI Module', () => {
       
       // More lenient - just check it doesn't crash with key letters
       expect(completedTurns >= 0).toBe(true);
+    });
+  });
+
+  describe('Noob Bot (rule-breaking)', () => {
+    it('always adds an S regardless of dictionary validity', async () => {
+      const result = await generateBotMoveWithDependencies('CAT', botDependencies, { botId: 'noob-bot' });
+
+      expect(result.move?.word).toBe('CATS');
+    });
+
+    it('still adds an S even when the resulting word is not a real word', async () => {
+      const result = await generateBotMoveWithDependencies('ZZQX', botDependencies, { botId: 'noob-bot' });
+
+      expect(result.move?.word).toBe('ZZQXS');
+      expect(botDependencies.isValidDictionaryWord('ZZQXS')).toBe(false);
     });
   });
 

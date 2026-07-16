@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createUnlockEngine } from '../../packages/engine/unlocks';
-import { createBrowserUnlockDependencies } from '../../packages/adapters/browser/unlocks';
+import { createBrowserUnlockDependencies } from '../adapters/browserUnlockAdapter';
 import type { UnlockEngine, UnlockResult, UnlockState } from '../../packages/engine/interfaces';
 
 export interface UseUnlocksReturn {

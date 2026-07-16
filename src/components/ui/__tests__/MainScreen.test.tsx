@@ -10,17 +10,23 @@ import { vi } from 'vitest';
 import { MainScreen } from '../MainScreen';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { UnlockProvider } from '../../unlock/UnlockProvider';
-import { ToastProvider } from '../ToastManager';
+import { AlertProvider } from '../AlertProvider';
+import { VanityFilterProvider } from '../../../contexts/VanityFilterContext';
+import { MechanicsSettingsProvider } from '../../../contexts/MechanicsSettingsContext';
 
 // Test wrapper with required providers
 function TestWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <ToastProvider>
+      <AlertProvider>
         <UnlockProvider>
-          {children}
+          <VanityFilterProvider>
+            <MechanicsSettingsProvider>
+              {children}
+            </MechanicsSettingsProvider>
+          </VanityFilterProvider>
         </UnlockProvider>
-      </ToastProvider>
+      </AlertProvider>
     </ThemeProvider>
   );
 }
@@ -40,13 +46,13 @@ describe('MainScreen Component', () => {
     );
 
     // Should show main game options
-    expect(screen.getByText((content, element) => {
+    expect(screen.getByText((_content, element) => {
       return element?.textContent === 'vs world';
     })).toBeInTheDocument();
-    expect(screen.getByText((content, element) => {
+    expect(screen.getByText((_content, element) => {
       return element?.textContent === 'vs human';
     })).toBeInTheDocument();
-    expect(screen.getByText((content, element) => {
+    expect(screen.getByText((_content, element) => {
       return element?.textContent === 'vs bot';
     })).toBeInTheDocument();
   });
@@ -59,7 +65,7 @@ describe('MainScreen Component', () => {
     );
 
     // Click vs bot button
-    const vsBotButton = screen.getByText((content, element) => {
+    const vsBotButton = screen.getByText((_content, element) => {
       return element?.textContent === 'vs bot';
     });
     fireEvent.click(vsBotButton);
@@ -79,7 +85,7 @@ describe('MainScreen Component', () => {
     );
 
     // Navigate to bot selection
-    const vsBotButton = screen.getByText((content, element) => {
+    const vsBotButton = screen.getByText((_content, element) => {
       return element?.textContent === 'vs bot';
     });
     fireEvent.click(vsBotButton);
@@ -106,7 +112,7 @@ describe('MainScreen Component', () => {
     );
 
     // Navigate to bot selection
-    const vsBotButton = screen.getByText((content, element) => {
+    const vsBotButton = screen.getByText((_content, element) => {
       return element?.textContent === 'vs bot';
     });
     fireEvent.click(vsBotButton);
@@ -131,7 +137,7 @@ describe('MainScreen Component', () => {
     );
 
     // Navigate to bot selection
-    const vsBotButton = screen.getByText((content, element) => {
+    const vsBotButton = screen.getByText((_content, element) => {
       return element?.textContent === 'vs bot';
     });
     fireEvent.click(vsBotButton);

@@ -105,7 +105,7 @@ export const AnimationProvider: React.FC<AnimationProviderProps> = ({
     }
 
     // Get animation from current theme
-    const componentAnimations = (currentTheme as any)[component];
+    const componentAnimations = (currentTheme as unknown as Record<string, Record<string, Animation>>)[component];
     if (!componentAnimations || !componentAnimations[animationName]) {
       console.warn(`Animation ${animationName} not found for component ${component}`);
       return Promise.resolve();

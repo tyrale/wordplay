@@ -27,7 +27,6 @@
 
 import { KeyLetterLogger } from './keyLetterLogger.js';
 
-import type { ValidationResult } from './dictionary';
 import type { ScoringResult } from './scoring';
 
 // Import consolidated interfaces from main interfaces file
@@ -38,6 +37,7 @@ import type {
   GameStateBotDependencies,
   GameState,
   GameConfig,
+  ValidationResult,
   Player,
   TurnHistory,
   GameStateUpdate,
@@ -90,11 +90,12 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * Initialize a new game state with default values
    */
   private initializeGameState(config: GameConfig): GameState {
-    // Get random 4-letter word if no initial word provided
+    // Get random word (4 letters by default, or config.startingWordLength) if no initial word provided
     let initialWord = config.initialWord;
     if (!initialWord) {
-      const randomWord = this.dependencies.getRandomWordByLength(4);
-      initialWord = randomWord || 'WORD'; // fallback to 'WORD' if no 4-letter words found
+      const wordLength = config.startingWordLength || 4;
+      const randomWord = this.dependencies.getRandomWordByLength(wordLength);
+      initialWord = randomWord || 'WORD'; // fallback to 'WORD' if no words of that length found
     }
 
     const defaultConfig: GameConfig = {
@@ -145,8 +146,8 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       config: defaultConfig,
       gameStartTime: now,
       lastMoveTime: now,
-      usedWords: new Set(),
-      usedKeyLetters: new Set(),
+      usedWords: [],
+      usedKeyLetters: [],
       lockedKeyLetters: []
     };
   }
@@ -155,12 +156,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * Get the current game state (read-only copy)
    */
   public getState(): GameState {
-    const stateToReturn = { 
-      ...this.state,
-      usedWords: Array.from(this.state.usedWords) as any, // Convert Set to Array for React state
-      usedKeyLetters: Array.from(this.state.usedKeyLetters) as any // Convert Set to Array for React state
-    };
-        return stateToReturn;
+    return { ...this.state };
   }
 
   /**
@@ -185,8 +181,10 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
             this.state.gameStatus = 'playing';
       this.state.gameStartTime = Date.now();
       
-      // Add initial word to used words set
-      this.state.usedWords.add(this.state.currentWord);
+      // Add initial word to used words list
+      if (!this.state.usedWords.includes(this.state.currentWord)) {
+        this.state.usedWords.push(this.state.currentWord);
+      }
       
       // Generate initial key letter so first player can use it for bonus points
       if (this.state.config.enableKeyLetters) {
@@ -242,7 +240,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     }
 
     // Check if word has been used before
-    if (this.state.usedWords.has(normalizedNewWord)) {
+    if (this.state.usedWords.includes(normalizedNewWord)) {
       return {
         newWord: normalizedNewWord,
         isValid: false,
@@ -350,7 +348,9 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     this.state.totalMoves++;
     
     // Track this word as used
-    this.state.usedWords.add(moveAttempt.newWord);
+    if (!this.state.usedWords.includes(moveAttempt.newWord)) {
+      this.state.usedWords.push(moveAttempt.newWord);
+    }
 
     // Update player score
     currentPlayer.score += moveAttempt.scoringResult.totalScore;
@@ -387,7 +387,9 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     if (this.state.config.enableKeyLetters) {
                   // Track the current key letter as used (since it was active for this turn)
       this.state.keyLetters.forEach(letter => {
-                this.state.usedKeyLetters.add(letter);
+        if (!this.state.usedKeyLetters.includes(letter)) {
+          this.state.usedKeyLetters.push(letter);
+        }
       });
       
       // Clear current key letters and generate exactly 1 new key letter
@@ -441,7 +443,8 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       const botResult: BotResult = await this.dependencies.generateBotMove(this.state.currentWord, {
         keyLetters: this.state.keyLetters,
         lockedLetters: allLockedLetters,
-        maxCandidates: 500 // Reasonable limit for responsive gameplay
+        maxCandidates: 500, // Reasonable limit for responsive gameplay
+        botId: this.state.config.botId // Selects the bot's strategy in bot.ts (e.g. filterPirateBotCandidates)
       });
 
             if (!botResult.move) {
@@ -662,7 +665,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       averageScorePerMove: number;
     }>;
   } {
-    const duration = Date.now() - this.state.gameStartTime;
+    const duration = this.state.gameStartTime ? Date.now() - this.state.gameStartTime : 0;
     const totalScore = this.state.players.reduce((sum, player) => sum + player.score, 0);
     const averageScore = this.state.totalMoves > 0 ? totalScore / this.state.totalMoves : 0;
 
@@ -760,7 +763,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     const currentWordLetters = new Set(this.state.currentWord.split(''));
     
     const availableLetters = alphabet.split('').filter(letter => 
-      !this.state.usedKeyLetters.has(letter) && 
+      !this.state.usedKeyLetters.includes(letter) && 
       !this.state.keyLetters.includes(letter) &&
       !currentWordLetters.has(letter) // NEW: Don't use letters already in the current word
     );
@@ -785,9 +788,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
         },
         timestamp: Date.now()
       });
-      
-          } else {
-          }
+    }
   }
 
   /**
@@ -813,7 +814,9 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       previousWord: this.state.currentWord,
       newWord: this.state.currentWord, // Word stays the same
       score: 0, // No points for passing
+      keyLettersUsed: [],
       scoringBreakdown: {
+        score: 0,
         totalScore: 0,
         breakdown: {
           addLetterPoints: 0,
@@ -821,7 +824,9 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
           movePoints: 0,
           keyLetterUsagePoints: 0,
         },
-        actions: ['PASS'],
+        actions: [],
+        keyLetterScore: 0,
+        baseScore: 0,
         keyLettersUsed: []
       },
       timestamp: Date.now()

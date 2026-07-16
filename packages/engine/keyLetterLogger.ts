@@ -19,8 +19,8 @@ export class KeyLetterLogger {
    */
   static async logKeyLetter(
     letter: string,
-    gameId: string,
-    turnNumber: number
+    _gameId: string,
+    _turnNumber: number
   ): Promise<void> {
     const upperLetter = letter.toUpperCase();
 
@@ -40,9 +40,6 @@ export class KeyLetterLogger {
 
   private static async updateCountFile(letter: string): Promise<void> {
     try {
-      // Dynamic import for Node.js file system operations
-      const fs = await import('fs');
-      
       // Read current counts
       const counts = await this.readCounts();
       
@@ -172,24 +169,6 @@ export class KeyLetterLogger {
     }
   }
 
-  // Legacy methods for compatibility
-  private static detectPlatform(): string {
-    if (this.isNodeEnvironment()) {
-      return 'nodejs';
-    }
-    
-    // Browser detection
-    if (typeof window !== 'undefined') {
-      const userAgent = window.navigator.userAgent.toLowerCase();
-      if (/mobile|android|iphone|ipad/.test(userAgent)) {
-        return 'mobile_browser';
-      }
-      return 'browser';
-    }
-    
-    return 'unknown';
-  }
-
   /**
    * Get log file path (Node.js only)
    */
@@ -200,7 +179,7 @@ export class KeyLetterLogger {
         return join(process.cwd(), this.logFilePath);
       }
       return null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }

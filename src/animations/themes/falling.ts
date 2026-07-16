@@ -5,7 +5,7 @@
  * and dramatic entry/exit animations. More expressive and playful.
  */
 
-import type { AnimationTheme } from '../types';
+import type { AnimationTheme, ComponentAnimations } from '../types';
 
 export const fallingTheme: AnimationTheme = {
   name: 'falling',
@@ -206,11 +206,11 @@ export const fallingTheme: AnimationTheme = {
   },
   
   // Copy the same animations for other components (they can be customized per component)
-  wordBuilder: {} as any, // Will be populated below
-  scoreDisplay: {} as any,
-  wordTrail: {} as any,
-  alphabetGrid: {} as any,
-  background: {} as any
+  wordBuilder: {} as unknown as ComponentAnimations, // Will be populated below
+  scoreDisplay: {} as unknown as ComponentAnimations,
+  wordTrail: {} as unknown as ComponentAnimations,
+  alphabetGrid: {} as unknown as ComponentAnimations,
+  background: {} as unknown as ComponentAnimations
 };
 
 // Populate other components with falling-theme-specific animations

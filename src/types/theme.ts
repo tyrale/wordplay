@@ -264,4 +264,5 @@ export type ThemeContextType = {
   availableThemes: GameTheme[];
   isInverted: boolean;
   toggleInverted: () => void;
+  setInverted: (value: boolean) => void;
 }; 

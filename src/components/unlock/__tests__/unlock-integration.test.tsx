@@ -4,11 +4,11 @@
  * Tests the integration between the unlock system and React components.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { UnlockProvider } from '../UnlockProvider';
-import { ToastProvider } from '../../ui/ToastManager';
+import { AlertProvider } from '../../ui/AlertProvider';
 import { useUnlockSystem } from '../UnlockProvider';
 
 // Test component that uses the unlock system
@@ -33,11 +33,11 @@ function TestUnlockComponent() {
 function TestWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <ToastProvider>
+      <AlertProvider>
         <UnlockProvider>
           {children}
         </UnlockProvider>
-      </ToastProvider>
+      </AlertProvider>
     </ThemeProvider>
   );
 }

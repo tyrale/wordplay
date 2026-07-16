@@ -93,12 +93,10 @@ export type { GridCellProps, GridCellState, GridCellType } from './ui/GridCell';
 export { Menu } from './ui/Menu';
 export { MainScreen } from './ui/MainScreen';
 
-export { ChallengeCompletionOverlay } from './ui/ChallengeCompletionOverlay';
-export type { ChallengeCompletionOverlayProps } from './ui/ChallengeCompletionOverlay';
+export { AlertOverlay } from './ui/AlertOverlay';
+export type { AlertOverlayProps, AlertOverlayAction, AlertOverlayVariant } from './ui/AlertOverlay';
 
-export { QuitterOverlay } from './ui/QuitterOverlay';
-export { WinnerOverlay } from './ui/WinnerOverlay';
-export { LoserOverlay } from './ui/LoserOverlay';
+export { AlertProvider, useAlert } from './ui/AlertProvider';
 
 // Game Components
 export { AlphabetGrid } from './game/AlphabetGrid';

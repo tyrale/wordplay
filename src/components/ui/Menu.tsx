@@ -2,8 +2,10 @@ import React, { useState, useCallback } from 'react';
 import { useTheme } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { useVanityFilter } from '../../hooks/useVanityFilter';
+import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
 import { getBotDisplayNamesMapping } from '../../data/botRegistry';
+import type { GameTheme } from '../../types/theme';
 import './Menu.css';
 
 interface MenuTier2Item {
@@ -11,7 +13,7 @@ interface MenuTier2Item {
   title: string;
   isSelected?: boolean;
   onClick?: () => void;
-  theme?: any; // For theme items, store the theme object
+  theme?: GameTheme; // For theme items, store the theme object
 }
 
 interface MenuTier1Item {
@@ -33,15 +35,16 @@ const mechanicDisplayNames: Record<string, string> = {
 
 // Updated menu structure based on requirements and unlock state
 const getMenuItems = (
-  availableThemes: any[], 
-  currentTheme: any, 
+  availableThemes: GameTheme[], 
+  currentTheme: GameTheme, 
   isInverted: boolean, 
   isInGame: boolean = false,
   unlockedMechanics: string[] = [],
   availableBots: string[] = [],
-  currentGameMode?: string,
-  vanityFilterUnlocked: boolean = false,
-  vanityFilterOn: boolean = true
+  _currentGameMode?: string,
+  _vanityFilterUnlocked: boolean = false,
+  vanityFilterOn: boolean = true,
+  isMechanicOn: (mechanicId: string) => boolean = () => true
 ): MenuTier1Item[] => [
   // Only include resign if user is in an active game
   ...(isInGame ? [{
@@ -62,7 +65,7 @@ const getMenuItems = (
     id: 'themes',
     title: 'themes', 
     children: [
-      { id: 'inverted', title: 'dark mode', isSelected: isInverted },
+      ...(unlockedMechanics.includes('dark-mode') ? [{ id: 'inverted', title: 'dark mode', isSelected: isInverted }] : []),
       ...availableThemes.map(theme => ({
         id: theme.name.toLowerCase().replace(/\s+/g, '-'),
         title: theme.name.toLowerCase(),
@@ -71,11 +74,12 @@ const getMenuItems = (
       }))
     ]
   },
-  // Only show mechanics section if there are unlocked mechanics
-  ...(unlockedMechanics.length > 0 ? [{
+  // Only show mechanics section if there are unlocked mechanics (excluding dark mode,
+  // which lives under the themes section instead)
+  ...(unlockedMechanics.filter(id => id !== 'dark-mode').length > 0 ? [{
     id: 'mechanics',
     title: 'mechanics',
-    children: unlockedMechanics.map(mechanicId => {
+    children: unlockedMechanics.filter(mechanicId => mechanicId !== 'dark-mode').map(mechanicId => {
       // Special handling for vanity filter - make it a toggle
       if (mechanicId === 'vanity-filter') {
         return {
@@ -86,7 +90,8 @@ const getMenuItems = (
       }
       return {
         id: mechanicId,
-        title: mechanicDisplayNames[mechanicId] || mechanicId
+        title: mechanicDisplayNames[mechanicId] || mechanicId,
+        isSelected: isMechanicOn(mechanicId)
       };
     })
   }] : []),
@@ -148,6 +153,9 @@ export const Menu: React.FC<MenuProps> = ({
   
   // Get vanity filter state
   const { isVanityFilterUnlocked, isVanityFilterOn, toggleVanityFilter } = useVanityFilter();
+  
+  // Get mechanics on/off state
+  const { isMechanicOn, toggleMechanic } = useMechanicsSettings();
   const unlockedThemeIds = getUnlockedItems('theme');
   const unlockedMechanics = getUnlockedItems('mechanic');
   const unlockedBots = getUnlockedItems('bot');
@@ -169,7 +177,7 @@ export const Menu: React.FC<MenuProps> = ({
     }
   }, []);
 
-  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn());
+  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn(), isMechanicOn);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -207,7 +215,7 @@ export const Menu: React.FC<MenuProps> = ({
   }, [onNavigateHome, onResign, handleClose]);
 
   // Helper function to render theme name with color preview
-  const renderThemeName = useCallback((item: any) => { // Changed type to any as MenuTier2Item is removed
+  const renderThemeName = useCallback((item: MenuTier2Item) => {
     if (!item.theme) {
       return item.title;
     }
@@ -297,9 +305,11 @@ export const Menu: React.FC<MenuProps> = ({
       if (tier2Id === 'vanity-filter') {
         // Toggle vanity filter
         toggleVanityFilter();
-        // Don't close menu after toggle
+      } else {
+        // Toggle the mechanic on/off
+        toggleMechanic(tier2Id);
       }
-      // For other mechanics, keep menu open (no functionality yet)
+      // Don't close menu after toggle
     } else if (tier1Id === 'bots') {
       // Bot selection - this will trigger confirmation in App.tsx
       onStartGame?.('bot', tier2Id);
@@ -308,7 +318,7 @@ export const Menu: React.FC<MenuProps> = ({
     
     // For other items (challenge, mechanics, other about items), keep menu open
     // These are placeholder items that don't have functionality yet
-  }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, toggleVanityFilter, resetUnlocksToFresh, resetDailyChallenge]);
+  }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, toggleVanityFilter, toggleMechanic, resetUnlocksToFresh, resetDailyChallenge]);
 
   if (!isOpen) return null;
 
@@ -360,8 +370,6 @@ export const Menu: React.FC<MenuProps> = ({
                           {tier1Item.children
                                                          .filter((item: MenuTier2Item) => item.id === 'inverted')
                              .map((tier2Item: MenuTier2Item, tier2Index: number) => {
-                              const isDarkModeToggle = true;
-                              
                               return (
                                 <button
                                   key={tier2Item.id}
@@ -390,13 +398,11 @@ export const Menu: React.FC<MenuProps> = ({
                           {tier1Item.children
                                                          .filter((item: MenuTier2Item) => item.id !== 'inverted')
                              .map((tier2Item: MenuTier2Item, tier2Index: number) => {
-                              const isThemeItem = true;
-                              
                               // For theme items, use the theme's colors for styling
                               const themeStyles = {
-                                borderColor: isInverted ? tier2Item.theme.colors.background : tier2Item.theme.colors.text,
-                                backgroundColor: isInverted ? tier2Item.theme.colors.text : tier2Item.theme.colors.background,
-                                color: isInverted ? tier2Item.theme.colors.background : tier2Item.theme.colors.text
+                                borderColor: isInverted ? tier2Item.theme!.colors.background : tier2Item.theme!.colors.text,
+                                backgroundColor: isInverted ? tier2Item.theme!.colors.text : tier2Item.theme!.colors.background,
+                                color: isInverted ? tier2Item.theme!.colors.background : tier2Item.theme!.colors.text
                               };
 
                               return (
@@ -420,7 +426,7 @@ export const Menu: React.FC<MenuProps> = ({
                                   {tier2Item.isSelected && (
                                     <span 
                                       className="menu-tier2-item__checkmark"
-                                      style={{ color: tier2Item.theme.colors.accent }}
+                                      style={{ color: tier2Item.theme!.colors.accent }}
                                     >
                                       ✓
                                     </span>

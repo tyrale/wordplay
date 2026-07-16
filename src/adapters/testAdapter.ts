@@ -12,14 +12,19 @@ import type {
   GameStateScoringDependencies,
   GameStateBotDependencies,
   ValidationResult,
+  ValidationOptions,
   ScoringResult,
+  ScoringOptions,
   BotResult,
+  BotOptions,
   BotDependencies
 } from '../../packages/engine/interfaces';
 
-import { validateWordWithDependencies, isValidDictionaryWordWithDependencies } from '../../packages/engine/dictionary';
+import { isValidDictionaryWordWithDependencies } from '../../packages/engine/dictionary';
 import { calculateScore, getScoreForMove, isValidMove } from '../../packages/engine/scoring';
 import { generateBotMoveWithDependencies } from '../../packages/engine/bot';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Test-specific word data implementation
@@ -29,6 +34,7 @@ class TestWordData implements WordDataDependencies {
   public enableWords: Set<string> = new Set();
   public slangWords: Set<string> = new Set();
   public profanityWords: Set<string> = new Set();
+  public properNounWords: Set<string> = new Set();
   public wordCount: number = 0;
   private wordsByLength: Map<number, string[]> = new Map();
   private loaded = true; // Always loaded for tests
@@ -39,7 +45,7 @@ class TestWordData implements WordDataDependencies {
 
   public hasWord(word: string): boolean {
     const upperWord = word.toUpperCase();
-    return this.enableWords.has(upperWord) || this.slangWords.has(upperWord);
+    return this.enableWords.has(upperWord) || this.slangWords.has(upperWord) || this.properNounWords.has(upperWord);
   }
 
   public getRandomWordByLength(length: number): string | null {
@@ -96,15 +102,21 @@ class TestWordData implements WordDataDependencies {
       'BRUH', 'YEAH', 'NOPE', 'YEET', 'FOMO', 'SELFIE', 'EMOJI', 'BLOG'
     ]);
 
+    // Initialize test common proper nouns (months, days, common names)
+    this.properNounWords = new Set([
+      'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY',
+      'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER',
+      'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
+      'TYRALE'
+    ]);
+
     // Load profanity words from shared data file for testing
     try {
       // In test environment, load from file system
-      const fs = require('fs');
-      const path = require('path');
       const profanityPath = path.join(process.cwd(), 'public/data/profanity-words.json');
       const profanityData = JSON.parse(fs.readFileSync(profanityPath, 'utf-8'));
       this.profanityWords = new Set(profanityData.words || []);
-    } catch (error) {
+    } catch {
       console.warn('Test adapter: Failed to load profanity words, using test set');
       // Basic test profanity words for testing vanity filter functionality
       this.profanityWords = new Set([
@@ -162,12 +174,10 @@ class TestWordData implements WordDataDependencies {
   public switchToComprehensiveProfanity(): void {
     // Reload from shared data file
     try {
-      const fs = require('fs');
-      const path = require('path');
       const profanityPath = path.join(process.cwd(), 'public/data/profanity-words.json');
       const profanityData = JSON.parse(fs.readFileSync(profanityPath, 'utf-8'));
       this.profanityWords = new Set(profanityData.words || []);
-    } catch (error) {
+    } catch {
       this.profanityWords = new Set();
     }
   }
@@ -175,14 +185,12 @@ class TestWordData implements WordDataDependencies {
   public switchToBasicProfanity(): void {
     // Load basic subset from shared data file
     try {
-      const fs = require('fs');
-      const path = require('path');
       const profanityPath = path.join(process.cwd(), 'public/data/profanity-words.json');
       const profanityData = JSON.parse(fs.readFileSync(profanityPath, 'utf-8'));
       // Filter to 3-5 letter words for basic mode
       const basicWords = (profanityData.words || []).filter((word: string) => word.length >= 3 && word.length <= 5);
       this.profanityWords = new Set(basicWords);
-    } catch (error) {
+    } catch {
       this.profanityWords = new Set();
     }
   }
@@ -228,7 +236,7 @@ const testDictionaryDependencies: GameStateDictionaryDependencies = {
  * Uses direct imports from scoring module since it's platform-agnostic
  */
 const testScoringDependencies: GameStateScoringDependencies = {
-  calculateScore: (fromWord: string, toWord: string, options?: any): ScoringResult => {
+  calculateScore: (fromWord: string, toWord: string, options?: ScoringOptions): ScoringResult => {
     return calculateScore(fromWord, toWord, options);
   },
 
@@ -245,7 +253,7 @@ const testScoringDependencies: GameStateScoringDependencies = {
  * Test bot dependencies implementation
  */
 const testBotDependencies: GameStateBotDependencies = {
-  generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
+  generateBotMove: async (word: string, options?: BotOptions): Promise<BotResult> => {
     // Create complete BotDependencies with all required interfaces
     const botDeps: BotDependencies = {
       // DictionaryDependencies
@@ -267,8 +275,8 @@ const testBotDependencies: GameStateBotDependencies = {
       getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]): number => {
         return getScoreForMove(fromWord, toWord, keyLetters || []);
       },
-      calculateScore: (fromWord: string, toWord: string, keyLetters: string[], lockedLetters: string[]): ScoringResult => {
-        return calculateScore(fromWord, toWord, { keyLetters });
+      calculateScore: (fromWord: string, toWord: string, options?: ScoringOptions): ScoringResult => {
+        return calculateScore(fromWord, toWord, options);
       },
       
       // Bot-specific profanity checking
@@ -391,6 +399,20 @@ export class TestAdapter {
   }
 
   /**
+   * Add a word to the test profanity set
+   */
+  addProfanityWord(word: string): void {
+    this.wordData.addProfanityWord(word);
+  }
+
+  /**
+   * Remove a word from the test profanity set
+   */
+  removeProfanityWord(word: string): void {
+    this.wordData.removeProfanityWord(word);
+  }
+
+  /**
    * Get words of specific length for test assertions
    */
   getWordsOfLength(length: number): string[] {
@@ -428,7 +450,7 @@ export function getTestGameDependencies(): GameStateDependencies {
 /**
  * Quick validation using test dependencies
  */
-export function validateWordTest(word: string, options?: any): ValidationResult {
+export function validateWordTest(word: string, _options?: ValidationOptions): ValidationResult {
   return testDictionaryDependencies.validateWord(word);
 }
 
@@ -473,7 +495,7 @@ export function createCustomTestDependencies(words: string[]): GameStateDependen
   };
 
   const customBotDependencies: GameStateBotDependencies = {
-    generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
+    generateBotMove: async (word: string, options?: BotOptions): Promise<BotResult> => {
       const botDeps: BotDependencies = {
         // DictionaryDependencies
         validateWord: customDictionaryDependencies.validateWord,
@@ -494,8 +516,8 @@ export function createCustomTestDependencies(words: string[]): GameStateDependen
         getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]): number => {
           return getScoreForMove(fromWord, toWord, keyLetters || []);
         },
-        calculateScore: (fromWord: string, toWord: string, keyLetters: string[], lockedLetters: string[]): ScoringResult => {
-          return calculateScore(fromWord, toWord, { keyLetters });
+        calculateScore: (fromWord: string, toWord: string, options?: ScoringOptions): ScoringResult => {
+          return calculateScore(fromWord, toWord, options);
         },
         
         // Bot-specific profanity checking
