@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Menu } from './Menu';
+import { AlertOverlay } from './AlertOverlay';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { getAllBots } from '../../data/botRegistry';
 import './MainScreen.css';
@@ -11,6 +12,7 @@ interface MainScreenProps {
 export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
   const [currentView, setCurrentView] = useState<'main' | 'bots'>('main');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isVsHumanLockedOpen, setIsVsHumanLockedOpen] = useState(false);
   
   // Get unlock state
   const { getUnlockedItems } = useUnlockSystem();
@@ -25,8 +27,8 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
     } else if (gameType === 'challenge') {
       onStartGame('challenge');
     } else if (gameType === 'vs-human') {
-      // This mode not implemented yet
-      console.log(`${gameType} mode not implemented yet`);
+      // Not unlocked yet - show requirement overlay
+      setIsVsHumanLockedOpen(true);
     }
   }, [onStartGame]);
 
@@ -67,7 +69,9 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
               className="main-screen__game-option"
               onClick={() => handleGameTypeSelect('vs-human')}
             >
-              <span className="main-screen__vs-text">vs</span> human
+              <span className="main-screen__strikethrough">
+                <span className="main-screen__vs-text">vs</span>human
+              </span>
             </button>
             <button 
               className="main-screen__game-option"
@@ -106,6 +110,13 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
         }}
         isInGame={false}
         currentGameMode={undefined}
+      />
+
+      {/* vs human requirement overlay - closing returns to this (home) screen */}
+      <AlertOverlay
+        isVisible={isVsHumanLockedOpen}
+        lines={['BEAT', 'EASYBOT', 'FIRST']}
+        onClose={() => setIsVsHumanLockedOpen(false)}
       />
     </div>
   );

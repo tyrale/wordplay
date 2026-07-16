@@ -321,7 +321,8 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
           
           // Check for unlocks triggered by this word
           // (the vanity filter mechanic unlock is handled here via UNLOCK_DEFINITIONS)
-          await handleWordSubmission(pendingWord);
+          const isProfane = !!wordData?.profanityWords.has(pendingWord.trim().toUpperCase());
+          await handleWordSubmission(pendingWord, isProfane);
           
           // Check if challenge is complete (challengeState will be updated by useChallenge)
           // The completion check will happen in the next render cycle
@@ -334,7 +335,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         setIsProcessingMove(false);
       }
     }
-  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord, handleWordSubmission]);
+  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord, handleWordSubmission, wordData]);
 
   const handleMenuClose = useCallback(() => {
     setIsMenuOpen(false);

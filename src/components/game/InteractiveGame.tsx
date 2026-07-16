@@ -456,14 +456,15 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       if (success) {
         // Check for unlock triggers when word is successfully submitted
         // (the vanity filter mechanic unlock is handled here via UNLOCK_DEFINITIONS)
-        await handleWordSubmission(pendingMoveAttempt.newWord);
+        const isProfane = !!wordData?.profanityWords.has(pendingMoveAttempt.newWord.toUpperCase());
+        await handleWordSubmission(pendingMoveAttempt.newWord, isProfane);
         
         setPendingWord(pendingMoveAttempt.newWord);
         setPendingMoveAttempt(null);
         setShowValidationError(false);
       }
     }
-  }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission]);
+  }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, wordData]);
 
   const handleStartGame = useCallback(async () => {
     await actions.startGame();

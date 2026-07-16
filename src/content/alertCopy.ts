@@ -123,8 +123,8 @@ export const alertCopy = {
       metaByItem: {
         '5-letter-start': 'Toggle is on in the menu.',
         '6-letter-start': 'Toggle is on in the menu.',
-        'vanity-filter': 'Toggle is on in the menu.',
-        'time-pressure': '7 second turn timer. Toggle is on in the menu.'
+        'vanity-filter': 'Let the explitives fly!',
+        'time-pressure': '7 second turn timer. The pressure is on!'
       }
     },
     vanityFilter: { lines: ['FILTER', 'TOGGLE', 'UNLOCKED'], meta: 'Toggle it in the menu' },

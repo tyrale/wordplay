@@ -95,6 +95,10 @@
   color: var(--theme-accent);
 }
 
+.main-screen__strikethrough {
+  text-decoration: line-through;
+}
+
 .main-screen__bot-selection {
   display: flex;
   flex-direction: column;

@@ -16,7 +16,7 @@ import type { UnlockResult } from '../../../packages/engine/interfaces';
 
 export interface UnlockContextType extends UseUnlocksReturn {
   // Enhanced functionality
-  handleWordSubmission: (word: string) => Promise<UnlockResult[]>;
+  handleWordSubmission: (word: string, isProfane?: boolean) => Promise<UnlockResult[]>;
   handleGameCompletion: (winner: string | null, botId?: string) => Promise<UnlockResult[]>;
   showUnlockNotification: (results: UnlockResult[]) => void;
   
@@ -106,7 +106,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
   }, [setTheme, availableThemes]);
 
   // Enhanced word submission handler
-  const handleWordSubmission = useCallback(async (word: string): Promise<UnlockResult[]> => {
+  const handleWordSubmission = useCallback(async (word: string, isProfane?: boolean): Promise<UnlockResult[]> => {
     // Special case: playing "RESET" wipes out all unlocks instead of granting one
     if (word === 'RESET') {
       console.log('[Unlock] "RESET" played - resetting all unlocks');
@@ -116,6 +116,12 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
     }
 
     const results = await unlocks.checkWordTriggers(word);
+
+    // Any profanity word unlocks the vanity filter toggle, not just one hardcoded word
+    if (isProfane) {
+      const profanityResults = await unlocks.checkAchievementTriggers('played_profanity');
+      results.push(...profanityResults);
+    }
     
     if (results.length > 0) {
       console.log(`[Unlock] Word "${word}" triggered ${results.length} unlock(s):`, results);
@@ -124,7 +130,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
     }
     
     return results;
-  }, [unlocks.checkWordTriggers, handleImmediateEffects, showUnlockNotification]);
+  }, [unlocks.checkWordTriggers, unlocks.checkAchievementTriggers, handleImmediateEffects, showUnlockNotification]);
 
   // Enhanced game completion handler
   const handleGameCompletion = useCallback(async (winner: string | null, botId?: string): Promise<UnlockResult[]> => {

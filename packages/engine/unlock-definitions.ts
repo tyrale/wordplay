@@ -572,7 +572,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     itemId: 'vanity-filter',
     name: 'Vanity Filter',
     description: 'Unlock the vanity filter by playing a profanity word',
-    trigger: { type: 'word', value: 'shit', timing: 'word_submission' },
+    trigger: { type: 'achievement', value: 'played_profanity' },
     target: 'vanity-filter'
   },
   {
