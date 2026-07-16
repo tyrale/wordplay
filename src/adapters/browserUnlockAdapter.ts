@@ -62,7 +62,8 @@ async function loadStateFromIndexedDB(): Promise<UnlockState> {
           // Validate the loaded state has all required properties
           const state = result.data;
           if (state.themes && state.mechanics && state.bots && state.achievements) {
-            resolve(state);
+            // Backward compatibility: default 'reveals' if missing from a state saved before this field existed
+            resolve({ reveals: [], ...state });
           } else {
             // Invalid state, return initial state
             resolve({ ...INITIAL_UNLOCK_STATE });
@@ -138,7 +139,8 @@ export function createLocalStorageUnlockDependencies(): UnlockDependencies {
           const parsed = JSON.parse(stored);
           // Validate the loaded state
           if (parsed.themes && parsed.mechanics && parsed.bots && parsed.achievements) {
-            return parsed;
+            // Backward compatibility: default 'reveals' if missing from a state saved before this field existed
+            return { reveals: [], ...parsed };
           }
         }
       } catch (error) {

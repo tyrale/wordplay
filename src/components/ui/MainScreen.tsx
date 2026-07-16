@@ -66,12 +66,10 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
               <span className="main-screen__vs-text">vs</span> world
             </button>
             <button 
-              className="main-screen__game-option"
+              className="main-screen__game-option main-screen__strikethrough"
               onClick={() => handleGameTypeSelect('vs-human')}
             >
-              <span className="main-screen__strikethrough">
-                <span className="main-screen__vs-text">vs</span>human
-              </span>
+              <span className="main-screen__vs-text">vs</span>human
             </button>
             <button 
               className="main-screen__game-option"

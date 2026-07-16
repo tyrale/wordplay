@@ -50,7 +50,7 @@ describe('MainScreen Component', () => {
       return element?.textContent === 'vs world';
     })).toBeInTheDocument();
     expect(screen.getByText((_content, element) => {
-      return element?.textContent === 'vs human';
+      return element?.textContent === 'vshuman';
     })).toBeInTheDocument();
     expect(screen.getByText((_content, element) => {
       return element?.textContent === 'vs bot';

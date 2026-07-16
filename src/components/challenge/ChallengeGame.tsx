@@ -20,6 +20,7 @@ import { shareChallengeResult, getShareResultMessage } from '../../utils/shareUt
 import { useAlert } from '../ui/AlertProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { getWordLegalityReason, fetchWordDefinition } from '../../utils/wordHelp';
+import { triggerHapticFeedback } from '../../utils/haptics';
 import type { GameStateDependencies } from '../../../packages/engine/gamestate';
 import type { WordDataDependencies } from '../../../packages/engine/interfaces';
 
@@ -213,6 +214,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     
     const newWord = pendingWord + letter;
     if (newWord.length <= 10) {
+      triggerHapticFeedback('add');
       handleWordChange(newWord);
     }
   }, [pendingWord, isProcessingMove, challengeState, handleWordChange]);
@@ -235,6 +237,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
 
   const handleWordBuilderMouseUp = useCallback((_e: React.MouseEvent) => {
     if (draggedLetter && pendingWord.length < 10) {
+      triggerHapticFeedback('add');
       handleWordChange(pendingWord + draggedLetter);
     }
     setDraggedLetter(null);
@@ -242,6 +245,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
 
   const handleWordBuilderTouchEnd = useCallback((_e: React.TouchEvent) => {
     if (draggedLetter && pendingWord.length < 10) {
+      triggerHapticFeedback('add');
       handleWordChange(pendingWord + draggedLetter);
     }
     setDraggedLetter(null);
@@ -314,6 +318,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         const result = await submitWord(pendingWord);
         
         if (result.success) {
+          triggerHapticFeedback('submit');
           // Word was successfully submitted, pending word becomes current word
           setPendingWord(pendingWord); // Keep the word that was just submitted
           setValidationResult(null);

@@ -42,7 +42,7 @@ describe('App Component', () => {
       return element?.textContent === 'vs world';
     })).toBeInTheDocument();
     expect(screen.getByText((_content, element) => {
-      return element?.textContent === 'vs human';
+      return element?.textContent === 'vshuman';
     })).toBeInTheDocument();
     expect(screen.getByText((_content, element) => {
       return element?.textContent === 'vs bot';
@@ -69,7 +69,7 @@ describe('App Component', () => {
     expect(worldButton.tagName).toBe('BUTTON');
     
     const humanButton = screen.getByText((_content, element) => {
-      return element?.textContent === 'vs human';
+      return element?.textContent === 'vshuman';
     });
     expect(humanButton).toBeInTheDocument();
     expect(humanButton.tagName).toBe('BUTTON');
@@ -83,7 +83,7 @@ describe('App Component', () => {
       return element?.textContent === 'vs world';
     })).toBeInTheDocument();
     expect(screen.getByText((_content, element) => {
-      return element?.textContent === 'vs human';
+      return element?.textContent === 'vshuman';
     })).toBeInTheDocument();
     expect(screen.getByText((_content, element) => {
       return element?.textContent === 'vs bot';

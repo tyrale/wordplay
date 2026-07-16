@@ -4,7 +4,8 @@ import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { useVanityFilter } from '../../hooks/useVanityFilter';
 import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
-import { getBotDisplayNamesMapping } from '../../data/botRegistry';
+import { getAllBots, getBotDisplayNamesMapping } from '../../data/botRegistry';
+import { availableThemes as ALL_THEMES } from '../../types/theme';
 import type { GameTheme } from '../../types/theme';
 import { DictionariesOverlay } from './DictionariesOverlay';
 import './Menu.css';
@@ -15,7 +16,14 @@ interface MenuTier2Item {
   isSelected?: boolean;
   onClick?: () => void;
   theme?: GameTheme; // For theme items, store the theme object
+  isLocked?: boolean; // Grayed-out '????' preview for a not-yet-unlocked item
 }
+
+// Full list of mechanic ids that can exist (excludes 'dark-mode', which lives under the themes section)
+const ALL_MECHANIC_IDS = ['vanity-filter', '5-letter-start', '6-letter-start', 'time-pressure'];
+
+// Masks a display name into '?' characters (one per non-space character), preserving spaces as gaps
+const maskName = (name: string): string => name.replace(/[^\s]/g, '?');
 
 interface MenuTier1Item {
   id: string;
@@ -33,6 +41,10 @@ const mechanicDisplayNames: Record<string, string> = {
 };
 
 // Updated menu structure based on requirements and unlock state
+// Resolves a mechanic id's real display name (matches the logic used for real unlocked mechanic items)
+const getMechanicTitle = (mechanicId: string): string =>
+  mechanicId === 'vanity-filter' ? 'bad word filter' : (mechanicDisplayNames[mechanicId] || mechanicId);
+
 const getMenuItems = (
   availableThemes: GameTheme[], 
   currentTheme: GameTheme, 
@@ -43,8 +55,43 @@ const getMenuItems = (
   _currentGameMode?: string,
   _vanityFilterUnlocked: boolean = false,
   vanityFilterOn: boolean = true,
-  isMechanicOn: (mechanicId: string) => boolean = () => true
-): MenuTier1Item[] => [
+  isMechanicOn: (mechanicId: string) => boolean = () => true,
+  revealedCategories: string[] = []
+): MenuTier1Item[] => {
+  // Locked theme previews - only computed once 'themes' has been revealed
+  const lockedThemeItems: MenuTier2Item[] = revealedCategories.includes('themes')
+    ? ALL_THEMES
+        .filter(theme => !availableThemes.some(unlocked => unlocked.name === theme.name))
+        .map(theme => ({
+          id: `locked-theme-${theme.name.toLowerCase().replace(/\s+/g, '-')}`,
+          title: maskName(theme.name.toLowerCase()),
+          isLocked: true
+        }))
+    : [];
+
+  // Locked mechanic previews - only computed once 'mechanics' has been revealed
+  const lockedMechanicItems: MenuTier2Item[] = revealedCategories.includes('mechanics')
+    ? ALL_MECHANIC_IDS
+        .filter(mechanicId => !unlockedMechanics.includes(mechanicId))
+        .map(mechanicId => ({
+          id: `locked-mechanic-${mechanicId}`,
+          title: maskName(getMechanicTitle(mechanicId)),
+          isLocked: true
+        }))
+    : [];
+
+  // Locked bot previews - only computed once 'bots' has been revealed
+  const lockedBotItems: MenuTier2Item[] = revealedCategories.includes('bots')
+    ? getAllBots()
+        .filter(bot => !availableBots.includes(bot.id))
+        .map(bot => ({
+          id: `locked-bot-${bot.id}`,
+          title: maskName(getBotDisplayNamesMapping()[bot.id] || bot.id),
+          isLocked: true
+        }))
+    : [];
+
+  return [
   // Only include resign if user is in an active game
   ...(isInGame ? [{
     id: 'resign',
@@ -70,38 +117,45 @@ const getMenuItems = (
         title: theme.name.toLowerCase(),
         isSelected: theme.name === currentTheme.name,
         theme: theme
-      }))
+      })),
+      ...lockedThemeItems
     ]
   },
-  // Only show mechanics section if there are unlocked mechanics (excluding dark mode,
-  // which lives under the themes section instead)
-  ...(unlockedMechanics.filter(id => id !== 'dark-mode').length > 0 ? [{
+  // Show mechanics section if there are unlocked mechanics (excluding dark mode,
+  // which lives under the themes section instead) or if locked previews are revealed
+  ...(unlockedMechanics.filter(id => id !== 'dark-mode').length > 0 || lockedMechanicItems.length > 0 ? [{
     id: 'mechanics',
     title: 'mechanics',
-    children: unlockedMechanics.filter(mechanicId => mechanicId !== 'dark-mode').map(mechanicId => {
-      // Special handling for vanity filter - make it a toggle
-      if (mechanicId === 'vanity-filter') {
+    children: [
+      ...unlockedMechanics.filter(mechanicId => mechanicId !== 'dark-mode').map(mechanicId => {
+        // Special handling for vanity filter - make it a toggle
+        if (mechanicId === 'vanity-filter') {
+          return {
+            id: mechanicId,
+            title: 'bad word filter',
+            isSelected: vanityFilterOn
+          };
+        }
         return {
           id: mechanicId,
-          title: 'bad word filter',
-          isSelected: vanityFilterOn
+          title: mechanicDisplayNames[mechanicId] || mechanicId,
+          isSelected: isMechanicOn(mechanicId)
         };
-      }
-      return {
-        id: mechanicId,
-        title: mechanicDisplayNames[mechanicId] || mechanicId,
-        isSelected: isMechanicOn(mechanicId)
-      };
-    })
+      }),
+      ...lockedMechanicItems
+    ]
   }] : []),
   // Show bots section if there are available bots
-  ...(availableBots.length > 0 ? [{
+  ...(availableBots.length > 0 || lockedBotItems.length > 0 ? [{
     id: 'bots',
     title: 'bots',
-    children: availableBots.map((botId: string) => ({
-      id: botId,
-      title: getBotDisplayNamesMapping()[botId] || botId
-    }))
+    children: [
+      ...availableBots.map((botId: string) => ({
+        id: botId,
+        title: getBotDisplayNamesMapping()[botId] || botId
+      })),
+      ...lockedBotItems
+    ]
   }] : []),
   {
     id: 'about',
@@ -119,7 +173,8 @@ const getMenuItems = (
     title: 'home'
     // No children - this is a standalone tier 1 action item
   },
-];
+  ];
+};
 
 export interface MenuProps {
   isOpen: boolean;
@@ -160,6 +215,7 @@ export const Menu: React.FC<MenuProps> = ({
   const unlockedThemeIds = getUnlockedItems('theme');
   const unlockedMechanics = getUnlockedItems('mechanic');
   const unlockedBots = getUnlockedItems('bot');
+  const revealedCategories = getUnlockedItems('reveal');
   
   // Ensure basicBot is always available (fallback for loading state or missing data)
   const availableBots = isLoading ? ['basicBot'] : (unlockedBots.length > 0 ? unlockedBots : ['basicBot']);
@@ -178,7 +234,7 @@ export const Menu: React.FC<MenuProps> = ({
     }
   }, []);
 
-  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn(), isMechanicOn);
+  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn(), isMechanicOn, revealedCategories);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -403,8 +459,8 @@ export const Menu: React.FC<MenuProps> = ({
                           {tier1Item.children
                                                          .filter((item: MenuTier2Item) => item.id !== 'inverted')
                              .map((tier2Item: MenuTier2Item, tier2Index: number) => {
-                              // For theme items, use the theme's colors for styling
-                              const themeStyles = {
+                              // Locked previews have no theme colors to show - render as a flat gray box
+                              const themeStyles = tier2Item.isLocked ? {} : {
                                 borderColor: isInverted ? tier2Item.theme!.colors.background : tier2Item.theme!.colors.text,
                                 backgroundColor: isInverted ? tier2Item.theme!.colors.text : tier2Item.theme!.colors.background,
                                 color: isInverted ? tier2Item.theme!.colors.background : tier2Item.theme!.colors.text
@@ -413,7 +469,9 @@ export const Menu: React.FC<MenuProps> = ({
                               return (
                                 <button
                                   key={tier2Item.id}
-                                  className={`menu-tier2-item menu-tier2-item--theme ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''}`}
+                                  className={`menu-tier2-item menu-tier2-item--theme ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''} ${tier2Item.isLocked ? 'menu-tier2-item--locked' : ''}`}
+                                  disabled={tier2Item.isLocked}
+                                  aria-disabled={tier2Item.isLocked}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleTier2Click(tier1Item.id, tier2Item.id);
@@ -425,10 +483,10 @@ export const Menu: React.FC<MenuProps> = ({
                                     ...themeStyles
                                   }}
                                 >
-                                  {renderThemeName(tier2Item)}
+                                  {tier2Item.isLocked ? tier2Item.title : renderThemeName(tier2Item)}
                                   
                                   {/* Checkmark for selected theme items */}
-                                  {tier2Item.isSelected && (
+                                  {tier2Item.isSelected && !tier2Item.isLocked && (
                                     <span 
                                       className="menu-tier2-item__checkmark"
                                       style={{ color: tier2Item.theme!.colors.accent }}
@@ -450,7 +508,9 @@ export const Menu: React.FC<MenuProps> = ({
                         return (
                           <button
                             key={tier2Item.id}
-                            className={`menu-tier2-item ${isToggle ? 'menu-tier2-item--toggle' : ''} ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''}`}
+                            className={`menu-tier2-item ${isToggle ? 'menu-tier2-item--toggle' : ''} ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''} ${tier2Item.isLocked ? 'menu-tier2-item--locked' : ''}`}
+                            disabled={tier2Item.isLocked}
+                            aria-disabled={tier2Item.isLocked}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleTier2Click(tier1Item.id, tier2Item.id);

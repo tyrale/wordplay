@@ -128,6 +128,7 @@ export const alertCopy = {
       }
     },
     vanityFilter: { lines: ['FILTER', 'TOGGLE', 'UNLOCKED'], meta: 'Toggle it in the menu' },
+    reveal: { lines: ['{item}', 'PREVIEW', 'UNLOCKED'], meta: 'Check the menu to see what\'s still locked' },
     darkMode: { lines: ['HELL', 'YES', 'BITCH'], meta: 'the founder and creator grants you dark mode' },
     generic: { lines: ['NEW', 'UNLOCK', '{item}'], meta: 'Check the menu to see what\'s new' }
   },

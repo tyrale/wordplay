@@ -26,7 +26,8 @@ export function createTestUnlockDependencies(
         themes: [...currentState.themes],
         mechanics: [...currentState.mechanics],
         bots: [...currentState.bots],
-        achievements: [...currentState.achievements]
+        achievements: [...currentState.achievements],
+        reveals: [...currentState.reveals]
       };
     },
     
@@ -36,7 +37,8 @@ export function createTestUnlockDependencies(
         themes: [...state.themes],
         mechanics: [...state.mechanics],
         bots: [...state.bots],
-        achievements: [...state.achievements]
+        achievements: [...state.achievements],
+        reveals: [...state.reveals]
       };
     },
     
@@ -58,7 +60,8 @@ export function createControlledTestUnlockDependencies(
         themes: [...controlledState.themes],
         mechanics: [...controlledState.mechanics],
         bots: [...controlledState.bots],
-        achievements: [...controlledState.achievements]
+        achievements: [...controlledState.achievements],
+        reveals: [...controlledState.reveals]
       };
     },
     
@@ -68,6 +71,7 @@ export function createControlledTestUnlockDependencies(
       controlledState.mechanics = [...state.mechanics];
       controlledState.bots = [...state.bots];
       controlledState.achievements = [...state.achievements];
+      controlledState.reveals = [...state.reveals];
     },
     
     getTimestamp: () => Date.now()
@@ -93,7 +97,8 @@ export function createFailingTestUnlockDependencies(
         themes: [...currentState.themes],
         mechanics: [...currentState.mechanics],
         bots: [...currentState.bots],
-        achievements: [...currentState.achievements]
+        achievements: [...currentState.achievements],
+        reveals: [...currentState.reveals]
       };
     },
     
@@ -105,7 +110,8 @@ export function createFailingTestUnlockDependencies(
         themes: [...state.themes],
         mechanics: [...state.mechanics],
         bots: [...state.bots],
-        achievements: [...state.achievements]
+        achievements: [...state.achievements],
+        reveals: [...state.reveals]
       };
     },
     
@@ -128,7 +134,8 @@ export function createDeterministicTestUnlockDependencies(
         themes: [...currentState.themes],
         mechanics: [...currentState.mechanics],
         bots: [...currentState.bots],
-        achievements: [...currentState.achievements]
+        achievements: [...currentState.achievements],
+        reveals: [...currentState.reveals]
       };
     },
     
@@ -137,7 +144,8 @@ export function createDeterministicTestUnlockDependencies(
         themes: [...state.themes],
         mechanics: [...state.mechanics],
         bots: [...state.bots],
-        achievements: [...state.achievements]
+        achievements: [...state.achievements],
+        reveals: [...state.reveals]
       };
     },
     

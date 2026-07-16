@@ -58,7 +58,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
     for (const result of results) {
       // Easter egg: playing "tyrale" unlocks dark mode with fully custom copy
       if (result.itemId === 'dark-mode') {
-        showAlert('unlocks', 'darkMode');
+        showAlert('unlocks', 'darkMode', { variant: 'unlock' });
         continue;
       }
 
@@ -87,7 +87,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
       }
       
       const category = (result.category in alertCopy.unlocks) ? result.category as keyof typeof alertCopy.unlocks : 'generic';
-      showAlert('unlocks', category, { params: { item: itemName.toUpperCase() }, itemId: result.itemId });
+      showAlert('unlocks', category, { params: { item: itemName.toUpperCase() }, itemId: result.itemId, variant: 'unlock' });
     }
   }, [showAlert]);
 

@@ -12,7 +12,8 @@
  * for cases that need more than a single dismiss (e.g. Share + Home).
  */
 
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { triggerHapticFeedback } from '../../utils/haptics';
 import './AlertOverlay.css';
 
 export interface AlertOverlayAction {
@@ -102,6 +103,12 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({
 }) => {
   const linesContainerRef = useRef<HTMLDivElement>(null);
   const fontSizes = useFitLineFontSizes(lines, linesContainerRef, isVisible);
+
+  useEffect(() => {
+    if (isVisible) {
+      triggerHapticFeedback(variant === 'unlock' ? 'unlock' : 'overlay');
+    }
+  }, [isVisible, variant]);
 
   if (!isVisible) return null;
 

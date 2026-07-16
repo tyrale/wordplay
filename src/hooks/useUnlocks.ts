@@ -16,8 +16,8 @@ export interface UseUnlocksReturn {
   isLoading: boolean;
   
   // Queries
-  isUnlocked: (category: 'theme' | 'mechanic' | 'bot', itemId: string) => boolean;
-  getUnlockedItems: (category: 'theme' | 'mechanic' | 'bot') => string[];
+  isUnlocked: (category: 'theme' | 'mechanic' | 'bot' | 'reveal', itemId: string) => boolean;
+  getUnlockedItems: (category: 'theme' | 'mechanic' | 'bot' | 'reveal') => string[];
   
   // Triggers
   checkWordTriggers: (word: string) => Promise<UnlockResult[]>;
@@ -35,7 +35,8 @@ export function useUnlocks(): UseUnlocksReturn {
     themes: ['classic blue'],
     mechanics: [],
     bots: ['basicBot'],
-    achievements: []
+    achievements: [],
+    reveals: []
   });
   const [isLoading, setIsLoading] = useState(true);
   const engineRef = useRef<UnlockEngine | null>(null);
@@ -75,12 +76,12 @@ export function useUnlocks(): UseUnlocksReturn {
   }, []);
 
   // Query functions
-  const isUnlocked = useCallback((category: 'theme' | 'mechanic' | 'bot', itemId: string): boolean => {
+  const isUnlocked = useCallback((category: 'theme' | 'mechanic' | 'bot' | 'reveal', itemId: string): boolean => {
     if (!engineRef.current) return false;
     return engineRef.current.isUnlocked(category, itemId);
   }, []);
 
-  const getUnlockedItems = useCallback((category: 'theme' | 'mechanic' | 'bot'): string[] => {
+  const getUnlockedItems = useCallback((category: 'theme' | 'mechanic' | 'bot' | 'reveal'): string[] => {
     if (!engineRef.current) return [];
     return engineRef.current.getUnlockedItems(category);
   }, []);

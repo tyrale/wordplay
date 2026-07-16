@@ -257,6 +257,19 @@
   white-space: nowrap; /* Keep theme names on one line */
 }
 
+/* Locked '????' preview items - grayed out, non-interactive teases for not-yet-unlocked options */
+.menu-tier2-item--locked {
+  color: #9ca3af !important;
+  cursor: default !important;
+  opacity: 0.6 !important;
+  pointer-events: none;
+}
+
+.menu-tier2-item--theme.menu-tier2-item--locked {
+  border-color: #9ca3af !important;
+  background-color: #e5e7eb !important;
+}
+
 /* Dark mode toggle styling */
 .menu-tier2-item--toggle {
   display: flex;

@@ -642,10 +642,11 @@ export interface UnlockState {
   mechanics: string[];     // Mechanic IDs that are unlocked (e.g., ['5-letter-start'])
   bots: string[];         // Bot IDs that are unlocked (e.g., ['easy-bot', 'pirate-bot'])
   achievements: string[]; // Achievement IDs that are earned (e.g., ['beat-basicBot'])
+  reveals: string[];      // Menu-preview reveals unlocked (e.g., ['bots', 'themes', 'mechanics'])
 }
 
 export interface UnlockResult {
-  category: 'theme' | 'mechanic' | 'bot';
+  category: 'theme' | 'mechanic' | 'bot' | 'reveal';
   itemId: string;
   name: string;
   description: string;
@@ -665,7 +666,7 @@ export interface UnlockTrigger {
   value?: string; // Old format compatibility
   timing?: string; // Old format compatibility
   unlocks?: Array<{
-    category: 'theme' | 'mechanic' | 'bot';
+    category: 'theme' | 'mechanic' | 'bot' | 'reveal';
     itemId: string;
   }>; // New format
 }
@@ -673,7 +674,7 @@ export interface UnlockTrigger {
 export interface UnlockDefinition {
   id?: string; // Old format compatibility
   trigger: UnlockTrigger;
-  category: 'theme' | 'mechanic' | 'bot';
+  category: 'theme' | 'mechanic' | 'bot' | 'reveal';
   itemId?: string; // Made optional for backward compatibility
   name?: string; // Made optional for backward compatibility
   description?: string; // Made optional for backward compatibility
@@ -699,8 +700,8 @@ export interface UnlockEngine {
   checkAchievementTriggers(achievement: string): Promise<UnlockResult[]>;
   
   // State queries
-  getUnlockedItems(category: 'theme' | 'mechanic' | 'bot'): string[];
-  isUnlocked(category: 'theme' | 'mechanic' | 'bot', itemId: string): boolean;
+  getUnlockedItems(category: 'theme' | 'mechanic' | 'bot' | 'reveal'): string[];
+  isUnlocked(category: 'theme' | 'mechanic' | 'bot' | 'reveal', itemId: string): boolean;
   getCurrentState(): UnlockState;
   
   // Admin/Debug

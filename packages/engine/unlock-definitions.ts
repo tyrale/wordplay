@@ -15,7 +15,8 @@ const _INITIAL_UNLOCK_STATE = {
   themes: ['classic blue'],  // Only default theme unlocked initially
   mechanics: [],             // No special mechanics unlocked
   bots: ['basicBot'],         // Only basic test bot unlocked
-  achievements: []          // No achievements earned
+  achievements: [],         // No achievements earned
+  reveals: []               // No menu-preview reveals unlocked
 } as const;
 
 /**
@@ -26,7 +27,8 @@ export function getInitialUnlockState(): UnlockState {
     themes: [..._INITIAL_UNLOCK_STATE.themes],
     mechanics: [..._INITIAL_UNLOCK_STATE.mechanics],
     bots: [..._INITIAL_UNLOCK_STATE.bots],
-    achievements: [..._INITIAL_UNLOCK_STATE.achievements]
+    achievements: [..._INITIAL_UNLOCK_STATE.achievements],
+    reveals: [..._INITIAL_UNLOCK_STATE.reveals]
   };
 }
 
@@ -563,6 +565,35 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     trigger: { type: 'word', value: 'lavendar', timing: 'word_submission' },
     target: 'lavendar',
     immediate_effect: { type: 'apply_theme', value: 'lavendar' }
+  },
+
+  // Reveal unlocks - playing the category name previews all its (still-locked) options in the menu
+  {
+    id: 'reveal_bots',
+    category: 'reveal',
+    itemId: 'bots',
+    name: 'Bots Preview',
+    description: 'Reveals all bots as previews in the menu',
+    trigger: { type: 'word', value: 'bots', timing: 'word_submission' },
+    target: 'bots'
+  },
+  {
+    id: 'reveal_themes',
+    category: 'reveal',
+    itemId: 'themes',
+    name: 'Themes Preview',
+    description: 'Reveals all themes as previews in the menu',
+    trigger: { type: 'word', value: 'themes', timing: 'word_submission' },
+    target: 'themes'
+  },
+  {
+    id: 'reveal_mechanics',
+    category: 'reveal',
+    itemId: 'mechanics',
+    name: 'Mechanics Preview',
+    description: 'Reveals all mechanics as previews in the menu',
+    trigger: { type: 'word', value: 'mechanics', timing: 'word_submission' },
+    target: 'mechanics'
   },
 
   // Mechanic unlocks - triggered by playing specific words

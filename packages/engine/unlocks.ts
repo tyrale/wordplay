@@ -86,6 +86,8 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
           state.mechanics.push(target);
         } else if (unlock.category === 'bot') {
           state.bots.push(target);
+        } else if (unlock.category === 'reveal') {
+          state.reveals.push(target);
         }
 
         // Create result
@@ -141,6 +143,8 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
           state.mechanics.push(target);
         } else if (unlock.category === 'bot') {
           state.bots.push(target);
+        } else if (unlock.category === 'reveal') {
+          state.reveals.push(target);
         }
 
         // Create result
@@ -171,36 +175,40 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
   /**
    * Get all unlocked items for a specific category
    */
-  function getUnlockedItems(category: 'theme' | 'mechanic' | 'bot'): string[] {
+  function getUnlockedItems(category: 'theme' | 'mechanic' | 'bot' | 'reveal'): string[] {
     if (!currentState) {
       // Return initial state items if state not loaded yet
       if (category === 'theme') return [...INITIAL_UNLOCK_STATE.themes];
       if (category === 'mechanic') return [...INITIAL_UNLOCK_STATE.mechanics];
       if (category === 'bot') return [...INITIAL_UNLOCK_STATE.bots];
+      if (category === 'reveal') return [...INITIAL_UNLOCK_STATE.reveals];
       return [];
     }
     
     if (category === 'theme') return [...currentState.themes];
     if (category === 'mechanic') return [...currentState.mechanics];
     if (category === 'bot') return [...currentState.bots];
+    if (category === 'reveal') return [...currentState.reveals];
     return [];
   }
 
   /**
    * Check if a specific item is unlocked
    */
-  function isUnlocked(category: 'theme' | 'mechanic' | 'bot', itemId: string): boolean {
+  function isUnlocked(category: 'theme' | 'mechanic' | 'bot' | 'reveal', itemId: string): boolean {
     if (!currentState) {
       // Check against initial state if state not loaded yet
       if (category === 'theme') return INITIAL_UNLOCK_STATE.themes.includes(itemId);
       if (category === 'mechanic') return INITIAL_UNLOCK_STATE.mechanics.includes(itemId);
       if (category === 'bot') return INITIAL_UNLOCK_STATE.bots.includes(itemId);
+      if (category === 'reveal') return INITIAL_UNLOCK_STATE.reveals.includes(itemId);
       return false;
     }
     
     if (category === 'theme') return currentState.themes.includes(itemId);
     if (category === 'mechanic') return currentState.mechanics.includes(itemId);
     if (category === 'bot') return currentState.bots.includes(itemId);
+    if (category === 'reveal') return currentState.reveals.includes(itemId);
     return false;
   }
 
@@ -213,14 +221,16 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
         themes: [...INITIAL_UNLOCK_STATE.themes],
         mechanics: [...INITIAL_UNLOCK_STATE.mechanics],
         bots: [...INITIAL_UNLOCK_STATE.bots],
-        achievements: [...INITIAL_UNLOCK_STATE.achievements]
+        achievements: [...INITIAL_UNLOCK_STATE.achievements],
+        reveals: [...INITIAL_UNLOCK_STATE.reveals]
       };
     }
     return {
       themes: [...currentState.themes],
       mechanics: [...currentState.mechanics],
       bots: [...currentState.bots],
-      achievements: [...currentState.achievements]
+      achievements: [...currentState.achievements],
+      reveals: [...currentState.reveals]
     };
   }
 
@@ -232,7 +242,8 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
       themes: [...INITIAL_UNLOCK_STATE.themes],
       mechanics: [...INITIAL_UNLOCK_STATE.mechanics],
       bots: [...INITIAL_UNLOCK_STATE.bots],
-      achievements: [...INITIAL_UNLOCK_STATE.achievements]
+      achievements: [...INITIAL_UNLOCK_STATE.achievements],
+      reveals: [...INITIAL_UNLOCK_STATE.reveals]
     };
     await saveState();
   }
@@ -253,12 +264,13 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
  */
 function isItemUnlocked(
   state: UnlockState, 
-  category: 'theme' | 'mechanic' | 'bot', 
+  category: 'theme' | 'mechanic' | 'bot' | 'reveal', 
   itemId: string
 ): boolean {
   if (category === 'theme') return state.themes.includes(itemId);
   if (category === 'mechanic') return state.mechanics.includes(itemId);
   if (category === 'bot') return state.bots.includes(itemId);
+  if (category === 'reveal') return state.reveals.includes(itemId);
   return false;
 }
 

@@ -200,7 +200,8 @@ describe('Unlock Engine', () => {
         themes: ['classic blue'],
         mechanics: [],
         bots: ['basicBot'],
-        achievements: []
+        achievements: [],
+        reveals: []
       };
       
       // Create shared dependencies

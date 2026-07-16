@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useVanityFilter } from '../../hooks/useVanityFilter';
+import { triggerHapticFeedback } from '../../utils/haptics';
 import './WordBuilder.css';
 import { LockIcon } from '../ui/LockIcon';
 
@@ -103,6 +104,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     }
 
     if (onLetterClick) {
+      triggerHapticFeedback('remove');
       onLetterClick({ letter: currentWord[index], index: index });
     }
   }, [disabled, isDragging, onLetterClick, currentWord, wordHighlights]);
@@ -151,11 +153,12 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
         newDropTarget = currentWord.length;
       }
       
-      if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1) {
+      if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1 && newDropTarget !== dropTargetIndex) {
+        triggerHapticFeedback('move');
         setDropTargetIndex(newDropTarget);
       }
     }
-  }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
+  }, [draggedIndex, dragStartPos, isDragging, currentWord.length, dropTargetIndex]);
 
   const handleMouseUp = useCallback((_e: React.MouseEvent) => {
     if (draggedIndex === null || inputMethodRef.current !== 'mouse') {
@@ -233,12 +236,13 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
         }
         
         // Don't set drop target to the same position as dragged letter
-        if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1) {
+        if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1 && newDropTarget !== dropTargetIndex) {
+          triggerHapticFeedback('move');
           setDropTargetIndex(newDropTarget);
         }
       }
     }
-  }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
+  }, [draggedIndex, dragStartPos, isDragging, currentWord.length, dropTargetIndex]);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     e.stopPropagation();

@@ -14,6 +14,7 @@ import { Menu } from '../ui/Menu';
 import { getBotDisplayName } from '../../data/botRegistry';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import { getWordLegalityReason, fetchWordDefinition } from '../../utils/wordHelp';
+import { triggerHapticFeedback } from '../../utils/haptics';
 import type { WordDataDependencies, ScoringAction, GameConfig, MoveAttempt, GameState } from '../../../packages/engine/interfaces';
 
 // Dictionary validation using pure dependency injection
@@ -379,6 +380,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     
     // Add letter to pending word
     if (pendingWord.length < 10) { // Max word length
+      triggerHapticFeedback('add');
       const newWord = pendingWord + letter;
       handleWordChange(newWord);
     }
@@ -395,6 +397,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   const handleWordBuilderMouseUp = useCallback((_e: React.MouseEvent) => {
     if (draggedLetter && pendingWord.length < 10) {
+      triggerHapticFeedback('add');
       const newWord = pendingWord + draggedLetter;
       handleWordChange(newWord);
     }
@@ -403,6 +406,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   const handleWordBuilderTouchEnd = useCallback((_e: React.TouchEvent) => {
     if (draggedLetter && pendingWord.length < 10) {
+      triggerHapticFeedback('add');
       const newWord = pendingWord + draggedLetter;
       handleWordChange(newWord);
     }
@@ -454,6 +458,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     if (pendingMoveAttempt?.canApply) {
       const success = actions.applyMove(pendingMoveAttempt);
       if (success) {
+        triggerHapticFeedback('submit');
         // Check for unlock triggers when word is successfully submitted
         // (the vanity filter mechanic unlock is handled here via UNLOCK_DEFINITIONS)
         const isProfane = !!wordData?.profanityWords.has(pendingMoveAttempt.newWord.toUpperCase());
