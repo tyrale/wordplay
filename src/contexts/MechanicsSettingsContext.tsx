@@ -9,6 +9,8 @@
  *
  * Mechanics default to "on" the first time they're seen, matching the
  * expectation that unlocking a mechanic should take effect immediately.
+ * A small set of mechanics (see `DEFAULT_OFF_MECHANICS`) default to "off"
+ * instead, for mechanics disruptive enough that the player should opt in.
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
@@ -22,6 +24,9 @@ export interface MechanicsSettingsContextValue {
 const MechanicsSettingsContext = createContext<MechanicsSettingsContextValue | null>(null);
 
 const STORAGE_KEY = 'wordplay-mechanics-settings';
+
+// Mechanics that default to "off" until the player explicitly turns them on
+const DEFAULT_OFF_MECHANICS = new Set(['time-pressure']);
 
 interface MechanicsSettingsProviderProps {
   children: ReactNode;
@@ -47,15 +52,22 @@ export const MechanicsSettingsProvider: React.FC<MechanicsSettingsProviderProps>
   }, [settings]);
 
   const isMechanicOn = useCallback((mechanicId: string): boolean => {
-    // Default to "on" for any mechanic that hasn't been explicitly toggled off
-    return settings[mechanicId] !== false;
+    // Respect any explicit choice the player has made
+    if (mechanicId in settings) {
+      return settings[mechanicId];
+    }
+    // Otherwise fall back to the mechanic's default (on, unless listed in DEFAULT_OFF_MECHANICS)
+    return !DEFAULT_OFF_MECHANICS.has(mechanicId);
   }, [settings]);
 
   const toggleMechanic = useCallback((mechanicId: string): void => {
-    setSettings(prev => ({
-      ...prev,
-      [mechanicId]: !(prev[mechanicId] !== false)
-    }));
+    setSettings(prev => {
+      const currentlyOn = mechanicId in prev ? prev[mechanicId] : !DEFAULT_OFF_MECHANICS.has(mechanicId);
+      return {
+        ...prev,
+        [mechanicId]: !currentlyOn
+      };
+    });
   }, []);
 
   const contextValue: MechanicsSettingsContextValue = {

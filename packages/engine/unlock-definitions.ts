@@ -588,28 +588,10 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     target: '6-letter-start'
   },
   {
-    id: 'unlock_longer_words',
-    category: 'mechanic',
-    trigger: { type: 'word', value: 'longer', timing: 'word_submission' },
-    target: 'longer-words'
-  },
-  {
     id: 'unlock_time_pressure',
     category: 'mechanic',
     trigger: { type: 'word', value: 'time', timing: 'word_submission' },
     target: 'time-pressure'
-  },
-  {
-    id: 'unlock_double_key_letters',
-    category: 'mechanic',
-    trigger: { type: 'word', value: 'double', timing: 'word_submission' },
-    target: 'double-key-letters'
-  },
-  {
-    id: 'unlock_reverse_scoring',
-    category: 'mechanic',
-    trigger: { type: 'word', value: 'reverse', timing: 'word_submission' },
-    target: 'reverse-scoring'
   },
 
   // Bot unlocks - mixed triggers (achievements and words)

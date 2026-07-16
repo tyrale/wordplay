@@ -64,8 +64,10 @@ class BrowserWordData implements WordDataDependencies {
     if (!words || words.length === 0) {
       return null;
     }
-    const randomIndex = Math.floor(Math.random() * words.length);
-    return words[randomIndex];
+    const nonProfaneWords = words.filter(word => !this.profanityWords.has(word));
+    const pool = nonProfaneWords.length > 0 ? nonProfaneWords : words;
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    return pool[randomIndex];
   }
 
   private async loadDictionary(): Promise<void> {

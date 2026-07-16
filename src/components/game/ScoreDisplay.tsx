@@ -25,6 +25,7 @@ export interface ScoreDisplayProps {
   validationError?: string | null;
   showValidationError?: boolean;
   isChallengeMode?: boolean;
+  timerSeconds?: number | null;
 }
 
 export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({ 
@@ -38,7 +39,8 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
   isPassMode = false,
   validationError = null,
   showValidationError = false,
-  isChallengeMode = false
+  isChallengeMode = false,
+  timerSeconds = null
 }) => {
   // Build action icons based on what actions were taken (like image)
   const actionIcons = [];
@@ -87,6 +89,11 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
     }
   }
   // When isChallengeMode = true, rightContent stays empty (no scores shown)
+
+  // Time-pressure countdown takes priority over score/instruction content
+  if (typeof timerSeconds === 'number') {
+    rightContent = `${timerSeconds}`;
+  }
 
   const handleClick = (_e: React.MouseEvent) => {
     if (onClick) {

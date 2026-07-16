@@ -69,7 +69,7 @@ export const alertCopy = {
   /** Daily challenge outcome screens */
   challenge: {
     win: { lines: ['WELL', 'DONE'] },
-    lose: { lines: ['CHALLENGE', 'FAILED'] }
+    lose: { lines: ['HAHA', 'QUITTER'] }
   },
 
   /** Unlock notifications (theme/bot/mechanic/vanity filter/etc.) */
@@ -122,7 +122,9 @@ export const alertCopy = {
       meta: 'Now available in the game',
       metaByItem: {
         '5-letter-start': 'Toggle is on in the menu.',
-        '6-letter-start': 'Toggle is on in the menu.'
+        '6-letter-start': 'Toggle is on in the menu.',
+        'vanity-filter': 'Toggle is on in the menu.',
+        'time-pressure': '7 second turn timer. Toggle is on in the menu.'
       }
     },
     vanityFilter: { lines: ['FILTER', 'TOGGLE', 'UNLOCKED'], meta: 'Toggle it in the menu' },

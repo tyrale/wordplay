@@ -6,6 +6,7 @@ import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
 import { getBotDisplayNamesMapping } from '../../data/botRegistry';
 import type { GameTheme } from '../../types/theme';
+import { DictionariesOverlay } from './DictionariesOverlay';
 import './Menu.css';
 
 interface MenuTier2Item {
@@ -28,8 +29,6 @@ const mechanicDisplayNames: Record<string, string> = {
   '5-letter-start': '5 letter starting word',
   '6-letter-start': '6 letter starting word',
   'time-pressure': 'time pressure mode',
-  'double-key-letters': 'double key letters',
-  'reverse-scoring': 'reverse scoring',
   'challenge-dictionary': 'challenge dictionary'
 };
 
@@ -109,6 +108,7 @@ const getMenuItems = (
     title: 'about',
     children: [
       { id: 'the-basics', title: 'the basics' },
+      { id: 'dictionaries', title: 'dictionaries' },
       { id: 'debug-mode', title: 'debug mode' },
       { id: 'reset-unlocks', title: 'reset unlocks (debug)' },
     ]
@@ -146,6 +146,7 @@ export const Menu: React.FC<MenuProps> = ({
 }) => {
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+  const [isDictionariesOpen, setIsDictionariesOpen] = useState(false);
   const { currentTheme, setTheme, isInverted, toggleInverted } = useTheme();
   
   // Get unlock state
@@ -285,6 +286,10 @@ export const Menu: React.FC<MenuProps> = ({
       // Start tutorial
       onStartGame?.('tutorial');
       handleClose(); // Close menu after starting tutorial
+    } else if (tier1Id === 'about' && tier2Id === 'dictionaries') {
+      // Show the dictionaries overlay
+      setIsDictionariesOpen(true);
+      handleClose(); // Close menu behind the overlay
     } else if (tier1Id === 'about' && (tier2Id === 'debug' || tier2Id === 'debug-mode')) {
       // Open debug dialog
       onDebugOpen?.();
@@ -320,9 +325,9 @@ export const Menu: React.FC<MenuProps> = ({
     // These are placeholder items that don't have functionality yet
   }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, toggleVanityFilter, toggleMechanic, resetUnlocksToFresh, resetDailyChallenge]);
 
-  if (!isOpen) return null;
-
   return (
+    <>
+    {isOpen && (
     <div 
       className={`menu-overlay ${isClosing ? 'menu-overlay--closing' : ''} ${className}`.trim()}
       onClick={handleOverlayClick}
@@ -484,5 +489,11 @@ export const Menu: React.FC<MenuProps> = ({
         </div>
       </div>
     </div>
+    )}
+      <DictionariesOverlay
+        isVisible={isDictionariesOpen}
+        onClose={() => setIsDictionariesOpen(false)}
+      />
+    </>
   );
 }; 

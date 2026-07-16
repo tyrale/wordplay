@@ -71,6 +71,9 @@ import type { LetterState, ScoreBreakdown, LetterHighlight, WordMove } from '../
 import type { ActionState } from './ScoreDisplay';
 import './InteractiveGame.css';
 
+// Number of seconds a player has to take their turn when the time-pressure mechanic is on
+const TURN_TIME_LIMIT_SECONDS = 7;
+
 export interface InteractiveGameProps {
   config?: GameConfig;
   onGameEnd?: (winner: string | null, finalScores: { human: number; bot: number }) => void;
@@ -109,6 +112,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const startingWordLength = availableStartLengths.length > 0
     ? availableStartLengths[Math.floor(Math.random() * availableStartLengths.length)]
     : undefined;
+
+  // Time-pressure mechanic: unlocked via the "time" word and toggled on in the mechanics menu
+  const isTimePressureOn = unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
 
   // Game state management
   const {
@@ -155,6 +161,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [showValidationError, setShowValidationError] = useState(false);
+  const [turnTimeRemaining, setTurnTimeRemaining] = useState<number | null>(null);
 
   // Initialize pending word with current word
   useEffect(() => {
@@ -195,6 +202,36 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       }
     };
   }, [isBotTurn, isGameActive, isBotThinking, actions.makeBotMove]); // Removed gameState.players to prevent retriggering
+
+  // Time-pressure countdown: resets to 7 seconds each time the player's turn starts,
+  // and clears when it's no longer the player's turn.
+  useEffect(() => {
+    if (!isTimePressureOn || !isPlayerTurn || !isGameActive) {
+      setTurnTimeRemaining(null);
+      return;
+    }
+
+    setTurnTimeRemaining(TURN_TIME_LIMIT_SECONDS);
+
+    const intervalId = setInterval(() => {
+      setTurnTimeRemaining(prev => (prev !== null ? Math.max(prev - 1, 0) : null));
+    }, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [isTimePressureOn, isPlayerTurn, isGameActive]);
+
+  // Auto-pass the player's turn when the countdown reaches zero
+  useEffect(() => {
+    if (turnTimeRemaining === 0 && isTimePressureOn && isPlayerTurn && isGameActive) {
+      actions.passTurn();
+      setPendingWord(wordState.currentWord);
+      setPendingMoveAttempt(null);
+      setShowValidationError(false);
+      setTurnTimeRemaining(null);
+    }
+  }, [turnTimeRemaining, isTimePressureOn, isPlayerTurn, isGameActive, actions, wordState.currentWord]);
 
   // Letter grid state
   const letterStates: LetterState[] = React.useMemo(() => {
@@ -560,6 +597,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 isPassMode={false}
                 validationError={pendingMoveAttempt?.validationResult?.userMessage || null}
                 showValidationError={showValidationError}
+                timerSeconds={isTimePressureOn && isPlayerTurn ? turnTimeRemaining : null}
               />
             </div>
 

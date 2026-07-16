@@ -146,7 +146,9 @@ class NodeWordData implements WordDataDependencies {
     if (!words || words.length === 0) {
       return null;
     }
-    return words[Math.floor(Math.random() * words.length)];
+    const nonProfaneWords = words.filter(word => !this.profanityWords.has(word));
+    const pool = nonProfaneWords.length > 0 ? nonProfaneWords : words;
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
   public hasWord(word: string): boolean {

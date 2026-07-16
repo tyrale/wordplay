@@ -1,0 +1,104 @@
+/**
+ * Dictionaries Overlay Styles
+ *
+ * Flat, full-screen informational overlay - same visual language as
+ * AlertOverlay (no containers, borders, or shadows).
+ */
+
+.dictionaries-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--theme-background);
+  z-index: 20000;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-xl) var(--spacing-lg) calc(var(--spacing-xl) * 3);
+}
+
+.dictionaries-overlay__content {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--spacing-xl);
+}
+
+.dictionaries-overlay__title {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 10vw;
+  line-height: 1;
+  color: var(--theme-accent);
+  text-align: center;
+  text-transform: uppercase;
+  margin: 0 0 var(--spacing-xl);
+}
+
+.dictionaries-overlay__list {
+  width: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.dictionaries-overlay__item-name {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-lg);
+  color: var(--theme-text);
+  text-transform: uppercase;
+}
+
+.dictionaries-overlay__item-description {
+  margin-top: 2px;
+  font-family: var(--theme-font-family);
+  font-size: var(--theme-font-size-md);
+  color: var(--theme-text);
+  opacity: 0.75;
+}
+
+.dictionaries-overlay__footnote {
+  margin-top: var(--spacing-xl);
+  font-family: var(--theme-font-family);
+  font-size: var(--theme-font-size-md);
+  color: var(--theme-text);
+  text-align: center;
+  opacity: 0.9;
+}
+
+/* Close X - always present, centered at the bottom */
+.dictionaries-overlay__close {
+  position: fixed;
+  bottom: var(--spacing-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 32px;
+  line-height: 1;
+  color: var(--theme-text);
+  padding: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dictionaries-overlay__close:hover {
+  opacity: 0.7;
+}

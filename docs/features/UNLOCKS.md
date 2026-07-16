@@ -254,13 +254,10 @@ const mechanicDisplayNames: Record<string, string> = {
 ### Currently Defined (Unlocks Work, Game Logic Missing)
 - 🟧 five - 5 Letter Start
 - 🟧 six - 6 Letter Start
-- 🟧 longer - Longer Words (`longer-words`)
-- 🟧 time - Time Pressure Mode (`time-pressure`) — has a display name in `Menu.tsx` but no actual timer logic
-- 🟧 double - Double Key Letters (`double-key-letters`)
-- 🟧 reverse - Reverse Scoring (`reverse-scoring`)
 
 ### Currently Defined and Fully Working
 - ✅ shit - Vanity Filter (`vanity-filter`) — unlike the other mechanics above, this one is fully implemented as a working toggle in `Menu.tsx`; see `VANITY_FILTER_SYSTEM.md`
+- ✅ time - Time Pressure Mode (`time-pressure`) — 7 second per-turn countdown shown next to the submit/pass control; auto-passes the player's turn when it hits zero
 
 ### Future Word Length Mechanics
 - [ ] three - 3 Letter Start
