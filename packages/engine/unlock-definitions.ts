@@ -410,6 +410,160 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     target: 'midnight',
     immediate_effect: { type: 'apply_theme', value: 'midnight' }
   },
+  {
+    id: 'unlock_softness_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'softness', timing: 'word_submission' },
+    target: 'softness',
+    immediate_effect: { type: 'apply_theme', value: 'softness' }
+  },
+  {
+    id: 'unlock_smog_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'smog', timing: 'word_submission' },
+    target: 'smog',
+    immediate_effect: { type: 'apply_theme', value: 'smog' }
+  },
+  {
+    id: 'unlock_foggy_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'foggy', timing: 'word_submission' },
+    target: 'foggy',
+    immediate_effect: { type: 'apply_theme', value: 'foggy' }
+  },
+  {
+    id: 'unlock_dew_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'dew', timing: 'word_submission' },
+    target: 'dew',
+    immediate_effect: { type: 'apply_theme', value: 'dew' }
+  },
+  {
+    id: 'unlock_reds_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'reds', timing: 'word_submission' },
+    target: 'reds',
+    immediate_effect: { type: 'apply_theme', value: 'reds' }
+  },
+  {
+    id: 'unlock_female_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'female', timing: 'word_submission' },
+    target: 'female',
+    immediate_effect: { type: 'apply_theme', value: 'female' }
+  },
+  {
+    id: 'unlock_seaglass_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'seaglass', timing: 'word_submission' },
+    target: 'seaglass',
+    immediate_effect: { type: 'apply_theme', value: 'seaglass' }
+  },
+  {
+    id: 'unlock_skins_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'skins', timing: 'word_submission' },
+    target: 'skins',
+    immediate_effect: { type: 'apply_theme', value: 'skins' }
+  },
+  {
+    id: 'unlock_bougie_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'bougie', timing: 'word_submission' },
+    target: 'bougie',
+    immediate_effect: { type: 'apply_theme', value: 'bougie' }
+  },
+  {
+    id: 'unlock_moles_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'moles', timing: 'word_submission' },
+    target: 'moles',
+    immediate_effect: { type: 'apply_theme', value: 'moles' }
+  },
+  {
+    id: 'unlock_pinks_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'pinks', timing: 'word_submission' },
+    target: 'pinks',
+    immediate_effect: { type: 'apply_theme', value: 'pinks' }
+  },
+  {
+    id: 'unlock_roots_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'roots', timing: 'word_submission' },
+    target: 'roots',
+    immediate_effect: { type: 'apply_theme', value: 'roots' }
+  },
+  {
+    id: 'unlock_purples_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'purples', timing: 'word_submission' },
+    target: 'purples',
+    immediate_effect: { type: 'apply_theme', value: 'purples' }
+  },
+  {
+    id: 'unlock_american_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'american', timing: 'word_submission' },
+    target: 'american',
+    immediate_effect: { type: 'apply_theme', value: 'american' }
+  },
+  {
+    id: 'unlock_serene_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'serene', timing: 'word_submission' },
+    target: 'serene',
+    immediate_effect: { type: 'apply_theme', value: 'serene' }
+  },
+  {
+    id: 'unlock_playful_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'playful', timing: 'word_submission' },
+    target: 'playful',
+    immediate_effect: { type: 'apply_theme', value: 'playful' }
+  },
+  {
+    id: 'unlock_warmer_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'warmer', timing: 'word_submission' },
+    target: 'warmer',
+    immediate_effect: { type: 'apply_theme', value: 'warmer' }
+  },
+  {
+    id: 'unlock_delicate_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'delicate', timing: 'word_submission' },
+    target: 'delicate',
+    immediate_effect: { type: 'apply_theme', value: 'delicate' }
+  },
+  {
+    id: 'unlock_robust_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'robust', timing: 'word_submission' },
+    target: 'robust',
+    immediate_effect: { type: 'apply_theme', value: 'robust' }
+  },
+  {
+    id: 'unlock_tile_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'tile', timing: 'word_submission' },
+    target: 'tile',
+    immediate_effect: { type: 'apply_theme', value: 'tile' }
+  },
+  {
+    id: 'unlock_tweed_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'tweed', timing: 'word_submission' },
+    target: 'tweed',
+    immediate_effect: { type: 'apply_theme', value: 'tweed' }
+  },
+  {
+    id: 'unlock_lavendar_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'lavendar', timing: 'word_submission' },
+    target: 'lavendar',
+    immediate_effect: { type: 'apply_theme', value: 'lavendar' }
+  },
 
   // Mechanic unlocks - triggered by playing specific words
   {
