@@ -66,7 +66,7 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
   }
   
   // Build center content (checkmark/pass/error)
-  let centerContent = isPassMode ? 'pass turn' : (isValid && !isEmpty) ? '✓' : '✗';
+  const centerContent = isPassMode ? 'pass turn' : (isValid && !isEmpty) ? '✓' : '✗';
   
   // Build right side content (scores or pass instruction)
   let rightContent = '';
@@ -88,7 +88,7 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
   }
   // When isChallengeMode = true, rightContent stays empty (no scores shown)
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (_e: React.MouseEvent) => {
     if (onClick) {
       onClick();
     }

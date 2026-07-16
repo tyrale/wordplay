@@ -5,10 +5,11 @@
  * Handles unlock notifications and immediate effects like theme application.
  */
 
-import React, { createContext, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useCallback, useEffect } from 'react';
 import { useUnlocks } from '../../hooks/useUnlocks';
 import { useTheme } from '../theme/ThemeProvider';
-import { useToast } from '../ui/ToastManager';
+import { useAlert } from '../ui/AlertProvider';
+import { alertCopy } from '../../content/alertCopy';
 import { availableThemes } from '../../types/theme';
 import type { UseUnlocksReturn } from '../../hooks/useUnlocks';
 import type { UnlockResult } from '../../../packages/engine/interfaces';
@@ -16,7 +17,7 @@ import type { UnlockResult } from '../../../packages/engine/interfaces';
 export interface UnlockContextType extends UseUnlocksReturn {
   // Enhanced functionality
   handleWordSubmission: (word: string) => Promise<UnlockResult[]>;
-  handleGameCompletion: (winner: string, botId?: string) => Promise<UnlockResult[]>;
+  handleGameCompletion: (winner: string | null, botId?: string) => Promise<UnlockResult[]>;
   showUnlockNotification: (results: UnlockResult[]) => void;
   
   // Testing/Debug functions
@@ -39,12 +40,28 @@ interface UnlockProviderProps {
 
 export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
   const unlocks = useUnlocks();
-  const { setTheme } = useTheme();
-  const { showUnlockToast } = useToast();
+  const { setTheme, isInverted, setInverted } = useTheme();
+  const { showAlert } = useAlert();
 
-  // Show unlock notification using toast system
+  // Enforce that dark mode can only be active if actually unlocked. Guards
+  // against stale/stray `wordplay-inverted` localStorage values (e.g. from
+  // before this unlock gate existed) leaving the app stuck in dark mode.
+  useEffect(() => {
+    if (unlocks.isLoading) return;
+    if (isInverted && !unlocks.isUnlocked('mechanic', 'dark-mode')) {
+      setInverted(false);
+    }
+  }, [unlocks.isLoading, isInverted, unlocks.isUnlocked, setInverted]);
+
+  // Show unlock notification using the universal alert overlay
   const showUnlockNotification = useCallback((results: UnlockResult[]) => {
     for (const result of results) {
+      // Easter egg: playing "tyrale" unlocks dark mode with fully custom copy
+      if (result.itemId === 'dark-mode') {
+        showAlert('unlocks', 'darkMode');
+        continue;
+      }
+
       // Get user-friendly name for the unlocked item
       let itemName = result.target || result.itemId || result.name || 'Unknown Item';
       
@@ -69,9 +86,10 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
         ).join(' ');
       }
       
-      showUnlockToast(result.category, itemName);
+      const category = (result.category in alertCopy.unlocks) ? result.category as keyof typeof alertCopy.unlocks : 'generic';
+      showAlert('unlocks', category, { params: { item: itemName.toUpperCase() }, itemId: result.itemId });
     }
-  }, [showUnlockToast]);
+  }, [showAlert]);
 
   // Handle immediate effects from unlock results
   const handleImmediateEffects = useCallback((results: UnlockResult[]) => {
@@ -89,6 +107,14 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
 
   // Enhanced word submission handler
   const handleWordSubmission = useCallback(async (word: string): Promise<UnlockResult[]> => {
+    // Special case: playing "RESET" wipes out all unlocks instead of granting one
+    if (word === 'RESET') {
+      console.log('[Unlock] "RESET" played - resetting all unlocks');
+      await unlocks.resetUnlocks();
+      showAlert('generic', 'resetTrigger');
+      return [];
+    }
+
     const results = await unlocks.checkWordTriggers(word);
     
     if (results.length > 0) {
@@ -101,7 +127,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
   }, [unlocks.checkWordTriggers, handleImmediateEffects, showUnlockNotification]);
 
   // Enhanced game completion handler
-  const handleGameCompletion = useCallback(async (winner: string, botId?: string): Promise<UnlockResult[]> => {
+  const handleGameCompletion = useCallback(async (winner: string | null, botId?: string): Promise<UnlockResult[]> => {
     const results: UnlockResult[] = [];
     
     // Check for bot-beating achievements

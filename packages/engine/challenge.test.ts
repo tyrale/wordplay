@@ -313,7 +313,7 @@ describe('Challenge Engine', () => {
       const patterns = challengeEngine.generateSharingPattern(wordSequence);
       
       expect(patterns).toHaveLength(2); // Two transformations
-      expect(patterns[0]).toMatch(/[🀫*]+/u); // Should contain emoji and asterisks
+      expect(patterns[0]).toMatch(/[◼◻]+/u); // Should contain filled/empty squares
     });
 
     test('should generate complete sharing text with checkmark for completed challenges', async () => {
@@ -331,7 +331,7 @@ describe('Challenge Engine', () => {
       
       // Verify step count format without parentheses for completed challenges
       if (completedChallenge.completed) {
-        expect(sharingText).toContain(' ✓ '); // Should have checkmark between challenge # and words
+        expect(sharingText).toContain(' ✓\n'); // Should have checkmark on the challenge # line, words on their own line
         expect(sharingText).toMatch(/\d+ turns/);
         expect(sharingText).not.toMatch(/\(\d+ turns\)/);
       }
@@ -345,7 +345,7 @@ describe('Challenge Engine', () => {
       const sharingText = challengeEngine.generateSharingText(failedChallenge);
       
       expect(sharingText).toContain('Challenge #');
-      expect(sharingText).toContain(' ❌ '); // Should have red X between challenge # and words
+      expect(sharingText).toContain(' ❌\n'); // Should have red X on the challenge # line, words on their own line
       expect(sharingText).toContain(challenge.startWord);
       expect(sharingText).toContain(challenge.targetWord);
       expect(sharingText).not.toContain('turns'); // Failed challenges don't show turn count

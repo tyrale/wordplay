@@ -5,13 +5,12 @@
  * dictionary loading via fetch API and caching strategies.
  */
 
-import type { WordDataDependencies, ValidationResult, BotDependencies } from '../../packages/engine/interfaces';
+import type { WordDataDependencies, ValidationResult, BotDependencies, ScoringOptions, ValidationOptions, BotOptions } from '../../packages/engine/interfaces';
 import { validateWordWithDependencies, isValidDictionaryWordWithDependencies } from '../../packages/engine/dictionary';
 import { calculateScore, getScoreForMove, isValidMove } from '../../packages/engine/scoring';
 import type { ScoringResult } from '../../packages/engine/scoring';
 import { generateBotMoveWithDependencies } from '../../packages/engine/bot';
-import type { BotOptions } from '../../packages/engine/bot';
-import type { BotMove, BotResult } from '../../packages/engine/interfaces';
+import type { BotResult } from '../../packages/engine/interfaces';
 import type { 
   GameStateDictionaryDependencies, 
   GameStateScoringDependencies, 
@@ -19,8 +18,6 @@ import type {
   GameStateDependencies
 } from '../../packages/engine/gamestate';
 
-// Import centralized profanity management
-import { getComprehensiveProfanityWords } from '../../packages/engine/profanity';
 
 /**
  * Browser-specific word data implementation
@@ -30,6 +27,7 @@ class BrowserWordData implements WordDataDependencies {
   public enableWords: Set<string> = new Set();
   public slangWords: Set<string> = new Set();
   public profanityWords: Set<string> = new Set();
+  public properNounWords: Set<string> = new Set();
   public wordCount: number = 0;
   private wordsByLength: Map<number, string[]> = new Map();
   private loaded = false;
@@ -41,7 +39,7 @@ class BrowserWordData implements WordDataDependencies {
 
   public hasWord(word: string): boolean {
     const upperWord = word.toUpperCase();
-    return this.enableWords.has(upperWord) || this.slangWords.has(upperWord);
+    return this.enableWords.has(upperWord) || this.slangWords.has(upperWord) || this.properNounWords.has(upperWord);
   }
 
   public isLoaded(): boolean {
@@ -128,6 +126,21 @@ class BrowserWordData implements WordDataDependencies {
         console.warn('Error loading profanity words:', profanityError);
         this.profanityWords = new Set();
       }
+
+      // Load common proper nouns (months, days, common names) from shared data file
+      try {
+        const properNounResponse = await fetch('/data/common-proper-nouns.json');
+        if (properNounResponse.ok) {
+          const properNounData = await properNounResponse.json();
+          this.properNounWords = new Set(properNounData.words || []);
+          console.log(`Common proper nouns loaded: ${this.properNounWords.size} words`);
+        } else {
+          this.properNounWords = new Set();
+        }
+      } catch (properNounError) {
+        console.warn('Error loading common proper nouns:', properNounError);
+        this.properNounWords = new Set();
+      }
       
       this.loaded = true;
       console.log('Dictionary loaded successfully.'); // Log successful load
@@ -151,6 +164,7 @@ class BrowserWordData implements WordDataDependencies {
     
     // Use empty profanity set for fallback
     this.profanityWords = new Set();
+    this.properNounWords = new Set();
     
     this.loaded = true;
   }
@@ -172,7 +186,7 @@ function getBrowserWordData(): BrowserWordData {
 
 // Centralize dependency creation
 const browserDictionaryDependencies: GameStateDictionaryDependencies = {
-  validateWord: (word: string, options?: any): ValidationResult => {
+  validateWord: (word: string, options?: ValidationOptions): ValidationResult => {
     return validateWordWithDependencies(word, getBrowserWordData(), options);
   },
 
@@ -182,7 +196,7 @@ const browserDictionaryDependencies: GameStateDictionaryDependencies = {
 };
 
 const browserScoringDependencies: GameStateScoringDependencies = {
-  calculateScore: (fromWord: string, toWord: string, options?: any): ScoringResult => {
+  calculateScore: (fromWord: string, toWord: string, options?: ScoringOptions): ScoringResult => {
     return calculateScore(fromWord, toWord, options);
   },
 
@@ -196,7 +210,7 @@ const browserScoringDependencies: GameStateScoringDependencies = {
 };
 
 const browserBotDependencies: GameStateBotDependencies = {
-  generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
+  generateBotMove: async (word: string, options?: BotOptions): Promise<BotResult> => {
     // Create complete BotDependencies with all required interfaces
     const botDeps: BotDependencies = {
       // DictionaryDependencies
@@ -218,8 +232,8 @@ const browserBotDependencies: GameStateBotDependencies = {
       getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]): number => {
         return getScoreForMove(fromWord, toWord, keyLetters || []);
       },
-      calculateScore: (fromWord: string, toWord: string, keyLetters: string[], lockedLetters: string[]): ScoringResult => {
-        return calculateScore(fromWord, toWord, { keyLetters });
+      calculateScore: (fromWord: string, toWord: string, options?: ScoringOptions): ScoringResult => {
+        return calculateScore(fromWord, toWord, options);
       },
       
       // Bot-specific profanity checking
@@ -227,7 +241,7 @@ const browserBotDependencies: GameStateBotDependencies = {
         return getBrowserWordData().profanityWords.has(word.toUpperCase());
       }
     };
-    return generateBotMoveWithDependencies(word, botDeps, { ...options, botId: options.botId });
+    return generateBotMoveWithDependencies(word, botDeps, { ...options, botId: options?.botId });
   }
 };
 
@@ -365,7 +379,7 @@ export function getBrowserGameDependencies(): GameStateDependencies {
 /**
  * Quick validation using browser dependencies
  */
-export function validateWordBrowser(word: string, options?: any): ValidationResult {
+export function validateWordBrowser(word: string, _options?: ValidationOptions): ValidationResult {
   return browserDictionaryDependencies.validateWord(word);
 }
 

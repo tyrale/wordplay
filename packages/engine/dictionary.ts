@@ -11,13 +11,11 @@
 // import { join, dirname } from 'path';
 // import { fileURLToPath } from 'url';
 
-// Import centralized profanity management
-import { getComprehensiveProfanityWords } from './profanity';
-
 // Types for validation
 export interface ValidationOptions {
   isBot?: boolean;
   allowSlang?: boolean;
+  allowProperNouns?: boolean;
   allowProfanity?: boolean;
   checkLength?: boolean;
   previousWord?: string;
@@ -25,118 +23,6 @@ export interface ValidationOptions {
 
 // Import shared interfaces from central location
 import type { ValidationResult, WordDataDependencies } from './interfaces';
-
-// Word sets for different validation scenarios
-class WordDictionary {
-  private enableWords: Set<string> = new Set();
-  private slangWords: Set<string> = new Set();
-  private profanityWords: Set<string> = new Set();
-  private initialized = false;
-
-  // Dependency injection version of constructor
-  constructor(wordData?: WordDataDependencies) {
-    if (wordData) {
-      this.initializeWithData(wordData);
-    } else {
-      // Keep old initialization for backward compatibility
-      this.initializeDictionary();
-    }
-  }
-
-  // New: Dependency-injected initialization
-  private initializeWithData(wordData: WordDataDependencies) {
-    this.enableWords = new Set(wordData.enableWords);
-    this.slangWords = new Set(wordData.slangWords);
-    this.profanityWords = new Set(wordData.profanityWords);
-    this.initialized = true;
-  }
-
-  // Legacy: Minimal initialization (Node.js file system loading moved to adapters)
-  private initializeDictionary() {
-    if (this.initialized) return;
-
-    // Minimal word set for backward compatibility when no dependency injection
-    // Real word loading should be done via dependency injection
-    const minimalWords = ['CAT', 'DOG', 'WORD', 'GAME', 'TEST', 'HELLO', 'WORLD'];
-    minimalWords.forEach(word => this.enableWords.add(word));
-
-    // Add common slang words that are acceptable in casual play
-    const slangWords = [
-      'BRUH', 'YEAH', 'NOPE', 'YEET', 'FOMO', 'SELFIE', 'EMOJI', 'BLOG',
-      'VLOG', 'WIFI', 'UBER', 'GOOGLE', 'TWEET', 'UNFRIEND', 'HASHTAG',
-      'PHOTOBOMB', 'MANSPLAIN', 'GHOSTING', 'CATFISH', 'TROLL', 'MEME',
-      'VIRAL', 'CLICKBAIT', 'SPAM', 'PHISHING', 'MALWARE', 'AVATAR',
-      'NOOB', 'PWNED', 'EPIC', 'FAIL', 'WIN', 'OWNED', 'LEET', 'HAXOR'
-    ];
-    slangWords.forEach(word => this.slangWords.add(word.toUpperCase()));
-
-    // Use empty profanity set for fallback - real data should come via dependency injection
-    this.profanityWords = new Set();
-
-    this.initialized = true;
-    console.warn('Dictionary: Using minimal word set. For full functionality, use dependency injection with complete word data.');
-  }
-
-  public isInEnable(word: string): boolean {
-    return this.enableWords.has(word.toUpperCase());
-  }
-
-  public isSlang(word: string): boolean {
-    return this.slangWords.has(word.toUpperCase());
-  }
-
-  public isProfanity(word: string): boolean {
-    return this.profanityWords.has(word.toUpperCase());
-  }
-
-  public censorWord(word: string): string {
-    if (!this.isProfanity(word)) return word;
-    
-    const upperWord = word.toUpperCase();
-    const firstChar = upperWord[0];
-    const lastChar = upperWord[upperWord.length - 1];
-    const middle = '*'.repeat(Math.max(0, upperWord.length - 2));
-    
-    return firstChar + middle + lastChar;
-  }
-
-  public getWordCount(): number {
-    return this.enableWords.size;
-  }
-
-  /**
-   * Get a random word of specified length from the dictionary
-   */
-  public getRandomWordByLength(length: number): string | null {
-    const wordsOfLength = Array.from(this.enableWords).filter(word => word.length === length);
-    
-    if (wordsOfLength.length === 0) {
-      return null;
-    }
-    
-    const randomIndex = Math.floor(Math.random() * wordsOfLength.length);
-    return wordsOfLength[randomIndex];
-  }
-
-  /**
-   * Get multiple random words of specified length
-   */
-  public getRandomWordsByLength(length: number, count: number = 1): string[] {
-    const wordsOfLength = Array.from(this.enableWords).filter(word => word.length === length);
-    
-    if (wordsOfLength.length === 0) {
-      return [];
-    }
-    
-    const result: string[] = [];
-    for (let i = 0; i < count; i++) {
-      const randomIndex = Math.floor(Math.random() * wordsOfLength.length);
-      result.push(wordsOfLength[randomIndex]);
-    }
-    
-    return result;
-  }
-}
 
 // =============================================================================
 // PLATFORM-AGNOSTIC ARCHITECTURE NOTE
@@ -200,6 +86,7 @@ export function validateWordWithDependencies(
   const {
     isBot = false,
     allowSlang = true,
+    allowProperNouns = true,
     checkLength = true,
     previousWord
   } = options;
@@ -270,10 +157,11 @@ export function validateWordWithDependencies(
   // Dictionary validation
   const isInEnable = wordData.enableWords.has(normalizedWord);
   const isSlang = wordData.slangWords.has(normalizedWord);
+  const isProperNoun = wordData.properNounWords.has(normalizedWord);
   const isProfanity = wordData.profanityWords.has(normalizedWord);
 
-  // Word must be in dictionary or accepted slang
-  if (!isInEnable && !(allowSlang && isSlang)) {
+  // Word must be in dictionary, accepted slang, or an accepted common proper noun
+  if (!isInEnable && !(allowSlang && isSlang) && !(allowProperNouns && isProperNoun)) {
     return {
       isValid: false,
       reason: 'NOT_IN_DICTIONARY',
@@ -296,7 +184,7 @@ export function validateWordWithDependencies(
  */
 export function isValidDictionaryWordWithDependencies(word: string, wordData: WordDataDependencies): boolean {
   const normalizedWord = word.trim().toUpperCase();
-  return wordData.enableWords.has(normalizedWord) || wordData.slangWords.has(normalizedWord);
+  return wordData.enableWords.has(normalizedWord) || wordData.slangWords.has(normalizedWord) || wordData.properNounWords.has(normalizedWord);
 }
 
 /**
@@ -328,7 +216,7 @@ export function getVanityDisplayWordWithDependencies(
   word: string, 
   vanityState: VanityState,
   wordData: WordDataDependencies,
-  options: { isEditing?: boolean } = {}
+  _options: { isEditing?: boolean } = {}
 ): string {
   const normalizedWord = word.trim().toUpperCase();
   

@@ -1,48 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   LocalGameStateManagerWithDependencies, 
-  createGameStateManagerWithDependencies,
-  type GameStateDependencies
+  createGameStateManagerWithDependencies
 } from '../../packages/engine/gamestate';
 import { createBrowserAdapter } from '../adapters/browserAdapter';
+import type { GameState, MoveAttempt, GameConfig, BotMove } from '../../packages/engine/interfaces';
 
 // Game configuration interface
-interface PublicGameState {
-  gameStatus: string;
-  currentTurn: number;
-  currentWord: string;
-  players: any[];
-  winner?: any;
-  turnHistory: any[];
-  keyLetters: string[];
-  lockedLetters: string[];
-  lockedKeyLetters: string[];
-  usedWords: string[];
-  [key: string]: any;
-}
-
-interface MoveAttempt {
-  newWord: string;
-  isValid: boolean;
-  validationResult: any;
-  scoringResult: any;
-  canApply: boolean;
-  reason?: string;
-}
-
-interface GameConfig {
-  maxTurns?: number;
-  startingWord?: string;
-  botId?: string;
-  [key: string]: any;
-}
-
-interface BotMove {
-  word: string;
-  score: number;
-  confidence: number;
-  reasoning: string[];
-}
+type PublicGameState = GameState;
 
 const initializeBrowserDictionary = async (): Promise<void> => {
   // Dictionary initialization for browser environment
@@ -164,7 +129,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
   
   // React state - provide default state until initialized  
   const [gameState, setGameState] = useState<PublicGameState>(() => ({
-    gameStatus: 'notStarted',
+    gameStatus: 'waiting',
     currentTurn: 0,
     currentWord: '',
     players: [],
@@ -172,7 +137,15 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
     keyLetters: [],
     lockedLetters: [],
     lockedKeyLetters: [],
-    usedWords: []
+    usedWords: [],
+    currentPlayerIndex: 0,
+    maxTurns: 0,
+    usedKeyLetters: [],
+    gameStartTime: null,
+    lastMoveTime: null,
+    winner: null,
+    totalMoves: 0,
+    config: {}
   }));
   const [isBotThinking, setIsBotThinking] = useState(false);
   const [isProcessingMove, setIsProcessingMove] = useState(false);

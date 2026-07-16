@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { ChallengeEngine, ChallengeState } from '../../packages/engine/challenge';
 import { createChallengeEngine } from '../../packages/engine/challenge';
 import { createBrowserAdapter } from '../adapters/browserAdapter';
+import type { ValidationOptions } from '../../packages/engine/interfaces';
 
 export interface ChallengeHookState {
   // Current challenge state
@@ -58,7 +59,7 @@ export function useChallenge(): ChallengeHookState {
 
         // Create compatible dictionary engine interface
         const dictionaryEngine = {
-          validateWord: (word: string, options?: any) => {
+          validateWord: (word: string, options?: ValidationOptions) => {
             // Convert gamestate ValidationResult to interfaces ValidationResult
             const result = gameAdapter.getDictionaryDependencies().validateWord(word, options);
             
@@ -72,7 +73,7 @@ export function useChallenge(): ChallengeHookState {
             } else {
               return {
                 isValid: false as const,
-                reason: (result.reason || 'UNKNOWN') as any,
+                reason: result.reason || 'UNKNOWN',
                 word: result.word,
                 userMessage: result.userMessage || 'Invalid word'
               };

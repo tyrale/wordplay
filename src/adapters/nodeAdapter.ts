@@ -23,8 +23,11 @@ import type {
   GameStateBotDependencies,
   WordDataDependencies,
   ValidationResult,
+  ValidationOptions,
   ScoringResult,
+  ScoringOptions,
   BotResult,
+  BotOptions,
   BotDependencies
 } from '../../packages/engine/interfaces';
 
@@ -40,6 +43,7 @@ class NodeWordData implements WordDataDependencies {
   public enableWords: Set<string> = new Set();
   public slangWords: Set<string> = new Set();
   public profanityWords: Set<string> = new Set();
+  public properNounWords: Set<string> = new Set();
   private wordsByLength: Map<number, string[]> = new Map();
   private loaded = false;
 
@@ -118,6 +122,16 @@ class NodeWordData implements WordDataDependencies {
         this.profanityWords = new Set();
       }
 
+      // Load common proper nouns (months, days, common names) from shared data file
+      try {
+        const properNounData = JSON.parse(readFileSync(join(__dirname, '../../public/data/common-proper-nouns.json'), 'utf-8'));
+        this.properNounWords = new Set(properNounData.words || []);
+        console.log(`Common proper nouns loaded: ${this.properNounWords.size} words`);
+      } catch (properNounError) {
+        console.warn('Error loading common proper nouns:', properNounError);
+        this.properNounWords = new Set();
+      }
+
       this.loaded = true;
       console.log(`✅ Dictionary loaded: ${this.enableWords.size} words, ${this.slangWords.size} slang words, ${this.profanityWords.size} profanity words`);
 
@@ -137,7 +151,7 @@ class NodeWordData implements WordDataDependencies {
 
   public hasWord(word: string): boolean {
     const upperWord = word.toUpperCase();
-    return this.enableWords.has(upperWord) || this.slangWords.has(upperWord);
+    return this.enableWords.has(upperWord) || this.slangWords.has(upperWord) || this.properNounWords.has(upperWord);
   }
 
   public get wordCount(): number {
@@ -156,7 +170,7 @@ const nodeWordData = new NodeWordData();
  * Node.js dictionary dependencies implementation
  */
 const nodeDictionaryDependencies: GameStateDictionaryDependencies = {
-  validateWord: (word: string, options?: any): ValidationResult => {
+  validateWord: (word: string, options?: ValidationOptions): ValidationResult => {
     return validateWordWithDependencies(word, nodeWordData, options);
   },
 
@@ -170,7 +184,7 @@ const nodeDictionaryDependencies: GameStateDictionaryDependencies = {
  * Uses direct imports from scoring module since it's platform-agnostic
  */
 const nodeScoringDependencies: GameStateScoringDependencies = {
-  calculateScore: (fromWord: string, toWord: string, options?: any): ScoringResult => {
+  calculateScore: (fromWord: string, toWord: string, options?: ScoringOptions): ScoringResult => {
     return calculateScoreWithDependencies(fromWord, toWord, options);
   },
 
@@ -188,7 +202,7 @@ const nodeScoringDependencies: GameStateScoringDependencies = {
  * Node.js bot dependencies implementation
  */
 const nodeBotDependencies: GameStateBotDependencies = {
-  generateBotMove: async (word: string, options?: any): Promise<BotResult> => {
+  generateBotMove: async (word: string, options?: BotOptions): Promise<BotResult> => {
     // Create complete BotDependencies with all required interfaces
     const botDeps: BotDependencies = {
       // DictionaryDependencies
@@ -351,7 +365,7 @@ export function getNodeGameDependencies(): GameStateDependencies {
 /**
  * Validate word using Node.js adapter (convenience function)
  */
-export function validateWordNode(word: string, options?: any): ValidationResult {
+export function validateWordNode(word: string, options?: ValidationOptions): ValidationResult {
   return nodeDictionaryDependencies.validateWord(word, options);
 }
 

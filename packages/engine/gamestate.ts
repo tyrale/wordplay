@@ -27,7 +27,6 @@
 
 import { KeyLetterLogger } from './keyLetterLogger.js';
 
-import type { ValidationResult } from './dictionary';
 import type { ScoringResult } from './scoring';
 
 // Import consolidated interfaces from main interfaces file
@@ -38,6 +37,7 @@ import type {
   GameStateBotDependencies,
   GameState,
   GameConfig,
+  ValidationResult,
   Player,
   TurnHistory,
   GameStateUpdate,
@@ -90,11 +90,12 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * Initialize a new game state with default values
    */
   private initializeGameState(config: GameConfig): GameState {
-    // Get random 4-letter word if no initial word provided
+    // Get random word (4 letters by default, or config.startingWordLength) if no initial word provided
     let initialWord = config.initialWord;
     if (!initialWord) {
-      const randomWord = this.dependencies.getRandomWordByLength(4);
-      initialWord = randomWord || 'WORD'; // fallback to 'WORD' if no 4-letter words found
+      const wordLength = config.startingWordLength || 4;
+      const randomWord = this.dependencies.getRandomWordByLength(wordLength);
+      initialWord = randomWord || 'WORD'; // fallback to 'WORD' if no words of that length found
     }
 
     const defaultConfig: GameConfig = {
@@ -442,7 +443,8 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       const botResult: BotResult = await this.dependencies.generateBotMove(this.state.currentWord, {
         keyLetters: this.state.keyLetters,
         lockedLetters: allLockedLetters,
-        maxCandidates: 500 // Reasonable limit for responsive gameplay
+        maxCandidates: 500, // Reasonable limit for responsive gameplay
+        botId: this.state.config.botId // Selects the bot's strategy in bot.ts (e.g. filterPirateBotCandidates)
       });
 
             if (!botResult.move) {
@@ -663,7 +665,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       averageScorePerMove: number;
     }>;
   } {
-    const duration = Date.now() - this.state.gameStartTime;
+    const duration = this.state.gameStartTime ? Date.now() - this.state.gameStartTime : 0;
     const totalScore = this.state.players.reduce((sum, player) => sum + player.score, 0);
     const averageScore = this.state.totalMoves > 0 ? totalScore / this.state.totalMoves : 0;
 
@@ -786,9 +788,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
         },
         timestamp: Date.now()
       });
-      
-          } else {
-          }
+    }
   }
 
   /**
@@ -814,7 +814,9 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       previousWord: this.state.currentWord,
       newWord: this.state.currentWord, // Word stays the same
       score: 0, // No points for passing
+      keyLettersUsed: [],
       scoringBreakdown: {
+        score: 0,
         totalScore: 0,
         breakdown: {
           addLetterPoints: 0,
@@ -822,7 +824,9 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
           movePoints: 0,
           keyLetterUsagePoints: 0,
         },
-        actions: ['PASS'],
+        actions: [],
+        keyLetterScore: 0,
+        baseScore: 0,
         keyLettersUsed: []
       },
       timestamp: Date.now()

@@ -14,8 +14,7 @@ import {
   getRandomWordByLengthWithDependencies,
   getVanityDisplayWordWithDependencies,
   shouldUnlockVanityToggleWithDependencies,
-  type ValidationOptions,
-  type VanityState
+  type ValidationOptions
 } from './dictionary';
 import type { WordDataDependencies } from './interfaces';
 import { createTestAdapter, type TestAdapter } from '../../src/adapters/testAdapter';
@@ -31,7 +30,7 @@ describe('Word Validation Service', () => {
     // Add additional words for comprehensive testing
     const additionalWords = [
       'HELLO', 'WORLD', 'COMPUTER', 'GAME', 'WORD', 'PLAY',
-      'ELEPHANT', 'DOGS', 'DAMN', 'HELL', 'CRAP', 'PISS',
+      'ELEPHANT', 'DOGS', 'DAMN', 'HELL', 'CRAP', 'PISS', 'SHIT',
       'WIFI', 'UBER', 'GOOGLE', 'SELFIE', 'EMOJI', 'YEET'
     ];
     
@@ -102,6 +101,37 @@ describe('Word Validation Service', () => {
       expect(wordData.slangWords.has('BRUH')).toBe(true);
       expect(wordData.slangWords.has('SELFIE')).toBe(true);
       expect(wordData.slangWords.has('HELLO')).toBe(false);
+    });
+  });
+
+  describe('Common Proper Noun Support', () => {
+    it('should validate JULY as a common proper noun (month)', () => {
+      const result = validateWordWithDependencies('JULY', wordData);
+      expect(result.isValid).toBe(true);
+      expect(result.word).toBe('JULY');
+    });
+
+    it('should validate common proper nouns (months, days) when allowed', () => {
+      const properNouns = ['JULY', 'MARCH', 'MONDAY', 'FRIDAY'];
+
+      properNouns.forEach(word => {
+        const result = validateWordWithDependencies(word, wordData, { allowProperNouns: true });
+        expect(result.isValid).toBe(true);
+        expect(result.word).toBe(word.toUpperCase());
+      });
+    });
+
+    it('should reject common proper nouns when not allowed', () => {
+      const result = validateWordWithDependencies('JULY', wordData, { allowProperNouns: false });
+      expect(result.isValid).toBe(false);
+      expect(result.reason).toBe('NOT_IN_DICTIONARY');
+      expect(result.userMessage).toBe('not a word');
+    });
+
+    it('should identify common proper nouns correctly', () => {
+      expect(wordData.properNounWords.has('JULY')).toBe(true);
+      expect(wordData.properNounWords.has('MONDAY')).toBe(true);
+      expect(wordData.properNounWords.has('HELLO')).toBe(false);
     });
   });
 
@@ -211,16 +241,6 @@ describe('Word Validation Service', () => {
   });
 
   describe('Vanity Display System', () => {
-    const defaultVanityState: VanityState = {
-      hasUnlockedToggle: false,
-      isVanityFilterOn: true
-    };
-
-    const unlockedVanityState: VanityState = {
-      hasUnlockedToggle: true,
-      isVanityFilterOn: true
-    };
-
     it('should show normal words unchanged', () => {
       // These functions would need to be implemented or mocked
       // For now, just test that profane words get censored

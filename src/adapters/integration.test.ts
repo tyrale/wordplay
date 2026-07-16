@@ -7,7 +7,6 @@
 
 import { describe, it, expect } from 'vitest';
 import { BrowserAdapter } from './browserAdapter';
-import { NodeAdapter } from './nodeAdapter';
 import { TestAdapter } from './testAdapter';
 import { validateWordWithDependencies } from '../../packages/engine/dictionary';
 import { generateBotMoveWithDependencies } from '../../packages/engine/bot';

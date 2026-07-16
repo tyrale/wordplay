@@ -2,7 +2,7 @@
  * Unit tests for useVanityFilter hook with context
  */
 
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useVanityFilter } from '../useVanityFilter';
 import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
@@ -47,14 +47,18 @@ describe('useVanityFilter with context', () => {
     localStorageMock.clear();
   });
 
-  it('should initialize with default state', () => {
+  it('should initialize with default state', async () => {
     const { result } = renderHook(() => useVanityFilter(), {
       wrapper: VanityFilterProvider
     });
     
     expect(result.current.vanityState.hasUnlockedToggle).toBe(false);
     expect(result.current.vanityState.isVanityFilterOn).toBe(true);
-    expect(result.current.isLoading).toBe(false);
+
+    // Word data loads asynchronously via createBrowserAdapter
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
   });
 
   it('should load state from localStorage', () => {
@@ -147,20 +151,28 @@ describe('useVanityFilter with context', () => {
     expect(localStorageMock.getItem('wordplay-vanity-filter')).toBe('false');
   });
 
-  it('should get display word', () => {
+  it('should get display word', async () => {
     const { result } = renderHook(() => useVanityFilter(), {
       wrapper: VanityFilterProvider
     });
     
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
     const displayWord = result.current.getDisplayWord('shit');
-    expect(displayWord).toBe('S***'); // Should be censored by default
+    expect(displayWord).toBe('%#^&'); // Should be censored by default (transformToSymbols)
   });
 
-  it('should check if word unlocks vanity', () => {
+  it('should check if word unlocks vanity', async () => {
     const { result } = renderHook(() => useVanityFilter(), {
       wrapper: VanityFilterProvider
     });
     
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
     expect(result.current.shouldWordUnlockVanity('shit')).toBe(true);
     expect(result.current.shouldWordUnlockVanity('test')).toBe(false);
   });

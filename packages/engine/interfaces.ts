@@ -20,10 +20,17 @@ export interface ValidationResult {
   censored?: string;
 }
 
+export interface ScoringBreakdown {
+  addLetterPoints: number;
+  removeLetterPoints: number;
+  movePoints: number;
+  keyLetterUsagePoints: number;
+}
+
 export interface ScoringResult {
   score: number;
   totalScore: number;
-  breakdown: string[] | Record<string, number>; // Support both old and new formats
+  breakdown: ScoringBreakdown;
   actions: ScoringAction[];
   keyLetterScore: number;
   baseScore: number;
@@ -41,12 +48,6 @@ export interface WordAnalysis {
   removedLetters: string[];
   isMoved: boolean;
   keyLettersUsed: string[];
-  // New interface compatibility
-  added: string[];
-  removed: string[];
-  rearranged: boolean;
-  substituted: { from: string; to: string }[];
-  valid: boolean;
 }
 
 export interface BotMove {
@@ -81,6 +82,7 @@ export interface WordDataDependencies {
   enableWords: Set<string>;
   slangWords: Set<string>;
   profanityWords: Set<string>;
+  properNounWords: Set<string>;
   wordCount: number;
 }
 
@@ -151,11 +153,10 @@ export interface ScoringDependencies {
    * Calculate score for a move (usually platform-agnostic)
    * @param fromWord - Starting word
    * @param toWord - Ending word  
-   * @param keyLetters - Available key letters
-   * @param lockedLetters - Letters that cannot be removed
+   * @param options - Scoring options (key letters, locked letters, etc.)
    * @returns Scoring result with breakdown
    */
-  calculateScore?(fromWord: string, toWord: string, keyLetters: string[], lockedLetters: string[]): ScoringResult;
+  calculateScore?(fromWord: string, toWord: string, options?: ScoringOptions): ScoringResult;
   
   /**
    * Get simple numeric score for a move (used by bot AI)
@@ -187,7 +188,7 @@ export interface BotDependencies extends DictionaryDependencies, UtilityDependen
  */
 export interface GameEngineDependencies extends BotDependencies, ScoringDependencies {
   // Game engine specific bot functions  
-  generateBotMove?: (currentWord: string, options?: any) => Promise<BotResult>;
+  generateBotMove?: (currentWord: string, options?: BotOptions) => Promise<BotResult>;
 }
 
 // =============================================================================
@@ -199,7 +200,7 @@ export interface GameEngineDependencies extends BotDependencies, ScoringDependen
  * CONSOLIDATED: Matches adapter expectations with consistent signatures
  */
 export interface GameStateDictionaryDependencies {
-  validateWord: (word: string, options?: any) => ValidationResult;
+  validateWord: (word: string, options?: ValidationOptions) => ValidationResult;
   getRandomWordByLength: (length: number) => string | null;
 }
 
@@ -208,7 +209,7 @@ export interface GameStateDictionaryDependencies {
  * CONSOLIDATED: Matches adapter expectations with consistent signatures
  */
 export interface GameStateScoringDependencies {
-  calculateScore: (fromWord: string, toWord: string, options?: any) => ScoringResult;
+  calculateScore: (fromWord: string, toWord: string, options?: ScoringOptions) => ScoringResult;
   getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]) => number;
   isValidMove: (fromWord: string, toWord: string) => boolean;
 }
@@ -218,7 +219,7 @@ export interface GameStateScoringDependencies {
  * CONSOLIDATED: Matches adapter expectations with consistent signatures
  */
 export interface GameStateBotDependencies {
-  generateBotMove: (word: string, options?: any) => Promise<BotResult>;
+  generateBotMove: (word: string, options?: BotOptions) => Promise<BotResult>;
 }
 
 /**
@@ -255,6 +256,8 @@ export interface BotOptions {
   maxCandidates?: number;
   timeLimit?: number;
   difficulty?: 'easy' | 'medium' | 'hard';
+  /** Which bot (see src/data/botRegistry.ts) is playing, used to select its strategy in bot.ts */
+  botId?: string;
 }
 
 export interface GameEngineOptions {
@@ -413,20 +416,6 @@ export interface GameEngine extends BotEngine, ScoringEngine, DictionaryEngine {
 // =============================================================================
 
 /**
- * Adapter factory function type
- * How platform adapters are created
- */
-export type AdapterFactory<T = GameEngine> = (config?: any) => T;
-
-/**
- * Platform adapter registry
- * Maps platform names to adapter factories
- */
-export interface AdapterRegistry {
-  [platform: string]: AdapterFactory;
-}
-
-/**
  * Platform detection function type
  * How the system determines current platform
  */
@@ -446,23 +435,6 @@ export interface CrossPlatformConfig {
 // =============================================================================
 // VALIDATION HELPERS
 // =============================================================================
-
-/**
- * Validate that dependencies object implements required interface
- * @param dependencies - Dependencies to validate
- * @param requiredMethods - Required method names
- * @throws Error if dependencies are invalid
- */
-export function validateDependencies(
-  dependencies: any, 
-  requiredMethods: string[]
-): asserts dependencies is GameEngineDependencies {
-  for (const method of requiredMethods) {
-    if (typeof dependencies[method] !== 'function') {
-      throw new Error(`Dependencies.${method} must be a function`);
-    }
-  }
-}
 
 /**
  * Test configuration factory
@@ -499,7 +471,7 @@ export function createMockDependencies(): GameEngineDependencies {
   const testWords = new Set(['CAT', 'CATS', 'DOG', 'DOGS', 'BAT', 'BATS']);
   
   return {
-    validateWord: (word: string, options?: ValidationOptions) => {
+    validateWord: (word: string, _options?: ValidationOptions) => {
       const normalizedWord = word.trim().toUpperCase();
       
       if (normalizedWord.length === 0) {
@@ -527,15 +499,23 @@ export function createMockDependencies(): GameEngineDependencies {
     getTimestamp: () => Date.now(),
     random: () => Math.random(),
     
-         calculateScore: (fromWord: string, toWord: string, keyLetters: string[] = []) => {
-       return { score: 1, totalScore: 1, breakdown: ['Base score: 1'], actions: [], keyLetterScore: 0, baseScore: 1, keyLettersUsed: [] };
-     },
+    calculateScore: (_fromWord: string, _toWord: string, _options: ScoringOptions = {}) => {
+      return {
+        score: 1,
+        totalScore: 1,
+        breakdown: { addLetterPoints: 1, removeLetterPoints: 0, movePoints: 0, keyLetterUsagePoints: 0 },
+        actions: [],
+        keyLetterScore: 0,
+        baseScore: 1,
+        keyLettersUsed: []
+      };
+    },
     
-    getScoreForMove: (fromWord: string, toWord: string, keyLetters: string[] = []) => {
+    getScoreForMove: (_fromWord: string, _toWord: string, _keyLetters: string[] = []) => {
       return 1; // Simple scoring for tests
     },
     
-    generateBotMove: async (currentWord: string, options: any = {}) => {
+    generateBotMove: async (currentWord: string, _options: BotOptions = {}) => {
       // Simple bot that tries to add 'S'
       const candidate = currentWord + 'S';
       const candidateMove = { word: candidate, score: 1, confidence: 0.8, reasoning: ['Added S'] };
@@ -593,7 +573,7 @@ export interface GameState {
 
 export interface GameStateUpdate {
   type: string;
-  data: any;
+  data: Record<string, unknown>;
   timestamp: number;
 }
 
@@ -605,6 +585,10 @@ export interface GameConfig {
   enableKeyLetters?: boolean;
   enableLockedLetters?: boolean;
   allowProfanity?: boolean;
+  /** Which bot (see src/data/botRegistry.ts) the human is playing against, forwarded to generateBotMove() */
+  botId?: string;
+  /** Desired length of the randomly-generated starting word, used when initialWord isn't set. Defaults to 4. */
+  startingWordLength?: number;
 }
 
 export interface TurnHistory {
@@ -636,12 +620,10 @@ export interface IGameStateManager {
   startGame(initialWord?: string): void;
   resetGame(config?: GameConfig): void;
   passTurn(): boolean;
-  applyMove(word: string): ScoringResult | null;
+  applyMove(wordOrAttempt: string | MoveAttempt): boolean;
   validateMove(word: string): ValidationResult;
   makeBotMove(): Promise<BotMove | null>;
   getCurrentPlayer(): Player | null;
-  getWinner(): Player | null;
-  addPlayer(name: string, isBot: boolean): void;
   addKeyLetter(letter: string): void;
   removeKeyLetter(letter: string): void;
   addLockedLetter(letter: string): void;
@@ -674,6 +656,7 @@ export interface UnlockResult {
     value: string;
   }; // Old format compatibility
   unlockId?: string; // Old format compatibility
+  wasAlreadyUnlocked?: boolean;
 }
 
 export interface UnlockTrigger {

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Preview } from '@storybook/react-vite';
 import { ThemeProvider } from '../src/components/theme/ThemeProvider';
+import { VanityFilterProvider } from '../src/contexts/VanityFilterContext';
 import '../src/index.css';
 
 const preview: Preview = {
@@ -23,7 +24,9 @@ const preview: Preview = {
   decorators: [
     (Story) => (
       <ThemeProvider>
-        <Story />
+        <VanityFilterProvider>
+          <Story />
+        </VanityFilterProvider>
       </ThemeProvider>
     ),
   ],

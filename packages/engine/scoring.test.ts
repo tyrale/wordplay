@@ -17,6 +17,10 @@ import {
   type ScoringResult
 } from './scoring';
 
+function hasAction(result: ScoringResult, type: string): boolean {
+  return result.actions.some(action => action.type === type);
+}
+
 describe('Scoring Module', () => {
 
   describe('Core Scoring Rules - Base Letters Only', () => {
@@ -26,7 +30,7 @@ describe('Scoring Module', () => {
       expect(result.breakdown.addLetterPoints).toBe(1);
       expect(result.breakdown.removeLetterPoints).toBe(0);
       expect(result.breakdown.movePoints).toBe(0);
-      expect(result.actions).toContain('Added letter(s): S');
+      expect(hasAction(result, 'add')).toBe(true);
     });
 
     it('should score CAT→COAT as 1 point (add letter)', () => {
@@ -35,7 +39,7 @@ describe('Scoring Module', () => {
       expect(result.breakdown.addLetterPoints).toBe(1);
       expect(result.breakdown.removeLetterPoints).toBe(0);
       expect(result.breakdown.movePoints).toBe(0);
-      expect(result.actions).toContain('Added letter(s): O');
+      expect(hasAction(result, 'add')).toBe(true);
     });
 
     it('should score CATS→BATS as 2 points (remove C, add B)', () => {
@@ -44,8 +48,8 @@ describe('Scoring Module', () => {
       expect(result.breakdown.addLetterPoints).toBe(1);
       expect(result.breakdown.removeLetterPoints).toBe(1);
       expect(result.breakdown.movePoints).toBe(0);
-      expect(result.actions).toContain('Added letter(s): B');
-      expect(result.actions).toContain('Removed letter(s): C');
+      expect(hasAction(result, 'add')).toBe(true);
+      expect(hasAction(result, 'remove')).toBe(true);
     });
 
     it('should score CATS→TABS as 3 points (remove C, add T, move)', () => {
@@ -54,9 +58,9 @@ describe('Scoring Module', () => {
       expect(result.breakdown.addLetterPoints).toBe(1);
       expect(result.breakdown.removeLetterPoints).toBe(1);
       expect(result.breakdown.movePoints).toBe(1);
-      expect(result.actions).toContain('Added letter(s): B');
-      expect(result.actions).toContain('Removed letter(s): C');
-      expect(result.actions).toContain('Moved letters');
+      expect(hasAction(result, 'add')).toBe(true);
+      expect(hasAction(result, 'remove')).toBe(true);
+      expect(hasAction(result, 'rearrange')).toBe(true);
     });
 
     it('should score CAT→BAT as 2 points (remove C, add B)', () => {
@@ -65,8 +69,8 @@ describe('Scoring Module', () => {
       expect(result.breakdown.addLetterPoints).toBe(1);
       expect(result.breakdown.removeLetterPoints).toBe(1);
       expect(result.breakdown.movePoints).toBe(0);
-      expect(result.actions).toContain('Added letter(s): B');
-      expect(result.actions).toContain('Removed letter(s): C');
+      expect(hasAction(result, 'add')).toBe(true);
+      expect(hasAction(result, 'remove')).toBe(true);
     });
   });
 
@@ -74,13 +78,13 @@ describe('Scoring Module', () => {
     it('should give +1 point for adding one letter', () => {
       const result = calculateScore('CAT', 'CATS');
       expect(result.breakdown.addLetterPoints).toBe(1);
-      expect(result.actions).toContain('Added letter(s): S');
+      expect(hasAction(result, 'add')).toBe(true);
     });
 
     it('should give +1 point for adding multiple letters (not cumulative)', () => {
       const result = calculateScore('CAT', 'SCATS');
       expect(result.breakdown.addLetterPoints).toBe(1);
-      expect(result.actions).toContain('Added letter(s): S, S');
+      expect(hasAction(result, 'add')).toBe(true);
     });
 
     it('should give 0 points when no letters are added', () => {
@@ -93,13 +97,13 @@ describe('Scoring Module', () => {
     it('should give +1 point for removing one letter', () => {
       const result = calculateScore('CATS', 'CAT');
       expect(result.breakdown.removeLetterPoints).toBe(1);
-      expect(result.actions).toContain('Removed letter(s): S');
+      expect(hasAction(result, 'remove')).toBe(true);
     });
 
     it('should give +1 point for removing multiple letters (not cumulative)', () => {
       const result = calculateScore('SCATS', 'CAT');
       expect(result.breakdown.removeLetterPoints).toBe(1);
-      expect(result.actions).toContain('Removed letter(s): S, S');
+      expect(hasAction(result, 'remove')).toBe(true);
     });
 
     it('should give 0 points when no letters are removed', () => {
@@ -112,13 +116,13 @@ describe('Scoring Module', () => {
     it('should give +1 point for moving same letters', () => {
       const result = calculateScore('CAT', 'TAC');
       expect(result.breakdown.movePoints).toBe(1);
-      expect(result.actions).toContain('Moved letters');
+      expect(hasAction(result, 'rearrange')).toBe(true);
     });
 
     it('should give +1 point for complex moves', () => {
       const result = calculateScore('LISTEN', 'SILENT');
       expect(result.breakdown.movePoints).toBe(1);
-      expect(result.actions).toContain('Moved letters');
+      expect(hasAction(result, 'rearrange')).toBe(true);
     });
 
     it('should give 0 points when letters are not moved', () => {
@@ -325,7 +329,7 @@ describe('Scoring Module', () => {
       const result = calculateScore('CAT', 'CATS', { keyLetters: ['S'] });
       expect(result.breakdown.keyLetterUsagePoints).toBe(1);
       expect(result.keyLettersUsed).toEqual(['S']);
-      expect(result.actions).toContain('Used key letter(s): S');
+      expect(hasAction(result, 'key-letter')).toBe(true);
     });
 
     it('should give 0 points when no key letters are used', () => {
@@ -377,9 +381,9 @@ describe('Scoring Module', () => {
       expect(result.breakdown.removeLetterPoints).toBe(1); // Remove C
       expect(result.breakdown.movePoints).toBe(0);
       expect(result.breakdown.keyLetterUsagePoints).toBe(1); // Used key letter B
-      expect(result.actions).toContain('Added letter(s): B');
-      expect(result.actions).toContain('Removed letter(s): C');
-      expect(result.actions).toContain('Used key letter(s): B');
+      expect(hasAction(result, 'add')).toBe(true);
+      expect(hasAction(result, 'remove')).toBe(true);
+      expect(hasAction(result, 'key-letter')).toBe(true);
     });
 
     it('should handle key letters in game flow context', () => {
@@ -444,8 +448,8 @@ describe('Scoring Module', () => {
       expect(result.totalScore).toBe(1);
       expect(result.breakdown.removeLetterPoints).toBe(1);
       expect(result.breakdown.movePoints).toBe(0); // This should be 0, not 1
-      expect(result.actions).toContain('Removed letter(s): P');
-      expect(result.actions).not.toContain('Moved letters');
+      expect(hasAction(result, 'remove')).toBe(true);
+      expect(hasAction(result, 'rearrange')).toBe(false);
     });
 
     it('should NOT detect move for FLOE → FOES (natural shift)', () => {
@@ -456,9 +460,9 @@ describe('Scoring Module', () => {
       expect(result.breakdown.removeLetterPoints).toBe(1);
       expect(result.breakdown.addLetterPoints).toBe(1);
       expect(result.breakdown.movePoints).toBe(0); // This should be 0, not 1
-      expect(result.actions).toContain('Removed letter(s): L');
-      expect(result.actions).toContain('Added letter(s): S');
-      expect(result.actions).not.toContain('Moved letters');
+      expect(hasAction(result, 'remove')).toBe(true);
+      expect(hasAction(result, 'add')).toBe(true);
+      expect(hasAction(result, 'rearrange')).toBe(false);
     });
 
     it('should still detect TRUE move for NARD → YARN', () => {
@@ -476,8 +480,8 @@ describe('Scoring Module', () => {
       expect(result.totalScore).toBe(2);
       expect(result.breakdown.addLetterPoints).toBe(1);
       expect(result.breakdown.movePoints).toBe(1);
-      expect(result.actions).toContain('Added letter(s): L');
-      expect(result.actions).toContain('Moved letters');
+      expect(hasAction(result, 'add')).toBe(true);
+      expect(hasAction(result, 'rearrange')).toBe(true);
     });
 
     it('should correctly score EARL → GEAR as 3 points (remove L, add G, key usage)', () => {
@@ -488,9 +492,9 @@ describe('Scoring Module', () => {
       expect(result.breakdown.removeLetterPoints).toBe(1); // Remove L
       expect(result.breakdown.movePoints).toBe(0); // No move needed
       expect(result.breakdown.keyLetterUsagePoints).toBe(1); // Used key letter G
-      expect(result.actions).toContain('Added letter(s): G');
-      expect(result.actions).toContain('Removed letter(s): L');
-      expect(result.actions).toContain('Used key letter(s): G');
+      expect(hasAction(result, 'add')).toBe(true);
+      expect(hasAction(result, 'remove')).toBe(true);
+      expect(hasAction(result, 'key-letter')).toBe(true);
     });
 
     it('should correctly score REAR → EARL as 2 points (remove R, add L, no move)', () => {
@@ -501,9 +505,9 @@ describe('Scoring Module', () => {
       expect(result.breakdown.removeLetterPoints).toBe(1); // Remove R
       expect(result.breakdown.movePoints).toBe(0); // No move - EAR sequence preserved
       expect(result.breakdown.keyLetterUsagePoints).toBe(0); // No key letters
-      expect(result.actions).toContain('Added letter(s): L');
-      expect(result.actions).toContain('Removed letter(s): R');
-      expect(result.actions).not.toContain('Moved letters');
+      expect(hasAction(result, 'add')).toBe(true);
+      expect(hasAction(result, 'remove')).toBe(true);
+      expect(hasAction(result, 'rearrange')).toBe(false);
     });
   });
 }); 

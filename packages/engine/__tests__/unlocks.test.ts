@@ -99,6 +99,19 @@ describe('Unlock Engine', () => {
       expect(unlockEngine.isUnlocked('bot', 'pirate-bot')).toBe(true);
     });
 
+    it('should unlock dark mode when playing "tyrale"', async () => {
+      const results = await unlockEngine.checkWordTriggers('tyrale');
+
+      expect(results).toHaveLength(1);
+      expect(results[0]).toMatchObject({
+        category: 'mechanic',
+        target: 'dark-mode',
+        wasAlreadyUnlocked: false
+      });
+
+      expect(unlockEngine.isUnlocked('mechanic', 'dark-mode')).toBe(true);
+    });
+
     it('should not unlock already unlocked items', async () => {
       // First unlock
       await unlockEngine.checkWordTriggers('red');

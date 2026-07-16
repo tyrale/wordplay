@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ThemeProvider, InteractiveGame, MainScreen } from './components';
 import { ChallengeGame } from './components/challenge/ChallengeGame';
 import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
@@ -6,13 +6,13 @@ import { ConfirmationDialog } from './components/ui/ConfirmationDialog';
 import { AnimationProvider } from './animations';
 import { UnlockProvider } from './components/unlock/UnlockProvider';
 import { VanityFilterProvider } from './contexts/VanityFilterContext';
+import { MechanicsSettingsProvider } from './contexts/MechanicsSettingsContext';
 import ResponsiveTest from './components/game/ResponsiveTest';
-import { QuitterOverlay } from './components/ui/QuitterOverlay';
-import { WinnerOverlay } from './components/ui/WinnerOverlay';
-import { LoserOverlay } from './components/ui/LoserOverlay';
+import { AlertOverlay } from './components/ui/AlertOverlay';
+import { alertCopy, pickAlertVariant } from './content/alertCopy';
 import { getBotDisplayName } from './data/botRegistry';
 import { initViewportHeight } from './utils/viewportHeight';
-import { ToastProvider } from './components/ui/ToastManager';
+import { AlertProvider } from './components/ui/AlertProvider';
 import './App.css';
 
 type AppState = 'main' | 'game' | 'challenge' | 'tutorial' | 'quitter' | 'winner' | 'loser';
@@ -184,6 +184,11 @@ function App() {
     setGameResults(null);
   };
 
+  // Pick a random phrase each time a win/lose/quit screen is shown (not on every re-render)
+  const quitCopy = useMemo(() => pickAlertVariant(alertCopy.quit), [appState === 'quitter']);
+  const winCopy = useMemo(() => pickAlertVariant(alertCopy.win), [appState === 'winner']);
+  const loseCopy = useMemo(() => pickAlertVariant(alertCopy.lose), [appState === 'loser']);
+
   // Initialize viewport height handling
   React.useEffect(() => {
     initViewportHeight();
@@ -191,9 +196,10 @@ function App() {
 
   return (
     <ThemeProvider>
-      <ToastProvider>
+      <AlertProvider>
         <UnlockProvider>
           <VanityFilterProvider>
+            <MechanicsSettingsProvider>
             <AnimationProvider initialTheme="default">
               <ResponsiveTest>
               {appState === 'main' && (
@@ -242,31 +248,45 @@ function App() {
               />
               
               {/* Quitter Overlay */}
-              <QuitterOverlay 
+              <AlertOverlay
                 isVisible={appState === 'quitter'}
-                onComplete={handleQuitterComplete}
+                lines={[...quitCopy.lines]}
+                onClose={handleQuitterComplete}
               />
               
               {/* Winner Overlay */}
-              <WinnerOverlay
+              <AlertOverlay
                 isVisible={appState === 'winner'}
-                onComplete={handleWinnerComplete}
-                finalScores={gameResults?.finalScores}
-                botName={gameResults?.botName}
+                lines={[...winCopy.lines]}
+                variant="win"
+                onClose={handleWinnerComplete}
+                meta={gameResults?.finalScores && (
+                  <>
+                    <div>You: {gameResults.finalScores.human}</div>
+                    <div>{gameResults.botName || 'Bot'}: {gameResults.finalScores.bot}</div>
+                  </>
+                )}
               />
               
               {/* Loser Overlay */}
-              <LoserOverlay
+              <AlertOverlay
                 isVisible={appState === 'loser'}
-                onComplete={handleLoserComplete}
-                finalScores={gameResults?.finalScores}
-                botName={gameResults?.botName}
+                lines={[...loseCopy.lines]}
+                variant="lose"
+                onClose={handleLoserComplete}
+                meta={gameResults?.finalScores && (
+                  <>
+                    <div>You: {gameResults.finalScores.human}</div>
+                    <div>{gameResults.botName || 'Bot'}: {gameResults.finalScores.bot}</div>
+                  </>
+                )}
               />
                           </ResponsiveTest>
             </AnimationProvider>
+            </MechanicsSettingsProvider>
           </VanityFilterProvider>
         </UnlockProvider>
-      </ToastProvider>
+      </AlertProvider>
     </ThemeProvider>
   );
 }

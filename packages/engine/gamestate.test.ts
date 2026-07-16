@@ -112,5 +112,38 @@ describe('LocalGameStateManager', () => {
         expect(botMove).toBeNull();
       }
     });
+
+    it('should forward config.botId to the bot strategy so pirate-bot overrides normal score-based move selection', async () => {
+      // Regression test: LocalGameStateManager.makeBotMove() must forward
+      // this.state.config.botId into generateBotMove()'s options, otherwise
+      // bot.ts's per-botId strategies (e.g. filterPirateBotCandidates) never run.
+      // Use passTurn() for the human's turn so the word stays at 'CRAPS' when
+      // it becomes the bot's turn (applyMove() would change the word).
+      testAdapter.reset();
+      testAdapter.addWord('CRAPS');
+      testAdapter.addWord('CRAP');   // remove S -> profane once flagged below
+      testAdapter.addWord('CRAPSX'); // add key letter X -> higher-scoring, non-profane
+      testAdapter.addProfanityWord('CRAP');
+
+      // Baseline: with no botId, the bot should prefer the higher-scoring,
+      // key-letter move (CRAPSX) over the lower-scoring profane one (CRAP).
+      gameManager.resetGame({ initialWord: 'CRAPS', allowBotPlayer: true, botId: undefined });
+      gameManager.startGame();
+      gameManager.addKeyLetter('X');
+      gameManager.passTurn(); // human passes, word stays 'CRAPS', now bot's turn
+      const normalMove = await gameManager.makeBotMove();
+      expect(normalMove).not.toBeNull();
+      expect(normalMove!.word).toBe('CRAPSX');
+
+      // Same setup, but with botId: 'pirate-bot' - it should pick the profane
+      // word (CRAP) over the higher-scoring CRAPSX, proving botId is forwarded.
+      gameManager.resetGame({ initialWord: 'CRAPS', allowBotPlayer: true, botId: 'pirate-bot' });
+      gameManager.startGame();
+      gameManager.addKeyLetter('X');
+      gameManager.passTurn();
+      const pirateMove = await gameManager.makeBotMove();
+      expect(pirateMove).not.toBeNull();
+      expect(pirateMove!.word).toBe('CRAP');
+    });
   });
 }); 

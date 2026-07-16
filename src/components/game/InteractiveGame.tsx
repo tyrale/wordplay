@@ -1,34 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useGameState, useGameStats, useWordState } from '../../hooks/useGameState';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
-import { useVanityFilter } from '../../hooks/useVanityFilter';
-import { useToast } from '../ui/ToastManager';
+import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
+import { useAlert } from '../ui/AlertProvider';
 import { AlphabetGrid } from './AlphabetGrid';
 import { WordTrail } from './WordTrail';
 
 import { ScoreDisplay } from './ScoreDisplay';
+import { ScoreBar } from './ScoreBar';
 import { WordBuilder } from './WordBuilder';
 import { DebugDialog } from './DebugDialog';
 import { Menu } from '../ui/Menu';
 import { getBotDisplayName } from '../../data/botRegistry';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
-import type { WordDataDependencies } from '../../../packages/engine/interfaces';
-
-// Game configuration and state interfaces
-interface GameConfig {
-  maxTurns?: number;
-  startingWord?: string;
-  [key: string]: any;
-}
-
-interface MoveAttempt {
-  newWord: string;
-  isValid: boolean;
-  validationResult: any;
-  scoringResult: any;
-  canApply: boolean;
-  reason?: string;
-}
+import { getWordLegalityReason, fetchWordDefinition } from '../../utils/wordHelp';
+import type { WordDataDependencies, ScoringAction, GameConfig, MoveAttempt, GameState } from '../../../packages/engine/interfaces';
 
 // Dictionary validation using pure dependency injection
 function useDictionaryValidation() {
@@ -92,7 +78,7 @@ export interface InteractiveGameProps {
   onNavigateHome?: () => void;
   currentGameMode?: string;
   onStartGame?: (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => void;
-  onGameStateChange?: (gameState: any) => void;
+  onGameStateChange?: (gameState: GameState) => void;
   disableLetterRemoval?: boolean;
 }
 
@@ -107,13 +93,23 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   disableLetterRemoval = false
 }) => {
   // Initialize dictionary validation hook
-  const { isValidDictionaryWord, wordData, isLoaded } = useDictionaryValidation();
+  const { isValidDictionaryWord, wordData } = useDictionaryValidation();
   
   // Unlock system integration
-  const { handleWordSubmission, handleGameCompletion } = useUnlockSystem();
-  const { shouldWordUnlockVanity, unlockVanityToggle, isVanityFilterUnlocked } = useVanityFilter();
-  const { showToast } = useToast();
-  
+  const { handleWordSubmission, handleGameCompletion, getUnlockedItems } = useUnlockSystem();
+  const { isMechanicOn } = useMechanicsSettings();
+  const { showCustomAlert } = useAlert();
+
+  // Determine starting word length from unlocked + enabled starting-word mechanics.
+  // If multiple lengths are unlocked and on, pick one at random for variety.
+  const unlockedMechanics = getUnlockedItems('mechanic');
+  const availableStartLengths = [5, 6].filter(len =>
+    unlockedMechanics.includes(`${len}-letter-start`) && isMechanicOn(`${len}-letter-start`)
+  );
+  const startingWordLength = availableStartLengths.length > 0
+    ? availableStartLengths[Math.floor(Math.random() * availableStartLengths.length)]
+    : undefined;
+
   // Game state management
   const {
     gameState,
@@ -127,7 +123,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     lastError,
     clearError
   } = useGameState({
-    config,
+    config: { ...config, startingWordLength },
     onGameStateChange: async (state) => {
       if (state.gameStatus === 'finished' && onGameEnd) {
         const humanScore = state.players.find(p => p.id === 'human')?.score || 0;
@@ -242,28 +238,13 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       return { add: false, remove: false, move: false };
     }
     
-    const actions = pendingMoveAttempt.scoringResult.actions;
-    
-    // Handle both string arrays (legacy) and ScoringAction arrays (new)
-    if (Array.isArray(actions) && actions.length > 0) {
-      if (typeof actions[0] === 'string') {
-        // Legacy string format
-        return {
-          add: actions.some((action: any) => action.startsWith('Added letter')),
-          remove: actions.some((action: any) => action.startsWith('Removed letter')),
-          move: actions.some((action: any) => action === 'Moved letters')
-        };
-      } else {
-        // New ScoringAction format
-        return {
-          add: actions.some((action: any) => action.type === 'add'),
-          remove: actions.some((action: any) => action.type === 'remove'), 
-          move: actions.some((action: any) => action.type === 'rearrange')
-        };
-      }
-    }
-    
-    return { add: false, remove: false, move: false };
+    const actions: ScoringAction[] = pendingMoveAttempt.scoringResult.actions;
+
+    return {
+      add: actions.some((action) => action.type === 'add'),
+      remove: actions.some((action) => action.type === 'remove'),
+      move: actions.some((action) => action.type === 'rearrange')
+    };
   }, [pendingMoveAttempt]);
 
   // Score breakdown
@@ -273,65 +254,27 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     }
     
     const result = pendingMoveAttempt.scoringResult;
-    
-    // Handle both legacy and new ScoringResult formats
-    if (result.baseScore !== undefined && result.keyLetterScore !== undefined) {
-      // New format
-      return {
-        base: result.baseScore,
-        keyBonus: result.keyLetterScore,
-        total: result.totalScore
-      };
-    } else {
-      // Legacy format fallback - try to extract from breakdown if it's an object
-      const breakdown = result.breakdown as any;
-      if (breakdown && typeof breakdown === 'object' && !Array.isArray(breakdown)) {
-        return {
-          base: (breakdown.addLetterPoints || 0) + (breakdown.removeLetterPoints || 0) + (breakdown.movePoints || 0),
-          keyBonus: breakdown.keyLetterUsagePoints || 0,
-          total: result.totalScore
-        };
-      } else {
-        // Fallback to score only
-        return {
-          base: result.score || result.totalScore || 0,
-          keyBonus: 0,
-          total: result.totalScore || result.score || 0
-        };
-      }
-    }
+
+    return {
+      base: result.baseScore,
+      keyBonus: result.keyLetterScore,
+      total: result.totalScore
+    };
   }, [pendingMoveAttempt]);
 
   // Word trail with move details
   const wordTrailMoves: WordMove[] = React.useMemo(() => {
     const moves = gameState.turnHistory.map((turn) => {
-      // Handle both legacy and new ScoringResult formats
       const scoringBreakdown = turn.scoringBreakdown;
-      const actions = Array.isArray(scoringBreakdown.breakdown) 
-        ? scoringBreakdown.breakdown 
-        : scoringBreakdown.actions || [];
-      
-      const keyLettersUsed = scoringBreakdown.keyLettersUsed || 
-                            (scoringBreakdown as any).keyLettersUsed || 
-                            [];
-      
-      // Create scoreBreakdown object for WordTrail compatibility
-      const scoreBreakdown = {
-        addLetterPoints: scoringBreakdown.baseScore || 0,
-        removeLetterPoints: 0, 
-        movePoints: 0,
-        keyLetterUsagePoints: scoringBreakdown.keyLetterScore || 0
-      };
-      
+
       return {
         word: turn.newWord,
         score: turn.score,
         player: turn.playerId,
         opponentName: turn.playerId === 'bot' && config?.botId ? getBotDisplayName(config.botId) : undefined,
         turnNumber: turn.turnNumber,
-        actions,
-        keyLetters: keyLettersUsed,
-        scoreBreakdown
+        keyLetters: scoringBreakdown.keyLettersUsed || [],
+        scoreBreakdown: scoringBreakdown.breakdown
       };
     });
     
@@ -339,6 +282,23 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, [gameState, config?.botId]); // Use full gameState instead of just turnHistory
 
   // Event handlers
+  const handleHelp = useCallback(async () => {
+    const word = pendingWord.trim().toUpperCase();
+    if (!word) return;
+
+    const reason = getWordLegalityReason(word, wordData);
+    const definition = await fetchWordDefinition(word);
+
+    showCustomAlert([word], {
+      meta: (
+        <>
+          <div>{reason}</div>
+          {definition && <div className="alert-overlay__meta-definition">{definition}</div>}
+        </>
+      )
+    });
+  }, [pendingWord, wordData, showCustomAlert]);
+
   const handleActionClick = useCallback((action: string) => {
     if (!isPlayerTurn || isProcessingMove) return;
     
@@ -358,7 +318,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         handleSettings();
         break;
     }
-  }, [isPlayerTurn, isProcessingMove, wordState.currentWord]);
+  }, [isPlayerTurn, isProcessingMove, wordState.currentWord, handleHelp]);
 
   const handleWordChange = useCallback((newWord: string) => {
     if (!isPlayerTurn || isProcessingMove) {
@@ -458,26 +418,15 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       const success = actions.applyMove(pendingMoveAttempt);
       if (success) {
         // Check for unlock triggers when word is successfully submitted
+        // (the vanity filter mechanic unlock is handled here via UNLOCK_DEFINITIONS)
         await handleWordSubmission(pendingMoveAttempt.newWord);
-        
-        // Check if this word should unlock the vanity filter
-        if (!isVanityFilterUnlocked() && shouldWordUnlockVanity(pendingMoveAttempt.newWord)) {
-          unlockVanityToggle();
-          console.log(`[VanityFilter] Word "${pendingMoveAttempt.newWord}" unlocked vanity filter toggle`);
-          showToast({
-            type: 'unlock',
-            title: 'Bad Word Filter Unlocked!',
-            message: 'You can now toggle the bad word filter in the menu.',
-            duration: 5000
-          });
-        }
         
         setPendingWord(pendingMoveAttempt.newWord);
         setPendingMoveAttempt(null);
         setShowValidationError(false);
       }
     }
-  }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, isVanityFilterUnlocked, shouldWordUnlockVanity, unlockVanityToggle, showToast]);
+  }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission]);
 
   const handleStartGame = useCallback(async () => {
     await actions.startGame();
@@ -540,10 +489,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     return [...new Set(validSuggestions)].slice(0, 8);
   }, [wordState.usedWords, isValidDictionaryWord]);
 
-  const handleHelp = useCallback(() => {
-    // Show help modal or navigate to help
-  }, []);
-
   const handleSettings = useCallback(() => {
     setIsMenuOpen(true);
   }, []);
@@ -561,6 +506,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   return (
     <div className="interactive-game">
+
+      {/* Score bar - shows all players' names/avatars and scores */}
+      <ScoreBar players={gameState.players} botId={config?.botId} />
 
       {/* Error display */}
       {lastError && (

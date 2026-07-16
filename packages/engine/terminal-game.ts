@@ -14,6 +14,7 @@
  */
 
 import { createGameStateManagerWithDependencies, type LocalGameStateManagerWithDependencies, type GameConfig } from './gamestate';
+import type { ScoringBreakdown, GameStateDependencies } from './interfaces';
 import { createNodeAdapter } from '../../src/adapters/nodeAdapter';
 import * as readline from 'readline';
 
@@ -72,7 +73,7 @@ export class TerminalGame {
     };
 
     // Initialize with null, will be replaced in start() or manually in tests
-    this.gameManager = null as any;
+    this.gameManager = null as unknown as LocalGameStateManagerWithDependencies;
 
     this.rl = readline.createInterface({
       input: process.stdin,
@@ -86,7 +87,7 @@ export class TerminalGame {
   /**
    * Initialize game manager with given dependencies (for testing)
    */
-  public initializeForTesting(dependencies: any): void {
+  public initializeForTesting(dependencies: GameStateDependencies): void {
     this.gameManager = createGameStateManagerWithDependencies(dependencies, this.gameConfig);
   }
 
@@ -207,13 +208,11 @@ export class TerminalGame {
     }
     
     if (command === 'DEBUG') {
-            // Test the exact words from the bug report
+      // Test the exact words from the bug report
       const testWords = ['LOCK', 'CLOCK'];
-      const currentState = this.gameManager.getState();
-      
-                              testWords.forEach(word => {
-                const attempt = this.gameManager.attemptMove(word);
-                                      });
+      testWords.forEach(word => {
+        this.gameManager.attemptMove(word);
+      });
       return;
     }
     
@@ -234,11 +233,6 @@ export class TerminalGame {
     }
     
     const moveAttempt = this.gameManager.attemptMove(command);
-    
-    // DEBUG: Add detailed validation debugging for the reported issue
-    if (!moveAttempt.isValid) {
-      const currentState = this.gameManager.getState();
-                                        }
     
     if (moveAttempt.canApply) {
       const success = this.gameManager.applyMove(moveAttempt);
@@ -393,7 +387,7 @@ export class TerminalGame {
   /**
    * Show scoring breakdown using action icons format
    */
-  private showScoringBreakdown(scoring: { breakdown: Record<string, number>; keyLettersUsed: string[] }): void {
+  private showScoringBreakdown(scoring: { breakdown: ScoringBreakdown; keyLettersUsed: string[] }): void {
     const state = this.gameManager.getState();
     const theme = this.getTurnTheme(state.currentTurn);
     const breakdown = scoring.breakdown;

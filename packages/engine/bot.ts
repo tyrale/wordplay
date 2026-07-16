@@ -56,6 +56,9 @@ export interface BotOptions {
 // Import standard interfaces from central location
 import type { BotMove, BotResult, MoveCandidate } from './interfaces';
 
+// Re-export imported types for compatibility
+export type { BotMove, BotResult, MoveCandidate, ScoringDependencies, BotDependencies };
+
 // Common letter frequencies for move generation priority
 const COMMON_LETTERS = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'.split('');
 
@@ -274,6 +277,23 @@ function filterHardBotCandidates(candidates: MoveCandidate[], dependencies: BotD
   });
 }
 
+// Noob bot - always adds an S to the current word, no matter what.
+// Ignores dictionary validation, length-change rules, and every other
+// game rule; the resulting word may not even be legal. Bots bypass
+// word validation entirely (see validateWordWithDependencies), so this
+// move is guaranteed to be applied as-is.
+function generateNoobBotMove(currentWord: string, dependencies: BotDependencies, keyLetters: string[]): BotMove {
+  const word = `${currentWord.toUpperCase()}S`;
+  const score = dependencies.getScoreForMove(currentWord, word, keyLetters);
+
+  return {
+    word,
+    score,
+    confidence: 1,
+    reasoning: ['NOOB MOVE - always adds an S, rules do not apply']
+  };
+}
+
 // Add a new strategy for pirate bot - prioritizes profanity/bad words
 function filterPirateBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string): MoveCandidate[] {
   // First, look for candidates that result in profanity words
@@ -309,6 +329,18 @@ export function generateBotMoveWithDependencies(
     maxCandidates = 200,
     botId
   } = options;
+
+  // Noob bot bypasses normal move generation/validation entirely - it
+  // always adds an S, whether or not that's a legal move or a real word.
+  if (botId === 'noob-bot') {
+    const move = generateNoobBotMove(currentWord, dependencies, keyLetters);
+    return {
+      move,
+      candidates: [move],
+      processingTime: performance.now() - startTime,
+      totalCandidatesGenerated: 1
+    };
+  }
 
   // Combine key and locked letters into a single protected set
   const protectedLetters = [...keyLetters, ...lockedLetters];
@@ -365,32 +397,6 @@ export function generateBotMoveWithDependencies(
 // LEGACY FUNCTIONS (BACKWARD COMPATIBILITY)
 // =============================================================================
 
-// Dynamic import for Node.js dictionary (avoids bundling in browser)
-let nodeDictionary: typeof import('./dictionary') | null = null;
-async function getNodeDictionary() {
-  if (!nodeDictionary) {
-    try {
-      nodeDictionary = await import('./dictionary');
-    } catch {
-      throw new Error('Node.js dictionary not available in this environment');
-    }
-  }
-  return nodeDictionary;
-}
-
-// Dynamic import for Node.js scoring
-let nodeScoring: typeof import('./scoring') | null = null;
-async function getNodeScoring() {
-  if (!nodeScoring) {
-    try {
-      nodeScoring = await import('./scoring');
-    } catch {
-      throw new Error('Node.js scoring not available in this environment');
-    }
-  }
-  return nodeScoring;
-}
-
 /**
  * Agnostic version that accepts dictionary validation functions (LEGACY)
  */
@@ -419,7 +425,7 @@ export async function filterValidCandidates(candidates: MoveCandidate[]): Promis
  */
 export function scoreCandidates(
   candidates: MoveCandidate[], 
-  currentWord: string, 
+  _currentWord: string, 
   _keyLetters: string[] = []
 ): BotMove[] {
   // Legacy implementation that doesn't use dependency injection
@@ -456,7 +462,7 @@ export function generateBotMoveAgnostic(
     calculateScore: () => ({
       score: 1,
       totalScore: 1,
-      breakdown: ['Default scoring'],
+      breakdown: { addLetterPoints: 1, removeLetterPoints: 0, movePoints: 0, keyLetterUsagePoints: 0 },
       actions: [],
       keyLetterScore: 0,
       baseScore: 1,
@@ -472,7 +478,7 @@ export function generateBotMoveAgnostic(
  */
 export async function generateBotMove(
   currentWord: string, 
-  options: BotOptions = {}
+  _options: BotOptions = {}
 ): Promise<BotResult> {
   console.warn('generateBotMove: Legacy function called. Use generateBotMoveWithDependencies instead.');
   

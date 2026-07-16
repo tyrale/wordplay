@@ -175,6 +175,7 @@ export function calculateScore(
   // Handle edge cases
   if (!previousWord || !currentWord) {
     return {
+      score: 0,
       totalScore: 0,
       breakdown: {
         addLetterPoints: 0,
@@ -183,6 +184,8 @@ export function calculateScore(
         keyLetterUsagePoints: 0,
       },
       actions: [],
+      keyLetterScore: 0,
+      baseScore: 0,
       keyLettersUsed: []
     };
   }
@@ -234,7 +237,12 @@ export function calculateScore(
   return {
     score: totalScore,
     totalScore,
-    breakdown: actions,
+    breakdown: {
+      addLetterPoints,
+      removeLetterPoints,
+      movePoints,
+      keyLetterUsagePoints,
+    },
     actions: actions.map(action => ({
       type: action.includes('Added') ? 'add' : 
             action.includes('Removed') ? 'remove' :
@@ -353,24 +361,6 @@ function findLongestCommonSubsequence(str1: string, str2: string): string {
   }
   
   return lcs;
-}
-
-/**
- * Extracts a subsequence from a word, preserving order.
- * Example: extractSubsequence("REAR", "EAR") -> "EAR"
- */
-function extractSubsequence(word: string, subsequence: string): string {
-  let subIndex = 0;
-  let result = '';
-  
-  for (const char of word) {
-    if (subIndex < subsequence.length && char === subsequence[subIndex]) {
-      result += char;
-      subIndex++;
-    }
-  }
-  
-  return result;
 }
 
 /**
@@ -504,23 +494,7 @@ export function calculateScoreWithDependencies(
   toWord: string,
   options: { keyLetters?: string[] } = {}
 ): ScoringResult {
-  const legacyResult = calculateScore(fromWord, toWord, options);
-  
-  // Convert legacy result to new interface format
-  return {
-    score: legacyResult.totalScore,
-    totalScore: legacyResult.totalScore,
-    breakdown: legacyResult.actions,
-    actions: legacyResult.actions.map(action => ({
-      type: action.includes('Added') ? 'add' : 
-            action.includes('Removed') ? 'remove' :
-            action.includes('Moved') ? 'rearrange' :
-            action.includes('key letter') ? 'key-letter' : 'substitute',
-      score: 1
-    })),
-    keyLetterScore: legacyResult.breakdown.keyLetterUsagePoints,
-    baseScore: legacyResult.totalScore - legacyResult.breakdown.keyLetterUsagePoints
-  };
+  return calculateScore(fromWord, toWord, options);
 }
 
 /**

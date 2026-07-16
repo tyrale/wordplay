@@ -36,6 +36,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   // Suppress unused variable warnings - kept for interface compatibility
   void maxLength;
   void minLength;
+  void className;
   
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -70,11 +71,22 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       }
     };
 
-    // Add non-passive touch event listener
+    // React's JSX onTouchEnd is passive by default (React 17+), so it cannot
+    // call preventDefault(). Without it, the browser fires a compatibility
+    // mousedown/mouseup/click sequence after touchend, which re-triggers
+    // handleLetterClick a second time and removes an extra letter. A
+    // non-passive native listener lets us suppress those ghost mouse events.
+    const handleNativeTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+
+    // Add non-passive touch event listeners
     container.addEventListener('touchmove', handleNativeTouchMove, { passive: false });
+    container.addEventListener('touchend', handleNativeTouchEnd, { passive: false });
 
     return () => {
       container.removeEventListener('touchmove', handleNativeTouchMove);
+      container.removeEventListener('touchend', handleNativeTouchEnd);
     };
   }, [isDragging]);
 
@@ -145,7 +157,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     }
   }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
 
-  const handleMouseUp = useCallback((e: React.MouseEvent) => {
+  const handleMouseUp = useCallback((_e: React.MouseEvent) => {
     if (draggedIndex === null || inputMethodRef.current !== 'mouse') {
       return;
     }

@@ -54,7 +54,7 @@ export async function shareContent(data: ShareData): Promise<ShareResult> {
         success: true,
         method: 'native'
       };
-    } catch (error) {
+    } catch {
       // User cancelled or share failed, fall back to clipboard
       console.log('Web Share cancelled or failed, trying clipboard');
     }
