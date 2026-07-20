@@ -86,6 +86,19 @@ describe('Unlock Engine', () => {
       expect(unlockEngine.isUnlocked('mechanic', '5-letter-start')).toBe(true);
     });
 
+    it('should unlock the gravity mechanic with the "falls" word trigger', async () => {
+      const results = await unlockEngine.checkWordTriggers('falls');
+
+      expect(results).toHaveLength(1);
+      expect(results[0]).toMatchObject({
+        category: 'mechanic',
+        target: 'gravity',
+        wasAlreadyUnlocked: false
+      });
+
+      expect(unlockEngine.isUnlocked('mechanic', 'gravity')).toBe(true);
+    });
+
     it('should unlock bots with word triggers', async () => {
       const results = await unlockEngine.checkWordTriggers('pirate');
       

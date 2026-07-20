@@ -66,6 +66,7 @@ describe('Bot Registry', () => {
     expect(botIds).toContain('medium-bot');
     expect(botIds).toContain('hard-bot');
     expect(botIds).toContain('pirate-bot');
-    expect(botIds).toContain('chaos-bot');
+    expect(botIds).toContain('expert-bot');
+    expect(botIds).toContain('noob-bot');
   });
 }); 

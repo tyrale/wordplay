@@ -117,6 +117,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // Time-pressure mechanic: unlocked via the "time" word and toggled on in the mechanics menu
   const isTimePressureOn = unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
 
+  // Gravity mechanic: unlocked via the "gravity" word and toggled on in the mechanics menu.
+  // Makes the alphabet grid letters fall and roll freely around the viewport.
+  const isGravityOn = unlockedMechanics.includes('gravity') && isMechanicOn('gravity');
+
   // Game state management
   const {
     gameState,
@@ -648,6 +652,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 onLetterDragEnd={handleLetterDragEnd}
                 disabled={!isPlayerTurn || isProcessingMove}
                 enableDrag={true} // Enable drag for mobile and desktop
+                gravityEnabled={isGravityOn}
               />
             </div>
           </div>

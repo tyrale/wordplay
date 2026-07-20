@@ -10,7 +10,8 @@ ALTER DATABASE postgres SET row_security = on;
 -- USERS table (extends Supabase auth.users)
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
-    email TEXT NOT NULL,
+    -- Nullable: anonymous players (used for multiplayer) have no email.
+    email TEXT,
     username TEXT UNIQUE,
     display_name TEXT,
     avatar_url TEXT,
@@ -170,11 +171,14 @@ CREATE TRIGGER update_games_updated_at BEFORE UPDATE ON public.games
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.users (id, email, username)
+    -- NEW.email is NULL for anonymous sign-ins (used for multiplayer);
+    -- fall back to a generic display name instead of the (missing) email.
+    INSERT INTO public.users (id, email, username, display_name)
     VALUES (
         NEW.id,
         NEW.email,
-        COALESCE(NEW.raw_user_meta_data->>'username', NEW.email)
+        COALESCE(NEW.raw_user_meta_data->>'username', NEW.email, 'Player-' || substr(NEW.id::text, 1, 8)),
+        COALESCE(NEW.raw_user_meta_data->>'display_name', 'Player')
     );
     RETURN NEW;
 END;

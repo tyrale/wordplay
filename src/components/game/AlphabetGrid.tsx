@@ -1,6 +1,7 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { GridCell } from '../ui/GridCell';
 import type { GridCellState } from '../ui/GridCell';
+import { GravityLetterGrid } from './GravityLetterGrid';
 import './AlphabetGrid.css';
 
 export interface LetterState {
@@ -16,7 +17,26 @@ export interface AlphabetGridProps {
   onLetterDragEnd?: () => void;
   disabled?: boolean;
   enableDrag?: boolean;
+  /** When true, letters fall under simulated gravity and roll freely instead of sitting in the fixed grid */
+  gravityEnabled?: boolean;
 }
+
+// Detects the user's reduced-motion preference so the gravity effect can be skipped for them.
+const usePrefersReducedMotion = (): boolean => {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  return prefersReducedMotion;
+};
 
 // Default alphabet layout
 const ALPHABET_GRID = [
@@ -37,8 +57,11 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   onLetterDragStart,
   onLetterDragEnd,
   disabled = false,
-  enableDrag = true
+  enableDrag = true,
+  gravityEnabled = false
 }) => {
+  const prefersReducedMotion = usePrefersReducedMotion();
+
   // Create a map for quick lookup of letter states
   const stateMap = letterStates.reduce((acc, { letter, state }) => {
     acc[letter] = state;
@@ -157,6 +180,19 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
     
     return `${baseLabel} (draggable)`;
   };
+
+  // Gravity mode replaces the fixed grid layout with letters that fall and roll
+  // freely around the viewport. Skipped for users who prefer reduced motion.
+  if (gravityEnabled && !prefersReducedMotion) {
+    return (
+      <GravityLetterGrid
+        letterStates={letterStates}
+        onLetterClick={onLetterClick}
+        onActionClick={onActionClick}
+        disabled={disabled}
+      />
+    );
+  }
 
   return (
     <div 

@@ -614,6 +614,93 @@ export interface MoveAttempt {
 // Event system for state change notifications
 export type GameStateListener = (update: GameStateUpdate) => void;
 
+/**
+ * Remote Multiplayer (vs Human) Interfaces
+ *
+ * Platform-agnostic contracts for the async, turn-based "vs human" game
+ * manager (`RemoteGameStateManager` in `remoteGamestate.ts`). Mirrors the
+ * shape of `GameStateDependencies` but talks to a persisted, shared game
+ * (e.g. Supabase) instead of an in-memory bot.
+ */
+
+export interface RemoteGameTurnRecord {
+  turnNumber: number;
+  playerId: string;
+  previousWord: string;
+  newWord: string;
+  scoreEarned: number;
+  keyLetterUsed: string | null;
+  timestamp: number;
+}
+
+export interface RemoteGamePlayerInfo {
+  /** Matches the platform's user id (e.g. Supabase auth.uid()) */
+  id: string;
+  name: string;
+  playerIndex: number;
+  score: number;
+}
+
+export type RemoteGameStatus = 'waiting' | 'active' | 'completed' | 'abandoned';
+
+export interface RemoteGameSnapshot {
+  gameId: string;
+  status: RemoteGameStatus;
+  currentWord: string;
+  usedWords: string[];
+  keyLetters: string[];
+  lockedLetters: string[];
+  lockedKeyLetters: string[];
+  currentTurn: number;
+  currentPlayerIndex: number;
+  maxTurns: number;
+  players: RemoteGamePlayerInfo[];
+  turnHistory: RemoteGameTurnRecord[];
+  winnerId: string | null;
+}
+
+export interface RemoteGameUpdatedFields {
+  currentWord: string;
+  keyLetters: string[];
+  lockedLetters: string[];
+  lockedKeyLetters: string[];
+  usedWords: string[];
+  currentTurn: number;
+  currentPlayerIndex: number;
+  status: RemoteGameStatus;
+  winnerId: string | null;
+}
+
+export interface RemoteGameDependencies {
+  /** Get the local player's platform user id (must be stable/authenticated) */
+  getLocalPlayerId(): string;
+
+  /** Fetch the full current state of a game (players + turn history) */
+  fetchGame(gameId: string): Promise<RemoteGameSnapshot>;
+
+  /**
+   * Persist a completed move: writes a turn record and the resulting
+   * derived game fields. Implementations should perform this as close to
+   * atomically as the platform allows (e.g. a single RPC/transaction).
+   */
+  persistMove(
+    gameId: string,
+    turn: RemoteGameTurnRecord,
+    updatedFields: RemoteGameUpdatedFields
+  ): Promise<void>;
+
+  /**
+   * Subscribe to remote changes (opponent moves) for this game.
+   * `onChange` should be called whenever the remote game may have changed;
+   * the manager re-fetches and reconciles rather than trusting push payloads.
+   * Returns an unsubscribe function.
+   */
+  subscribeToGame(gameId: string, onChange: () => void): () => void;
+
+  /** Mark the game abandoned (resign/forfeit) */
+  abandonGame(gameId: string, resigningPlayerId: string): Promise<void>;
+}
+
 export interface IGameStateManager {
   subscribe(listener: (update: GameStateUpdate) => void): () => void;
   getState(): GameState;
@@ -628,6 +715,7 @@ export interface IGameStateManager {
   removeKeyLetter(letter: string): void;
   addLockedLetter(letter: string): void;
   removeLockedLetter(letter: string): void;
+  loadState(state: GameState): void;
 }
 
 /**

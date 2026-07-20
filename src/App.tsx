@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { ThemeProvider, InteractiveGame, MainScreen } from './components';
+import { ThemeProvider, InteractiveGame, MainScreen, MultiplayerLobby, MultiplayerGame } from './components';
 import { ChallengeGame } from './components/challenge/ChallengeGame';
 import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
+import { TUTORIAL_INITIAL_CONFIG } from './components/tutorial/tutorialSteps';
 import { ConfirmationDialog } from './components/ui/ConfirmationDialog';
 import { AnimationProvider } from './animations';
 import { UnlockProvider } from './components/unlock/UnlockProvider';
@@ -12,10 +13,12 @@ import { AlertOverlay } from './components/ui/AlertOverlay';
 import { alertCopy, pickAlertVariant } from './content/alertCopy';
 import { getBotDisplayName } from './data/botRegistry';
 import { initViewportHeight } from './utils/viewportHeight';
+import { hasSeenTutorial, markTutorialSeen } from './utils/tutorialStorage';
 import { AlertProvider } from './components/ui/AlertProvider';
+import type { GameState } from '../packages/engine/interfaces';
 import './App.css';
 
-type AppState = 'main' | 'game' | 'challenge' | 'tutorial' | 'quitter' | 'winner' | 'loser';
+type AppState = 'main' | 'game' | 'challenge' | 'quitter' | 'winner' | 'loser' | 'multiplayer-lobby' | 'multiplayer-game';
 
 interface ConfirmationState {
   isVisible: boolean;
@@ -27,11 +30,17 @@ interface ConfirmationState {
 function App() {
   const [appState, setAppState] = useState<AppState>('main');
   const [selectedBotId, setSelectedBotId] = useState<string>('basicBot');
+  const [multiplayerGameId, setMultiplayerGameId] = useState<string | null>(null);
   const [gameResults, setGameResults] = useState<{
     winner: string | null;
     finalScores: { human: number; bot: number };
     botName?: string;
   } | null>(null);
+
+  // Tutorial: layered on top of a real bot game (not a separate game instance)
+  const [tutorialActive, setTutorialActive] = useState(false);
+  const [tutorialStepId, setTutorialStepId] = useState(1);
+  const [tutorialGameState, setTutorialGameState] = useState<GameState | null>(null);
   const [confirmationState, setConfirmationState] = useState<ConfirmationState>({
     isVisible: false,
     title: '',
@@ -52,6 +61,16 @@ function App() {
     setConfirmationState(prev => ({ ...prev, isVisible: false }));
   };
 
+  // Begins a fresh bot game with the tutorial layer active on top of it (used for
+  // first-time auto-trigger and for the "the basics" replay entry in the menu)
+  const beginTutorialGame = (botId: string) => {
+    setSelectedBotId(botId);
+    setTutorialStepId(1);
+    setTutorialGameState(null);
+    setTutorialActive(true);
+    setAppState('game');
+  };
+
   const handleStartGame = (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => {
     if (gameType === 'bot' && botId) {
       // Check if we need confirmation for game transition
@@ -61,17 +80,20 @@ function App() {
           `Do you want to exit the current challenge and start a new game with ${botId}?`,
           () => {
             setSelectedBotId(botId);
+            setTutorialActive(!hasSeenTutorial());
+            setTutorialStepId(1);
+            setTutorialGameState(null);
             setAppState('game');
             hideConfirmation();
           }
         );
-      } else if (appState === 'game') {
-        // Already in bot game - switch directly to new bot
-        setSelectedBotId(botId);
-        setAppState('game');
       } else {
-        // No current game, start directly
+        // Already in a bot game, or no current game - start/switch directly.
+        // Auto-trigger the tutorial the first time the user ever plays a bot.
         setSelectedBotId(botId);
+        setTutorialActive(!hasSeenTutorial());
+        setTutorialStepId(1);
+        setTutorialGameState(null);
         setAppState('game');
       }
     } else if (gameType === 'challenge') {
@@ -89,8 +111,8 @@ function App() {
         setAppState('challenge');
       }
     } else if (gameType === 'tutorial') {
-      // Always start tutorial directly (resets to step 1)
-      setAppState('tutorial');
+      // "the basics" in the menu - force-replay the tutorial on a fresh bot game
+      beginTutorialGame(selectedBotId);
     }
   };
 
@@ -111,6 +133,18 @@ function App() {
       // Tie - could show loser or custom tie screen, for now show loser
       setAppState('loser');
     }
+  };
+
+  // Tutorial layer: skipping or completing just removes the overlay/restrictions
+  // and marks it seen - the underlying bot game the user was already playing continues.
+  const handleTutorialSkip = () => {
+    markTutorialSeen();
+    setTutorialActive(false);
+  };
+
+  const handleTutorialComplete = () => {
+    markTutorialSeen();
+    setTutorialActive(false);
   };
 
   const handleChallengeComplete = (completed: boolean, stepCount: number) => {
@@ -134,6 +168,20 @@ function App() {
     setAppState('quitter');
   };
 
+  const handleStartMultiplayer = () => {
+    setAppState('multiplayer-lobby');
+  };
+
+  const handleMultiplayerGameReady = (gameId: string) => {
+    setMultiplayerGameId(gameId);
+    setAppState('multiplayer-game');
+  };
+
+  const handleMultiplayerExit = () => {
+    setMultiplayerGameId(null);
+    setAppState('main');
+  };
+
   const handleQuitterComplete = () => {
     // Return to main screen after quitter animation completes
     setAppState('main');
@@ -145,30 +193,6 @@ function App() {
       // Force re-render of challenge component by toggling state
       setAppState('main');
       setTimeout(() => setAppState('challenge'), 100);
-    }
-  };
-
-  const handleTutorialComplete = () => {
-    // Return to main screen after tutorial completion
-    setAppState('main');
-  };
-
-  const handleTutorialGameEnd = (winner: string | null, finalScores: { human: number; bot: number }) => {
-    // Tutorial game ended - store results and show appropriate overlay
-    setGameResults({
-      winner,
-      finalScores,
-      botName: 'Tutorial Bot' // Use a friendly name for tutorial bot
-    });
-    
-    // Show appropriate overlay based on winner
-    if (winner === 'human') {
-      setAppState('winner');
-    } else if (winner === 'bot') {
-      setAppState('loser');
-    } else {
-      // Tie - show loser overlay
-      setAppState('loser');
     }
   };
 
@@ -203,23 +227,48 @@ function App() {
             <AnimationProvider initialTheme="default">
               <ResponsiveTest>
               {appState === 'main' && (
-                <MainScreen onStartGame={handleStartGame} />
+                <MainScreen onStartGame={handleStartGame} onStartMultiplayer={handleStartMultiplayer} />
+              )}
+              {appState === 'multiplayer-lobby' && (
+                <MultiplayerLobby onGameReady={handleMultiplayerGameReady} onBack={handleMultiplayerExit} />
+              )}
+              {appState === 'multiplayer-game' && multiplayerGameId && (
+                <MultiplayerGame gameId={multiplayerGameId} onExit={handleMultiplayerExit} />
               )}
               {appState === 'game' && (
-                <InteractiveGame 
-                  config={{ 
-                    maxTurns: 20,
-                    allowBotPlayer: true,
-                    enableKeyLetters: true,
-                    enableLockedLetters: true,
-                    botId: selectedBotId
-                  }}
-                  onGameEnd={handleGameEnd}
-                  onResign={handleResign}
-                  onNavigateHome={handleNavigateHome}
-                  currentGameMode="bot"
-                  onStartGame={handleStartGame}
-                />
+                <div
+                  className={`game-screen${tutorialActive ? ' tutorial-active' : ''}`}
+                  data-tutorial-step={tutorialActive ? tutorialStepId : undefined}
+                >
+                  <InteractiveGame
+                    config={
+                      tutorialActive
+                        ? { ...TUTORIAL_INITIAL_CONFIG, botId: selectedBotId }
+                        : {
+                            maxTurns: 20,
+                            allowBotPlayer: true,
+                            enableKeyLetters: true,
+                            enableLockedLetters: true,
+                            botId: selectedBotId
+                          }
+                    }
+                    onGameEnd={handleGameEnd}
+                    onResign={handleResign}
+                    onNavigateHome={handleNavigateHome}
+                    currentGameMode="bot"
+                    onStartGame={handleStartGame}
+                    onGameStateChange={tutorialActive ? setTutorialGameState : undefined}
+                    disableLetterRemoval={tutorialActive && tutorialStepId === 3}
+                  />
+                  {tutorialActive && (
+                    <TutorialOverlay
+                      gameState={tutorialGameState}
+                      onSkip={handleTutorialSkip}
+                      onComplete={handleTutorialComplete}
+                      onStepChange={setTutorialStepId}
+                    />
+                  )}
+                </div>
               )}
               {appState === 'challenge' && (
                 <ChallengeGame
@@ -228,13 +277,6 @@ function App() {
                   onNavigateHome={handleNavigateHome}
                   onResetChallenge={handleResetChallenge}
                   onStartGame={handleStartGame}
-                />
-              )}
-              {appState === 'tutorial' && (
-                <TutorialOverlay
-                  onComplete={handleTutorialComplete}
-                  onNavigateHome={handleNavigateHome}
-                  onGameEnd={handleTutorialGameEnd}
                 />
               )}
               

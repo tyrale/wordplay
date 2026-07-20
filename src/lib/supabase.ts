@@ -65,7 +65,10 @@ export type Database = {
           created_by: string
           status: 'waiting' | 'active' | 'completed' | 'abandoned'
           game_mode: 'single_player' | 'multiplayer'
+          pairing_mode: 'invite' | 'matchmaking'
+          invite_code: string | null
           max_players: number
+          max_turns: number
           current_turn: number
           current_player_index: number
           target_score: number
@@ -76,6 +79,7 @@ export type Database = {
           word_history: string[]
           key_letters: string[]
           locked_letters: string[]
+          locked_key_letters: string[]
           created_at: string
           updated_at: string
           completed_at: string | null
@@ -85,7 +89,10 @@ export type Database = {
           created_by: string
           status?: 'waiting' | 'active' | 'completed' | 'abandoned'
           game_mode?: 'single_player' | 'multiplayer'
+          pairing_mode?: 'invite' | 'matchmaking'
+          invite_code?: string | null
           max_players?: number
+          max_turns?: number
           current_turn?: number
           current_player_index?: number
           target_score?: number
@@ -96,20 +103,36 @@ export type Database = {
           word_history?: string[]
           key_letters?: string[]
           locked_letters?: string[]
+          locked_key_letters?: string[]
           completed_at?: string | null
           winner_id?: string | null
         }
         Update: {
           status?: 'waiting' | 'active' | 'completed' | 'abandoned'
+          invite_code?: string | null
           current_turn?: number
           current_player_index?: number
           current_word?: string
           word_history?: string[]
           key_letters?: string[]
           locked_letters?: string[]
+          locked_key_letters?: string[]
           completed_at?: string | null
           winner_id?: string | null
         }
+      }
+      matchmaking_queue: {
+        Row: {
+          id: string
+          user_id: string
+          display_name: string
+          queued_at: string
+        }
+        Insert: {
+          user_id: string
+          display_name: string
+        }
+        Update: Record<string, never>
       }
       game_players: {
         Row: {

@@ -1,305 +1,127 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { InteractiveGame } from '../game/InteractiveGame';
-import { TutorialInstructions } from './TutorialInstructions';
-import type { GameState, GameConfig } from '../../../packages/engine/interfaces';
+import React, { useState, useEffect, useRef } from 'react';
+import type { GameState } from '../../../packages/engine/interfaces';
+import { TUTORIAL_STEPS } from './tutorialSteps';
+import type { TutorialState } from './tutorialSteps';
 import './TutorialOverlay.css';
 
-interface TutorialStep {
-  id: number;
-  instructions: string | string[];
-  constraints: TutorialConstraints;
-  completionCondition: (gameState: GameState | null, tutorialState: TutorialState) => boolean;
-}
-
-interface TutorialConstraints {
-  hiddenElements: string[];
-  disabledActions: string[];
-  forcedGameConfig: GameConfig;
-  letterOpacity: Record<string, number>;
-  allowedLetters?: string[];
-  disableLetterRemoval?: boolean;
-}
-
-interface TutorialState {
-  lastPendingWord: string;
-  submittedWords: string[];
-  lastTurnHistoryLength: number;
-}
-
-interface TutorialOverlayProps {
+export interface TutorialOverlayProps {
+  /** Live game state from the real InteractiveGame instance this overlay sits on top of */
+  gameState: GameState | null;
+  onSkip: () => void;
   onComplete: () => void;
-  onNavigateHome: () => void;
-  onGameEnd?: (winner: string | null, finalScores: { human: number; bot: number }) => void;
+  /** Called whenever the active step changes, so the parent can drive CSS restrictions + disableLetterRemoval */
+  onStepChange?: (stepId: number) => void;
 }
-
-const TUTORIAL_STEPS: TutorialStep[] = [
-  {
-    id: 1,
-    instructions: "add a letter",
-    constraints: {
-      hiddenElements: ['action-icons', 'key-letters'],
-      disabledActions: ['remove-letter', 'move-letter'],
-      forcedGameConfig: { 
-        initialWord: 'WORD',
-        maxTurns: 20,
-        allowBotPlayer: true,
-        enableKeyLetters: true,
-        enableLockedLetters: true,
-        botId: 'basicBot'
-      },
-      letterOpacity: { default: 0.3, S: 1.0 },
-      allowedLetters: ['S']
-    },
-    completionCondition: (gameState, tutorialState: TutorialState) => {
-      // Step 1 completes when user has "WORDS" in their pending word
-      return tutorialState.lastPendingWord === 'WORDS' || 
-             Boolean(gameState && gameState.currentWord === 'WORDS');
-    }
-  },
-  {
-    id: 2,
-    instructions: ["add a letter", "remove a letter"],
-    constraints: {
-      hiddenElements: ['action-icons', 'key-letters'],
-      disabledActions: ['move-letter'],
-      forcedGameConfig: { 
-        initialWord: 'WORDS',
-        maxTurns: 20,
-        allowBotPlayer: true,
-        enableKeyLetters: true,
-        enableLockedLetters: true,
-        botId: 'basicBot'
-      },
-      letterOpacity: {},
-      allowedLetters: []
-    },
-    completionCondition: (gameState, tutorialState: TutorialState) => {
-      // Step 2 completes when user has "WORS" in their pending word (removed D)
-      return tutorialState.lastPendingWord === 'WORS' || 
-             Boolean(gameState && gameState.currentWord === 'WORS');
-    }
-  },
-  {
-    id: 3,
-    instructions: ["add a letter", "remove a letter", "move to spell ROWS", "tap to submit"],
-    constraints: {
-      hiddenElements: ['action-icons', 'key-letters'],
-      disabledActions: [],
-      forcedGameConfig: { 
-        initialWord: 'WORS',
-        maxTurns: 20,
-        allowBotPlayer: true,
-        enableKeyLetters: true,
-        enableLockedLetters: true,
-        botId: 'basicBot'
-      },
-      letterOpacity: {},
-      allowedLetters: [],
-      disableLetterRemoval: true
-    },
-    completionCondition: (_gameState, tutorialState: TutorialState) => {
-      // Step 3 completes when user has "ROWS" in their submitted words
-      return tutorialState.submittedWords.includes('ROWS');
-    }
-  },
-  {
-    id: 4,
-    instructions: ["key letter +1", "& locked next turn", "", "15 turns each", "high score wins"],
-    constraints: {
-      hiddenElements: [], // No hidden elements - full game experience
-      disabledActions: [], // No disabled actions - full game experience
-      forcedGameConfig: { 
-        initialWord: '', // Continue from Step 3 result
-        maxTurns: 15, // Real game turn limit
-        allowBotPlayer: true,
-        enableKeyLetters: true,
-        enableLockedLetters: true,
-        botId: 'basicBot'
-      },
-      letterOpacity: {}, // No opacity constraints - full game experience
-      allowedLetters: [], // No letter restrictions - full game experience
-      disableLetterRemoval: false // Full letter removal enabled
-    },
-    completionCondition: (_gameState, tutorialState: TutorialState) => {
-      // Step 4 completes when user has submitted a word after Step 3 completion
-      // We track this by checking if the human submitted words has grown beyond just "ROWS"
-      return tutorialState.submittedWords.includes('ROWS') && 
-             tutorialState.submittedWords.length >= 2; // At least ROWS + one more human word
-    }
-  },
-  {
-    id: 5,
-    instructions: ["thanks & have fun"],
-    constraints: {
-      hiddenElements: [], // No hidden elements - full game experience
-      disabledActions: [], // No disabled actions - full game experience
-      forcedGameConfig: { 
-        initialWord: '', // Continue from Step 4 result
-        maxTurns: 15, // Real game turn limit
-        allowBotPlayer: true,
-        enableKeyLetters: true,
-        enableLockedLetters: true,
-        botId: 'basicBot'
-      },
-      letterOpacity: {}, // No opacity constraints - full game experience
-      allowedLetters: [], // No letter restrictions - full game experience
-      disableLetterRemoval: false // Full letter removal enabled
-    },
-    completionCondition: (_gameState, tutorialState: TutorialState) => {
-      // Step 5 completes when user submits any word (tutorial ends)
-      return tutorialState.submittedWords.includes('ROWS') && 
-             tutorialState.submittedWords.length >= 3; // At least ROWS + 2 more human words
-    }
-  }
-];
 
 export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
+  gameState,
+  onSkip,
   onComplete,
-  onNavigateHome,
-  onGameEnd
+  onStepChange
 }) => {
-  const [currentStep, setCurrentStep] = useState<number>(1);
-  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [tutorialState, setTutorialState] = useState<TutorialState>({
     lastPendingWord: '',
     submittedWords: [],
     lastTurnHistoryLength: 0
   });
-  const [tutorialComplete, setTutorialComplete] = useState<boolean>(false);
-  
+  const isAdvancingRef = useRef(false);
 
-  const currentTutorialStep = TUTORIAL_STEPS.find(step => step.id === currentStep);
+  const currentStep = TUTORIAL_STEPS[currentStepIndex];
 
-  // Enhanced game state change handler that tracks submitted words
-  const handleGameStateChange = useCallback((newGameState: GameState) => {
-    setGameState(newGameState);
-    
-    // Track submitted words using turn history
-    if (newGameState && newGameState.turnHistory) {
-      const currentTurnHistoryLength = newGameState.turnHistory.length;
-      
-      if (currentTurnHistoryLength > tutorialState.lastTurnHistoryLength) {
-        // New word(s) have been submitted - only count human player moves
-        const newSubmittedWords = newGameState.turnHistory
-          .slice(tutorialState.lastTurnHistoryLength)
-          .filter((turn) => turn.playerId === 'human')
-          .map((turn) => turn.newWord);
-        
-        // Track human word submissions for tutorial progression
-        
-        setTutorialState((prev: TutorialState) => ({
-          ...prev,
-          submittedWords: [...prev.submittedWords, ...newSubmittedWords],
-          lastTurnHistoryLength: currentTurnHistoryLength
-        }));
-      }
-    }
-    
-    // Track the pending word by monitoring the word builder
-    const wordBuilderElement = document.querySelector('.word-builder');
-    if (wordBuilderElement) {
-      const letters = wordBuilderElement.querySelectorAll('.word-builder__letter');
-      const currentPendingWord = Array.from(letters).map(letter => letter.textContent).join('');
-      
-      if (currentPendingWord && currentPendingWord !== tutorialState.lastPendingWord) {
-        setTutorialState((prev: TutorialState) => ({
-          ...prev,
-          lastPendingWord: currentPendingWord
-        }));
-      }
-    }
-  }, [tutorialState.lastPendingWord, tutorialState.lastTurnHistoryLength]);
-
-  // Monitor for step completion
+  // Notify parent of step changes (drives wrapper CSS class + disableLetterRemoval)
   useEffect(() => {
-    if (currentTutorialStep && gameState && tutorialState.lastPendingWord) {
-      const isStepComplete = currentTutorialStep.completionCondition(gameState, tutorialState);
-      
-      // Check tutorial step completion
-      
-      if (isStepComplete && !tutorialComplete) {
-        // Step completed, advance tutorial
-        
-        if (currentStep < TUTORIAL_STEPS.length) {
-          // Move to next step
-          setTimeout(() => {
-            setCurrentStep(currentStep + 1);
-            // Move to next tutorial step
-          }, 500); // Small delay to ensure the user sees the completion
-        } else {
-          // Tutorial complete - just hide instructions, same game continues
-          setTimeout(() => {
-            setTutorialComplete(true);
-            // Tutorial instructions hidden, same game continues
-          }, 1000); // Give user time to see the "thanks & have fun" message
-        }
-      }
-    }
-  }, [gameState, tutorialState, currentStep, currentTutorialStep, tutorialComplete]);
+    onStepChange?.(currentStep.id);
+  }, [currentStep.id, onStepChange]);
 
-  // Additional DOM monitoring for more reliable tracking
+  // Track newly submitted words from the real game's turn history
   useEffect(() => {
-    const checkPendingWord = () => {
-      const wordBuilderElement = document.querySelector('.word-builder');
-      if (wordBuilderElement) {
-        const letters = wordBuilderElement.querySelectorAll('.word-builder__letter');
-        const currentPendingWord = Array.from(letters).map(letter => letter.textContent).join('');
-        
-        if (currentPendingWord && currentPendingWord !== tutorialState.lastPendingWord) {
-          // Track pending word changes for early steps completion
-          setTutorialState((prev: TutorialState) => ({
-            ...prev,
-            lastPendingWord: currentPendingWord
-          }));
-        }
+    if (!gameState?.turnHistory) return;
+
+    const historyLength = gameState.turnHistory.length;
+    if (historyLength <= tutorialState.lastTurnHistoryLength) return;
+
+    const newWords = gameState.turnHistory
+      .slice(tutorialState.lastTurnHistoryLength)
+      .filter((turn) => turn.playerId === 'human')
+      .map((turn) => turn.newWord);
+
+    if (newWords.length > 0) {
+      setTutorialState((prev) => ({
+        ...prev,
+        submittedWords: [...prev.submittedWords, ...newWords],
+        lastTurnHistoryLength: historyLength
+      }));
+    } else {
+      setTutorialState((prev) => ({ ...prev, lastTurnHistoryLength: historyLength }));
+    }
+  }, [gameState, tutorialState.lastTurnHistoryLength]);
+
+  // Poll the live DOM for the in-progress word (drives step completion checks below).
+  // Polling (rather than mutation observers) keeps this resilient to re-renders in InteractiveGame.
+  useEffect(() => {
+    const poll = () => {
+      const wordBuilderLetters = document.querySelectorAll('.word-builder__letter');
+      if (wordBuilderLetters.length > 0) {
+        const word = Array.from(wordBuilderLetters)
+          .map((el) => el.textContent || '')
+          .join('');
+        setTutorialState((prev) => (word && word !== prev.lastPendingWord ? { ...prev, lastPendingWord: word } : prev));
       }
     };
 
-    // Check immediately and then set up periodic checking
-    checkPendingWord();
-    const interval = setInterval(checkPendingWord, 200);
+    poll();
+    const intervalId = setInterval(poll, 150);
 
-    return () => clearInterval(interval);
-  }, [tutorialState.lastPendingWord]);
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
 
-  const handleGameEnd = useCallback((winner: string | null, finalScores: { human: number, bot: number }) => {
-    // Game ended naturally - let InteractiveGame show winner/loser screen
-    // User can then click "Home" button to return to main menu
-    console.log('[Tutorial] Game ended - winner:', winner, 'scores:', finalScores);
-    onGameEnd?.(winner, finalScores);
-  }, [onGameEnd]);
+  // Advance to the next step (or complete the tutorial) once the current step's condition is met
+  useEffect(() => {
+    if (isAdvancingRef.current) return;
+    if (!currentStep.completionCondition(gameState, tutorialState)) return;
 
-  const handleResign = useCallback(() => {
-    // Allow resignation from tutorial
-    onComplete();
-  }, [onComplete]);
+    isAdvancingRef.current = true;
+    const isLastStep = currentStepIndex === TUTORIAL_STEPS.length - 1;
 
-  if (!currentTutorialStep) {
-    return null;
-  }
+    const timeoutId = setTimeout(() => {
+      if (isLastStep) {
+        onComplete();
+      } else {
+        setCurrentStepIndex((prev) => prev + 1);
+        isAdvancingRef.current = false;
+      }
+    }, isLastStep ? 1200 : 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [gameState, tutorialState, currentStep, currentStepIndex, onComplete]);
 
   return (
     <div className="tutorial-overlay">
-      {/* Tutorial Instructions - hidden after tutorial completes */}
-      {!tutorialComplete && (
-        <TutorialInstructions 
-          text={currentTutorialStep.instructions}
-        />
-      )}
-      
-      {/* Game - keep step styling even after tutorial completes */}
-      <div className={`tutorial-overlay__game tutorial-overlay--step-${currentStep}`}>
-        <InteractiveGame
-          config={currentTutorialStep.constraints.forcedGameConfig}
-          onGameEnd={handleGameEnd}
-          onResign={handleResign}
-          onNavigateHome={onNavigateHome}
-          currentGameMode="tutorial"
-          onStartGame={() => {}} // Disable game switching during tutorial
-          onGameStateChange={handleGameStateChange}
-          disableLetterRemoval={currentStep === 3}
-        />
+      <div className="tutorial-overlay__banner">
+        <div className="tutorial-overlay__progress">
+          {TUTORIAL_STEPS.map((step, index) => (
+            <span
+              key={step.id}
+              className={`tutorial-overlay__dot ${index <= currentStepIndex ? 'tutorial-overlay__dot--active' : ''}`}
+            />
+          ))}
+        </div>
+
+        <div className="tutorial-overlay__lines">
+          {currentStep.banner.map((line, index) => (
+            <div key={index} className="tutorial-overlay__line">
+              {line}
+            </div>
+          ))}
+        </div>
+
+        <button className="tutorial-overlay__skip" onClick={onSkip} type="button">
+          Skip tutorial
+        </button>
       </div>
     </div>
   );
-}; 
+};

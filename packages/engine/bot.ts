@@ -294,6 +294,52 @@ function generateNoobBotMove(currentWord: string, dependencies: BotDependencies,
   };
 }
 
+// Uncommon letters (least frequent end of the COMMON_LETTERS table) used by expert bot
+const UNCOMMON_LETTERS = new Set(COMMON_LETTERS.slice(-10)); // G, Y, P, B, V, K, J, X, Q, Z
+
+// Counts how many letters in the word are considered "uncommon" (e.g. B, J, P, Q, ...)
+function countUncommonLetters(word: string): number {
+  return word.split('').filter(letter => UNCOMMON_LETTERS.has(letter)).length;
+}
+
+// Counts how many distinct letters appear 2+ times in the word (e.g. TREES has 2 E's -> 1 doubled letter)
+function countDoubledLetters(word: string): number {
+  const counts = new Map<string, number>();
+  for (const letter of word) {
+    counts.set(letter, (counts.get(letter) || 0) + 1);
+  }
+  return [...counts.values()].filter(count => count >= 2).length;
+}
+
+// Expert bot - among valid candidate moves, prioritizes uncommon letters (B, J, P, Q, etc.)
+// and doubled letters (e.g. TREES) in addition to the base greedy score.
+function selectExpertBotMove(scoredMoves: BotMove[]): BotMove | null {
+  if (scoredMoves.length === 0) return null;
+
+  const ranked = scoredMoves
+    .map(move => ({
+      move,
+      priority: move.score
+        + countUncommonLetters(move.word) * 0.5
+        + countDoubledLetters(move.word) * 0.3
+    }))
+    .sort((a, b) => b.priority - a.priority);
+
+  const best = ranked[0].move;
+  const uncommonCount = countUncommonLetters(best.word);
+  const doubledCount = countDoubledLetters(best.word);
+
+  if (uncommonCount > 0 || doubledCount > 0) {
+    best.reasoning = [
+      ...best.reasoning,
+      uncommonCount > 0 ? `Uses ${uncommonCount} uncommon letter(s)` : '',
+      doubledCount > 0 ? `Uses ${doubledCount} doubled letter(s)` : ''
+    ].filter(Boolean);
+  }
+
+  return best;
+}
+
 // Add a new strategy for pirate bot - prioritizes profanity/bad words
 function filterPirateBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string): MoveCandidate[] {
   // First, look for candidates that result in profanity words
@@ -380,8 +426,10 @@ export function generateBotMoveWithDependencies(
   // Score valid candidates using dependency injection
   const scoredCandidates = scoreCandidatesWithDependencies(filteredCandidates, currentWord, dependencies, keyLetters);
 
-  // Choose best move
-  const bestMove = scoredCandidates.length > 0 ? scoredCandidates[0] : null;
+  // Choose best move - expert bot re-ranks by uncommon/doubled letter usage on top of score
+  const bestMove = botId === 'expert-bot'
+    ? selectExpertBotMove(scoredCandidates)
+    : (scoredCandidates.length > 0 ? scoredCandidates[0] : null);
 
   const processingTime = performance.now() - startTime;
 

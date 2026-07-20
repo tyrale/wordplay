@@ -636,6 +636,22 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
   }
 
   /**
+   * Replace the current in-memory state with a previously persisted one
+   * (e.g. restored from IndexedDB after a page refresh). Notifies listeners
+   * so subscribed UI immediately reflects the restored state.
+   */
+  public loadState(state: GameState): void {
+    this.state = state;
+    this.botMoveInProgress = false;
+
+    this.notifyListeners({
+      type: 'state_restored',
+      data: { gameStatus: this.state.gameStatus },
+      timestamp: Date.now()
+    });
+  }
+
+  /**
    * Reset game to initial state
    */
   public resetGame(newConfig?: GameConfig): void {

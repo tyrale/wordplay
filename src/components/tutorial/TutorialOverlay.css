@@ -1,225 +1,147 @@
+/* ===== Overlay layer (instruction banner only - no darkening scrim) ===== */
+
 .tutorial-overlay {
-  width: 100%;
-  height: 100vh;
-  position: relative;
-  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  pointer-events: none;
 }
 
-.tutorial-overlay__game {
-  width: 100%;
-  height: 100%;
-}
-
-/* Tutorial Step 1 Constraints */
-
-/* Hide action icons in alphabet grid during step 1 */
-.tutorial-overlay--step-1 .grid-cell--action {
-  display: none;
-}
-
-/* Apply letter opacity constraints for step 1 only */
-.tutorial-overlay--step-1 .alphabet-grid .grid-cell--letter {
-  opacity: 0.3 !important;
-}
-
-/* Full opacity for S letter only in step 1 */
-.tutorial-overlay--step-1 .alphabet-grid .grid-cell[data-letter="S"] {
-  opacity: 1 !important;
-}
-
-/* Hide key letter styling (force base color) in step 1 */
-.tutorial-overlay--step-1 .grid-cell--key {
-  background-color: var(--theme-background) !important;
-  color: var(--theme-text) !important;
-}
-
-/* Disable interaction for non-S letters in step 1 */
-.tutorial-overlay--step-1 .alphabet-grid .grid-cell--letter:not([data-letter="S"]) {
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-/* Disable word builder letter removal in step 1 */
-.tutorial-overlay--step-1 .word-builder__letter {
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-/* Disable drag and drop in step 1 */
-.tutorial-overlay--step-1 .grid-cell--letter[draggable] {
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-/* Re-enable S letter interaction in step 1 */
-.tutorial-overlay--step-1 .alphabet-grid .grid-cell[data-letter="S"] {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-}
-
-/* Disable score display interaction in step 1 */
-.tutorial-overlay--step-1 .interactive-game__score {
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-/* Disable all ScoreDisplay component interactions in step 1 */
-.tutorial-overlay--step-1 .score-display {
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-/* Disable submit anchor interactions in step 1 */
-.tutorial-overlay--step-1 .interactive-game__submit-anchor {
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-/* Tutorial Step 2 Constraints */
-
-/* Hide action icons in alphabet grid during step 2 */
-.tutorial-overlay--step-2 .grid-cell--action {
-  display: none;
-}
-
-/* Hide key letter styling (force base color) in step 2 */
-.tutorial-overlay--step-2 .grid-cell--key {
-  background-color: var(--theme-background) !important;
-  color: var(--theme-text) !important;
-}
-
-/* Disable score display interaction in step 2 */
-.tutorial-overlay--step-2 .interactive-game__score {
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-/* Disable all ScoreDisplay component interactions in step 2 */
-.tutorial-overlay--step-2 .score-display {
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-/* Disable submit anchor interactions in step 2 */
-.tutorial-overlay--step-2 .interactive-game__submit-anchor {
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-/* COMPLETELY DISABLE alphabet grid in step 2 - user should only interact with word builder */
-.tutorial-overlay--step-2 .alphabet-grid .grid-cell {
-  pointer-events: none !important;
-  cursor: default !important;
-  opacity: 0.3 !important;
-}
-
-/* Word builder constraints for step 2 - dim W, O, R, S and disable interactions */
-.tutorial-overlay--step-2 .word-builder__letter[data-letter-index="0"] {
-  opacity: 0.3 !important;
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-.tutorial-overlay--step-2 .word-builder__letter[data-letter-index="1"] {
-  opacity: 0.3 !important;
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-.tutorial-overlay--step-2 .word-builder__letter[data-letter-index="2"] {
-  opacity: 0.3 !important;
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-.tutorial-overlay--step-2 .word-builder__letter[data-letter-index="4"] {
-  opacity: 0.3 !important;
-  pointer-events: none !important;
-  cursor: default !important;
-}
-
-/* Keep D letter (index 3) fully interactive in step 2 */
-.tutorial-overlay--step-2 .word-builder__letter[data-letter-index="3"] {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  cursor: pointer !important;
-}
-
-/* Tutorial Step 3 - Normal game play with hidden action icons and key letters */
-.tutorial-overlay--step-3 .grid-cell--action {
-  display: none;
-}
-
-.tutorial-overlay--step-3 .grid-cell--key {
-  background-color: var(--theme-background) !important;
-  color: var(--theme-text) !important;
-}
-
-/* Step 3: Disable alphabet grid interactions - only word rearrangement allowed */
-.tutorial-overlay--step-3 .alphabet-grid .grid-cell {
-  pointer-events: none !important;
-  cursor: default !important;
-  opacity: 0.3 !important;
-}
-
-/* Step 3: Word builder letters - prevent click but allow drag */
-.tutorial-overlay--step-3 .word-builder__letter {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  cursor: grab !important;
-  user-select: none !important;
-}
-
-/* Step 3: Visual feedback during drag */
-.tutorial-overlay--step-3 .word-builder__letter:active {
-  cursor: grabbing !important;
-}
-
-/* Step 3: Disable click events via JavaScript interception */
-.tutorial-overlay--step-3 .word-builder__letter {
-  --tutorial-disable-click: true;
-}
-
-/* Step 3: Enable score interactions */
-.tutorial-overlay--step-3 .interactive-game__score {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-}
-
-.tutorial-overlay--step-3 .score-display {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-}
-
-.tutorial-overlay--step-3 .interactive-game__submit-anchor {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-}
-
-/* Step 4: Full game experience - NO constraints, let game render naturally */
-/* No CSS rules needed - Step 4 should have zero tutorial interference */
-
-/* Tutorial Step 5+ - Full opacity for all letters in alphabet grid */
-.tutorial-overlay--step-5 .alphabet-grid .grid-cell--letter,
-.tutorial-overlay--step-6 .alphabet-grid .grid-cell--letter {
-  opacity: 1 !important;
-}
-
-/* Tutorial complete state - remove all constraints */
-.tutorial-overlay--complete .grid-cell--action {
+.tutorial-overlay__banner {
+  position: fixed;
+  top: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 950;
+  pointer-events: auto;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: var(--theme-background);
+  border: 1px solid var(--theme-accent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  max-width: 90vw;
 }
 
-.tutorial-overlay--complete .grid-cell--letter {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  cursor: pointer !important;
+.tutorial-overlay__progress {
+  display: flex;
+  gap: 6px;
 }
 
-/* Removed key letter styling - let normal game styling apply */
+.tutorial-overlay__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--theme-text);
+  opacity: 0.25;
+}
 
-.tutorial-overlay--complete .word-builder__letter {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  cursor: pointer !important;
-} 
+.tutorial-overlay__dot--active {
+  background: var(--theme-accent);
+  opacity: 1;
+}
+
+.tutorial-overlay__lines {
+  text-align: center;
+  font-family: var(--theme-font-family);
+  font-size: var(--theme-font-size-lg);
+  font-weight: var(--theme-font-weight);
+  color: var(--theme-text);
+}
+
+.tutorial-overlay__line {
+  margin-bottom: 4px;
+}
+
+.tutorial-overlay__line:last-child {
+  margin-bottom: 0;
+}
+
+.tutorial-overlay__skip {
+  background: none;
+  border: none;
+  color: var(--theme-text);
+  opacity: 0.6;
+  font-family: var(--theme-font-family);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tutorial-overlay__skip:hover {
+  opacity: 1;
+}
+
+/* ===== Step-driven restrictions on the real game board underneath ===== */
+/* Scoped to the wrapper element App.tsx applies as `.tutorial-active[data-tutorial-step="N"]` */
+
+/* Step 1: add S to WORD -> WORDS */
+.tutorial-active[data-tutorial-step="1"] .grid-cell--action {
+  display: none;
+}
+
+.tutorial-active[data-tutorial-step="1"] .alphabet-grid .grid-cell--letter {
+  opacity: 0.3;
+  pointer-events: none;
+  cursor: default;
+}
+
+.tutorial-active[data-tutorial-step="1"] .alphabet-grid .grid-cell[data-letter="S"] {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.tutorial-active[data-tutorial-step="1"] .interactive-game__submit-anchor,
+.tutorial-active[data-tutorial-step="1"] .word-builder__letter {
+  pointer-events: none;
+}
+
+/* Step 2: remove D from WORDS -> WORS */
+.tutorial-active[data-tutorial-step="2"] .grid-cell--action {
+  display: none;
+}
+
+.tutorial-active[data-tutorial-step="2"] .alphabet-grid {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.tutorial-active[data-tutorial-step="2"] .interactive-game__submit-anchor {
+  pointer-events: none;
+}
+
+.tutorial-active[data-tutorial-step="2"] .word-builder__letter {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.tutorial-active[data-tutorial-step="2"] .word-builder__letter[data-letter-index="3"] {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Step 3: rearrange WORS -> ROWS via drag, then submit */
+.tutorial-active[data-tutorial-step="3"] .grid-cell--action {
+  display: none;
+}
+
+.tutorial-active[data-tutorial-step="3"] .alphabet-grid {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* Steps 1-3: key letter styling stays neutral until Step 4 explains it */
+.tutorial-active[data-tutorial-step="1"] .grid-cell--key,
+.tutorial-active[data-tutorial-step="2"] .grid-cell--key,
+.tutorial-active[data-tutorial-step="3"] .grid-cell--key {
+  background-color: var(--theme-background);
+  color: var(--theme-text);
+}
+
+/* Steps 4-5: full game, no restrictions */

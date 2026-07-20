@@ -93,6 +93,9 @@ export type { GridCellProps, GridCellState, GridCellType } from './ui/GridCell';
 export { Menu } from './ui/Menu';
 export { MainScreen } from './ui/MainScreen';
 
+export { MultiplayerLobby } from './multiplayer/MultiplayerLobby';
+export { MultiplayerGame } from './multiplayer/MultiplayerGame';
+
 export { AlertOverlay } from './ui/AlertOverlay';
 export type { AlertOverlayProps, AlertOverlayAction, AlertOverlayVariant } from './ui/AlertOverlay';
 
@@ -128,7 +131,7 @@ export type { InteractiveGameProps } from './game/InteractiveGame';
 
 // Tutorial Components
 export { TutorialOverlay } from './tutorial/TutorialOverlay';
-export { TutorialInstructions } from './tutorial/TutorialInstructions';
+export type { TutorialOverlayProps } from './tutorial/TutorialOverlay';
 
 // Hooks
 export { useGameState, useGameStats, useWordState } from '../hooks/useGameState';

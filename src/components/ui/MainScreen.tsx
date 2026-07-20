@@ -7,9 +7,10 @@ import './MainScreen.css';
 
 interface MainScreenProps {
   onStartGame: (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => void;
+  onStartMultiplayer?: () => void;
 }
 
-export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
+export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMultiplayer }) => {
   const [currentView, setCurrentView] = useState<'main' | 'bots'>('main');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVsHumanLockedOpen, setIsVsHumanLockedOpen] = useState(false);
@@ -27,10 +28,14 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
     } else if (gameType === 'challenge') {
       onStartGame('challenge');
     } else if (gameType === 'vs-human') {
-      // Not unlocked yet - show requirement overlay
-      setIsVsHumanLockedOpen(true);
+      if (onStartMultiplayer) {
+        onStartMultiplayer();
+      } else {
+        // Fallback if no handler was wired up - show requirement overlay
+        setIsVsHumanLockedOpen(true);
+      }
     }
-  }, [onStartGame]);
+  }, [onStartGame, onStartMultiplayer]);
 
   const handleBotSelect = useCallback((botId: string) => {
     onStartGame('bot', botId);
@@ -66,7 +71,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame }) => {
               <span className="main-screen__vs-text">vs</span> world
             </button>
             <button 
-              className="main-screen__game-option main-screen__strikethrough"
+              className="main-screen__game-option"
               onClick={() => handleGameTypeSelect('vs-human')}
             >
               <span className="main-screen__vs-text">vs</span>human

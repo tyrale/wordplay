@@ -624,6 +624,12 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     trigger: { type: 'word', value: 'time', timing: 'word_submission' },
     target: 'time-pressure'
   },
+  {
+    id: 'unlock_gravity',
+    category: 'mechanic',
+    trigger: { type: 'word', value: 'falls', timing: 'word_submission' },
+    target: 'gravity'
+  },
 
   // Bot unlocks - mixed triggers (achievements and words)
   {
@@ -655,42 +661,6 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     category: 'bot',
     trigger: { type: 'achievement', value: 'beat_hard_bot', timing: 'game_completion' },
     target: 'expert-bot'
-  },
-  {
-    id: 'unlock_chaos_bot',
-    category: 'bot',
-    trigger: { type: 'word', value: 'chaos', timing: 'word_submission' },
-    target: 'chaos-bot'
-  },
-  {
-    id: 'unlock_puzzle_bot',
-    category: 'bot',
-    trigger: { type: 'word', value: 'puzzle', timing: 'word_submission' },
-    target: 'puzzle-bot'
-  },
-  {
-    id: 'unlock_speed_bot',
-    category: 'bot',
-    trigger: { type: 'word', value: 'speed', timing: 'word_submission' },
-    target: 'speed-bot'
-  },
-  {
-    id: 'unlock_creative_bot',
-    category: 'bot',
-    trigger: { type: 'word', value: 'creative', timing: 'word_submission' },
-    target: 'creative-bot'
-  },
-  {
-    id: 'unlock_vowel_bot',
-    category: 'bot',
-    trigger: { type: 'word', value: 'vowel', timing: 'word_submission' },
-    target: 'vowel-bot'
-  },
-  {
-    id: 'unlock_rhyme_bot',
-    category: 'bot',
-    trigger: { type: 'word', value: 'rhyme', timing: 'word_submission' },
-    target: 'rhyme-bot'
   },
   {
     id: 'unlock_noob_bot',

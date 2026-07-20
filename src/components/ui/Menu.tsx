@@ -20,7 +20,7 @@ interface MenuTier2Item {
 }
 
 // Full list of mechanic ids that can exist (excludes 'dark-mode', which lives under the themes section)
-const ALL_MECHANIC_IDS = ['vanity-filter', '5-letter-start', '6-letter-start', 'time-pressure'];
+const ALL_MECHANIC_IDS = ['vanity-filter', '5-letter-start', '6-letter-start', 'time-pressure', 'gravity'];
 
 // Masks a display name into '?' characters (one per non-space character), preserving spaces as gaps
 const maskName = (name: string): string => name.replace(/[^\s]/g, '?');
@@ -37,6 +37,7 @@ const mechanicDisplayNames: Record<string, string> = {
   '5-letter-start': '5 letter starting word',
   '6-letter-start': '6 letter starting word',
   'time-pressure': 'time pressure mode',
+  'gravity': 'falls mode',
   'challenge-dictionary': 'challenge dictionary'
 };
 
@@ -339,7 +340,7 @@ export const Menu: React.FC<MenuProps> = ({
         }
       }
     } else if (tier1Id === 'about' && tier2Id === 'the-basics') {
-      // Start tutorial
+      // Force-replay the tutorial layer on a fresh bot game (handled in App.tsx)
       onStartGame?.('tutorial');
       handleClose(); // Close menu after starting tutorial
     } else if (tier1Id === 'about' && tier2Id === 'dictionaries') {

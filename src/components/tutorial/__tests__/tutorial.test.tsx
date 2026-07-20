@@ -1,104 +1,83 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { TutorialInstructions } from '../TutorialInstructions';
 import { TutorialOverlay } from '../TutorialOverlay';
+import { TUTORIAL_STEPS } from '../tutorialSteps';
+import type { GameState } from '../../../../packages/engine/interfaces';
 
-// Mock the InteractiveGame component
-vi.mock('../../game/InteractiveGame', () => ({
-  InteractiveGame: () => <div data-testid="interactive-game">Mock Interactive Game</div>
-}));
+const baseGameState: GameState = {
+  currentWord: 'WORD',
+  keyLetters: [],
+  lockedLetters: [],
+  lockedKeyLetters: [],
+  players: [
+    { id: 'human', name: 'You', score: 0 },
+    { id: 'bot', name: 'Bot', score: 0 }
+  ],
+  turnHistory: [],
+  currentPlayerIndex: 0,
+  gameStatus: 'playing',
+  turnNumber: 1,
+  usedWords: ['WORD'],
+  lastMoveTime: null,
+  winner: null,
+  totalMoves: 0,
+  config: {}
+} as unknown as GameState;
 
-describe('TutorialInstructions', () => {
-  it('renders single line instruction', () => {
-    render(<TutorialInstructions text="add a letter" />);
-    expect(screen.getByText('add a letter')).toBeInTheDocument();
-  });
-
-  it('renders multiple line instructions', () => {
-    render(<TutorialInstructions text={["add a letter", "remove a letter"]} />);
-    expect(screen.getByText('add a letter')).toBeInTheDocument();
-    expect(screen.getByText('remove a letter')).toBeInTheDocument();
-  });
-
-  it('renders Step 3 four-line instructions', () => {
-    render(<TutorialInstructions text={["add a letter", "remove a letter", "move to spell ROWS", "tap to submit"]} />);
-    expect(screen.getByText('add a letter')).toBeInTheDocument();
-    expect(screen.getByText('remove a letter')).toBeInTheDocument();
-    expect(screen.getByText('move to spell ROWS')).toBeInTheDocument();
-    expect(screen.getByText('tap to submit')).toBeInTheDocument();
-  });
-
-  it('renders Step 4 five-line instructions with empty line', () => {
-    render(<TutorialInstructions text={["key letter +1", "& locked next turn", "", "15 turns each", "high score wins"]} />);
-    expect(screen.getByText('key letter +1')).toBeInTheDocument();
-    expect(screen.getByText('& locked next turn')).toBeInTheDocument();
-    expect(screen.getByText('15 turns each')).toBeInTheDocument();
-    expect(screen.getByText('high score wins')).toBeInTheDocument();
-    
-    // Check that there are 5 instruction lines (including empty one)
-    const instructionLines = document.querySelectorAll('.tutorial-instructions__line');
-    expect(instructionLines).toHaveLength(5);
-  });
-
-  it('renders Step 5 single-line thank you message', () => {
-    render(<TutorialInstructions text={["thanks & have fun"]} />);
-    expect(screen.getByText('thanks & have fun')).toBeInTheDocument();
-    
-    // Check that there is only 1 instruction line
-    const instructionLines = document.querySelectorAll('.tutorial-instructions__line');
-    expect(instructionLines).toHaveLength(1);
-  });
-
-  it('applies custom className', () => {
-    render(<TutorialInstructions text="test" className="custom-class" />);
-    const element = screen.getByText('test').closest('.tutorial-instructions');
-    expect(element).toHaveClass('custom-class');
-  });
-
-  it('renders each instruction line with proper class', () => {
-    render(<TutorialInstructions text={["first line", "second line"]} />);
-    
-    const lines = screen.getAllByText(/line/);
-    expect(lines).toHaveLength(2);
-    
-    lines.forEach(line => {
-      expect(line.closest('.tutorial-instructions__line')).toBeInTheDocument();
+describe('tutorialSteps', () => {
+  it('defines 5 steps with banner copy and completion conditions', () => {
+    expect(TUTORIAL_STEPS).toHaveLength(5);
+    TUTORIAL_STEPS.forEach((step) => {
+      expect(step.banner.length).toBeGreaterThan(0);
+      expect(typeof step.completionCondition).toBe('function');
     });
+  });
+
+  it('step 3 disables letter removal (drag-only rearrange step)', () => {
+    const step3 = TUTORIAL_STEPS.find((s) => s.id === 3);
+    expect(step3?.disableLetterRemoval).toBe(true);
   });
 });
 
 describe('TutorialOverlay', () => {
-  it('renders tutorial overlay component', () => {
-    const mockOnComplete = vi.fn();
-    const mockOnNavigateHome = vi.fn();
-    
+  it('renders the first step banner and a skip control', () => {
     render(
-      <TutorialOverlay 
-        onComplete={mockOnComplete}
-        onNavigateHome={mockOnNavigateHome}
+      <TutorialOverlay
+        gameState={baseGameState}
+        onSkip={vi.fn()}
+        onComplete={vi.fn()}
       />
     );
-    
-    expect(screen.getByText('add a letter')).toBeInTheDocument();
+
+    expect(screen.getByText(TUTORIAL_STEPS[0].banner[0])).toBeInTheDocument();
+    expect(screen.getByText('Skip tutorial')).toBeInTheDocument();
   });
 
-  it('calls onGameEnd when game finishes', () => {
-    const mockOnComplete = vi.fn();
-    const mockOnNavigateHome = vi.fn();
-    const mockOnGameEnd = vi.fn();
-    
+  it('calls onSkip when the skip control is clicked', () => {
+    const onSkip = vi.fn();
     render(
-      <TutorialOverlay 
-        onComplete={mockOnComplete}
-        onNavigateHome={mockOnNavigateHome}
-        onGameEnd={mockOnGameEnd}
+      <TutorialOverlay
+        gameState={baseGameState}
+        onSkip={onSkip}
+        onComplete={vi.fn()}
       />
     );
-    
-    // Verify onGameEnd prop is properly passed and can be called
-    expect(mockOnGameEnd).not.toHaveBeenCalled();
-    
-    // The tutorial overlay component should be rendered
-    expect(screen.getByText('add a letter')).toBeInTheDocument();
+
+    screen.getByText('Skip tutorial').click();
+    expect(onSkip).toHaveBeenCalledTimes(1);
   });
-}); 
+
+  it('notifies the parent of the initial step id via onStepChange', () => {
+    const onStepChange = vi.fn();
+    render(
+      <TutorialOverlay
+        gameState={baseGameState}
+        onSkip={vi.fn()}
+        onComplete={vi.fn()}
+        onStepChange={onStepChange}
+      />
+    );
+
+    expect(onStepChange).toHaveBeenCalledWith(TUTORIAL_STEPS[0].id);
+  });
+});

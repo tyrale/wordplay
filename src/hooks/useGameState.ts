@@ -4,7 +4,25 @@ import {
   createGameStateManagerWithDependencies
 } from '../../packages/engine/gamestate';
 import { createBrowserAdapter } from '../adapters/browserAdapter';
+import { loadActiveGame, saveActiveGame, clearActiveGame } from '../adapters/browserGameSaveAdapter';
 import type { GameState, MoveAttempt, GameConfig, BotMove } from '../../packages/engine/interfaces';
+
+/**
+ * Compares only the config fields that determine whether a persisted game
+ * is still compatible with the game currently being requested. If these
+ * differ, a saved game is considered stale and should not be restored.
+ */
+function isSavedGameCompatible(savedConfig: GameConfig, requestedConfig?: GameConfig): boolean {
+  const a = savedConfig || {};
+  const b = requestedConfig || {};
+  return (
+    a.botId === b.botId &&
+    (a.maxTurns ?? 10) === (b.maxTurns ?? 10) &&
+    (a.allowBotPlayer ?? true) === (b.allowBotPlayer ?? true) &&
+    (a.enableKeyLetters ?? true) === (b.enableKeyLetters ?? true) &&
+    (a.enableLockedLetters ?? true) === (b.enableLockedLetters ?? true)
+  );
+}
 
 // Game configuration interface
 type PublicGameState = GameState;
@@ -101,7 +119,28 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
         
         if (isMounted) {
           const dependencies = browserAdapter.getGameDependencies();
-          gameManagerRef.current = createGameStateManagerWithDependencies(dependencies, config);
+          const manager = createGameStateManagerWithDependencies(dependencies, config);
+
+          // Attempt to restore a previously in-progress game (e.g. after a
+          // page refresh). Only restore if it's still playing and the
+          // requested config matches, otherwise discard the stale save.
+          try {
+            const saved = await loadActiveGame();
+            if (saved && saved.state.gameStatus === 'playing') {
+              if (isSavedGameCompatible(saved.state.config, config)) {
+                manager.loadState(saved.state);
+              } else {
+                await clearActiveGame();
+              }
+            } else if (saved) {
+              // Finished/waiting saves are no longer useful to restore
+              await clearActiveGame();
+            }
+          } catch (restoreError) {
+            console.warn('Failed to restore saved game:', restoreError);
+          }
+
+          gameManagerRef.current = manager;
           setIsInitialized(true);
         }
       } catch (error) {
@@ -176,6 +215,14 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
       const newState = gameManager.getState();
                   setGameState(newState as unknown as PublicGameState);
       onGameStateChangeRef.current?.(newState as unknown as PublicGameState);
+
+      // Persist the in-progress game so a refresh/crash doesn't lose it.
+      // Finished games have nothing left to resume, so clear the save instead.
+      if (newState.gameStatus === 'finished') {
+        clearActiveGame().catch(err => console.warn('Failed to clear saved game:', err));
+      } else {
+        saveActiveGame(newState).catch(err => console.warn('Failed to save game:', err));
+      }
     });
     
     // Initialize state when game manager is ready

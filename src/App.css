@@ -39,6 +39,13 @@ html, body {
   box-sizing: border-box;
 }
 
+/* Wraps InteractiveGame (+ optional TutorialOverlay layer). #root uses
+   align-items: center, so without an explicit width this shrinks to fit
+   content instead of spanning the viewport. */
+.game-screen {
+  width: 100%;
+}
+
 /* Main app container */
 .app {
   width: 100%;
