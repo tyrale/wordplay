@@ -707,7 +707,9 @@ export interface IGameStateManager {
   startGame(initialWord?: string): void;
   resetGame(config?: GameConfig): void;
   passTurn(): boolean;
+  attemptMove(newWord: string): MoveAttempt;
   applyMove(wordOrAttempt: string | MoveAttempt): boolean;
+  setWord(word: string): boolean;
   validateMove(word: string): ValidationResult;
   makeBotMove(): Promise<BotMove | null>;
   getCurrentPlayer(): Player | null;

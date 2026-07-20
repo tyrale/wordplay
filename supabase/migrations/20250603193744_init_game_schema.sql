@@ -169,10 +169,15 @@ CREATE TRIGGER update_games_updated_at BEFORE UPDATE ON public.games
 
 -- Function to handle user creation (called by auth trigger)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
     -- NEW.email is NULL for anonymous sign-ins (used for multiplayer);
     -- fall back to a generic display name instead of the (missing) email.
+    -- SECURITY DEFINER is required so this INSERT isn't blocked by RLS/role
+    -- context when triggered internally by Supabase Auth on signup.
     INSERT INTO public.users (id, email, username, display_name)
     VALUES (
         NEW.id,

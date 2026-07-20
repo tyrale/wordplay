@@ -15,7 +15,7 @@ import { getBotDisplayName } from '../../data/botRegistry';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import { getWordLegalityReason, fetchWordDefinition } from '../../utils/wordHelp';
 import { triggerHapticFeedback } from '../../utils/haptics';
-import type { WordDataDependencies, ScoringAction, GameConfig, MoveAttempt, GameState } from '../../../packages/engine/interfaces';
+import type { WordDataDependencies, ScoringAction, GameConfig, MoveAttempt, GameState, IGameStateManager } from '../../../packages/engine/interfaces';
 
 // Dictionary validation using pure dependency injection
 function useDictionaryValidation() {
@@ -84,6 +84,15 @@ export interface InteractiveGameProps {
   onStartGame?: (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => void;
   onGameStateChange?: (gameState: GameState) => void;
   disableLetterRemoval?: boolean;
+  /**
+   * Use an already-constructed manager instead of the local bot-game
+   * manager - e.g. a `RemoteGameStateManager` for vs-human multiplayer.
+   * When provided, the board renders exactly as it does for a bot game,
+   * just driven by this manager's state/actions instead.
+   */
+  externalManager?: IGameStateManager;
+  /** The authenticated player id to treat as "the local player" when using `externalManager`. */
+  localPlayerId?: string;
 }
 
 export const InteractiveGame: React.FC<InteractiveGameProps> = ({
@@ -94,7 +103,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   currentGameMode,
   onStartGame,
   onGameStateChange,
-  disableLetterRemoval = false
+  disableLetterRemoval = false,
+  externalManager,
+  localPlayerId
 }) => {
   // Initialize dictionary validation hook
   const { isValidDictionaryWord, wordData } = useDictionaryValidation();
@@ -135,10 +146,16 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     clearError
   } = useGameState({
     config: { ...config, startingWordLength },
+    externalManager,
+    localPlayerId,
     onGameStateChange: async (state) => {
       if (state.gameStatus === 'finished' && onGameEnd) {
-        const humanScore = state.players.find(p => p.id === 'human')?.score || 0;
-        const botScore = state.players.find(p => p.id === 'bot')?.score || 0;
+        const localId = localPlayerId ?? 'human';
+        const opponentId = localPlayerId
+          ? state.players.find(p => p.id !== localId)?.id
+          : 'bot';
+        const humanScore = state.players.find(p => p.id === localId)?.score || 0;
+        const botScore = state.players.find(p => p.id === opponentId)?.score || 0;
         
         // Check for unlock triggers on game completion
         await handleGameCompletion(state.winner?.id || null, config?.botId);

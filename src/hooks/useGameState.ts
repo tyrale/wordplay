@@ -1,11 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  LocalGameStateManagerWithDependencies, 
-  createGameStateManagerWithDependencies
-} from '../../packages/engine/gamestate';
+import { createGameStateManagerWithDependencies } from '../../packages/engine/gamestate';
 import { createBrowserAdapter } from '../adapters/browserAdapter';
 import { loadActiveGame, saveActiveGame, clearActiveGame } from '../adapters/browserGameSaveAdapter';
-import type { GameState, MoveAttempt, GameConfig, BotMove } from '../../packages/engine/interfaces';
+import type { GameState, MoveAttempt, GameConfig, BotMove, IGameStateManager } from '../../packages/engine/interfaces';
 
 /**
  * Compares only the config fields that determine whether a persisted game
@@ -36,6 +33,20 @@ export interface UseGameStateOptions {
   onGameStateChange?: (state: PublicGameState) => void;
   onMoveAttempt?: (attempt: MoveAttempt) => void;
   onBotMove?: (move: BotMove | null) => void;
+  /**
+   * Use an already-constructed manager (e.g. `RemoteGameStateManager` for
+   * vs-human multiplayer) instead of creating a local bot-game manager.
+   * When provided, local-save-slot persistence and the bot-game config
+   * (botId-based recreation) are skipped entirely.
+   */
+  externalManager?: IGameStateManager;
+  /**
+   * The player id that should be treated as "the local player" for
+   * `isPlayerTurn`/`currentPlayer` comparisons. Defaults to `'human'`
+   * (the bot-game convention). Multiplayer callers should pass the
+   * actual authenticated player id.
+   */
+  localPlayerId?: string;
 }
 
 export interface GameStateActions {
@@ -81,18 +92,19 @@ export interface UseGameStateReturn {
 }
 
 export function useGameState(options: UseGameStateOptions = {}): UseGameStateReturn {
-  const { config, onGameStateChange, onMoveAttempt, onBotMove } = options;
+  const { config, onGameStateChange, onMoveAttempt, onBotMove, externalManager, localPlayerId } = options;
   
   // Initialize game manager using browser adapter (pure dependency injection)
-  const gameManagerRef = useRef<LocalGameStateManagerWithDependencies | null>(null);
+  const gameManagerRef = useRef<IGameStateManager | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   
   // Track config changes to force recreation when botId changes
   const configRef = useRef(config);
   const [gameManagerKey, setGameManagerKey] = useState(0);
 
-  // Detect botId changes and force game manager recreation
+  // Detect botId changes and force game manager recreation (bot-game mode only)
   useEffect(() => {
+    if (externalManager) return;
     // Force recreation if botId changed
     if (config?.botId !== configRef.current?.botId) {
       gameManagerRef.current = null;
@@ -100,10 +112,18 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
       setGameManagerKey(prev => prev + 1); // Force effect re-run
     }
     configRef.current = config;
-  }, [config?.botId]);
+  }, [config?.botId, externalManager]);
   
-  // Initialize browser adapter and create game manager (pure dependency injection)
+  // Initialize browser adapter and create game manager (pure dependency injection).
+  // When an externalManager is supplied (e.g. multiplayer's RemoteGameStateManager),
+  // use it directly instead - it's already fully initialized by the caller.
   useEffect(() => {
+    if (externalManager) {
+      gameManagerRef.current = externalManager;
+      setIsInitialized(true);
+      return;
+    }
+
     let isMounted = true;
     
     async function initializeGameManager() {
@@ -155,7 +175,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
     return () => {
       isMounted = false;
     };
-  }, [config, gameManagerKey]); // Add gameManagerKey as dependency to force re-run
+  }, [config, gameManagerKey, externalManager]); // Add gameManagerKey as dependency to force re-run
   
   const gameManager = gameManagerRef.current;
   
@@ -216,8 +236,11 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
                   setGameState(newState as unknown as PublicGameState);
       onGameStateChangeRef.current?.(newState as unknown as PublicGameState);
 
-      // Persist the in-progress game so a refresh/crash doesn't lose it.
-      // Finished games have nothing left to resume, so clear the save instead.
+      // Persist the in-progress bot game so a refresh/crash doesn't lose it.
+      // Not applicable to an externally-managed (e.g. multiplayer) game,
+      // which is already persisted remotely and shouldn't share the local
+      // bot-game save slot.
+      if (externalManager) return;
       if (newState.gameStatus === 'finished') {
         clearActiveGame().catch(err => console.warn('Failed to clear saved game:', err));
       } else {
@@ -404,7 +427,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
   
   // Computed state
   const currentPlayer = gameState.players.find(p => p.isCurrentPlayer)?.id || null;
-  const isPlayerTurn = currentPlayer === 'human';
+  const isPlayerTurn = currentPlayer === (localPlayerId ?? 'human');
   const isBotTurn = currentPlayer === 'bot';
   const isGameActive = gameState.gameStatus === 'playing';
   const isGameFinished = gameState.gameStatus === 'finished';

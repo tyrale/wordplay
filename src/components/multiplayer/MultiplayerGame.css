@@ -1,83 +1,13 @@
+/*
+ * Only used for the brief loading/error states before the real game board
+ * (InteractiveGame, shared with vs-bot mode) takes over - see MultiplayerGame.tsx.
+ */
 .multiplayer-game {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   height: 100%;
   width: 100%;
-}
-
-.multiplayer-game__loading {
-  align-items: center;
-  justify-content: center;
-}
-
-.multiplayer-game__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  gap: 1rem;
-}
-
-.multiplayer-game__back,
-.multiplayer-game__resign {
-  background: none;
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-  color: inherit;
-}
-
-.multiplayer-game__scores {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.multiplayer-game__player {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 0.85rem;
-  opacity: 0.6;
-}
-
-.multiplayer-game__player--active {
-  opacity: 1;
-  font-weight: 600;
-}
-
-.multiplayer-game__error {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 1rem;
-  background: rgba(255, 0, 0, 0.1);
-  margin: 0.5rem;
-  border-radius: 4px;
-}
-
-.multiplayer-game__board {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  position: relative;
-  padding: 1rem;
-}
-
-.multiplayer-game__waiting {
-  position: absolute;
-  top: 0.5rem;
-  font-size: 0.85rem;
-  opacity: 0.7;
-}
-
-.multiplayer-game__end {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 1rem;
 }
