@@ -27,10 +27,19 @@ interface ConfirmationState {
   onConfirm: () => void;
 }
 
+/** Reads the active multiplayer game id from the URL, if present, so a page
+ * refresh during a multiplayer game re-enters that game instead of losing
+ * your place and bouncing back to the main menu. */
+function getMultiplayerGameIdFromUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  return new URLSearchParams(window.location.search).get('mgame');
+}
+
 function App() {
-  const [appState, setAppState] = useState<AppState>('main');
+  const initialMultiplayerGameId = getMultiplayerGameIdFromUrl();
+  const [appState, setAppState] = useState<AppState>(initialMultiplayerGameId ? 'multiplayer-game' : 'main');
   const [selectedBotId, setSelectedBotId] = useState<string>('basicBot');
-  const [multiplayerGameId, setMultiplayerGameId] = useState<string | null>(null);
+  const [multiplayerGameId, setMultiplayerGameId] = useState<string | null>(initialMultiplayerGameId);
   const [gameResults, setGameResults] = useState<{
     winner: string | null;
     finalScores: { human: number; bot: number };
@@ -175,11 +184,17 @@ function App() {
   const handleMultiplayerGameReady = (gameId: string) => {
     setMultiplayerGameId(gameId);
     setAppState('multiplayer-game');
+    const url = new URL(window.location.href);
+    url.searchParams.set('mgame', gameId);
+    window.history.replaceState({}, '', url.toString());
   };
 
   const handleMultiplayerExit = () => {
     setMultiplayerGameId(null);
     setAppState('main');
+    const url = new URL(window.location.href);
+    url.searchParams.delete('mgame');
+    window.history.replaceState({}, '', url.toString());
   };
 
   const handleQuitterComplete = () => {
