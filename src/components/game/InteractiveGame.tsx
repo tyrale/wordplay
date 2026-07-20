@@ -358,7 +358,18 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     });
   }, [pendingWord, wordData, showCustomAlert]);
 
+  const handleSettings = useCallback(() => {
+    setIsMenuOpen(true);
+  }, []);
+
   const handleActionClick = useCallback((action: string) => {
+    // The menu should always be reachable, even when it's not the
+    // player's turn (e.g. waiting on an opponent in async multiplayer).
+    if (action === '≡') {
+      handleSettings();
+      return;
+    }
+
     if (!isPlayerTurn || isProcessingMove) return;
     
     switch (action) {
@@ -373,11 +384,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       case '?': // Help
         handleHelp();
         break;
-      case '≡': // Settings
-        handleSettings();
-        break;
     }
-  }, [isPlayerTurn, isProcessingMove, wordState.currentWord, handleHelp]);
+  }, [isPlayerTurn, isProcessingMove, wordState.currentWord, handleHelp, handleSettings]);
 
   const handleWordChange = useCallback((newWord: string) => {
     if (!isPlayerTurn || isProcessingMove) {
@@ -552,10 +560,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     // Remove duplicates and return first 8
     return [...new Set(validSuggestions)].slice(0, 8);
   }, [wordState.usedWords, isValidDictionaryWord]);
-
-  const handleSettings = useCallback(() => {
-    setIsMenuOpen(true);
-  }, []);
 
   const handleMenuClose = useCallback(() => {
     setIsMenuOpen(false);

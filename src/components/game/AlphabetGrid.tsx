@@ -69,7 +69,9 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   }, {} as Record<string, GridCellState>);
 
   const handleCellClick = useCallback((content: string) => {
-    if (disabled) return;
+    // The menu button should always be reachable, even when it's not the
+    // player's turn (e.g. waiting on an opponent in async multiplayer).
+    if (disabled && content !== '≡') return;
     
     if (ACTION_BUTTONS.includes(content)) {
       onActionClick?.(content);
@@ -209,7 +211,8 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
             const state = stateMap[content] || 'normal';
             const canDrag = enableDrag && !disabled && !isAction && state !== 'disabled';
             
-            // Menu button - no special handling needed since close icon is now in menu
+            // Menu button - always enabled (see handleCellClick) so the
+            // player can open the menu even when it's not their turn.
             if (content === '≡') {
               return (
                 <GridCell
@@ -218,7 +221,7 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
                   state={state}
                   type="action"
                   onClick={() => handleCellClick(content)}
-                  disabled={disabled}
+                  disabled={false}
                   aria-label={getDragAriaLabel(content, state)}
                 />
               );

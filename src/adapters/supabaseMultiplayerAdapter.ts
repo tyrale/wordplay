@@ -15,6 +15,7 @@ import type {
 } from '../../packages/engine/interfaces';
 import { supabase } from '../lib/supabase';
 import { ensureAnonymousSession, getDisplayName } from './supabaseAuthAdapter';
+import { createBrowserAdapter } from './browserAdapter';
 
 const INVITE_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid ambiguity
 
@@ -24,6 +25,25 @@ function generateInviteCode(length = 6): string {
     code += INVITE_CODE_ALPHABET[Math.floor(Math.random() * INVITE_CODE_ALPHABET.length)];
   }
   return code;
+}
+
+/**
+ * Pick a random starting word the same way vs-bot games do (via the shared
+ * dictionary dependencies), instead of relying on the DB's fixed default.
+ */
+async function pickRandomStartingWord(length: number): Promise<string> {
+  try {
+    const browserAdapter = await createBrowserAdapter();
+    const wordData = browserAdapter.getWordData();
+    if (wordData && typeof wordData.waitForLoad === 'function') {
+      await wordData.waitForLoad();
+    }
+    const dependencies = browserAdapter.getGameDependencies();
+    return dependencies.getRandomWordByLength(length) || 'WORD';
+  } catch (error) {
+    console.warn('Failed to pick random starting word, falling back to WORD:', error);
+    return 'WORD';
+  }
 }
 
 type GameRow = {
@@ -237,6 +257,8 @@ export async function createInviteGame(
   if (!userId) throw new Error('Unable to authenticate for multiplayer');
 
   const inviteCode = generateInviteCode();
+  const wordLength = options.initialWordLength ?? 4;
+  const startingWord = await pickRandomStartingWord(wordLength);
 
   const { data: game, error: gameError } = await supabase
     .from('games')
@@ -248,7 +270,8 @@ export async function createInviteGame(
       invite_code: inviteCode,
       max_turns: options.maxTurns ?? 20,
       turn_timeout_hours: options.turnTimeoutHours ?? 48,
-      initial_word_length: options.initialWordLength ?? 4
+      initial_word_length: wordLength,
+      current_word: startingWord
     })
     .select('id')
     .single();
@@ -320,7 +343,13 @@ export async function findMatch(onMatched: (gameId: string) => void): Promise<Ma
     if (data) {
       settled = true;
       cleanup();
-      onMatched(data as string);
+      const gameId = data as string;
+      // We matched with an already-queued opponent and created the game
+      // (see try_match() RPC) - give it a random starting word, same as
+      // vs-bot games, instead of the DB's fixed default.
+      const startingWord = await pickRandomStartingWord(4);
+      await supabase.from('games').update({ current_word: startingWord }).eq('id', gameId);
+      onMatched(gameId);
     }
   };
 

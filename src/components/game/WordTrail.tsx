@@ -381,7 +381,11 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                       } else if (keyBonus > 0) {
                         return `+${keyBonus}`;
                       }
-                      return '+0';
+                      // Breakdown has no detail to show (e.g. a synced
+                      // multiplayer turn only carries the total earned
+                      // score, not the add/remove/move/key split) - fall
+                      // back to the actual total instead of a misleading "+0".
+                      return `+${item.score}`;
                     })() : 
                     `+${item.score}`
                 }

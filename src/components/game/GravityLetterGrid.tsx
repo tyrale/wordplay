@@ -225,7 +225,9 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
   }, [applyTransform]);
 
   const handleTileClick = useCallback((content: string) => {
-    if (disabled) return;
+    // The menu button should always be reachable, even when it's not the
+    // player's turn (e.g. waiting on an opponent in async multiplayer).
+    if (disabled && content !== '≡') return;
     if (ACTION_BUTTONS.includes(content)) {
       onActionClick?.(content);
     } else {
@@ -255,11 +257,12 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
       {ALL_TILES.map((content) => {
         const isAction = ACTION_BUTTONS.includes(content);
         const state: GridCellState = isAction ? 'normal' : (stateMap[content] || 'normal');
+        const isMenuButton = content === '≡';
         const cellClasses = [
           'grid-cell',
           `grid-cell--${state}`,
           `grid-cell--${isAction ? 'action' : 'letter'}`,
-          disabled && 'grid-cell--disabled',
+          disabled && !isMenuButton && 'grid-cell--disabled',
           'grid-cell--gravity'
         ].filter(Boolean).join(' ');
 
@@ -270,7 +273,7 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
             className={cellClasses}
             onClick={() => handleTileClick(content)}
             role="button"
-            tabIndex={disabled ? -1 : 0}
+            tabIndex={disabled && !isMenuButton ? -1 : 0}
             aria-label={getAriaLabel(content, state)}
             data-letter={isAction ? undefined : content}
             data-type={isAction ? 'action' : 'letter'}
