@@ -642,8 +642,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
               />
             </div>
             
-            {/* Word builder positioned below submit anchor */}
-            {isPlayerTurn && (
+            {/* Word builder positioned below submit anchor. In vs-human
+                multiplayer the word in play must stay visible even when
+                it's the opponent's turn (unlike vs-bot, where the bot's
+                turn is effectively instant), so it's just made read-only
+                instead of being hidden entirely. */}
+            {(isPlayerTurn || currentGameMode === 'multiplayer') && (
               <div className="interactive-game__word-builder-positioned">
                 <div
                   onMouseUp={handleWordBuilderMouseUp}
@@ -654,7 +658,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                     wordHighlights={pendingWordHighlights}
                     onWordChange={handleWordChange}
                     onLetterClick={handleLetterRemove}
-                    disabled={isProcessingMove}
+                    disabled={isProcessingMove || !isPlayerTurn}
                     maxLength={10}
                     minLength={3}
                     isEditing={true}
