@@ -509,6 +509,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     const nextPlayerIndex = (currentPlayerIndex + 1) % this.state.players.length;
     
     this.state.players[nextPlayerIndex].isCurrentPlayer = true;
+    this.state.currentPlayerIndex = nextPlayerIndex;
     this.state.currentTurn++;
 
     this.notifyListeners({
