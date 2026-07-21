@@ -307,6 +307,66 @@ export async function joinGameByInviteCode(inviteCode: string): Promise<string> 
   return data as string;
 }
 
+export interface ActiveGameSummary {
+  gameId: string;
+  /** The other player's vanity name, or a placeholder if they haven't joined yet. */
+  opponentName: string;
+  /** Whether it's the local player's turn to move. */
+  isMyTurn: boolean;
+  status: 'waiting' | 'active';
+}
+
+/**
+ * List all of the current player's non-finished games (any number - there's
+ * no artificial cap), each with the opponent's display name and whose turn
+ * it is, so the lobby can show/resume them.
+ */
+export async function listMyActiveGames(): Promise<ActiveGameSummary[]> {
+  const userId = await ensureAnonymousSession();
+  if (!userId) return [];
+
+  const { data: myRows, error: myError } = await supabase
+    .from('game_players')
+    .select('game_id')
+    .eq('user_id', userId);
+
+  if (myError || !myRows || myRows.length === 0) return [];
+
+  const gameIds = myRows.map(row => row.game_id);
+
+  const { data: games, error: gamesError } = await supabase
+    .from('games')
+    .select('id, status, current_player_index')
+    .in('id', gameIds)
+    .in('status', ['waiting', 'active'])
+    .order('updated_at', { ascending: false });
+
+  if (gamesError || !games || games.length === 0) return [];
+
+  const activeGameIds = games.map(game => game.id);
+
+  const { data: players, error: playersError } = await supabase
+    .from('game_players')
+    .select('game_id, user_id, player_index, users(display_name, username)')
+    .in('game_id', activeGameIds);
+
+  if (playersError || !players) return [];
+
+  return games.map(game => {
+    const gamePlayers = players.filter(p => p.game_id === game.id);
+    const me = gamePlayers.find(p => p.user_id === userId);
+    const opponent = gamePlayers.find(p => p.user_id !== userId);
+    const opponentInfo = opponent ? (Array.isArray(opponent.users) ? opponent.users[0] : opponent.users) : null;
+
+    return {
+      gameId: game.id,
+      opponentName: opponentInfo?.display_name || opponentInfo?.username || 'Waiting for opponent…',
+      isMyTurn: !!me && me.player_index === game.current_player_index,
+      status: game.status as 'waiting' | 'active'
+    };
+  });
+}
+
 export interface MatchmakingHandle {
   /** Cancel searching and remove self from the queue. */
   cancel: () => Promise<void>;

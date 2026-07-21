@@ -20,7 +20,14 @@
   color: inherit;
 }
 
-.multiplayer-lobby__menu,
+.multiplayer-lobby__menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg, 32px);
+  min-width: 220px;
+}
+
 .multiplayer-lobby__panel {
   display: flex;
   flex-direction: column;
@@ -29,7 +36,6 @@
   min-width: 220px;
 }
 
-.multiplayer-lobby__menu button,
 .multiplayer-lobby__panel button {
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
@@ -38,6 +44,79 @@
   cursor: pointer;
   font-size: 0.95rem;
   min-width: 200px;
+}
+
+/* Text-link style menu options, matching the vs-bot menu on MainScreen */
+.multiplayer-lobby__link {
+  background: none;
+  border: none;
+  padding: var(--spacing-md, 20px);
+  cursor: pointer;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 32px;
+  color: var(--theme-text);
+  text-align: center;
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.multiplayer-lobby__link:active {
+  opacity: 0.5;
+}
+
+.multiplayer-lobby__games {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm, 12px);
+  width: 100%;
+  max-width: 320px;
+}
+
+.multiplayer-lobby__games-title {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+  margin: 0;
+}
+
+.multiplayer-lobby__game-link {
+  background: none;
+  border: none;
+  padding: var(--spacing-sm, 12px) var(--spacing-md, 20px);
+  cursor: pointer;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 20px;
+  color: var(--theme-text);
+  text-align: center;
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.multiplayer-lobby__game-link:active {
+  opacity: 0.5;
+}
+
+.multiplayer-lobby__game-status {
+  font-size: 0.7rem;
+  opacity: 0.6;
+  text-transform: uppercase;
 }
 
 .multiplayer-lobby__code {

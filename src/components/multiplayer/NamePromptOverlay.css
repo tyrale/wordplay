@@ -1,0 +1,88 @@
+.name-prompt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-md);
+}
+
+.name-prompt-dialog {
+  background-color: var(--theme-background);
+  border: 2px solid var(--theme-accent);
+  border-radius: 8px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.name-prompt-dialog__content {
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  text-align: center;
+}
+
+.name-prompt-dialog__title {
+  margin: 0;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-xl);
+  color: var(--theme-text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.name-prompt-dialog__message {
+  margin: 0;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-md);
+  color: var(--theme-text);
+  line-height: 1.4;
+  opacity: 0.8;
+}
+
+.name-prompt-dialog__input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 6px;
+  border: 2px solid var(--theme-accent);
+  background: none;
+  color: var(--theme-text);
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-lg);
+  text-align: center;
+  outline: none;
+}
+
+.name-prompt-dialog__action {
+  background-color: var(--theme-accent);
+  color: var(--theme-background);
+  border: 2px solid var(--theme-accent);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-md);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  min-height: 44px;
+  min-width: 140px;
+}
+
+.name-prompt-dialog__action:active {
+  opacity: 0.7;
+  transform: scale(0.98);
+}

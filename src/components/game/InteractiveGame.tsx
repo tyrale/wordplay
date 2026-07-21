@@ -576,7 +576,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     <div className="interactive-game">
 
       {/* Score bar - shows all players' names/avatars and scores */}
-      <ScoreBar players={gameState.players} botId={config?.botId} />
+      <ScoreBar players={gameState.players} botId={config?.botId} isMultiplayer={currentGameMode === 'multiplayer'} />
 
       {/* Error display */}
       {lastError && (

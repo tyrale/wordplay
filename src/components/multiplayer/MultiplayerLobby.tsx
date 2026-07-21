@@ -1,11 +1,15 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   createInviteGame,
   joinGameByInviteCode,
   findMatch,
-  type MatchmakingHandle
+  listMyActiveGames,
+  type MatchmakingHandle,
+  type ActiveGameSummary
 } from '../../adapters/supabaseMultiplayerAdapter';
 import { supabase } from '../../lib/supabase';
+import { getDisplayName, setDisplayName, hasConfirmedDisplayName, markDisplayNameConfirmed } from '../../adapters/supabaseAuthAdapter';
+import { NamePromptOverlay } from './NamePromptOverlay';
 import './MultiplayerLobby.css';
 
 export interface MultiplayerLobbyProps {
@@ -21,7 +25,19 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
   const [joinCodeInput, setJoinCodeInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
+  const [showNamePrompt, setShowNamePrompt] = useState(!hasConfirmedDisplayName());
+  const [activeGames, setActiveGames] = useState<ActiveGameSummary[]>([]);
   const matchmakingHandleRef = useRef<MatchmakingHandle | null>(null);
+
+  useEffect(() => {
+    listMyActiveGames().then(setActiveGames).catch(() => setActiveGames([]));
+  }, []);
+
+  const handleNameSubmit = useCallback(async (name: string) => {
+    await setDisplayName(name);
+    markDisplayNameConfirmed();
+    setShowNamePrompt(false);
+  }, []);
 
   const handleCreateInvite = useCallback(async () => {
     setView('create');
@@ -98,10 +114,27 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
 
       {view === 'menu' && (
         <div className="multiplayer-lobby__menu">
-          <h2>vs Human</h2>
-          <button onClick={handleCreateInvite}>Create Invite</button>
-          <button onClick={() => setView('join')}>Join with Code</button>
-          <button onClick={handleFindMatch}>Find Random Match</button>
+          <button className="multiplayer-lobby__link" onClick={handleCreateInvite}>Create Invite</button>
+          <button className="multiplayer-lobby__link" onClick={() => setView('join')}>Join with Code</button>
+          <button className="multiplayer-lobby__link" onClick={handleFindMatch}>Find Random Match</button>
+
+          {activeGames.length > 0 && (
+            <div className="multiplayer-lobby__games">
+              <p className="multiplayer-lobby__games-title">Games in Progress</p>
+              {activeGames.map((game) => (
+                <button
+                  key={game.gameId}
+                  className="multiplayer-lobby__game-link"
+                  onClick={() => onGameReady(game.gameId)}
+                >
+                  {game.opponentName}
+                  <span className="multiplayer-lobby__game-status">
+                    {game.status === 'waiting' ? 'waiting' : game.isMyTurn ? 'your turn' : 'waiting'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -151,6 +184,12 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
           {error}
         </div>
       )}
+
+      <NamePromptOverlay
+        isVisible={showNamePrompt}
+        defaultName={getDisplayName()}
+        onSubmit={handleNameSubmit}
+      />
     </div>
   );
 };

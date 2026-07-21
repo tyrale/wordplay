@@ -11,6 +11,7 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const DISPLAY_NAME_STORAGE_KEY = 'wordplay-display-name';
+const DISPLAY_NAME_CONFIRMED_KEY = 'wordplay-display-name-confirmed';
 
 /**
  * Generate a friendly, unique-enough default display name
@@ -69,6 +70,29 @@ export async function setDisplayName(name: string): Promise<void> {
 
   if (error) {
     console.warn('Failed to update display name in Supabase:', error);
+  }
+}
+
+/**
+ * Whether the player has already confirmed/customized their vanity display
+ * name (via the first-vshuman-game name prompt). Used to decide whether to
+ * show that prompt again.
+ */
+export function hasConfirmedDisplayName(): boolean {
+  try {
+    return localStorage.getItem(DISPLAY_NAME_CONFIRMED_KEY) === 'true';
+  } catch (error) {
+    console.warn('Failed to read display name confirmation from localStorage:', error);
+    return false;
+  }
+}
+
+/** Mark the vanity display name as confirmed, so the prompt isn't shown again. */
+export function markDisplayNameConfirmed(): void {
+  try {
+    localStorage.setItem(DISPLAY_NAME_CONFIRMED_KEY, 'true');
+  } catch (error) {
+    console.warn('Failed to persist display name confirmation to localStorage:', error);
   }
 }
 
