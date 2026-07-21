@@ -209,14 +209,22 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
-          () => onChange()
+          (payload) => {
+            console.debug('[multiplayer] realtime "games" change received', payload);
+            onChange();
+          }
         )
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'turns', filter: `game_id=eq.${gameId}` },
-          () => onChange()
+          (payload) => {
+            console.debug('[multiplayer] realtime "turns" insert received', payload);
+            onChange();
+          }
         )
-        .subscribe();
+        .subscribe((status, err) => {
+          console.debug('[multiplayer] realtime channel status', status, err);
+        });
 
       return () => {
         supabase.removeChannel(channel);
