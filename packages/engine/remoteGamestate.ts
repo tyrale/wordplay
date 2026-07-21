@@ -143,7 +143,7 @@ export class RemoteGameStateManager implements IGameStateManager {
 
   private async refreshFromRemote(): Promise<void> {
     if (this.syncing) {
-      console.debug('[multiplayer] refreshFromRemote skipped - already syncing');
+      console.log('[multiplayer] refreshFromRemote skipped - already syncing');
       return; // avoid overlapping fetches
     }
     this.syncing = true;
@@ -153,7 +153,7 @@ export class RemoteGameStateManager implements IGameStateManager {
       const localWord = this.local.getState().currentWord;
       const changed = snapshot.turnHistory.length !== currentTurnCount || localWord !== snapshot.currentWord;
       const statusChanged = snapshot.status !== this.local.getState().gameStatus;
-      console.debug('[multiplayer] refreshFromRemote', {
+      console.log('[multiplayer] refreshFromRemote', {
         localWord,
         remoteWord: snapshot.currentWord,
         localTurns: currentTurnCount,

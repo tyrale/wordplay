@@ -210,7 +210,7 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
           'postgres_changes',
           { event: '*', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
           (payload) => {
-            console.debug('[multiplayer] realtime "games" change received', payload);
+            console.log('[multiplayer] realtime "games" change received', payload);
             onChange();
           }
         )
@@ -218,12 +218,12 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'turns', filter: `game_id=eq.${gameId}` },
           (payload) => {
-            console.debug('[multiplayer] realtime "turns" insert received', payload);
+            console.log('[multiplayer] realtime "turns" insert received', payload);
             onChange();
           }
         )
         .subscribe((status, err) => {
-          console.debug('[multiplayer] realtime channel status', status, err);
+          console.log('[multiplayer] realtime channel status', status, err);
         });
 
       return () => {
