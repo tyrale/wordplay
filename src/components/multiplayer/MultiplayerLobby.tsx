@@ -115,9 +115,9 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
       {view === 'menu' && (
         <div className="multiplayer-lobby__menu">
           <div className="multiplayer-lobby__link-list">
-            <button className="multiplayer-lobby__link" onClick={handleCreateInvite}>Create Invite</button>
-            <button className="multiplayer-lobby__link" onClick={() => setView('join')}>Join with Code</button>
-            <button className="multiplayer-lobby__link" onClick={handleFindMatch}>Find Random Match</button>
+            <button className="multiplayer-lobby__link" onClick={handleCreateInvite}>Create</button>
+            <button className="multiplayer-lobby__link" onClick={() => setView('join')}>Join</button>
+            <button className="multiplayer-lobby__link" onClick={handleFindMatch}>Random</button>
           </div>
 
           {activeGames.length > 0 && (
