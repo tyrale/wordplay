@@ -25,7 +25,16 @@
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-lg, 32px);
-  min-width: 220px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.multiplayer-lobby__link-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm, 12px);
+  width: 100%;
 }
 
 .multiplayer-lobby__panel {
@@ -46,17 +55,20 @@
   min-width: 200px;
 }
 
-/* Text-link style menu options, matching the vs-bot menu on MainScreen */
+/* Text-link style menu options, matching the vs-bot selection list
+   (.main-screen__bot-option) on MainScreen exactly. */
 .multiplayer-lobby__link {
   background: none;
   border: none;
-  padding: var(--spacing-md, 20px);
+  padding: 0;
   cursor: pointer;
+  width: 100%;
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: 32px;
+  font-size: 20px;
   color: var(--theme-text);
   text-align: center;
+  text-transform: uppercase;
   transition: opacity 0.2s ease;
   -webkit-tap-highlight-color: transparent;
   outline: none;
