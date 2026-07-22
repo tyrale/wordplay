@@ -50,6 +50,20 @@ const REST_SPEED = 15; // px/s - below this (and resting on floor) a tile is con
 const MAX_DT = 1 / 30; // clamp large frame gaps (e.g. tab switch)
 const EDGE_PADDING = 4;
 
+// `window.innerHeight` reports the full layout-viewport height on mobile
+// Safari/Chrome, as if the browser's address bar were hidden. When the
+// address bar is actually showing, the visible area is smaller, so using
+// `innerHeight` for the fixed-position floor causes tiles to settle below
+// what's actually visible. `visualViewport` tracks the real visible area
+// and updates live as the address bar shows/hides.
+const getViewportSize = (): { width: number; height: number } => {
+  const vv = window.visualViewport;
+  return {
+    width: vv?.width ?? window.innerWidth,
+    height: vv?.height ?? window.innerHeight
+  };
+};
+
 export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
   letterStates = [],
   onLetterClick,

@@ -86,7 +86,7 @@ export const alertCopy = {
         'expert-bot': 'The ultimate challenge',
         'pirate-bot': 'Arrr, ready to play',
         'noob-bot': 'Only ever adds an S',
-        'bruh-bot': 'Bruh. Just passes every turn'
+        'bruh-bot': 'Bruh'
       }
     },
     mechanic: {
@@ -96,7 +96,8 @@ export const alertCopy = {
         '5-letter-start': 'Toggle is on in the menu.',
         '6-letter-start': 'Toggle is on in the menu.',
         'vanity-filter': 'Let the explitives fly!',
-        'time-pressure': '7 second turn timer. The pressure is on!'
+        'time-pressure': '7 second turn timer. The pressure is on!',
+        'gravity': 'Letters fall and roll freely now'
       }
     },
     vanityFilter: { lines: ['FILTER', 'TOGGLE', 'UNLOCKED'], meta: 'Toggle it in the menu' },
