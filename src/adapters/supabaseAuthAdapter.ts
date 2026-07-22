@@ -108,16 +108,21 @@ export async function ensureAnonymousSession(): Promise<string | null> {
     return null;
   }
 
-  const { data: existing } = await supabase.auth.getSession();
-  let userId = existing.session?.user?.id ?? null;
+  let userId: string | null = null;
+  try {
+    const { data: existing } = await supabase.auth.getSession();
+    userId = existing.session?.user?.id ?? null;
 
-  if (!userId) {
-    const { data, error } = await supabase.auth.signInAnonymously();
-    if (error) {
-      console.error('Anonymous sign-in failed:', error);
-      return null;
+    if (!userId) {
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) throw error;
+      userId = data.user?.id ?? null;
     }
-    userId = data.user?.id ?? null;
+  } catch {
+    // Supabase unreachable (e.g. local dev without a running Supabase
+    // instance) - fail quietly instead of a noisy uncaught-fetch stack.
+    console.warn('Supabase is unreachable; multiplayer features are unavailable.');
+    return null;
   }
 
   if (!userId) return null;
