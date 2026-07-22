@@ -121,3 +121,14 @@ button {
     padding: 1rem;
   }
 }
+
+/* Game screens (vs-bot/tutorial/challenge/multiplayer all render an
+   .interactive-game element) size themselves to exactly 100vh and manage
+   their own internal layout - #root's padding/scroll (needed for menu
+   screens whose content can overflow) must never apply there, or the
+   extra padding pushes the game board past the viewport and triggers an
+   unwanted scrollbar. */
+#root:has(.interactive-game) {
+  padding: 0;
+  overflow: hidden;
+}
