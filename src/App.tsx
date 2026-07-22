@@ -50,6 +50,11 @@ function App() {
   const [tutorialActive, setTutorialActive] = useState(false);
   const [tutorialStepId, setTutorialStepId] = useState(1);
   const [tutorialGameState, setTutorialGameState] = useState<GameState | null>(null);
+  // Bumped every time a bot/tutorial game should start completely fresh (even if
+  // InteractiveGame is already mounted with the same botId) - forces React to
+  // remount it, which discards the old game manager instead of silently
+  // continuing an in-progress game underneath the tutorial's forced start word.
+  const [gameInstanceKey, setGameInstanceKey] = useState(0);
   const [confirmationState, setConfirmationState] = useState<ConfirmationState>({
     isVisible: false,
     title: '',
@@ -78,6 +83,7 @@ function App() {
     setTutorialGameState(null);
     setTutorialActive(true);
     setAppState('game');
+    setGameInstanceKey(prev => prev + 1);
   };
 
   const handleStartGame = (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => {
@@ -93,6 +99,7 @@ function App() {
             setTutorialStepId(1);
             setTutorialGameState(null);
             setAppState('game');
+            setGameInstanceKey(prev => prev + 1);
             hideConfirmation();
           }
         );
@@ -104,6 +111,7 @@ function App() {
         setTutorialStepId(1);
         setTutorialGameState(null);
         setAppState('game');
+        setGameInstanceKey(prev => prev + 1);
       }
     } else if (gameType === 'challenge') {
       if (appState === 'game') {
@@ -252,6 +260,7 @@ function App() {
               )}
               {appState === 'game' && (
                 <div
+                  key={gameInstanceKey}
                   className={`game-screen${tutorialActive ? ' tutorial-active' : ''}`}
                   data-tutorial-step={tutorialActive ? tutorialStepId : undefined}
                 >
@@ -270,7 +279,7 @@ function App() {
                     onGameEnd={handleGameEnd}
                     onResign={handleResign}
                     onNavigateHome={handleNavigateHome}
-                    currentGameMode="bot"
+                    currentGameMode={tutorialActive ? 'tutorial' : 'bot'}
                     onStartGame={handleStartGame}
                     onGameStateChange={tutorialActive ? setTutorialGameState : undefined}
                     disableLetterRemoval={tutorialActive && tutorialStepId === 3}

@@ -388,6 +388,18 @@ export function generateBotMoveWithDependencies(
     };
   }
 
+  // Bruh bot never submits a word - it always passes its turn. Returning
+  // move: null causes the caller (see makeBotMove in gamestate.ts) to
+  // automatically pass the turn on its behalf.
+  if (botId === 'bruh-bot') {
+    return {
+      move: null,
+      candidates: [],
+      processingTime: performance.now() - startTime,
+      totalCandidatesGenerated: 0
+    };
+  }
+
   // Combine key and locked letters into a single protected set
   const protectedLetters = [...keyLetters, ...lockedLetters];
 

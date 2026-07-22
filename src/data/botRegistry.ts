@@ -73,6 +73,12 @@ export const BOT_REGISTRY: Bot[] = [
     displayName: 'noobbot', 
     category: 'behavior',
     description: 'Only knows one move: adds an S, rules be damned. Unlocked by playing "noob"'
+  },
+  { 
+    id: 'bruh-bot', 
+    displayName: 'bruhbot', 
+    category: 'behavior',
+    description: 'Never plays a word, only ever passes. Unlocked by playing "bruh"'
   }
 ];
 

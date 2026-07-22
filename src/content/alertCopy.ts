@@ -85,7 +85,8 @@ export const alertCopy = {
         'hard-bot': 'Bring your best moves',
         'expert-bot': 'The ultimate challenge',
         'pirate-bot': 'Arrr, ready to play',
-        'noob-bot': 'Only ever adds an S'
+        'noob-bot': 'Only ever adds an S',
+        'bruh-bot': 'Bruh. Just passes every turn'
       }
     },
     mechanic: {

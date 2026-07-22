@@ -21,6 +21,8 @@ import { useAlert } from '../ui/AlertProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { getWordLegalityReason, fetchWordDefinition } from '../../utils/wordHelp';
 import { triggerHapticFeedback } from '../../utils/haptics';
+import { hasSeenChallengeIntro, markChallengeIntroSeen } from '../../utils/tutorialStorage';
+import { ChallengeIntroOverlay } from './ChallengeIntroOverlay';
 import type { GameStateDependencies } from '../../../packages/engine/gamestate';
 import type { WordDataDependencies } from '../../../packages/engine/interfaces';
 
@@ -66,6 +68,13 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
 
   // Unlock system integration
   const { handleWordSubmission } = useUnlockSystem();
+
+  // First-time "vs world" intro banner
+  const [showIntro, setShowIntro] = useState(() => !hasSeenChallengeIntro());
+  const dismissIntro = useCallback(() => {
+    markChallengeIntroSeen();
+    setShowIntro(false);
+  }, []);
 
   // Local UI state
   const [pendingWord, setPendingWord] = useState('');
@@ -573,6 +582,10 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {showIntro && !challengeState.completed && !challengeState.failed && (
+        <ChallengeIntroOverlay onDismiss={dismissIntro} />
       )}
 
       {/* Menu */}

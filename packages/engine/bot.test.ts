@@ -382,6 +382,16 @@ describe('Bot AI Module', () => {
     });
   });
 
+  describe('Bruh Bot (always passes)', () => {
+    it('never returns a move, regardless of the current word', async () => {
+      const result = await generateBotMoveWithDependencies('CAT', botDependencies, { botId: 'bruh-bot' });
+
+      expect(result.move).toBeNull();
+      expect(result.candidates).toHaveLength(0);
+      expect(result.totalCandidatesGenerated).toBe(0);
+    });
+  });
+
   describe('Bot Fair Play and Integration', () => {
     it('should integrate with scoring module correctly', async () => {
       const result = await generateBotMoveWithDependencies('CAT', botDependencies, { keyLetters: ['S'] });

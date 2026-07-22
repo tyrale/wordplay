@@ -7,23 +7,25 @@
   pointer-events: none;
 }
 
+/* Banner uses the theme's inverted (dark-mode-style) colors regardless of the
+   app's own light/dark setting: base/text color as the background, and the
+   theme's background color for the text - so it always reads as an overlay. */
 .tutorial-overlay__banner {
   position: fixed;
-  top: 2%;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 10%;
+  left: 0;
+  right: 0;
   z-index: 950;
   pointer-events: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
-  border-radius: 12px;
-  background: var(--theme-background);
-  border: 1px solid var(--theme-accent);
+  padding: 16px 20px;
+  background: var(--theme-text);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-  max-width: 90vw;
+  width: 100%;
+  text-transform: uppercase;
 }
 
 .tutorial-overlay__progress {
@@ -35,12 +37,12 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--theme-text);
-  opacity: 0.25;
+  background: var(--theme-background);
+  opacity: 0.35;
 }
 
 .tutorial-overlay__dot--active {
-  background: var(--theme-accent);
+  background: var(--theme-background);
   opacity: 1;
 }
 
@@ -49,7 +51,7 @@
   font-family: var(--theme-font-family);
   font-size: var(--theme-font-size-lg);
   font-weight: var(--theme-font-weight);
-  color: var(--theme-text);
+  color: var(--theme-background);
 }
 
 .tutorial-overlay__line {
@@ -63,8 +65,8 @@
 .tutorial-overlay__skip {
   background: none;
   border: none;
-  color: var(--theme-text);
-  opacity: 0.6;
+  color: var(--theme-background);
+  opacity: 0.7;
   font-family: var(--theme-font-family);
   font-size: 12px;
   text-decoration: underline;

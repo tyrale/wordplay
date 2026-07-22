@@ -17,7 +17,11 @@ function isSavedGameCompatible(savedConfig: GameConfig, requestedConfig?: GameCo
     (a.maxTurns ?? 10) === (b.maxTurns ?? 10) &&
     (a.allowBotPlayer ?? true) === (b.allowBotPlayer ?? true) &&
     (a.enableKeyLetters ?? true) === (b.enableKeyLetters ?? true) &&
-    (a.enableLockedLetters ?? true) === (b.enableLockedLetters ?? true)
+    (a.enableLockedLetters ?? true) === (b.enableLockedLetters ?? true) &&
+    // Only enforce a starting-word match when the caller explicitly requests one
+    // (e.g. the tutorial's forced 'WORD' start) - normal bot games don't specify
+    // initialWord, so any in-progress save remains restorable after a refresh.
+    (b.initialWord === undefined || a.initialWord === b.initialWord)
   );
 }
 
@@ -47,6 +51,13 @@ export interface UseGameStateOptions {
    * actual authenticated player id.
    */
   localPlayerId?: string;
+  /**
+   * Skip reading from and writing to the shared local "active game" save
+   * slot entirely. Used by the tutorial, which is a short scripted flow that
+   * must always start fresh at its forced `initialWord` and shouldn't
+   * overwrite (or be resumed from) the player's real in-progress bot game.
+   */
+  skipSavedGamePersistence?: boolean;
 }
 
 export interface GameStateActions {
@@ -92,7 +103,7 @@ export interface UseGameStateReturn {
 }
 
 export function useGameState(options: UseGameStateOptions = {}): UseGameStateReturn {
-  const { config, onGameStateChange, onMoveAttempt, onBotMove, externalManager, localPlayerId } = options;
+  const { config, onGameStateChange, onMoveAttempt, onBotMove, externalManager, localPlayerId, skipSavedGamePersistence } = options;
   
   // Initialize game manager using browser adapter (pure dependency injection)
   const gameManagerRef = useRef<IGameStateManager | null>(null);
@@ -144,20 +155,22 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
           // Attempt to restore a previously in-progress game (e.g. after a
           // page refresh). Only restore if it's still playing and the
           // requested config matches, otherwise discard the stale save.
-          try {
-            const saved = await loadActiveGame();
-            if (saved && saved.state.gameStatus === 'playing') {
-              if (isSavedGameCompatible(saved.state.config, config)) {
-                manager.loadState(saved.state);
-              } else {
+          if (!skipSavedGamePersistence) {
+            try {
+              const saved = await loadActiveGame();
+              if (saved && saved.state.gameStatus === 'playing') {
+                if (isSavedGameCompatible(saved.state.config, config)) {
+                  manager.loadState(saved.state);
+                } else {
+                  await clearActiveGame();
+                }
+              } else if (saved) {
+                // Finished/waiting saves are no longer useful to restore
                 await clearActiveGame();
               }
-            } else if (saved) {
-              // Finished/waiting saves are no longer useful to restore
-              await clearActiveGame();
+            } catch (restoreError) {
+              console.warn('Failed to restore saved game:', restoreError);
             }
-          } catch (restoreError) {
-            console.warn('Failed to restore saved game:', restoreError);
           }
 
           gameManagerRef.current = manager;
@@ -237,10 +250,10 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
       onGameStateChangeRef.current?.(newState as unknown as PublicGameState);
 
       // Persist the in-progress bot game so a refresh/crash doesn't lose it.
-      // Not applicable to an externally-managed (e.g. multiplayer) game,
-      // which is already persisted remotely and shouldn't share the local
-      // bot-game save slot.
-      if (externalManager) return;
+      // Not applicable to an externally-managed (e.g. multiplayer) game, which
+      // is already persisted remotely, or when explicitly skipped (tutorial) -
+      // both cases must not share the local bot-game save slot.
+      if (externalManager || skipSavedGamePersistence) return;
       if (newState.gameStatus === 'finished') {
         clearActiveGame().catch(err => console.warn('Failed to clear saved game:', err));
       } else {

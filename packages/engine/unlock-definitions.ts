@@ -668,6 +668,12 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     trigger: { type: 'word', value: 'noob', timing: 'word_submission' },
     target: 'noob-bot'
   },
+  {
+    id: 'unlock_bruh_bot',
+    category: 'bot',
+    trigger: { type: 'word', value: 'bruh', timing: 'word_submission' },
+    target: 'bruh-bot'
+  },
 
   // Easter egg - playing the founder's name unlocks dark mode
   {

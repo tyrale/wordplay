@@ -148,6 +148,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     config: { ...config, startingWordLength },
     externalManager,
     localPlayerId,
+    skipSavedGamePersistence: currentGameMode === 'tutorial',
     onGameStateChange: async (state) => {
       if (state.gameStatus === 'finished' && onGameEnd) {
         const localId = localPlayerId ?? 'human';
