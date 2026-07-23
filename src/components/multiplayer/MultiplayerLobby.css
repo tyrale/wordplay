@@ -9,15 +9,58 @@
   gap: 1rem;
 }
 
+/* Matches the vs-bot back arrow exactly (see .main-screen-back-button in
+   MainScreen.css) - same size, position, color, and responsive breakpoints. */
 .multiplayer-lobby__back {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
+  position: fixed;
+  bottom: var(--spacing-md, 20px);
+  left: var(--spacing-md, 20px);
+
+  width: 112px;
+  height: 112px;
   background: none;
-  border: none;
-  font-size: 1rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
   cursor: pointer;
-  color: inherit;
+
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: calc(var(--theme-font-size-lg) * 2);
+  color: var(--theme-accent);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: all 0.2s ease;
+  z-index: 100;
+
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.multiplayer-lobby__back:active {
+  transform: translateY(0);
+  opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+  .multiplayer-lobby__back {
+    width: 96px;
+    height: 96px;
+    font-size: calc(var(--theme-font-size-md) * 2);
+    bottom: var(--spacing-sm, 8px);
+    left: var(--spacing-sm, 8px);
+  }
+}
+
+@media (max-width: 480px) {
+  .multiplayer-lobby__back {
+    width: 60px;
+    height: 60px;
+    bottom: var(--spacing-sm, 8px);
+    left: var(--spacing-sm, 8px);
+  }
 }
 
 .multiplayer-lobby__menu {
