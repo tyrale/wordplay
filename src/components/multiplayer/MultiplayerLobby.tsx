@@ -201,6 +201,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
           {isBusy && !inviteCode && <p>Creating game…</p>}
           {inviteCode && !opponentName && (
             <>
+              <p className="multiplayer-lobby__share-label">Share this:</p>
               <div className="multiplayer-lobby__code-row">
                 <div className="multiplayer-lobby__code">{inviteCode}</div>
                 <button

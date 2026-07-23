@@ -131,26 +131,41 @@
   text-transform: uppercase;
 }
 
+.multiplayer-lobby__share-label {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 1rem;
+  color: var(--theme-text);
+  margin: 0;
+}
+
 .multiplayer-lobby__code-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  position: relative;
+  display: inline-flex;
 }
 
 .multiplayer-lobby__code {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
   font-size: 2rem;
-  font-weight: 700;
   letter-spacing: 0.2em;
-  padding: 0.5rem 1rem;
+  color: var(--theme-text);
 }
 
-.multiplayer-lobby__share {
+.multiplayer-lobby__panel .multiplayer-lobby__share {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  min-width: 0;
+  transform: translateY(-50%) rotate(90deg);
+  margin-left: 0.5rem;
   background: none;
   border: none;
-  font-size: 1rem;
+  font-size: 1.5rem;
+  line-height: 1;
   cursor: pointer;
-  color: inherit;
-  transform: rotate(90deg);
+  color: var(--theme-accent);
+  padding: 0;
 }
 
 .multiplayer-lobby__hint {
