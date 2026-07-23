@@ -185,6 +185,15 @@
   text-align: right;
   padding-right: 0;
   margin-top: -4px;
+
+  /* Animation - slide in from right, matching tier1 items */
+  transform: translateX(100px);
+  opacity: 0;
+  animation: slideInFromRight 0.4s ease-out forwards;
+}
+
+.menu-unlock-progress--closing {
+  animation: slideOutToRight 0.3s ease-in forwards;
 }
 
 .menu-tier2-list {

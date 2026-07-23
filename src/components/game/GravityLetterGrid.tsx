@@ -49,6 +49,7 @@ const AIR_DRAG = 0.999;
 const REST_SPEED = 15; // px/s - below this (and resting on floor) a tile is considered settled
 const MAX_DT = 1 / 30; // clamp large frame gaps (e.g. tab switch)
 const EDGE_PADDING = 4;
+const FLOOR_MARGIN_RATIO = 0.3; // keep this fraction of viewport height clear below the floor
 
 // `window.innerHeight`/`visualViewport` can both diverge from the actual
 // rendered size of the fixed-position container (mobile browser chrome,
@@ -158,7 +159,7 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
         body.y += body.vy * dt;
         body.rotation += body.vr * dt;
 
-        const floor = viewportHeight - body.size - EDGE_PADDING;
+        const floor = viewportHeight * (1 - FLOOR_MARGIN_RATIO) - body.size - EDGE_PADDING;
         const rightWall = viewportWidth - body.size - EDGE_PADDING;
         const leftWall = EDGE_PADDING;
 
@@ -245,7 +246,7 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
       let needsRestart = false;
 
       for (const body of bodiesRef.current) {
-        const floor = viewportHeight - body.size - EDGE_PADDING;
+        const floor = viewportHeight * (1 - FLOOR_MARGIN_RATIO) - body.size - EDGE_PADDING;
         if (body.settled && body.y > floor) {
           body.settled = false;
           needsRestart = true;

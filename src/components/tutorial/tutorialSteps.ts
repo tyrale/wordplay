@@ -61,7 +61,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     // Closing message only - no further action required, so it completes (and the
     // overlay disappears) as soon as it's shown, after the same delay every other
     // step uses before advancing.
-    banner: ['15 turns - high score wins', "You got this. It's easy work."],
+    banner: ['20 turns - high score wins', "You got this. It's easy work."],
     completionCondition: () => true
   }
 ];

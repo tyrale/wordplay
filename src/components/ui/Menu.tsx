@@ -422,7 +422,14 @@ export const Menu: React.FC<MenuProps> = ({
                 </button>
 
                 {tier1Item.id === 'home' && isUnlockCounterOn && (
-                  <div className="menu-unlock-progress">
+                  <div
+                    className={`menu-unlock-progress ${isClosing ? 'menu-unlock-progress--closing' : ''}`}
+                    style={{
+                      animationDelay: isClosing
+                        ? `${(menuItems.length - tier1Index - 1) * 0.05}s`
+                        : `${tier1Index * 0.1 + 0.05}s`
+                    }}
+                  >
                     {unlockProgress.unlocked}/{unlockProgress.total} unlocked
                   </div>
                 )}
