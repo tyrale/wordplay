@@ -3,10 +3,23 @@ import { InteractiveGame } from '../game/InteractiveGame';
 import { useMultiplayerManager } from '../../hooks/useMultiplayerManager';
 import './MultiplayerGame.css';
 
+export interface MultiplayerGameResult {
+  winnerId: string | null;
+  localPlayerId: string;
+  localScore: number;
+  opponentScore: number;
+  /** The opponent's vanity display name, for the end-of-game overlay. */
+  opponentName: string;
+  /** True if the game ended because a player resigned, rather than reaching
+   * max turns naturally - shown as a distinct "match ended" overlay instead
+   * of a win/lose result. */
+  resigned: boolean;
+}
+
 export interface MultiplayerGameProps {
   gameId: string;
   onExit: () => void;
-  onGameEnd?: (winnerId: string | null, localPlayerId: string | null) => void;
+  onGameEnd?: (result: MultiplayerGameResult) => void;
 }
 
 /**
@@ -25,8 +38,12 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
       return;
     }
     try {
+      // Don't call onExit() here - the resulting state change (synced to
+      // both players) fires onGameEnd below with resigned: true, which
+      // shows the "match ended" overlay and exits from there instead.
       await manager.resign();
-    } finally {
+    } catch (err) {
+      console.error('Failed to resign from multiplayer game:', err);
       onExit();
     }
   }, [manager, onExit]);
@@ -53,7 +70,17 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
       externalManager={manager}
       localPlayerId={localPlayerId}
       currentGameMode="multiplayer"
-      onGameEnd={(winnerId) => onGameEnd?.(winnerId, localPlayerId)}
+      onGameEnd={(winnerId, finalScores) => {
+        const opponent = manager.getState().players.find(p => p.id !== localPlayerId);
+        onGameEnd?.({
+          winnerId,
+          localPlayerId,
+          localScore: finalScores.human,
+          opponentScore: finalScores.bot,
+          opponentName: opponent?.name || 'Opponent',
+          resigned: manager.wasAbandoned()
+        });
+      }}
       onResign={handleResign}
       onNavigateHome={onExit}
     />

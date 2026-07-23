@@ -793,6 +793,7 @@ export interface UnlockEngine {
   getUnlockedItems(category: 'theme' | 'mechanic' | 'bot' | 'reveal'): string[];
   isUnlocked(category: 'theme' | 'mechanic' | 'bot' | 'reveal', itemId: string): boolean;
   getCurrentState(): UnlockState;
+  getUnlockProgress(): { unlocked: number; total: number };
   
   // Admin/Debug
   resetState(): Promise<void>;

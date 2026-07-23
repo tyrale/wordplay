@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ThemeProvider, InteractiveGame, MainScreen, MultiplayerLobby, MultiplayerGame } from './components';
+import type { MultiplayerGameResult } from './components/multiplayer/MultiplayerGame';
 import { ChallengeGame } from './components/challenge/ChallengeGame';
 import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
 import { TUTORIAL_INITIAL_CONFIG } from './components/tutorial/tutorialSteps';
@@ -15,10 +16,11 @@ import { getBotDisplayName } from './data/botRegistry';
 import { initViewportHeight } from './utils/viewportHeight';
 import { hasSeenTutorial, markTutorialSeen } from './utils/tutorialStorage';
 import { AlertProvider } from './components/ui/AlertProvider';
+import { clearActiveGame } from './adapters/browserGameSaveAdapter';
 import type { GameState } from '../packages/engine/interfaces';
 import './App.css';
 
-type AppState = 'main' | 'game' | 'challenge' | 'quitter' | 'winner' | 'loser' | 'multiplayer-lobby' | 'multiplayer-game';
+type AppState = 'main' | 'game' | 'challenge' | 'quitter' | 'winner' | 'loser' | 'multiplayer-lobby' | 'multiplayer-game' | 'multiplayer-resigned';
 
 interface ConfirmationState {
   isVisible: boolean;
@@ -45,6 +47,10 @@ function App() {
     finalScores: { human: number; bot: number };
     botName?: string;
   } | null>(null);
+  // Tracks whether the winner/loser overlay currently showing is for a
+  // vs-human multiplayer game, so closing it returns to the multiplayer
+  // lobby (the "last view") instead of the main menu.
+  const [isMultiplayerResult, setIsMultiplayerResult] = useState(false);
 
   // Tutorial: layered on top of a real bot game (not a separate game instance)
   const [tutorialActive, setTutorialActive] = useState(false);
@@ -181,7 +187,13 @@ function App() {
   };
 
   const handleResign = () => {
-    // Show the quitter overlay animation (for bot games only)
+    // Resigning abandons the in-progress bot game without it ever reaching
+    // 'finished' status, so the auto-save (which only clears on finish)
+    // would otherwise still be sitting in storage. Without clearing it here,
+    // starting a new bot game afterwards would restore the resigned game
+    // instead of beginning fresh. Show the quitter overlay animation (for
+    // bot games only).
+    clearActiveGame().catch(err => console.warn('Failed to clear saved game on resign:', err));
     setAppState('quitter');
   };
 
@@ -205,6 +217,27 @@ function App() {
     window.history.replaceState({}, '', url.toString());
   };
 
+  // Vs-human multiplayer game finished - show the same winner/loser overlay
+  // used for bot games, but return to the multiplayer lobby (the "last
+  // view") instead of the main menu once it's dismissed. A resignation
+  // (by either player) shows a distinct "match ended" overlay instead,
+  // since it isn't a fairly-earned win/lose result.
+  const handleMultiplayerGameEnd = ({ winnerId, localPlayerId, localScore, opponentScore, opponentName, resigned }: MultiplayerGameResult) => {
+    setIsMultiplayerResult(true);
+
+    if (resigned) {
+      setAppState('multiplayer-resigned');
+      return;
+    }
+
+    setGameResults({
+      winner: winnerId === null ? null : winnerId === localPlayerId ? 'human' : 'bot',
+      finalScores: { human: localScore, bot: opponentScore },
+      botName: opponentName
+    });
+    setAppState(winnerId === localPlayerId ? 'winner' : 'loser');
+  };
+
   const handleQuitterComplete = () => {
     // Return to main screen after quitter animation completes
     setAppState('main');
@@ -219,22 +252,49 @@ function App() {
     }
   };
 
+  // Clears the finished multiplayer game id/URL and returns to the lobby -
+  // used once the winner/loser overlay for a vs-human game is dismissed.
+  const returnToMultiplayerLobby = () => {
+    setMultiplayerGameId(null);
+    setIsMultiplayerResult(false);
+    setAppState('multiplayer-lobby');
+    const url = new URL(window.location.href);
+    url.searchParams.delete('mgame');
+    window.history.replaceState({}, '', url.toString());
+  };
+
   const handleWinnerComplete = () => {
-    // Return to main screen after winner animation completes
-    setAppState('main');
+    if (isMultiplayerResult) {
+      returnToMultiplayerLobby();
+    } else {
+      setAppState('main');
+    }
     setGameResults(null);
   };
 
   const handleLoserComplete = () => {
-    // Return to main screen after loser animation completes
-    setAppState('main');
+    if (isMultiplayerResult) {
+      returnToMultiplayerLobby();
+    } else {
+      setAppState('main');
+    }
     setGameResults(null);
+  };
+
+  // Both players (whoever resigned, and their opponent, whose client learns
+  // of it via realtime sync) land on the same "match ended" overlay, then
+  // both return to the multiplayer lobby.
+  const handleMultiplayerResignedComplete = () => {
+    returnToMultiplayerLobby();
   };
 
   // Pick a random phrase each time a win/lose/quit screen is shown (not on every re-render)
   const quitCopy = useMemo(() => pickAlertVariant(alertCopy.quit), [appState === 'quitter']);
   const winCopy = useMemo(() => pickAlertVariant(alertCopy.win), [appState === 'winner']);
-  const loseCopy = useMemo(() => pickAlertVariant(alertCopy.lose), [appState === 'loser']);
+  const loseCopy = useMemo(
+    () => pickAlertVariant(isMultiplayerResult ? alertCopy.losePvp : alertCopy.lose),
+    [appState === 'loser']
+  );
 
   // Initialize viewport height handling
   React.useEffect(() => {
@@ -256,7 +316,11 @@ function App() {
                 <MultiplayerLobby onGameReady={handleMultiplayerGameReady} onBack={handleMultiplayerExit} />
               )}
               {appState === 'multiplayer-game' && multiplayerGameId && (
-                <MultiplayerGame gameId={multiplayerGameId} onExit={handleMultiplayerExit} />
+                <MultiplayerGame
+                  gameId={multiplayerGameId}
+                  onExit={handleMultiplayerExit}
+                  onGameEnd={handleMultiplayerGameEnd}
+                />
               )}
               {appState === 'game' && (
                 <div
@@ -346,6 +410,14 @@ function App() {
                     <div>{gameResults.botName || 'Bot'}: {gameResults.finalScores.bot}</div>
                   </>
                 )}
+              />
+
+              {/* Multiplayer Resigned Overlay - shown to both players when either resigns mid-game */}
+              <AlertOverlay
+                isVisible={appState === 'multiplayer-resigned'}
+                lines={[...alertCopy.multiplayerResigned.lines]}
+                onClose={handleMultiplayerResignedComplete}
+                meta={alertCopy.multiplayerResigned.meta}
               />
                           </ResponsiveTest>
             </AnimationProvider>

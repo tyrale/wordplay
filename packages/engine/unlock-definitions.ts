@@ -630,6 +630,15 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     trigger: { type: 'word', value: 'falls', timing: 'word_submission' },
     target: 'gravity'
   },
+  {
+    id: 'unlock_counter',
+    category: 'mechanic',
+    itemId: 'unlock-counter',
+    name: 'Unlock Counter',
+    description: 'Unlock a small "x/x unlocked" progress indicator under home in the menu by playing "unlock"',
+    trigger: { type: 'word', value: 'unlock', timing: 'word_submission' },
+    target: 'unlock-counter'
+  },
 
   // Bot unlocks - mixed triggers (achievements and words)
   {

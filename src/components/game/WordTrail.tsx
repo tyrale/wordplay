@@ -264,13 +264,6 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                         ].filter(Boolean).join(' ')}
                         role="listitem"
                       >
-                        {/* Opponent name on the left side for bot moves */}
-                        {item.player === 'bot' && item.opponentName && (
-                          <span className="word-trail__opponent-name">
-                            {item.opponentName}
-                          </span>
-                        )}
-                        
                         <span 
                           className="word-trail__word"
                           onClick={onWordClick ? () => handleWordClick(item.word, index) : undefined}
@@ -352,13 +345,6 @@ export const WordTrail: React.FC<WordTrailProps> = ({
             ].filter(Boolean).join(' ')}
             role="listitem"
           >
-            {/* Opponent name on the left side for bot moves */}
-            {item.player === 'bot' && item.opponentName && (
-              <span className="word-trail__opponent-name">
-                {item.opponentName}
-              </span>
-            )}
-            
             <span 
               className="word-trail__word"
               onClick={onWordClick ? () => handleWordClick(item.word, index) : undefined}

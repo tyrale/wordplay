@@ -4,6 +4,7 @@ import {
   joinGameByInviteCode,
   findMatch,
   listMyActiveGames,
+  getOpponentName,
   type MatchmakingHandle,
   type ActiveGameSummary
 } from '../../adapters/supabaseMultiplayerAdapter';
@@ -27,6 +28,8 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
   const [isBusy, setIsBusy] = useState(false);
   const [showNamePrompt, setShowNamePrompt] = useState(!hasConfirmedDisplayName());
   const [activeGames, setActiveGames] = useState<ActiveGameSummary[]>([]);
+  const [opponentName, setOpponentName] = useState<string | null>(null);
+  const [readyGameId, setReadyGameId] = useState<string | null>(null);
   const matchmakingHandleRef = useRef<MatchmakingHandle | null>(null);
 
   useEffect(() => {
@@ -43,10 +46,14 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     setView('create');
     setError(null);
     setIsBusy(true);
+    setOpponentName(null);
+    setReadyGameId(null);
     try {
       const { gameId, inviteCode: code } = await createInviteGame();
       setInviteCode(code);
-      // Wait for the opponent joining (status flips 'waiting' -> 'active').
+      // Wait for the opponent joining (status flips 'waiting' -> 'active'),
+      // then load their name and stay on this screen until the host taps
+      // Start rather than jumping straight into the game.
       const channel = supabase
         .channel(`lobby-${gameId}`)
         .on(
@@ -55,7 +62,10 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
           (payload: { new?: { status?: string } }) => {
             if (payload.new?.status === 'active') {
               supabase.removeChannel(channel);
-              onGameReady(gameId);
+              getOpponentName(gameId).then((name) => {
+                setOpponentName(name || 'Your opponent');
+                setReadyGameId(gameId);
+              });
             }
           }
         )
@@ -65,7 +75,28 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     } finally {
       setIsBusy(false);
     }
-  }, [onGameReady]);
+  }, []);
+
+  const handleStartGame = useCallback(() => {
+    if (readyGameId) onGameReady(readyGameId);
+  }, [readyGameId, onGameReady]);
+
+  const handleShareInvite = useCallback(async () => {
+    if (!inviteCode) return;
+    const shareData = {
+      title: 'Join my Wordplay game',
+      text: `Join my Wordplay game with code ${inviteCode}`
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(inviteCode);
+      }
+    } catch {
+      // User cancelled the share sheet or clipboard write failed - ignore.
+    }
+  }, [inviteCode]);
 
   const handleJoin = useCallback(async () => {
     setError(null);
@@ -106,11 +137,36 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     setView('menu');
     setError(null);
     setInviteCode(null);
+    setOpponentName(null);
+    setReadyGameId(null);
   }, []);
+
+  // Matches every other back arrow in the app: from a submenu it returns to
+  // the last view (here, the lobby's own menu), and only leaves to the home
+  // screen once already at the top-level view.
+  const handleBack = useCallback(() => {
+    if (view === 'menu') {
+      onBack();
+      return;
+    }
+
+    if (view === 'matchmaking') {
+      handleCancelMatchmaking();
+      return;
+    }
+
+    handleBackToMenu();
+  }, [view, onBack, handleCancelMatchmaking, handleBackToMenu]);
 
   return (
     <div className="multiplayer-lobby">
-      <button className="multiplayer-lobby__back" onClick={onBack} aria-label="Back to main menu">←</button>
+      <button
+        className="multiplayer-lobby__back"
+        onClick={handleBack}
+        aria-label={view === 'create' ? 'Close' : 'Back'}
+      >
+        {view === 'create' ? '×' : '←'}
+      </button>
 
       {view === 'menu' && (
         <div className="multiplayer-lobby__menu">
@@ -142,16 +198,28 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
 
       {view === 'create' && (
         <div className="multiplayer-lobby__panel">
-          <h3>Invite a Friend</h3>
           {isBusy && !inviteCode && <p>Creating game…</p>}
-          {inviteCode && (
+          {inviteCode && !opponentName && (
             <>
-              <p>Share this code:</p>
-              <div className="multiplayer-lobby__code">{inviteCode}</div>
-              <p className="multiplayer-lobby__hint">Waiting for your opponent to join…</p>
+              <div className="multiplayer-lobby__code-row">
+                <div className="multiplayer-lobby__code">{inviteCode}</div>
+                <button
+                  className="multiplayer-lobby__share"
+                  onClick={handleShareInvite}
+                  aria-label="Share invite code"
+                >
+                  ←
+                </button>
+              </div>
+              <p className="multiplayer-lobby__hint">Waiting on player(s)…</p>
             </>
           )}
-          <button onClick={handleBackToMenu}>Cancel</button>
+          {opponentName && (
+            <>
+              <p className="multiplayer-lobby__hint">{opponentName} joined!</p>
+              <button onClick={handleStartGame}>Start</button>
+            </>
+          )}
         </div>
       )}
 

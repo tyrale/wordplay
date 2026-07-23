@@ -20,6 +20,7 @@ import type {
   GameStateListener,
   RemoteGameDependencies,
   RemoteGameSnapshot,
+  RemoteGameStatus,
   RemoteGameTurnRecord,
   IGameStateManager,
   Player,
@@ -112,6 +113,10 @@ export class RemoteGameStateManager implements IGameStateManager {
   private gameId: string;
   private unsubscribeRemote: (() => void) | null = null;
   private syncing = false;
+  /** The raw remote status as of the last successful sync, so callers can
+   * distinguish a natural finish ('completed') from a resignation
+   * ('abandoned') - `GameState.gameStatus` collapses both into 'finished'. */
+  private lastRemoteStatus: RemoteGameStatus | null = null;
 
   constructor(dependencies: GameStateDependencies, remote: RemoteGameDependencies, gameId: string) {
     this.remote = remote;
@@ -146,6 +151,7 @@ export class RemoteGameStateManager implements IGameStateManager {
     this.syncing = true;
     try {
       const snapshot = await this.remote.fetchGame(this.gameId);
+      this.lastRemoteStatus = snapshot.status;
       const currentTurnCount = this.local.getState().turnHistory.length;
       const changed =
         snapshot.turnHistory.length !== currentTurnCount ||
@@ -161,6 +167,13 @@ export class RemoteGameStateManager implements IGameStateManager {
 
   public getState(): GameState {
     return this.local.getState();
+  }
+
+  /** Whether the most recently synced remote state was ended via resignation
+   * (as opposed to a natural finish at max turns), so the UI can show a
+   * distinct "opponent left" message instead of a win/lose result. */
+  public wasAbandoned(): boolean {
+    return this.lastRemoteStatus === 'abandoned';
   }
 
   public getCurrentPlayer(): Player | null {

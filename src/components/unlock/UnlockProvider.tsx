@@ -62,6 +62,12 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
         continue;
       }
 
+      // bruh-bot gets its own minimal alert - just the word, no meta/extra lines
+      if (result.itemId === 'bruh-bot') {
+        showAlert('unlocks', 'bruh', { variant: 'unlock' });
+        continue;
+      }
+
       // Get user-friendly name for the unlocked item
       let itemName = result.target || result.itemId || result.name || 'Unknown Item';
       

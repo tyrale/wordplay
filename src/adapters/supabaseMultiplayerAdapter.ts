@@ -223,10 +223,19 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
       };
     },
 
-    async abandonGame(gameId: string, _resigningPlayerId: string): Promise<void> {
+    async abandonGame(gameId: string, resigningPlayerId: string): Promise<void> {
+      // Award the win to whoever didn't resign, so the surviving player's
+      // client (and any post-game stats) reflect a proper win rather than
+      // a null/tied result.
+      const { data: players } = await supabase
+        .from('game_players')
+        .select('user_id')
+        .eq('game_id', gameId);
+      const winnerId = players?.find(p => p.user_id !== resigningPlayerId)?.user_id ?? null;
+
       const { error } = await supabase
         .from('games')
-        .update({ status: 'abandoned', completed_at: new Date().toISOString() })
+        .update({ status: 'abandoned', winner_id: winnerId, completed_at: new Date().toISOString() })
         .eq('id', gameId);
 
       if (error) {
@@ -305,6 +314,25 @@ export async function joinGameByInviteCode(inviteCode: string): Promise<string> 
   }
 
   return data as string;
+}
+
+/** Fetch the display name of the other player in a game, once they've joined. */
+export async function getOpponentName(gameId: string): Promise<string | null> {
+  const userId = await ensureAnonymousSession();
+  if (!userId) return null;
+
+  const { data: players, error } = await supabase
+    .from('game_players')
+    .select('user_id, users(display_name, username)')
+    .eq('game_id', gameId);
+
+  if (error || !players) return null;
+
+  const opponent = players.find(p => p.user_id !== userId);
+  if (!opponent) return null;
+
+  const opponentInfo = Array.isArray(opponent.users) ? opponent.users[0] : opponent.users;
+  return opponentInfo?.display_name || opponentInfo?.username || null;
 }
 
 export interface ActiveGameSummary {

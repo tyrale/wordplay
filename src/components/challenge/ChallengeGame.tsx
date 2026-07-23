@@ -278,10 +278,15 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   }, [pendingWord, wordData, showCustomAlert]);
 
   const handleActionClick = useCallback((action: string) => {
+    // Home navigation should always be reachable, even mid-move.
+    if (action === '←') { // Leave the board and return to the home screen
+      onNavigateHome?.();
+      return;
+    }
+
     if (isProcessingMove) return;
     
     switch (action) {
-      case '←': // Return to current word
       case '↻': // Reset word
         setPendingWord(challengeState?.currentWord || '');
         setValidationResult(null);
@@ -294,10 +299,23 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         setIsMenuOpen(true);
         break;
     }
-  }, [isProcessingMove, challengeState?.currentWord, handleHelp]);
+  }, [isProcessingMove, challengeState?.currentWord, handleHelp, onNavigateHome]);
 
   const handleSubmit = useCallback(async () => {
     if (isProcessingMove) return;
+
+    // Shortcut: tapping the X while the word in play is unchanged from the
+    // last played word clears all letters instead of trying to submit/
+    // forfeit - a quick "remove all letters" gesture. Compare the words
+    // directly (rather than actionState) since actionState is only
+    // populated for valid, scoreable moves - an invalid in-progress edit
+    // (e.g. an unscoreable word after adding/removing/moving letters) must
+    // not be mistaken for "no changes".
+    const wordUnchanged = pendingWord === (challengeState?.currentWord || '');
+    if (!validationResult?.canApply && wordUnchanged && !showValidationError) {
+      handleWordChange('');
+      return;
+    }
 
     // Handle clicking X to show validation error / forfeit
     if (!validationResult?.canApply) {
@@ -349,7 +367,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         setIsProcessingMove(false);
       }
     }
-  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord, handleWordSubmission, wordData]);
+  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord, handleWordSubmission, wordData, handleWordChange]);
 
   const handleMenuClose = useCallback(() => {
     setIsMenuOpen(false);

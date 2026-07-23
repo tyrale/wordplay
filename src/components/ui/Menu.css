@@ -177,6 +177,16 @@
   animation: slideOutToRight 0.3s ease-in forwards;
 }
 
+.menu-unlock-progress {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 12px;
+  color: var(--theme-accent);
+  text-align: right;
+  padding-right: 0;
+  margin-top: -4px;
+}
+
 .menu-tier2-list {
   display: none;
   margin-top: var(--spacing-xs, 2px);

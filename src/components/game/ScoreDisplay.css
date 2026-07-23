@@ -88,7 +88,7 @@
 
 .score-display--invalid .score-display__x {
   opacity: 0.5;
-  color: var(--color-accent);
+  color: var(--theme-accent);
 }
 
 .score-display--pass-confirm {
@@ -101,18 +101,18 @@
   cursor: pointer;
   padding: 0.5em 1em;
   border-radius: 8px;
-  background-color: var(--color-background-muted);
-  color: var(--color-text);
+  background-color: var(--theme-surface);
+  color: var(--theme-text);
   transition: all 0.2s ease;
 }
 
 .score-display__reason {
-  color: var(--color-accent);
+  color: var(--theme-accent);
   opacity: 0.5;
 }
 
 .score-display__pass-x {
-  color: var(--color-accent);
+  color: var(--theme-accent);
   opacity: 0.5;
   font-weight: 900;
   font-size: 1.5em;
@@ -120,7 +120,7 @@
 }
 
 .score-display__pass-prompt {
-  color: var(--color-accent);
+  color: var(--theme-accent);
   opacity: 1;
   font-weight: normal;
 }

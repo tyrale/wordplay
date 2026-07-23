@@ -43,6 +43,9 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+  // Live horizontal offset from the drag start position, so the lifted letter
+  // visually tracks the pointer back and forth instead of staying anchored in place.
+  const [dragOffsetX, setDragOffsetX] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastEventTimeRef = useRef<number>(0);
   const lastTouchTimeRef = useRef<number>(0);
@@ -56,6 +59,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       setDropTargetIndex(null);
       setIsDragging(false);
       setDragStartPos({ x: 0, y: 0 });
+      setDragOffsetX(0);
       inputMethodRef.current = null;
       lastWordRef.current = currentWord;
     }
@@ -135,6 +139,8 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
     }
 
     if (isDragging && containerRef.current) {
+      setDragOffsetX(e.clientX - dragStartPos.x);
+
       const elements = containerRef.current.querySelectorAll('[data-letter-index]');
       let newDropTarget = null;
       
@@ -187,6 +193,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       setDraggedIndex(null);
       setIsDragging(false);
       setDragStartPos({ x: 0, y: 0 });
+      setDragOffsetX(0);
       setDropTargetIndex(null);
       inputMethodRef.current = null;
     }
@@ -216,6 +223,8 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       
       // Update drop target during drag
       if (isDragging && containerRef.current) {
+        setDragOffsetX(touch.clientX - dragStartPos.x);
+
         const elements = containerRef.current.querySelectorAll('[data-letter-index]');
         let newDropTarget = null;
         
@@ -273,6 +282,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       setDraggedIndex(null);
       setIsDragging(false);
       setDragStartPos({ x: 0, y: 0 });
+      setDragOffsetX(0);
       setDropTargetIndex(null);
       inputMethodRef.current = null;
     }
@@ -318,13 +328,17 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
               onMouseDown={(e) => handleMouseDown(e, index)}
               onTouchStart={(e) => handleTouchStart(e, index)}
               style={{
-                opacity: isCurrentlyDragging && isDragging ? 0.5 : 1,
+                opacity: 1,
                 cursor: disabled ? 'default' : 'grab',
-                transform: isDragging && dropTargetIndex !== null ? 
+                transform: isCurrentlyDragging && isDragging
+                  ? `translateX(${dragOffsetX}px) translateY(-14px) rotate(-6deg) scale(1.08)`
+                  : isDragging && dropTargetIndex !== null ? 
                   (index > dropTargetIndex && (draggedIndex === null || index > draggedIndex) ? 'translateX(16px)' :
                    index >= dropTargetIndex && draggedIndex !== null && index < draggedIndex ? 'translateX(16px)' :
                    'translateX(0)') : 'translateX(0)',
-                transition: 'transform 0.2s ease'
+                // The dragged letter tracks the pointer directly (no easing lag), while
+                // its siblings still animate smoothly as they slide to make room.
+                transition: isCurrentlyDragging && isDragging ? 'none' : 'transform 0.2s ease'
               }}
             >
               {letter}

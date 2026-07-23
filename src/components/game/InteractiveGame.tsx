@@ -12,6 +12,8 @@ import { WordBuilder } from './WordBuilder';
 import { DebugDialog } from './DebugDialog';
 import { Menu } from '../ui/Menu';
 import { getBotDisplayName } from '../../data/botRegistry';
+import { getDisplayName as getVanityName, setDisplayName, markDisplayNameConfirmed } from '../../adapters/supabaseAuthAdapter';
+import { NamePromptOverlay } from '../multiplayer/NamePromptOverlay';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import { getWordLegalityReason, fetchWordDefinition } from '../../utils/wordHelp';
 import { triggerHapticFeedback } from '../../utils/haptics';
@@ -185,6 +187,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   const [showValidationError, setShowValidationError] = useState(false);
   const [turnTimeRemaining, setTurnTimeRemaining] = useState<number | null>(null);
+  const [isRenamingSelf, setIsRenamingSelf] = useState(false);
 
   // Initialize pending word with current word
   useEffect(() => {
@@ -364,20 +367,22 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, []);
 
   const handleActionClick = useCallback((action: string) => {
-    // The menu should always be reachable, even when it's not the
-    // player's turn (e.g. waiting on an opponent in async multiplayer).
+    // The menu and home navigation should always be reachable, even when
+    // it's not the player's turn (e.g. waiting on an opponent in async
+    // multiplayer) - unlike letter/word edits, these aren't turn actions.
     if (action === '≡') {
       handleSettings();
+      return;
+    }
+
+    if (action === '←') { // Leave the board and return to the home screen
+      onNavigateHome?.();
       return;
     }
 
     if (!isPlayerTurn || isProcessingMove) return;
     
     switch (action) {
-      case '←': // Return to home (reset to current word)
-        setPendingWord(wordState.currentWord);
-        setPendingMoveAttempt(null);
-        break;
       case '↻': // Reset word (reset to current word)
         setPendingWord(wordState.currentWord);
         setPendingMoveAttempt(null);
@@ -386,7 +391,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         handleHelp();
         break;
     }
-  }, [isPlayerTurn, isProcessingMove, wordState.currentWord, handleHelp, handleSettings]);
+  }, [isPlayerTurn, isProcessingMove, wordState.currentWord, handleHelp, handleSettings, onNavigateHome]);
 
   const handleWordChange = useCallback((newWord: string) => {
     if (!isPlayerTurn || isProcessingMove) {
@@ -467,6 +472,19 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const handleSubmit = useCallback(async () => {
     
     if (!isPlayerTurn || isProcessingMove) return;
+
+    // Shortcut: tapping the X while the word in play is unchanged from the
+    // last played word clears all letters instead of trying to submit/pass -
+    // a quick "remove all letters" gesture. Compare the words directly
+    // (rather than actionState) since actionState is only populated for
+    // valid, scoreable moves - an invalid in-progress edit (e.g. an
+    // unscoreable word after adding/removing/moving letters) must not be
+    // mistaken for "no changes".
+    const wordUnchanged = pendingWord === wordState.currentWord;
+    if (!isValidSubmit && wordUnchanged && !showValidationError) {
+      handleWordChange('');
+      return;
+    }
     
     // Handle clicking X to pass turn (valid for any non-winning move)
     if (!isValidSubmit) {
@@ -499,7 +517,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         setShowValidationError(false);
       }
     }
-  }, [isPlayerTurn, isProcessingMove, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, wordData]);
+  }, [isPlayerTurn, isProcessingMove, pendingWord, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, wordData, actionState, handleWordChange]);
 
   const handleStartGame = useCallback(async () => {
     await actions.startGame();
@@ -573,11 +591,44 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     }
   }, [onResign]);
 
+  const handleOwnNameTap = useCallback(() => {
+    setIsRenamingSelf(true);
+  }, []);
+
+  const handleRenameSubmit = useCallback(async (name: string) => {
+    await setDisplayName(name);
+    markDisplayNameConfirmed();
+    setIsRenamingSelf(false);
+  }, []);
+
+  const handleRenameCancel = useCallback(() => {
+    setIsRenamingSelf(false);
+  }, []);
+
   return (
     <div className="interactive-game">
 
       {/* Score bar - shows all players' names/avatars and scores */}
-      <ScoreBar players={gameState.players} botId={config?.botId} isMultiplayer={currentGameMode === 'multiplayer'} />
+      <ScoreBar
+        players={gameState.players}
+        botId={config?.botId}
+        isMultiplayer={currentGameMode === 'multiplayer'}
+        currentRound={gameState.currentTurn}
+        localPlayerId={localPlayerId}
+        onOwnNameTap={handleOwnNameTap}
+      />
+
+      {/* Rename overlay - reuses the same banner used to pick a name the
+          first time, reopened here when the player taps their own name. */}
+      <NamePromptOverlay
+        isVisible={isRenamingSelf}
+        defaultName={getVanityName()}
+        onSubmit={handleRenameSubmit}
+        title="Change your name"
+        subtitle="Opponents will see this"
+        submitLabel="Save"
+        onCancel={handleRenameCancel}
+      />
 
       {/* Error display */}
       {lastError && (

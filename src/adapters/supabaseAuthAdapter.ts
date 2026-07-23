@@ -13,6 +13,9 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 const DISPLAY_NAME_STORAGE_KEY = 'wordplay-display-name';
 const DISPLAY_NAME_CONFIRMED_KEY = 'wordplay-display-name-confirmed';
 
+/** Maximum length allowed for a player's vanity display name. */
+export const MAX_DISPLAY_NAME_LENGTH = 10;
+
 /**
  * Generate a friendly, unique-enough default display name
  * (e.g. "Player4821").
@@ -48,7 +51,7 @@ export function getDisplayName(): string {
  * session already exists).
  */
 export async function setDisplayName(name: string): Promise<void> {
-  const trimmed = name.trim();
+  const trimmed = name.trim().slice(0, MAX_DISPLAY_NAME_LENGTH);
   if (!trimmed) return;
 
   try {

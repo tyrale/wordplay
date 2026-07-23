@@ -38,6 +38,41 @@
   opacity: 0.7;
 }
 
+/* Back arrow - mirrors the menu button but sits in the bottom-left corner,
+   matching the alphabet grid's "←" action button position. */
+.main-screen-back-button {
+  position: fixed;
+  bottom: var(--spacing-md, 20px);
+  left: var(--spacing-md, 20px);
+
+  width: 112px;
+  height: 112px;
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: calc(var(--theme-font-size-lg) * 2);
+  color: var(--theme-accent);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: all 0.2s ease;
+  z-index: 100;
+
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.main-screen-back-button:active {
+  transform: translateY(0);
+  opacity: 0.7;
+}
+
 .main-screen {
   width: 100%;
   height: 100vh;
@@ -160,6 +195,14 @@
     bottom: var(--spacing-sm, 8px);
     right: var(--spacing-sm, 8px);
   }
+
+  .main-screen-back-button {
+    width: 96px;
+    height: 96px;
+    font-size: calc(var(--theme-font-size-md) * 2);
+    bottom: var(--spacing-sm, 8px);
+    left: var(--spacing-sm, 8px);
+  }
   
   .main-screen__game-option {
     font-size: 36px;
@@ -180,6 +223,13 @@
     /* Keep same position - bottom-right corner */
     bottom: var(--spacing-sm, 8px);
     right: var(--spacing-sm, 8px);
+  }
+
+  .main-screen-back-button {
+    width: 60px;
+    height: 60px;
+    bottom: var(--spacing-sm, 8px);
+    left: var(--spacing-sm, 8px);
   }
   
   .main-screen__content {

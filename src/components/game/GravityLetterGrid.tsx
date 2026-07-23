@@ -50,13 +50,19 @@ const REST_SPEED = 15; // px/s - below this (and resting on floor) a tile is con
 const MAX_DT = 1 / 30; // clamp large frame gaps (e.g. tab switch)
 const EDGE_PADDING = 4;
 
-// `window.innerHeight` reports the full layout-viewport height on mobile
-// Safari/Chrome, as if the browser's address bar were hidden. When the
-// address bar is actually showing, the visible area is smaller, so using
-// `innerHeight` for the fixed-position floor causes tiles to settle below
-// what's actually visible. `visualViewport` tracks the real visible area
-// and updates live as the address bar shows/hides.
-const getViewportSize = (): { width: number; height: number } => {
+// `window.innerHeight`/`visualViewport` can both diverge from the actual
+// rendered size of the fixed-position container (mobile browser chrome,
+// pinch-zoom, iframe embedding, etc). Measuring the container element's own
+// `getBoundingClientRect()` is the ground truth for "what's visible", since
+// it's `position: fixed; inset: 0`, i.e. exactly the visible viewport as
+// resolved by the browser itself - no API discrepancies possible.
+const getViewportSizeFromEl = (el: HTMLElement | null): { width: number; height: number } => {
+  if (el) {
+    const rect = el.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      return { width: rect.width, height: rect.height };
+    }
+  }
   const vv = window.visualViewport;
   return {
     width: vv?.width ?? window.innerWidth,
@@ -70,6 +76,7 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
   onActionClick,
   disabled = false
 }) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const tileRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const bodiesRef = useRef<TileBody[]>([]);
   const rafRef = useRef<number | null>(null);
@@ -96,7 +103,7 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
     initializedRef.current = true;
 
     const bodies: TileBody[] = [];
-    const viewportWidth = window.innerWidth;
+    const { width: viewportWidth } = getViewportSizeFromEl(containerRef.current);
     const gap = 8;
     let rowY = 90;
 
@@ -138,8 +145,7 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
       lastTime = time;
 
       const bodies = bodiesRef.current;
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
+      const { width: viewportWidth, height: viewportHeight } = getViewportSizeFromEl(containerRef.current);
       let anyActive = false;
 
       for (const body of bodies) {
@@ -230,11 +236,38 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
 
     rafRef.current = requestAnimationFrame(step);
 
+    // If the visible viewport shrinks after tiles have already settled and
+    // the physics loop has stopped (e.g. the mobile address bar reappears),
+    // wake up any tile now resting below the new floor so it settles back
+    // into view instead of staying stuck off-screen.
+    const wakeIfOffscreen = () => {
+      const { height: viewportHeight } = getViewportSizeFromEl(containerRef.current);
+      let needsRestart = false;
+
+      for (const body of bodiesRef.current) {
+        const floor = viewportHeight - body.size - EDGE_PADDING;
+        if (body.settled && body.y > floor) {
+          body.settled = false;
+          needsRestart = true;
+        }
+      }
+
+      if (needsRestart && rafRef.current === null) {
+        lastTime = performance.now();
+        rafRef.current = requestAnimationFrame(step);
+      }
+    };
+
+    window.visualViewport?.addEventListener('resize', wakeIfOffscreen);
+    window.addEventListener('resize', wakeIfOffscreen);
+
     return () => {
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
       }
+      window.visualViewport?.removeEventListener('resize', wakeIfOffscreen);
+      window.removeEventListener('resize', wakeIfOffscreen);
     };
   }, [applyTransform]);
 
@@ -267,7 +300,7 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
   };
 
   return (
-    <div className="gravity-letter-grid" role="grid" aria-label="Alphabet grid (gravity mode)">
+    <div ref={containerRef} className="gravity-letter-grid" role="grid" aria-label="Alphabet grid (gravity mode)">
       {ALL_TILES.map((content) => {
         const isAction = ACTION_BUTTONS.includes(content);
         const state: GridCellState = isAction ? 'normal' : (stateMap[content] || 'normal');

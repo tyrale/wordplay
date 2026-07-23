@@ -1,8 +1,7 @@
 .score-bar {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--spacing-md);
+  justify-content: flex-start;
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
@@ -12,19 +11,12 @@
   z-index: 20;
 }
 
-.score-bar__side {
+.score-bar__stack {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--spacing-xs);
   min-width: 0;
-}
-
-.score-bar__side--left {
-  align-items: flex-start;
-}
-
-.score-bar__side--right {
-  align-items: flex-end;
 }
 
 .score-bar__player {
@@ -32,14 +24,19 @@
   align-items: baseline;
   gap: var(--spacing-xs);
   min-width: 0;
-  background-color: var(--theme-surface);
+  background-color: var(--theme-background);
   border: none;
   border-radius: 999px;
   padding: 2px 10px;
 }
 
-.score-bar__side--left .score-bar__player {
-  flex-direction: row-reverse;
+.score-bar__round {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 16px;
+  color: var(--theme-text);
+  text-transform: uppercase;
+  padding: 2px 10px;
 }
 
 .score-bar__name {
@@ -66,6 +63,16 @@
   color: var(--theme-accent);
 }
 
+.score-bar__player.score-bar__player--self {
+  cursor: pointer;
+  /* Override the global [role="button"] min touch-target size (App.css),
+     which otherwise inflates this row to 44px tall and throws off the
+     even gap between player/bot/round rows in the stack. Needs equal-or-
+     higher specificity than the "[role='button']" rule it overrides. */
+  min-height: 0;
+  min-width: 0;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .score-bar {
@@ -78,6 +85,10 @@
   }
 
   .score-bar__score {
+    font-size: 14px;
+  }
+
+  .score-bar__round {
     font-size: 14px;
   }
 }

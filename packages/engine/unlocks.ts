@@ -235,6 +235,24 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
   }
 
   /**
+   * Get overall unlock progress across all categories (excludes default,
+   * always-unlocked items like the starting theme and basic bot)
+   */
+  function getUnlockProgress(): { unlocked: number; total: number } {
+    const state = currentState ?? INITIAL_UNLOCK_STATE;
+    const unlocked =
+      (state.themes.length - INITIAL_UNLOCK_STATE.themes.length) +
+      (state.bots.length - INITIAL_UNLOCK_STATE.bots.length) +
+      state.mechanics.length +
+      state.reveals.length;
+
+    return {
+      unlocked: Math.max(0, unlocked),
+      total: UNLOCK_DEFINITIONS.length
+    };
+  }
+
+  /**
    * Reset unlock state to initial state (for testing/debugging)
    */
   async function resetState(): Promise<void> {
@@ -255,6 +273,7 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
     getUnlockedItems,
     isUnlocked,
     getCurrentState,
+    getUnlockProgress,
     resetState
   };
 }

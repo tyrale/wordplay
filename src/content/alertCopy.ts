@@ -50,9 +50,18 @@ export const alertCopy = {
   lose: {
     variants: [
       { lines: ['NICE', 'TRY', 'LOSER'] },
-      { lines: ['SO', 'CLOSE', 'YET', 'SO', 'FAR'] },
-      { lines: ['BETTER', 'LUCK', 'NEXT', 'TIME'] },
+      { lines: ['SO', 'CLOSE', 'BUT', 'NO'] },
+      { lines: ['DO', 'BETTER'] },
       { lines: ['THE', 'BOT', 'WINS'] },
+      { lines: ['OUTSMARTED'] }
+    ]
+  },
+  /** vs-human multiplayer lose screen - same pool as `lose` minus the bot-specific line. */
+  losePvp: {
+    variants: [
+      { lines: ['NICE', 'TRY', 'LOSER'] },
+      { lines: ['SO', 'CLOSE', 'BUT', 'NO'] },
+      { lines: ['DO', 'BETTER'] },
       { lines: ['OUTSMARTED'] }
     ]
   },
@@ -85,8 +94,7 @@ export const alertCopy = {
         'hard-bot': 'Bring your best moves',
         'expert-bot': 'The ultimate challenge',
         'pirate-bot': 'Arrr, ready to play',
-        'noob-bot': 'Only ever adds an S',
-        'bruh-bot': 'Bruh'
+        'noob-bot': 'Only ever adds an S'
       }
     },
     mechanic: {
@@ -97,10 +105,13 @@ export const alertCopy = {
         '6-letter-start': 'Toggle is on in the menu.',
         'vanity-filter': 'Let the explitives fly!',
         'time-pressure': '7 second turn timer. The pressure is on!',
-        'gravity': 'Letters fall and roll freely now'
+        'gravity': 'Letters fall and roll freely now',
+        'unlock-counter': 'Check under home to track your progress'
       }
     },
     vanityFilter: { lines: ['FILTER', 'TOGGLE', 'UNLOCKED'], meta: 'Toggle it in the menu' },
+    /** bruh-bot's unlock alert is deliberately just the one word - no meta, no extra lines. */
+    bruh: { lines: ['BRUH'] },
     reveal: { lines: ['{item}', 'PREVIEW', 'UNLOCKED'], meta: 'Check the menu to see what\'s still locked' },
     darkMode: { lines: ['HELL', 'YES', 'BITCH'], meta: 'the founder and creator grants you dark mode' },
     generic: { lines: ['NEW', 'UNLOCK', '{item}'], meta: 'Check the menu to see what\'s new' }
@@ -111,7 +122,10 @@ export const alertCopy = {
     shareSuccess: { lines: ['SHARED'] },
     shareError: { lines: ['SHARE', 'FAILED'] },
     resetTrigger: { lines: ['DUH', "yeah it happened. i wouldn't use that word"] }
-  }
+  },
+
+  /** Shown to *both* players in a vs-human match when either one resigns mid-game. */
+  multiplayerResigned: { lines: ['GAME', 'OVER'], meta: 'A player left the match' }
 } as const;
 
 export type AlertCategory = keyof typeof alertCopy;

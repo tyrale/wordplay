@@ -111,26 +111,6 @@
   text-align: center;
 }
 
-.word-trail__opponent-name {
-  position: absolute;
-  left: 0;
-  color: var(--theme-accent);
-  font-weight: var(--theme-font-weight);
-  font-size: 10px;
-  text-transform: uppercase;
-  padding-right: var(--spacing-xs, 4px);
-  white-space: nowrap;
-  
-  /* Responsive font sizing */
-  @media (max-width: 768px) {
-    font-size: 9px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 8px;
-  }
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .word-trail__container {
@@ -142,11 +122,6 @@
   }
   
   .word-trail__score {
-    font-size: 12px;
-    padding: 1px 4px;
-  }
-  
-  .word-trail__opponent-name {
     font-size: 12px;
     padding: 1px 4px;
   }
@@ -163,10 +138,6 @@
     border: 1px solid var(--theme-accent);
   }
   
-  .word-trail__opponent-name {
-    border: 1px solid var(--theme-accent);
-  }
-  
   /* Removed hover styles */
   
   .word-trail__letter--key {
@@ -180,10 +151,6 @@
   }
   
   .word-trail__letter {
-    transition: none;
-  }
-  
-  .word-trail__opponent-name {
     transition: none;
   }
 }

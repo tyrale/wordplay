@@ -18,6 +18,7 @@ export interface UseUnlocksReturn {
   // Queries
   isUnlocked: (category: 'theme' | 'mechanic' | 'bot' | 'reveal', itemId: string) => boolean;
   getUnlockedItems: (category: 'theme' | 'mechanic' | 'bot' | 'reveal') => string[];
+  getUnlockProgress: () => { unlocked: number; total: number };
   
   // Triggers
   checkWordTriggers: (word: string) => Promise<UnlockResult[]>;
@@ -86,6 +87,11 @@ export function useUnlocks(): UseUnlocksReturn {
     return engineRef.current.getUnlockedItems(category);
   }, []);
 
+  const getUnlockProgress = useCallback((): { unlocked: number; total: number } => {
+    if (!engineRef.current) return { unlocked: 0, total: 0 };
+    return engineRef.current.getUnlockProgress();
+  }, []);
+
   // Trigger functions
   const checkWordTriggers = useCallback(async (word: string): Promise<UnlockResult[]> => {
     if (!engineRef.current) return [];
@@ -143,6 +149,7 @@ export function useUnlocks(): UseUnlocksReturn {
     isLoading,
     isUnlocked,
     getUnlockedItems,
+    getUnlockProgress,
     checkWordTriggers,
     checkAchievementTriggers,
     resetUnlocks

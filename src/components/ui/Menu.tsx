@@ -124,11 +124,11 @@ const getMenuItems = (
   },
   // Show mechanics section if there are unlocked mechanics (excluding dark mode,
   // which lives under the themes section instead) or if locked previews are revealed
-  ...(unlockedMechanics.filter(id => id !== 'dark-mode').length > 0 || lockedMechanicItems.length > 0 ? [{
+  ...(unlockedMechanics.filter(id => id !== 'dark-mode' && id !== 'unlock-counter').length > 0 || lockedMechanicItems.length > 0 ? [{
     id: 'mechanics',
     title: 'mechanics',
     children: [
-      ...unlockedMechanics.filter(mechanicId => mechanicId !== 'dark-mode').map(mechanicId => {
+      ...unlockedMechanics.filter(mechanicId => mechanicId !== 'dark-mode' && mechanicId !== 'unlock-counter').map(mechanicId => {
         // Special handling for vanity filter - make it a toggle
         if (mechanicId === 'vanity-filter') {
           return {
@@ -206,7 +206,7 @@ export const Menu: React.FC<MenuProps> = ({
   const { currentTheme, setTheme, isInverted, toggleInverted } = useTheme();
   
   // Get unlock state
-  const { getUnlockedItems, resetUnlocksToFresh, isLoading } = useUnlockSystem();
+  const { getUnlockedItems, resetUnlocksToFresh, isLoading, isUnlocked, getUnlockProgress } = useUnlockSystem();
   
   // Get vanity filter state
   const { isVanityFilterUnlocked, isVanityFilterOn, toggleVanityFilter } = useVanityFilter();
@@ -236,6 +236,10 @@ export const Menu: React.FC<MenuProps> = ({
   }, []);
 
   const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn(), isMechanicOn, revealedCategories);
+
+  // "unlock" mechanic - shows a small "x/x unlocked" progress indicator under home
+  const isUnlockCounterOn = isUnlocked('mechanic', 'unlock-counter');
+  const unlockProgress = getUnlockProgress();
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -416,7 +420,13 @@ export const Menu: React.FC<MenuProps> = ({
                 >
                   {renderVsWorldTitle(tier1Item.title)}
                 </button>
-                
+
+                {tier1Item.id === 'home' && isUnlockCounterOn && (
+                  <div className="menu-unlock-progress">
+                    {unlockProgress.unlocked}/{unlockProgress.total} unlocked
+                  </div>
+                )}
+
                 {tier1Item.children && (
                   <div 
                     className={`menu-tier2-list ${expandedItem === tier1Item.id ? 'menu-tier2-list--expanded' : ''}`}

@@ -49,8 +49,25 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
     setIsMenuOpen(false);
   }, []);
 
+  const handleBack = useCallback(() => {
+    // From a submenu (e.g. bot selection), go back to the previous view
+    // rather than leaving the app - matches the alphabet grid's back arrow.
+    setCurrentView('main');
+  }, []);
+
   return (
     <div className="main-screen">
+      {/* Back arrow - only shown once the user has navigated into a submenu */}
+      {currentView !== 'main' && (
+        <button
+          className="main-screen-back-button"
+          onClick={handleBack}
+          aria-label="Back"
+        >
+          ←
+        </button>
+      )}
+
       {/* Menu icon - positioned to match alphabet grid menu icon */}
       <button 
         className="main-screen-menu-button"
