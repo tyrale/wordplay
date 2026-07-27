@@ -78,7 +78,7 @@ export const BOT_REGISTRY: Bot[] = [
     id: 'bruh-bot', 
     displayName: 'bruhbot', 
     category: 'behavior',
-    description: 'Never plays a word, only ever passes. Unlocked by playing "bruh"'
+    description: 'bruh'
   }
 ];
 

@@ -19,6 +19,7 @@ import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import { shareChallengeResult, getShareResultMessage } from '../../utils/shareUtils';
 import { useAlert } from '../ui/AlertProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
 import { getWordLegalityReason, fetchWordDefinition } from '../../utils/wordHelp';
 import { triggerHapticFeedback } from '../../utils/haptics';
 import { hasSeenChallengeIntro, markChallengeIntroSeen } from '../../utils/tutorialStorage';
@@ -67,7 +68,14 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const { showAlert, showCustomAlert } = useAlert();
 
   // Unlock system integration
-  const { handleWordSubmission } = useUnlockSystem();
+  const { handleWordSubmission, getUnlockedItems } = useUnlockSystem();
+  const { isMechanicOn } = useMechanicsSettings();
+
+  // Drunk mechanic: unlocked via the "drunk" word and toggled on in the mechanics menu.
+  // Makes the whole game view hazy and wobbly, like looking at it drunk. Must apply
+  // in every game mode (bot, challenge, multiplayer), not just vs-bot games.
+  const isDrunkOn = getUnlockedItems('mechanic').includes('drunk') && isMechanicOn('drunk');
+  const interactiveGameClassName = `interactive-game${isDrunkOn ? ' interactive-game--drunk' : ''}`;
 
   // First-time "vs world" intro banner
   const [showIntro, setShowIntro] = useState(() => !hasSeenChallengeIntro());
@@ -271,7 +279,9 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       meta: (
         <>
           <div>{reason}</div>
-          {definition && <div className="alert-overlay__meta-definition">{definition}</div>}
+          <div className="alert-overlay__meta-definition">
+            {definition || 'No definition available'}
+          </div>
         </>
       )
     });
@@ -479,6 +489,8 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const showInvalidX = !isValidSubmit;
 
   // Parse challenge share text into meta content for the completion AlertOverlay
+  const isPatternLine = (line: string) => /[◼︎◻︎]/.test(line);
+
   const renderShareLine = (line: string, index: number) => {
     if (index === 0 && line.endsWith(' ✓')) {
       const prefix = line.slice(0, -' ✓'.length);
@@ -496,16 +508,26 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         </div>
       );
     }
+    if (isPatternLine(line)) {
+      return (
+        <div key={index} className="alert-overlay__meta-pattern">
+          {line}
+        </div>
+      );
+    }
     return <div key={index}>{line}</div>;
   };
 
   const shareLines = (overlayData?.shareText || '').split('\n').filter(line => line.trim());
   const shareContent = shareLines.slice(0, -1);
   const stepCount = shareLines[shareLines.length - 1];
+  // For the win screen, the headline already shows "start → finish", so drop the
+  // redundant words line (always the 2nd line) from the meta content below it.
+  const winMetaContent = shareContent.filter((line, index) => !(index === 1 && !isPatternLine(line)));
 
   if (isLoading) {
     return (
-      <div className="interactive-game">
+      <div className={interactiveGameClassName}>
         <div className="interactive-game__loading">
           Loading today's challenge...
         </div>
@@ -515,7 +537,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
 
   if (!challengeState) {
     return (
-      <div className="interactive-game">
+      <div className={interactiveGameClassName}>
         <div className="interactive-game__error">
           {challengeError || 'Failed to load challenge. Please try again.'}
         </div>
@@ -524,7 +546,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   }
 
   return (
-    <div className="interactive-game">
+    <div className={interactiveGameClassName}>
 
       {/* Error display */}
       {challengeError && (
@@ -628,12 +650,16 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       {/* Challenge Completion Overlay */}
       <AlertOverlay
         isVisible={showCompletionOverlay}
-        lines={[...(overlayData?.isWinner ? alertCopy.challenge.win.lines : alertCopy.challenge.lose.lines)]}
+        lines={
+          overlayData?.isWinner
+            ? [challengeState.startWord.toUpperCase(), challengeState.targetWord.toUpperCase()]
+            : [...alertCopy.challenge.lose.lines]
+        }
         variant={overlayData?.isWinner ? 'win' : 'lose'}
         onClose={handleOverlayHome}
         meta={
           <>
-            {shareContent.map(renderShareLine)}
+            {(overlayData?.isWinner ? winMetaContent : shareContent).map(renderShareLine)}
             <div>{stepCount}</div>
           </>
         }

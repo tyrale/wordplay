@@ -69,7 +69,7 @@ export const alertCopy = {
     variants: [
       { lines: ['ALWAYS', 'THE', 'QUITTER'] },
       { lines: ['YOU', 'GAVE', 'UP'] },
-      { lines: ['RAGE', 'QUIT?'] },
+      { lines: ['RAGE', 'QUIT!'] },
       { lines: ['COWARD'] },
       { lines: ['RUNNING', 'AWAY?'] }
     ]

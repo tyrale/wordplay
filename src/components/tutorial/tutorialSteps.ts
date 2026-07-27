@@ -4,6 +4,9 @@ export interface TutorialState {
   lastPendingWord: string;
   submittedWords: string[];
   lastTurnHistoryLength: number;
+  /** submittedWords.length captured when the final step starts, used to require
+   *  one more real word play before the tutorial is allowed to close. */
+  finalStepWordBaseline?: number;
 }
 
 export interface TutorialStep {
@@ -58,10 +61,12 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 5,
-    // Closing message only - no further action required, so it completes (and the
-    // overlay disappears) as soon as it's shown, after the same delay every other
-    // step uses before advancing.
+    // Closing message - the tutorial only closes once the player has actually
+    // played a word after this step is shown (tracked via finalStepWordBaseline,
+    // captured when this step starts).
     banner: ['20 turns - high score wins', "You got this. It's easy work."],
-    completionCondition: () => true
+    completionCondition: (_gameState, tutorialState) =>
+      tutorialState.finalStepWordBaseline !== undefined &&
+      tutorialState.submittedWords.length > tutorialState.finalStepWordBaseline
   }
 ];

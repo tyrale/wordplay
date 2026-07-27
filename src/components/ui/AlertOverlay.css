@@ -58,6 +58,13 @@
   text-transform: uppercase;
 }
 
+/* Word path chart rows (the ◼︎/◻︎ move pattern) — bigger than the rest of the meta text so it's easy to read */
+.alert-overlay__meta-pattern {
+  font-size: calc(var(--theme-font-size-md) * 2.2);
+  letter-spacing: 0.15em;
+  line-height: 1.4;
+}
+
 /* Dictionary definition line — normal case/style to read naturally as a sentence */
 .alert-overlay__meta-definition {
   margin-top: var(--spacing-sm);

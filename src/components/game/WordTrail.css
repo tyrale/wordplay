@@ -186,7 +186,13 @@
 .word-trail__played-words {
   width: 100%;
   height: 100%; /* Take full container height */
-  max-height: 40vh; /* Viewport-based maximum */
+  /* Viewport-based maximum - use the same dynamic viewport sizing as the
+     parent .interactive-game__word-trail-positioned box to avoid this
+     inner max-height exceeding that box's real (dvh-based) height and
+     overflowing above the visible viewport. */
+  max-height: 40vh;
+  max-height: calc(var(--vh, 1vh) * 40);
+  max-height: 40dvh;
   min-height: 200px; /* Minimum height for usability */
   overflow-y: auto;
   overflow-x: visible; /* Allow start/target words to extend outside */
@@ -383,6 +389,8 @@
   }
   
   .word-trail__played-words {
-    max-height: 40vh; /* Smaller on mobile */
+    max-height: 40vh;
+    max-height: calc(var(--vh, 1vh) * 40);
+    max-height: 40dvh;
   }
 } 

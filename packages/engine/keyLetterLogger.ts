@@ -54,46 +54,10 @@ export class KeyLetterLogger {
   }
 
   private static async sendToEndpoint(letter: string): Promise<void> {
-    // In development, disable logging server requests entirely to avoid console errors
-    if (this.isDevelopmentEnvironment()) {
-      // Skip server entirely in development, just log locally
-      console.log('Key Letter:', letter);
-      return;
-    }
-
-    // Only attempt server communication in production
-    try {
-      // Try to send to local logging endpoint with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1000); // 1 second timeout
-      
-      const response = await fetch('http://localhost:3001/log-key-letter', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ letter }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-    } catch (error) {
-      // In production, log the error for debugging
-      console.log('Key Letter Count:', letter);
-      console.warn('Failed to send to logging endpoint, logged to console instead:', error);
-    }
-  }
-
-  private static isDevelopmentEnvironment(): boolean {
-    // Check if we're in development mode
-    return typeof window !== 'undefined' && 
-           (window.location.hostname === 'localhost' || 
-            window.location.hostname === '127.0.0.1' ||
-            window.location.hostname.includes('localhost'));
+    // The local logging server (log-server.cjs) only runs during local development
+    // and is never available in deployed builds, so we never attempt a network
+    // request here. This just logs locally for optional dev-time inspection.
+    console.log('Key Letter:', letter);
   }
 
   private static async readCounts(): Promise<{ [key: string]: number }> {

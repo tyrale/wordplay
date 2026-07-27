@@ -4,11 +4,28 @@
   justify-content: flex-start;
   width: 100%;
   max-width: 600px;
+  /* Overlay at the top of the game instead of sitting in normal flow, so
+     the board below (word trail / current word / anchor / grid) is always
+     vertically centered within the SAME available height regardless of
+     how many rows the score bar renders (e.g. 0 rows in challenge/vs-world
+     mode vs 2 player rows + a round row in vs-bot/multiplayer mode).
+     Previously the varying score bar height shifted the board's centered
+     anchor point differently per mode, causing the grid's last row to be
+     clipped in one mode and the word trail to overflow above the viewport
+     in another. */
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   margin: 0 auto;
   padding: var(--spacing-sm) 0;
   box-sizing: border-box;
-  position: relative;
   z-index: 20;
+  pointer-events: none;
+}
+
+.score-bar__player {
+  pointer-events: auto;
 }
 
 .score-bar__stack {

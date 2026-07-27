@@ -134,6 +134,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // Makes the alphabet grid letters fall and roll freely around the viewport.
   const isGravityOn = unlockedMechanics.includes('gravity') && isMechanicOn('gravity');
 
+  // Drunk mechanic: unlocked via the "drunk" word and toggled on in the mechanics menu.
+  // Makes the whole game view hazy and wobbly, like looking at it drunk.
+  const isDrunkOn = unlockedMechanics.includes('drunk') && isMechanicOn('drunk');
+
   // Game state management
   const {
     gameState,
@@ -356,7 +360,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       meta: (
         <>
           <div>{reason}</div>
-          {definition && <div className="alert-overlay__meta-definition">{definition}</div>}
+          <div className="alert-overlay__meta-definition">
+            {definition || 'No definition available'}
+          </div>
         </>
       )
     });
@@ -606,7 +612,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, []);
 
   return (
-    <div className="interactive-game">
+    <div className={`interactive-game${isDrunkOn ? ' interactive-game--drunk' : ''}`}>
 
       {/* Score bar - shows all players' names/avatars and scores */}
       <ScoreBar

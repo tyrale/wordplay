@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { LockIcon } from '../ui/LockIcon';
 import type { GridCellState } from '../ui/GridCell';
 import './GravityLetterGrid.css';
@@ -49,7 +50,7 @@ const AIR_DRAG = 0.999;
 const REST_SPEED = 15; // px/s - below this (and resting on floor) a tile is considered settled
 const MAX_DT = 1 / 30; // clamp large frame gaps (e.g. tab switch)
 const EDGE_PADDING = 4;
-const FLOOR_MARGIN_RATIO = 0.3; // keep this fraction of viewport height clear below the floor
+const FLOOR_MARGIN_RATIO = 0.06; // keep this fraction of viewport height clear below the floor
 
 // `window.innerHeight`/`visualViewport` can both diverge from the actual
 // rendered size of the fixed-position container (mobile browser chrome,
@@ -300,7 +301,15 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
     return `Letter ${content}`;
   };
 
-  return (
+  // Rendered via a portal directly into `document.body` so this overlay's
+  // `position: fixed` elements anchor to the true viewport. Without this,
+  // any ancestor with a CSS `transform` (e.g. `.interactive-game__grid-positioned`,
+  // which uses `transform: translateX(-50%)` to center the normal grid)
+  // becomes the containing block for `position: fixed` descendants per the
+  // CSS spec - collapsing this overlay into that ancestor's box (which has
+  // no explicit height, so it shrinks to 0) and sending every letter tile
+  // far below the actual visible screen.
+  return createPortal(
     <div ref={containerRef} className="gravity-letter-grid" role="grid" aria-label="Alphabet grid (gravity mode)">
       {ALL_TILES.map((content) => {
         const isAction = ACTION_BUTTONS.includes(content);
@@ -335,6 +344,7 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
           </div>
         );
       })}
-    </div>
+    </div>,
+    document.body
   );
 };

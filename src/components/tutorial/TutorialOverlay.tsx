@@ -23,7 +23,8 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
   const [tutorialState, setTutorialState] = useState<TutorialState>({
     lastPendingWord: '',
     submittedWords: [],
-    lastTurnHistoryLength: 0
+    lastTurnHistoryLength: 0,
+    finalStepWordBaseline: undefined
   });
   const isAdvancingRef = useRef(false);
 
@@ -90,7 +91,12 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
       if (isLastStep) {
         onComplete();
       } else {
-        setCurrentStepIndex((prev) => prev + 1);
+        const nextIndex = currentStepIndex + 1;
+        const enteringFinalStep = nextIndex === TUTORIAL_STEPS.length - 1;
+        setCurrentStepIndex(nextIndex);
+        if (enteringFinalStep) {
+          setTutorialState((prev) => ({ ...prev, finalStepWordBaseline: prev.submittedWords.length }));
+        }
         isAdvancingRef.current = false;
       }
     }, isLastStep ? 1200 : 500);

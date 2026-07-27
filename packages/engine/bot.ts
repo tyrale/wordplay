@@ -253,6 +253,11 @@ export function scoreCandidatesWithDependencies(
   }).sort((a, b) => b.score - a.score);
 }
 
+// Basic bot strategy - never plays a word that uses a key letter
+function filterBasicBotCandidates(candidates: MoveCandidate[], keyLetters: string[]): MoveCandidate[] {
+  return candidates.filter(candidate => !keyLetters.some(letter => candidate.word.includes(letter)));
+}
+
 // Add a new strategy for easy bot
 function filterEasyBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string, keyLetters: string[]): MoveCandidate[] {
   return candidates.filter(candidate => {
@@ -425,7 +430,9 @@ export function generateBotMoveWithDependencies(
 
   // Apply bot strategy if applicable
   let filteredCandidates = validCandidates;
-  if (botId === 'easy-bot') {
+  if (botId === 'basicBot') {
+    filteredCandidates = filterBasicBotCandidates(validCandidates, keyLetters);
+  } else if (botId === 'easy-bot') {
     filteredCandidates = filterEasyBotCandidates(validCandidates, dependencies, currentWord, keyLetters);
   } else if (botId === 'medium-bot') {
     filteredCandidates = filterMediumBotCandidates(validCandidates, dependencies, currentWord);

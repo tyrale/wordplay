@@ -24,22 +24,28 @@ export function getWordLegalityReason(word: string, wordData: WordDataDependenci
 
 const DEFINITION_FETCH_TIMEOUT_MS = 4000;
 
+/** Strips HTML tags/entities from a Wiktionary definition string. */
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 /**
  * Fetches a short definition for a word from the free Dictionary API
  * (https://dictionaryapi.dev). Returns `null` on any failure (offline,
- * not found, timeout, etc.) so callers can gracefully omit it.
+ * not found, timeout, etc.).
  */
-export async function fetchWordDefinition(word: string): Promise<string | null> {
-  const trimmed = word.trim();
-  if (!trimmed) return null;
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), DEFINITION_FETCH_TIMEOUT_MS);
-
+async function fetchFromDictionaryApi(word: string, signal: AbortSignal): Promise<string | null> {
   try {
     const response = await fetch(
-      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(trimmed.toLowerCase())}`,
-      { signal: controller.signal }
+      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
+      { signal }
     );
     if (!response.ok) return null;
 
@@ -48,6 +54,56 @@ export async function fetchWordDefinition(word: string): Promise<string | null> 
     return typeof definition === 'string' && definition.length > 0 ? definition : null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Fallback definition source for words not present in dictionaryapi.dev
+ * (e.g. archaic/dialectal words like "feal"). Uses Wiktionary's public REST
+ * API, which has no API key requirement and permissive CORS.
+ */
+async function fetchFromWiktionary(word: string, signal: AbortSignal): Promise<string | null> {
+  try {
+    const response = await fetch(
+      `https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(word)}`,
+      { signal }
+    );
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const entries = data?.en;
+    if (!Array.isArray(entries)) return null;
+
+    for (const entry of entries) {
+      const rawDefinition = entry?.definitions?.[0]?.definition;
+      if (typeof rawDefinition === 'string') {
+        const cleaned = stripHtml(rawDefinition);
+        if (cleaned.length > 0) return cleaned;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetches a short definition for a word, trying dictionaryapi.dev first and
+ * falling back to Wiktionary if the word isn't found there. Returns `null`
+ * if neither source has a definition (offline, timeout, truly unknown word).
+ */
+export async function fetchWordDefinition(word: string): Promise<string | null> {
+  const trimmed = word.trim().toLowerCase();
+  if (!trimmed) return null;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), DEFINITION_FETCH_TIMEOUT_MS);
+
+  try {
+    const primary = await fetchFromDictionaryApi(trimmed, controller.signal);
+    if (primary) return primary;
+
+    return await fetchFromWiktionary(trimmed, controller.signal);
   } finally {
     clearTimeout(timeoutId);
   }

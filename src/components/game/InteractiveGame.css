@@ -22,6 +22,24 @@
   overflow: hidden;
 }
 
+/* Drunk mechanic - hazy, wobbly view that makes the whole game feel unsteady */
+.interactive-game--drunk {
+  animation: drunk-wobble 6s ease-in-out infinite;
+  filter: blur(1.5px) saturate(1.2);
+  transform-origin: center center;
+}
+
+@keyframes drunk-wobble {
+  0%   { transform: rotate(0deg) scale(1) translate(0, 0); filter: blur(1.5px) saturate(1.2); }
+  15%  { transform: rotate(1deg) scale(1.015) translate(3px, -2px); filter: blur(2.5px) saturate(1.3); }
+  30%  { transform: rotate(-1.2deg) scale(0.99) translate(-4px, 3px); filter: blur(1px) saturate(1.1); }
+  45%  { transform: rotate(0.8deg) scale(1.01) translate(2px, 2px); filter: blur(3px) saturate(1.35); }
+  60%  { transform: rotate(-0.6deg) scale(1) translate(-3px, -3px); filter: blur(1.5px) saturate(1.15); }
+  75%  { transform: rotate(1.3deg) scale(0.995) translate(4px, -1px); filter: blur(2px) saturate(1.25); }
+  90%  { transform: rotate(-0.8deg) scale(1.005) translate(-2px, 2px); filter: blur(1.2px) saturate(1.2); }
+  100% { transform: rotate(0deg) scale(1) translate(0, 0); filter: blur(1.5px) saturate(1.2); }
+}
+
 /* Debug button in bottom left */
 .interactive-game__debug-btn {
   position: fixed;
@@ -188,7 +206,16 @@
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  height: 40vh; /* Fixed height - content grows upward from bottom */
+  /* Match the dynamic viewport sizing used by .interactive-game (see that
+     rule for details) so this box's height is computed against the same
+     "real" visible viewport - otherwise a static 40vh (based on the
+     browser's large viewport, address bar hidden) can be taller than the
+     actually visible area, pushing content above the top of the screen
+     since this box grows upward from a fixed bottom edge. */
+  height: 40vh;
+  height: calc(var(--vh, 1vh) * 40);
+  height: 40dvh;
+  /* Fixed height - content grows upward from bottom */
   text-align: center;
   display: flex;
   flex-direction: column;

@@ -63,7 +63,7 @@ export const DictionariesOverlay: React.FC<DictionariesOverlayProps> = ({ isVisi
         </ul>
 
         <div className="dictionaries-overlay__footnote">
-          We allow for more words than other word games because ¯\_(ツ)_/¯.
+          I allow for more words than other word games because ¯\_(ツ)_/¯.
         </div>
       </div>
 

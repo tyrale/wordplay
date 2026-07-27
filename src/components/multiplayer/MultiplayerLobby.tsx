@@ -36,9 +36,11 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
   const [opponentName, setOpponentName] = useState<string | null>(null);
   const [readyGameId, setReadyGameId] = useState<string | null>(null);
   const matchmakingHandleRef = useRef<MatchmakingHandle | null>(null);
-  // Which top-level action (Create/Join/Random) is currently showing its
-  // "vs one" / "vs many" submenu on the menu screen.
-  const [selectedAction, setSelectedAction] = useState<LobbyAction | null>(null);
+  // The menu screen is a two-step reveal: first vsone/vsmany, then (once
+  // chosen) Create/Join/Random slides in in its place.
+  const [menuStep, setMenuStep] = useState<'mode' | 'action'>('mode');
+  const [isMenuStepExiting, setIsMenuStepExiting] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<MatchmakingMode | null>(null);
   const [createMode, setCreateMode] = useState<MatchmakingMode>('vsone');
   const [createGameId, setCreateGameId] = useState<string | null>(null);
   // Live list of joined players for a vsmany "Create" game, shown while it's
@@ -178,11 +180,22 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     }
   }, [onGameReady]);
 
-  // Tapping a "vs one"/"vs many" submenu option under Create/Join/Random.
-  // Join's behavior doesn't depend on mode - any invite code works
-  // regardless of the created game's max_players - so it's ignored there.
-  const handleActionSelect = useCallback((action: LobbyAction, mode: MatchmakingMode) => {
-    setSelectedAction(null);
+  // Tapping vsone/vsmany on the first menu step: slide it out to the left,
+  // then reveal the Create/Join/Random step sliding in from the right.
+  const handleSelectMode = useCallback((mode: MatchmakingMode) => {
+    setSelectedMode(mode);
+    setIsMenuStepExiting(true);
+    setTimeout(() => {
+      setIsMenuStepExiting(false);
+      setMenuStep('action');
+    }, 300);
+  }, []);
+
+  // Tapping Create/Join/Random on the second menu step. Join's behavior
+  // doesn't depend on mode - any invite code works regardless of the
+  // created game's max_players - so it's ignored there.
+  const handleActionSelect = useCallback((action: LobbyAction) => {
+    const mode = selectedMode ?? 'vsone';
     if (action === 'create') {
       handleCreateInvite(mode);
     } else if (action === 'join') {
@@ -190,7 +203,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     } else {
       handleFindMatch(mode);
     }
-  }, [handleCreateInvite, handleFindMatch]);
+  }, [selectedMode, handleCreateInvite, handleFindMatch]);
 
   const handleCancelMatchmaking = useCallback(async () => {
     await matchmakingHandleRef.current?.cancel();
@@ -204,7 +217,8 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     setInviteCode(null);
     setOpponentName(null);
     setReadyGameId(null);
-    setSelectedAction(null);
+    setMenuStep('mode');
+    setSelectedMode(null);
   }, []);
 
   // Matches every other back arrow in the app: from a submenu it returns to
@@ -212,6 +226,12 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
   // screen once already at the top-level view.
   const handleBack = useCallback(() => {
     if (view === 'menu') {
+      if (menuStep === 'action') {
+        // Back to the vsone/vsmany step rather than leaving the lobby.
+        setMenuStep('mode');
+        setSelectedMode(null);
+        return;
+      }
       onBack();
       return;
     }
@@ -222,7 +242,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     }
 
     handleBackToMenu();
-  }, [view, onBack, handleCancelMatchmaking, handleBackToMenu]);
+  }, [view, menuStep, onBack, handleCancelMatchmaking, handleBackToMenu]);
 
   return (
     <div className="multiplayer-lobby">
@@ -236,39 +256,26 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
 
       {view === 'menu' && (
         <div className="multiplayer-lobby__menu">
-          <div className="multiplayer-lobby__link-list">
-            {([
-              { action: 'create' as const, label: 'Create' },
-              { action: 'join' as const, label: 'Join' },
-              { action: 'random' as const, label: 'Random' }
-            ]).map(({ action, label }) => (
-              <div key={action} className="multiplayer-lobby__action-group">
-                <button
-                  className="multiplayer-lobby__link"
-                  onClick={() => setSelectedAction(prev => (prev === action ? null : action))}
-                  aria-expanded={selectedAction === action}
-                >
-                  {label}
-                </button>
-                {selectedAction === action && (
-                  <div className="multiplayer-lobby__submenu">
-                    <button
-                      className="multiplayer-lobby__submenu-link"
-                      onClick={() => handleActionSelect(action, 'vsone')}
-                    >
-                      <span className="multiplayer-lobby__vs-text">vs</span> one
-                    </button>
-                    <button
-                      className="multiplayer-lobby__submenu-link"
-                      onClick={() => handleActionSelect(action, 'vsmany')}
-                    >
-                      <span className="multiplayer-lobby__vs-text">vs</span> many
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          {menuStep === 'mode' && (
+            <div
+              className={`multiplayer-lobby__link-list ${isMenuStepExiting ? 'multiplayer-lobby__link-list--exiting' : ''}`}
+            >
+              <button className="multiplayer-lobby__link" onClick={() => handleSelectMode('vsone')}>
+                <span className="multiplayer-lobby__vs-text">vs</span>one
+              </button>
+              <button className="multiplayer-lobby__link" onClick={() => handleSelectMode('vsmany')}>
+                <span className="multiplayer-lobby__vs-text">vs</span>many
+              </button>
+            </div>
+          )}
+
+          {menuStep === 'action' && (
+            <div className="multiplayer-lobby__link-list multiplayer-lobby__link-list--entering">
+              <button className="multiplayer-lobby__link" onClick={() => handleActionSelect('create')}>Create</button>
+              <button className="multiplayer-lobby__link" onClick={() => handleActionSelect('join')}>Join</button>
+              <button className="multiplayer-lobby__link" onClick={() => handleActionSelect('random')}>Random</button>
+            </div>
+          )}
 
           {activeGames.length > 0 && (
             <div className="multiplayer-lobby__games">
