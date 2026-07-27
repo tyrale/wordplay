@@ -5,6 +5,7 @@ import { useVanityFilter } from '../../hooks/useVanityFilter';
 import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
 import { useRoundLength } from '../../contexts/RoundLengthContext';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
+import { useCommunityUnlockStats } from '../../hooks/useCommunityUnlockStats';
 import { getAllBots, getBotDisplayNamesMapping } from '../../data/botRegistry';
 import { availableThemes as ALL_THEMES } from '../../types/theme';
 import type { GameTheme } from '../../types/theme';
@@ -21,7 +22,7 @@ interface MenuTier2Item {
 }
 
 // Full list of mechanic ids that can exist (excludes 'dark-mode', which lives under the themes section)
-const ALL_MECHANIC_IDS = ['vanity-filter', '5-letter-start', '6-letter-start', 'time-pressure', 'gravity', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
+const ALL_MECHANIC_IDS = ['vanity-filter', '5-letter-start', '6-letter-start', 'time-pressure', 'gravity', 'drunk', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
 
 // Mechanic IDs that control the round length (number of turns) - mutually
 // exclusive, unlike other mechanics, so only one can be selected at a time
@@ -32,6 +33,21 @@ const getRoundLengthValue = (mechanicId: string): number => parseInt(mechanicId.
 
 // Masks a display name into '?' characters (one per non-space character), preserving spaces as gaps
 const maskName = (name: string): string => name.replace(/[^\s]/g, '?');
+
+// Simple deterministic string hash, used to derive a stable "random" sort order
+// for locked item previews so they don't just appear in alphabetical order,
+// but also don't reshuffle on every re-render.
+const hashString = (str: string): number => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) | 0;
+  }
+  return hash;
+};
+
+// Shuffles items into a stable, non-alphabetical order based on a hash of each item's id
+const shuffleLockedItems = <T extends { id: string }>(items: T[]): T[] =>
+  [...items].sort((a, b) => hashString(a.id) - hashString(b.id));
 
 interface MenuTier1Item {
   id: string;
@@ -46,6 +62,7 @@ const mechanicDisplayNames: Record<string, string> = {
   '6-letter-start': '6 letter starting word',
   'time-pressure': 'time pressure mode',
   'gravity': 'falls mode',
+  'drunk': 'drunk mode',
   'challenge-dictionary': 'challenge dictionary',
   'round-length-10': '10 turn rounds',
   'round-length-15': '15 turn rounds',
@@ -76,35 +93,41 @@ const getMenuItems = (
 ): MenuTier1Item[] => {
   // Locked theme previews - only computed once 'themes' has been revealed
   const lockedThemeItems: MenuTier2Item[] = revealedCategories.includes('themes')
-    ? ALL_THEMES
-        .filter(theme => !availableThemes.some(unlocked => unlocked.name === theme.name))
-        .map(theme => ({
-          id: `locked-theme-${theme.name.toLowerCase().replace(/\s+/g, '-')}`,
-          title: maskName(theme.name.toLowerCase()),
-          isLocked: true
-        }))
+    ? shuffleLockedItems(
+        ALL_THEMES
+          .filter(theme => !availableThemes.some(unlocked => unlocked.name === theme.name))
+          .map(theme => ({
+            id: `locked-theme-${theme.name.toLowerCase().replace(/\s+/g, '-')}`,
+            title: maskName(theme.name.toLowerCase()),
+            isLocked: true
+          }))
+      )
     : [];
 
   // Locked mechanic previews - only computed once 'mechanics' has been revealed
   const lockedMechanicItems: MenuTier2Item[] = revealedCategories.includes('mechanics')
-    ? ALL_MECHANIC_IDS
-        .filter(mechanicId => !unlockedMechanics.includes(mechanicId))
-        .map(mechanicId => ({
-          id: `locked-mechanic-${mechanicId}`,
-          title: maskName(getMechanicTitle(mechanicId)),
-          isLocked: true
-        }))
+    ? shuffleLockedItems(
+        ALL_MECHANIC_IDS
+          .filter(mechanicId => !unlockedMechanics.includes(mechanicId))
+          .map(mechanicId => ({
+            id: `locked-mechanic-${mechanicId}`,
+            title: maskName(getMechanicTitle(mechanicId)),
+            isLocked: true
+          }))
+      )
     : [];
 
   // Locked bot previews - only computed once 'bots' has been revealed
   const lockedBotItems: MenuTier2Item[] = revealedCategories.includes('bots')
-    ? getAllBots()
-        .filter(bot => !availableBots.includes(bot.id))
-        .map(bot => ({
-          id: `locked-bot-${bot.id}`,
-          title: maskName(getBotDisplayNamesMapping()[bot.id] || bot.id),
-          isLocked: true
-        }))
+    ? shuffleLockedItems(
+        getAllBots()
+          .filter(bot => !availableBots.includes(bot.id))
+          .map(bot => ({
+            id: `locked-bot-${bot.id}`,
+            title: maskName(getBotDisplayNamesMapping()[bot.id] || bot.id),
+            isLocked: true
+          }))
+      )
     : [];
 
   return [
@@ -139,11 +162,11 @@ const getMenuItems = (
   },
   // Show mechanics section if there are unlocked mechanics (excluding dark mode,
   // which lives under the themes section instead) or if locked previews are revealed
-  ...(unlockedMechanics.filter(id => id !== 'dark-mode' && id !== 'unlock-counter').length > 0 || lockedMechanicItems.length > 0 ? [{
+  ...(unlockedMechanics.filter(id => id !== 'dark-mode' && id !== 'unlock-counter' && id !== 'community-stats').length > 0 || lockedMechanicItems.length > 0 ? [{
     id: 'mechanics',
     title: 'mechanics',
     children: [
-      ...unlockedMechanics.filter(mechanicId => mechanicId !== 'dark-mode' && mechanicId !== 'unlock-counter').map(mechanicId => {
+      ...unlockedMechanics.filter(mechanicId => mechanicId !== 'dark-mode' && mechanicId !== 'unlock-counter' && mechanicId !== 'community-stats').map(mechanicId => {
         // Special handling for vanity filter - make it a toggle
         if (mechanicId === 'vanity-filter') {
           return {
@@ -267,6 +290,10 @@ export const Menu: React.FC<MenuProps> = ({
   // "unlock" mechanic - shows a small "x/x unlocked" progress indicator under home
   const isUnlockCounterOn = isUnlocked('mechanic', 'unlock-counter');
   const unlockProgress = getUnlockProgress();
+
+  // "world" mechanic - shows a second "x/x found worldwide" progress indicator under home
+  const isCommunityStatsOn = isUnlocked('mechanic', 'community-stats');
+  const communityProgress = useCommunityUnlockStats(isCommunityStatsOn);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -461,6 +488,19 @@ export const Menu: React.FC<MenuProps> = ({
                     }}
                   >
                     {unlockProgress.unlocked}/{unlockProgress.total} unlocked
+                  </div>
+                )}
+
+                {tier1Item.id === 'home' && isCommunityStatsOn && !communityProgress.isLoading && (
+                  <div
+                    className={`menu-unlock-progress ${isClosing ? 'menu-unlock-progress--closing' : ''}`}
+                    style={{
+                      animationDelay: isClosing
+                        ? `${(menuItems.length - tier1Index - 1) * 0.05}s`
+                        : `${tier1Index * 0.1 + (isUnlockCounterOn ? 0.1 : 0.05)}s`
+                    }}
+                  >
+                    {communityProgress.unlocked}/{communityProgress.total} found worldwide
                   </div>
                 )}
 

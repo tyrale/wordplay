@@ -99,6 +99,19 @@ describe('Unlock Engine', () => {
       expect(unlockEngine.isUnlocked('mechanic', 'gravity')).toBe(true);
     });
 
+    it('should unlock the drunk mechanic with the "drunk" word trigger', async () => {
+      const results = await unlockEngine.checkWordTriggers('drunk');
+
+      expect(results).toHaveLength(1);
+      expect(results[0]).toMatchObject({
+        category: 'mechanic',
+        target: 'drunk',
+        wasAlreadyUnlocked: false
+      });
+
+      expect(unlockEngine.isUnlocked('mechanic', 'drunk')).toBe(true);
+    });
+
     it.each([
       ['ten', 'round-length-10'],
       ['fifteen', 'round-length-15'],

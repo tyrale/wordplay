@@ -112,6 +112,8 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
       await saveState();
     }
 
+    await recordCommunityUnlocks(results);
+
     return results;
   }
 
@@ -169,7 +171,34 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
       await saveState();
     }
 
+    await recordCommunityUnlocks(results);
+
     return results;
+  }
+
+  /**
+   * Report each genuinely-new unlock to the community-wide counter (if a
+   * `recordCommunityUnlock` dependency was provided). Attaches the returned
+   * count/total-players onto each result so callers can display rarity
+   * without a second round trip. Failures are swallowed so unlocks keep
+   * working fully offline/local-only.
+   */
+  async function recordCommunityUnlocks(results: UnlockResult[]): Promise<void> {
+    if (!dependencies.recordCommunityUnlock) return;
+
+    for (const result of results) {
+      const communityUnlockId = result.unlockId;
+      if (!communityUnlockId) continue;
+      try {
+        const stats = await dependencies.recordCommunityUnlock(communityUnlockId);
+        if (stats) {
+          result.communityUnlockCount = stats.count;
+          result.communityTotalPlayers = stats.totalPlayers;
+        }
+      } catch (error) {
+        console.warn(`Failed to record community unlock for "${communityUnlockId}":`, error);
+      }
+    }
   }
 
   /**

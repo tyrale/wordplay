@@ -191,6 +191,44 @@ export type Database = {
           time_taken_seconds?: number | null
         }
       }
+      user_unlocks: {
+        Row: {
+          user_id: string
+          unlock_id: string
+          unlocked_at: string
+        }
+        Insert: {
+          user_id: string
+          unlock_id: string
+        }
+        Update: Record<string, never>
+      }
+      community_unlock_counts: {
+        Row: {
+          unlock_id: string
+          unlock_count: number
+        }
+        Insert: {
+          unlock_id: string
+          unlock_count?: number
+        }
+        Update: {
+          unlock_count?: number
+        }
+      }
+      community_stats: {
+        Row: {
+          id: boolean
+          total_players: number
+        }
+        Insert: {
+          id?: boolean
+          total_players?: number
+        }
+        Update: {
+          total_players?: number
+        }
+      }
     }
   }
 } 

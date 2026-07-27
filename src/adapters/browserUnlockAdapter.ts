@@ -8,6 +8,7 @@
 
 import type { UnlockDependencies, UnlockState } from '../../packages/engine/interfaces';
 import { INITIAL_UNLOCK_STATE } from '../../packages/engine/unlock-definitions';
+import { recordCommunityUnlock } from './supabaseCommunityUnlocksAdapter';
 
 const DB_NAME = 'wordplay-unlocks';
 const DB_VERSION = 1;
@@ -121,7 +122,8 @@ export function createBrowserUnlockDependencies(): UnlockDependencies {
   return {
     loadState: loadStateFromIndexedDB,
     saveState: saveStateToIndexedDB,
-    getTimestamp: () => Date.now()
+    getTimestamp: () => Date.now(),
+    recordCommunityUnlock
   };
 }
 

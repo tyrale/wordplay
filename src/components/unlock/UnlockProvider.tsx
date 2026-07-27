@@ -9,7 +9,9 @@ import React, { createContext, useContext, useCallback, useEffect } from 'react'
 import { useUnlocks } from '../../hooks/useUnlocks';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAlert } from '../ui/AlertProvider';
-import { alertCopy } from '../../content/alertCopy';
+import { alertCopy, resolveAlertMeta } from '../../content/alertCopy';
+import type { AlertCopyEntry } from '../../content/alertCopy';
+import { computeUnlockPercentage } from '../../adapters/supabaseCommunityUnlocksAdapter';
 import { availableThemes } from '../../types/theme';
 import type { UseUnlocksReturn } from '../../hooks/useUnlocks';
 import type { UnlockResult } from '../../../packages/engine/interfaces';
@@ -56,15 +58,32 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
   // Show unlock notification using the universal alert overlay
   const showUnlockNotification = useCallback((results: UnlockResult[]) => {
     for (const result of results) {
+      // Rarity: what fraction of the community has ever found this unlock,
+      // if the community-wide count was successfully recorded server-side.
+      const percent = (result.communityUnlockCount != null && result.communityTotalPlayers != null)
+        ? computeUnlockPercentage(result.communityUnlockCount, result.communityTotalPlayers)
+        : null;
+
+      // Appends a "X% found" line below any existing meta text, when rarity data is available.
+      const withRarity = (baseMeta?: string): React.ReactNode => {
+        if (percent == null) return baseMeta;
+        return (
+          <>
+            {baseMeta && <div>{baseMeta}</div>}
+            <div>{percent}% found</div>
+          </>
+        );
+      };
+
       // Easter egg: playing "tyrale" unlocks dark mode with fully custom copy
       if (result.itemId === 'dark-mode') {
-        showAlert('unlocks', 'darkMode', { variant: 'unlock' });
+        showAlert('unlocks', 'darkMode', { variant: 'unlock', meta: withRarity(resolveAlertMeta(alertCopy.unlocks.darkMode)) });
         continue;
       }
 
-      // bruh-bot gets its own minimal alert - just the word, no meta/extra lines
+      // bruh-bot gets its own minimal alert - just the word, no meta/extra lines (aside from rarity)
       if (result.itemId === 'bruh-bot') {
-        showAlert('unlocks', 'bruh', { variant: 'unlock' });
+        showAlert('unlocks', 'bruh', { variant: 'unlock', meta: withRarity() });
         continue;
       }
 
@@ -93,7 +112,10 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
       }
       
       const category = (result.category in alertCopy.unlocks) ? result.category as keyof typeof alertCopy.unlocks : 'generic';
-      showAlert('unlocks', category, { params: { item: itemName.toUpperCase() }, itemId: result.itemId, variant: 'unlock' });
+      const params = { item: itemName.toUpperCase() };
+      const entry = (alertCopy.unlocks as Record<string, AlertCopyEntry>)[category];
+      const baseMeta = resolveAlertMeta(entry, params, result.itemId);
+      showAlert('unlocks', category, { params, itemId: result.itemId, variant: 'unlock', meta: withRarity(baseMeta) });
     }
   }, [showAlert]);
 

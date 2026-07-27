@@ -748,6 +748,10 @@ export interface UnlockResult {
   }; // Old format compatibility
   unlockId?: string; // Old format compatibility
   wasAlreadyUnlocked?: boolean;
+  /** Community-wide unique-player count for this unlock, if a `recordCommunityUnlock` dependency was provided and succeeded. */
+  communityUnlockCount?: number;
+  /** Total known players the community count is measured against, if available. */
+  communityTotalPlayers?: number;
 }
 
 export interface UnlockTrigger {
@@ -779,6 +783,14 @@ export interface UnlockDependencies {
   loadState(): Promise<UnlockState>;
   saveState(state: UnlockState): Promise<void>;
   getTimestamp(): number;
+  /**
+   * Optional hook to record a first-time unlock against a community-wide,
+   * cross-player counter (e.g. via a backend). Called once per genuinely
+   * new unlock. Should resolve to `null` (rather than throwing) if the
+   * backend is unavailable/unconfigured, so unlocks still work fully
+   * offline/local-only.
+   */
+  recordCommunityUnlock?(unlockId: string): Promise<{ count: number; totalPlayers: number } | null>;
 }
 
 export interface UnlockEngine {

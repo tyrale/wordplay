@@ -18,6 +18,7 @@ import { initViewportHeight } from './utils/viewportHeight';
 import { hasSeenTutorial, markTutorialSeen } from './utils/tutorialStorage';
 import { AlertProvider } from './components/ui/AlertProvider';
 import { clearActiveGame } from './adapters/browserGameSaveAdapter';
+import { ensureAnonymousSession } from './adapters/supabaseAuthAdapter';
 import type { GameState } from '../packages/engine/interfaces';
 import './App.css';
 
@@ -301,6 +302,13 @@ function AppContent() {
   // Initialize viewport height handling
   React.useEffect(() => {
     initViewportHeight();
+  }, []);
+
+  // Silently establish an anonymous Supabase identity for every session (not
+  // just multiplayer), so single-player unlocks also count toward the
+  // community-wide unlock stats. No-ops if Supabase isn't configured.
+  React.useEffect(() => {
+    ensureAnonymousSession().catch(err => console.warn('Failed to establish anonymous session:', err));
   }, []);
 
   return (

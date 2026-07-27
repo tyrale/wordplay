@@ -106,7 +106,9 @@ export const alertCopy = {
         'vanity-filter': 'Let the explitives fly!',
         'time-pressure': '7 second turn timer. The pressure is on!',
         'gravity': 'Letters fall and roll freely now',
-        'unlock-counter': 'Check under home to track your progress'
+        'drunk': 'Toggle is on in the menu. Everything gets a little hazy...',
+        'unlock-counter': 'Check under home to track your progress',
+        'community-stats': 'Check under home to see what the whole community has found'
       }
     },
     vanityFilter: { lines: ['FILTER', 'TOGGLE', 'UNLOCKED'], meta: 'Toggle it in the menu' },

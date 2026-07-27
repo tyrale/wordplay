@@ -630,6 +630,15 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     trigger: { type: 'word', value: 'falls', timing: 'word_submission' },
     target: 'gravity'
   },
+  {
+    id: 'unlock_drunk',
+    category: 'mechanic',
+    itemId: 'drunk',
+    name: 'Drunk Mode',
+    description: 'Unlock drunk mode by playing the word "drunk" - the whole screen gets hazy and wobbly',
+    trigger: { type: 'word', value: 'drunk', timing: 'word_submission' },
+    target: 'drunk'
+  },
 
   // Round length unlocks - playing a number word unlocks setting the round
   // (number of turns) to that number in the mechanics menu
@@ -695,6 +704,15 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     description: 'Unlock a small "x/x unlocked" progress indicator under home in the menu by playing "unlock"',
     trigger: { type: 'word', value: 'unlock', timing: 'word_submission' },
     target: 'unlock-counter'
+  },
+  {
+    id: 'unlock_community_stats',
+    category: 'mechanic',
+    itemId: 'community-stats',
+    name: 'Community Stats',
+    description: 'Unlock a community-wide "x/x found worldwide" progress indicator under home in the menu by playing "world"',
+    trigger: { type: 'word', value: 'world', timing: 'word_submission' },
+    target: 'community-stats'
   },
 
   // Bot unlocks - mixed triggers (achievements and words)
