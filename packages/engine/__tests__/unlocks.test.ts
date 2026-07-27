@@ -99,6 +99,26 @@ describe('Unlock Engine', () => {
       expect(unlockEngine.isUnlocked('mechanic', 'gravity')).toBe(true);
     });
 
+    it.each([
+      ['ten', 'round-length-10'],
+      ['fifteen', 'round-length-15'],
+      ['thirty', 'round-length-30'],
+      ['forty', 'round-length-40'],
+      ['fifty', 'round-length-50'],
+      ['hundred', 'round-length-100']
+    ])('should unlock the %s round length mechanic with the "%s" word trigger', async (word, target) => {
+      const results = await unlockEngine.checkWordTriggers(word);
+
+      expect(results).toHaveLength(1);
+      expect(results[0]).toMatchObject({
+        category: 'mechanic',
+        target,
+        wasAlreadyUnlocked: false
+      });
+
+      expect(unlockEngine.isUnlocked('mechanic', target)).toBe(true);
+    });
+
     it('should unlock bots with word triggers', async () => {
       const results = await unlockEngine.checkWordTriggers('pirate');
       

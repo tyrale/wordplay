@@ -13,6 +13,7 @@ import { UnlockProvider } from '../../unlock/UnlockProvider';
 import { AlertProvider } from '../AlertProvider';
 import { VanityFilterProvider } from '../../../contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from '../../../contexts/MechanicsSettingsContext';
+import { RoundLengthProvider } from '../../../contexts/RoundLengthContext';
 
 // Test wrapper with required providers
 function TestWrapper({ children }: { children: React.ReactNode }) {
@@ -22,7 +23,9 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
         <UnlockProvider>
           <VanityFilterProvider>
             <MechanicsSettingsProvider>
-              {children}
+              <RoundLengthProvider>
+                {children}
+              </RoundLengthProvider>
             </MechanicsSettingsProvider>
           </VanityFilterProvider>
         </UnlockProvider>

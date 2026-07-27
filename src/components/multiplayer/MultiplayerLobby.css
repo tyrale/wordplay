@@ -84,18 +84,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  min-width: 220px;
+  gap: var(--spacing-sm, 12px);
+  width: 100%;
+  max-width: 400px;
 }
 
-.multiplayer-lobby__panel button {
-  padding: 0.6rem 1.2rem;
-  border-radius: 6px;
-  border: 1px solid currentColor;
-  background: none;
-  cursor: pointer;
-  font-size: 0.95rem;
-  min-width: 200px;
+/* Matches MainScreen's h3-less menus - headings here use the same theme
+   typography instead of default browser heading styles. */
+.multiplayer-lobby__panel h3 {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 20px;
+  color: var(--theme-text);
+  text-transform: uppercase;
+  text-align: center;
+  margin: 0;
 }
 
 /* Text-link style menu options, matching the vs-bot selection list
@@ -123,6 +126,86 @@
 
 .multiplayer-lobby__link:active {
   opacity: 0.5;
+}
+
+.multiplayer-lobby__link:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.multiplayer-lobby__action-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.multiplayer-lobby__submenu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  overflow: hidden;
+  animation: multiplayer-lobby-submenu-in 0.22s ease-out;
+}
+
+@keyframes multiplayer-lobby-submenu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 120px;
+  }
+}
+
+.multiplayer-lobby__submenu-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  width: 100%;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 0.9rem;
+  color: var(--theme-text);
+  text-align: center;
+  text-transform: uppercase;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35em;
+}
+
+.multiplayer-lobby__submenu-link:active {
+  opacity: 0.5;
+}
+
+.multiplayer-lobby__vs-text {
+  color: var(--theme-accent);
+}
+
+.multiplayer-lobby__joined-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  color: var(--theme-text);
+  text-transform: uppercase;
 }
 
 .multiplayer-lobby__games {

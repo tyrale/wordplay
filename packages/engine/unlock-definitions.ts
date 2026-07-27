@@ -630,6 +630,63 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     trigger: { type: 'word', value: 'falls', timing: 'word_submission' },
     target: 'gravity'
   },
+
+  // Round length unlocks - playing a number word unlocks setting the round
+  // (number of turns) to that number in the mechanics menu
+  {
+    id: 'unlock_round_length_10',
+    category: 'mechanic',
+    itemId: 'round-length-10',
+    name: '10 Turn Rounds',
+    description: 'Unlock 10-turn rounds by playing the word "ten"',
+    trigger: { type: 'word', value: 'ten', timing: 'word_submission' },
+    target: 'round-length-10'
+  },
+  {
+    id: 'unlock_round_length_15',
+    category: 'mechanic',
+    itemId: 'round-length-15',
+    name: '15 Turn Rounds',
+    description: 'Unlock 15-turn rounds by playing the word "fifteen"',
+    trigger: { type: 'word', value: 'fifteen', timing: 'word_submission' },
+    target: 'round-length-15'
+  },
+  {
+    id: 'unlock_round_length_30',
+    category: 'mechanic',
+    itemId: 'round-length-30',
+    name: '30 Turn Rounds',
+    description: 'Unlock 30-turn rounds by playing the word "thirty"',
+    trigger: { type: 'word', value: 'thirty', timing: 'word_submission' },
+    target: 'round-length-30'
+  },
+  {
+    id: 'unlock_round_length_40',
+    category: 'mechanic',
+    itemId: 'round-length-40',
+    name: '40 Turn Rounds',
+    description: 'Unlock 40-turn rounds by playing the word "forty"',
+    trigger: { type: 'word', value: 'forty', timing: 'word_submission' },
+    target: 'round-length-40'
+  },
+  {
+    id: 'unlock_round_length_50',
+    category: 'mechanic',
+    itemId: 'round-length-50',
+    name: '50 Turn Rounds',
+    description: 'Unlock 50-turn rounds by playing the word "fifty"',
+    trigger: { type: 'word', value: 'fifty', timing: 'word_submission' },
+    target: 'round-length-50'
+  },
+  {
+    id: 'unlock_round_length_100',
+    category: 'mechanic',
+    itemId: 'round-length-100',
+    name: '100 Turn Rounds',
+    description: 'Unlock 100-turn rounds by playing the word "hundred"',
+    trigger: { type: 'word', value: 'hundred', timing: 'word_submission' },
+    target: 'round-length-100'
+  },
   {
     id: 'unlock_counter',
     category: 'mechanic',

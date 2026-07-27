@@ -3,6 +3,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { useVanityFilter } from '../../hooks/useVanityFilter';
 import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
+import { useRoundLength } from '../../contexts/RoundLengthContext';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
 import { getAllBots, getBotDisplayNamesMapping } from '../../data/botRegistry';
 import { availableThemes as ALL_THEMES } from '../../types/theme';
@@ -20,7 +21,14 @@ interface MenuTier2Item {
 }
 
 // Full list of mechanic ids that can exist (excludes 'dark-mode', which lives under the themes section)
-const ALL_MECHANIC_IDS = ['vanity-filter', '5-letter-start', '6-letter-start', 'time-pressure', 'gravity'];
+const ALL_MECHANIC_IDS = ['vanity-filter', '5-letter-start', '6-letter-start', 'time-pressure', 'gravity', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
+
+// Mechanic IDs that control the round length (number of turns) - mutually
+// exclusive, unlike other mechanics, so only one can be selected at a time
+const ROUND_LENGTH_MECHANIC_IDS = new Set(['round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100']);
+
+// Extracts the numeric turn count from a round-length mechanic id (e.g. 'round-length-10' -> 10)
+const getRoundLengthValue = (mechanicId: string): number => parseInt(mechanicId.replace('round-length-', ''), 10);
 
 // Masks a display name into '?' characters (one per non-space character), preserving spaces as gaps
 const maskName = (name: string): string => name.replace(/[^\s]/g, '?');
@@ -38,7 +46,13 @@ const mechanicDisplayNames: Record<string, string> = {
   '6-letter-start': '6 letter starting word',
   'time-pressure': 'time pressure mode',
   'gravity': 'falls mode',
-  'challenge-dictionary': 'challenge dictionary'
+  'challenge-dictionary': 'challenge dictionary',
+  'round-length-10': '10 turn rounds',
+  'round-length-15': '15 turn rounds',
+  'round-length-30': '30 turn rounds',
+  'round-length-40': '40 turn rounds',
+  'round-length-50': '50 turn rounds',
+  'round-length-100': '100 turn rounds'
 };
 
 // Updated menu structure based on requirements and unlock state
@@ -57,7 +71,8 @@ const getMenuItems = (
   _vanityFilterUnlocked: boolean = false,
   vanityFilterOn: boolean = true,
   isMechanicOn: (mechanicId: string) => boolean = () => true,
-  revealedCategories: string[] = []
+  revealedCategories: string[] = [],
+  selectedRoundLength: number = 0
 ): MenuTier1Item[] => {
   // Locked theme previews - only computed once 'themes' has been revealed
   const lockedThemeItems: MenuTier2Item[] = revealedCategories.includes('themes')
@@ -137,6 +152,15 @@ const getMenuItems = (
             isSelected: vanityFilterOn
           };
         }
+        // Round length options are mutually exclusive - only the currently
+        // selected round length is shown as selected, the rest are not
+        if (ROUND_LENGTH_MECHANIC_IDS.has(mechanicId)) {
+          return {
+            id: mechanicId,
+            title: mechanicDisplayNames[mechanicId] || mechanicId,
+            isSelected: getRoundLengthValue(mechanicId) === selectedRoundLength
+          };
+        }
         return {
           id: mechanicId,
           title: mechanicDisplayNames[mechanicId] || mechanicId,
@@ -213,6 +237,9 @@ export const Menu: React.FC<MenuProps> = ({
   
   // Get mechanics on/off state
   const { isMechanicOn, toggleMechanic } = useMechanicsSettings();
+
+  // Get round length (number of turns per round) selection state
+  const { roundLength, setRoundLength } = useRoundLength();
   const unlockedThemeIds = getUnlockedItems('theme');
   const unlockedMechanics = getUnlockedItems('mechanic');
   const unlockedBots = getUnlockedItems('bot');
@@ -235,7 +262,7 @@ export const Menu: React.FC<MenuProps> = ({
     }
   }, []);
 
-  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn(), isMechanicOn, revealedCategories);
+  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn(), isMechanicOn, revealedCategories, roundLength);
 
   // "unlock" mechanic - shows a small "x/x unlocked" progress indicator under home
   const isUnlockCounterOn = isUnlocked('mechanic', 'unlock-counter');
@@ -371,6 +398,9 @@ export const Menu: React.FC<MenuProps> = ({
       if (tier2Id === 'vanity-filter') {
         // Toggle vanity filter
         toggleVanityFilter();
+      } else if (ROUND_LENGTH_MECHANIC_IDS.has(tier2Id)) {
+        // Select this round length (mutually exclusive with other round lengths)
+        setRoundLength(getRoundLengthValue(tier2Id));
       } else {
         // Toggle the mechanic on/off
         toggleMechanic(tier2Id);
@@ -384,7 +414,7 @@ export const Menu: React.FC<MenuProps> = ({
     
     // For other items (challenge, mechanics, other about items), keep menu open
     // These are placeholder items that don't have functionality yet
-  }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, toggleVanityFilter, toggleMechanic, resetUnlocksToFresh, resetDailyChallenge]);
+  }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, toggleVanityFilter, toggleMechanic, setRoundLength, resetUnlocksToFresh, resetDailyChallenge]);
 
   return (
     <>

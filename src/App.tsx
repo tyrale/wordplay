@@ -9,6 +9,7 @@ import { AnimationProvider } from './animations';
 import { UnlockProvider } from './components/unlock/UnlockProvider';
 import { VanityFilterProvider } from './contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from './contexts/MechanicsSettingsContext';
+import { RoundLengthProvider, useRoundLength } from './contexts/RoundLengthContext';
 import ResponsiveTest from './components/game/ResponsiveTest';
 import { AlertOverlay } from './components/ui/AlertOverlay';
 import { alertCopy, pickAlertVariant } from './content/alertCopy';
@@ -37,7 +38,8 @@ function getMultiplayerGameIdFromUrl(): string | null {
   return new URLSearchParams(window.location.search).get('mgame');
 }
 
-function App() {
+function AppContent() {
+  const { roundLength } = useRoundLength();
   const initialMultiplayerGameId = getMultiplayerGameIdFromUrl();
   const [appState, setAppState] = useState<AppState>(initialMultiplayerGameId ? 'multiplayer-game' : 'main');
   const [selectedBotId, setSelectedBotId] = useState<string>('basicBot');
@@ -333,7 +335,7 @@ function App() {
                       tutorialActive
                         ? { ...TUTORIAL_INITIAL_CONFIG, botId: selectedBotId }
                         : {
-                            maxTurns: 20,
+                            maxTurns: roundLength,
                             allowBotPlayer: true,
                             enableKeyLetters: true,
                             enableLockedLetters: true,
@@ -426,6 +428,14 @@ function App() {
         </UnlockProvider>
       </AlertProvider>
     </ThemeProvider>
+  );
+}
+
+function App() {
+  return (
+    <RoundLengthProvider>
+      <AppContent />
+    </RoundLengthProvider>
   );
 }
 

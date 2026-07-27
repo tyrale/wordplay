@@ -216,6 +216,15 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
           { event: 'INSERT', schema: 'public', table: 'turns', filter: `game_id=eq.${gameId}` },
           () => onChange()
         )
+        // vsmany "waiting to start" games gain players one at a time via
+        // separate game_players inserts (not a `games` row update), so
+        // watch for those too - otherwise a waiting-room view wouldn't
+        // pick up newly-joined players until something else changed.
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'game_players', filter: `game_id=eq.${gameId}` },
+          () => onChange()
+        )
         .subscribe();
 
       return () => {
@@ -253,6 +262,8 @@ export interface CreateInviteGameOptions {
   maxTurns?: number;
   turnTimeoutHours?: number;
   initialWordLength?: number;
+  /** 2 for vsone (default), up to 8 for vsmany. */
+  maxPlayers?: number;
 }
 
 /**
@@ -277,6 +288,7 @@ export async function createInviteGame(
       game_mode: 'multiplayer',
       pairing_mode: 'invite',
       invite_code: inviteCode,
+      max_players: options.maxPlayers ?? 2,
       max_turns: options.maxTurns ?? 20,
       turn_timeout_hours: options.turnTimeoutHours ?? 48,
       initial_word_length: wordLength,
@@ -298,6 +310,53 @@ export async function createInviteGame(
   }
 
   return { gameId: game.id, inviteCode };
+}
+
+/**
+ * Host-only manual start for a vsmany invite game that hasn't filled up to
+ * `max_players` yet, once at least 2 players have joined. No-op error if
+ * called by a non-host or before 2 players have joined.
+ */
+export async function startWaitingGame(gameId: string): Promise<void> {
+  const { error } = await supabase.rpc('start_waiting_game', { p_game_id: gameId });
+  if (error) {
+    throw new Error(error.message || 'Failed to start game');
+  }
+}
+
+export interface GameJoinInfo {
+  status: 'waiting' | 'active' | 'completed' | 'abandoned';
+  maxPlayers: number;
+  players: { id: string; name: string }[];
+}
+
+/** Fetch the current join status of a game (used by vsmany waiting rooms to
+ * show a live "X/Y joined" list before the host starts or it fills up). */
+export async function getGameJoinInfo(gameId: string): Promise<GameJoinInfo | null> {
+  const { data: game, error: gameError } = await supabase
+    .from('games')
+    .select('status, max_players')
+    .eq('id', gameId)
+    .single();
+
+  if (gameError || !game) return null;
+
+  const { data: players, error: playersError } = await supabase
+    .from('game_players')
+    .select('user_id, player_index, users(display_name, username)')
+    .eq('game_id', gameId)
+    .order('player_index', { ascending: true });
+
+  if (playersError || !players) return null;
+
+  return {
+    status: game.status,
+    maxPlayers: game.max_players,
+    players: players.map(row => {
+      const userInfo = Array.isArray(row.users) ? row.users[0] : row.users;
+      return { id: row.user_id, name: userInfo?.display_name || userInfo?.username || 'Player' };
+    })
+  };
 }
 
 /** Join a waiting invite-created game by its shareable code. */
@@ -400,12 +459,26 @@ export interface MatchmakingHandle {
   cancel: () => Promise<void>;
 }
 
+export type MatchmakingMode = 'vsone' | 'vsmany';
+
+/** How long a vsmany search waits before grouping up whoever's queued
+ * (minimum 2) into a single game, rather than holding out for a full 8. */
+const VSMANY_GROUP_DELAY_MS = 8000;
+
 /**
  * Enter the random matchmaking queue and try to pair immediately. If no
  * opponent is available yet, subscribes for a match and calls `onMatched`
  * once one is found. Call `cancel()` to stop searching.
+ *
+ * - `vsone` (default): unchanged 1v1 behavior - pairs with the oldest other
+ *   vsone entrant immediately, or as soon as one appears.
+ * - `vsmany`: waits a short delay to let others queue up, then groups
+ *   whoever's queued (2-8) into a single game.
  */
-export async function findMatch(onMatched: (gameId: string) => void): Promise<MatchmakingHandle> {
+export async function findMatch(
+  onMatched: (gameId: string) => void,
+  mode: MatchmakingMode = 'vsone'
+): Promise<MatchmakingHandle> {
   const userId = await ensureAnonymousSession();
   if (!userId) throw new Error('Unable to authenticate for multiplayer');
 
@@ -413,7 +486,7 @@ export async function findMatch(onMatched: (gameId: string) => void): Promise<Ma
 
   const { error: queueError } = await supabase
     .from('matchmaking_queue')
-    .upsert({ user_id: userId, display_name: displayName }, { onConflict: 'user_id' });
+    .upsert({ user_id: userId, display_name: displayName, mode, assigned_game_id: null }, { onConflict: 'user_id' });
 
   if (queueError) {
     throw new Error(`Failed to join matchmaking queue: ${queueError.message}`);
@@ -421,42 +494,111 @@ export async function findMatch(onMatched: (gameId: string) => void): Promise<Ma
 
   let settled = false;
 
-  const attemptMatch = async () => {
+  if (mode === 'vsone') {
+    const attemptMatch = async () => {
+      if (settled) return;
+      const { data, error } = await supabase.rpc('try_match');
+      if (error) {
+        console.warn('try_match() failed:', error);
+        return;
+      }
+      if (data) {
+        settled = true;
+        cleanup();
+        const gameId = data as string;
+        // We matched with an already-queued opponent and created the game
+        // (see try_match() RPC) - give it a random starting word, same as
+        // vs-bot games, instead of the DB's fixed default.
+        const startingWord = await pickRandomStartingWord(4);
+        await supabase.from('games').update({ current_word: startingWord }).eq('id', gameId);
+        onMatched(gameId);
+      }
+    };
+
+    // Try immediately in case an opponent is already waiting.
+    await attemptMatch();
+
+    // Also retry whenever the queue changes (e.g. another player joined and
+    // may have matched us, or we should re-attempt matching them).
+    const channel = supabase
+      .channel(`matchmaking-${userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'matchmaking_queue' }, () => {
+        attemptMatch();
+      })
+      .subscribe();
+
+    const pollInterval = setInterval(attemptMatch, 4000);
+
+    function cleanup() {
+      clearInterval(pollInterval);
+      supabase.removeChannel(channel);
+    }
+
+    return {
+      cancel: async () => {
+        settled = true;
+        cleanup();
+        await supabase.from('matchmaking_queue').delete().eq('user_id', userId);
+      }
+    };
+  }
+
+  // vsmany: rows are *updated* with an assigned_game_id (not deleted) once
+  // grouped, so every member - not just whoever calls finalize - can
+  // discover the resulting game via their own still-existing queue row.
+  const checkAssigned = async (): Promise<string | null> => {
+    const { data } = await supabase
+      .from('matchmaking_queue')
+      .select('assigned_game_id')
+      .eq('user_id', userId)
+      .single();
+    return data?.assigned_game_id ?? null;
+  };
+
+  const settle = async (gameId: string) => {
     if (settled) return;
-    const { data, error } = await supabase.rpc('try_match');
+    settled = true;
+    cleanup();
+    await supabase.from('matchmaking_queue').delete().eq('user_id', userId);
+    onMatched(gameId);
+  };
+
+  const finalizeGroup = async () => {
+    if (settled) return;
+    const { data, error } = await supabase.rpc('finalize_vsmany_match');
     if (error) {
-      console.warn('try_match() failed:', error);
+      console.warn('finalize_vsmany_match() failed:', error);
       return;
     }
     if (data) {
-      settled = true;
-      cleanup();
       const gameId = data as string;
-      // We matched with an already-queued opponent and created the game
-      // (see try_match() RPC) - give it a random starting word, same as
-      // vs-bot games, instead of the DB's fixed default.
       const startingWord = await pickRandomStartingWord(4);
       await supabase.from('games').update({ current_word: startingWord }).eq('id', gameId);
-      onMatched(gameId);
+      await settle(gameId);
     }
   };
 
-  // Try immediately in case an opponent is already waiting.
-  await attemptMatch();
+  const pollAssigned = async () => {
+    if (settled) return;
+    const gameId = await checkAssigned();
+    if (gameId) await settle(gameId);
+  };
 
-  // Also retry whenever the queue changes (e.g. another player joined and
-  // may have matched us, or we should re-attempt matching them).
   const channel = supabase
     .channel(`matchmaking-${userId}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'matchmaking_queue' }, () => {
-      attemptMatch();
-    })
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'matchmaking_queue', filter: `user_id=eq.${userId}` },
+      () => pollAssigned()
+    )
     .subscribe();
 
-  const pollInterval = setInterval(attemptMatch, 4000);
+  const pollInterval = setInterval(pollAssigned, 2000);
+  const groupTimeout = setTimeout(finalizeGroup, VSMANY_GROUP_DELAY_MS);
 
   function cleanup() {
     clearInterval(pollInterval);
+    clearTimeout(groupTimeout);
     supabase.removeChannel(channel);
   }
 
