@@ -1,0 +1,87 @@
+/**
+ * Thoughts Overlay Styles
+ *
+ * Flat, full-screen informational overlay - same visual language as
+ * DictionariesOverlay / AlertOverlay (no containers, borders, or shadows).
+ */
+
+.thoughts-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--theme-background);
+  z-index: 20000;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-xl) var(--spacing-lg) calc(var(--spacing-xl) * 3);
+}
+
+.thoughts-overlay__content {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--spacing-xl);
+}
+
+.thoughts-overlay__title {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 10vw;
+  line-height: 1;
+  color: var(--theme-accent);
+  text-align: center;
+  text-transform: uppercase;
+  margin: 0 0 var(--spacing-xl);
+}
+
+.thoughts-overlay__list {
+  width: 100%;
+  margin: 0;
+  padding: 0 0 0 1.4em;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  text-align: left;
+}
+
+.thoughts-overlay__item {
+  font-family: var(--theme-font-family);
+  font-size: var(--theme-font-size-md);
+  color: var(--theme-text);
+  opacity: 0.9;
+  text-align: left;
+}
+
+/* Close X - always present, centered at the bottom */
+.thoughts-overlay__close {
+  position: fixed;
+  bottom: var(--spacing-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 32px;
+  line-height: 1;
+  color: var(--theme-text);
+  padding: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.thoughts-overlay__close:hover {
+  opacity: 0.7;
+}

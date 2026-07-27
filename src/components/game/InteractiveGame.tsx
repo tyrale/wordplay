@@ -120,7 +120,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // Determine starting word length from unlocked + enabled starting-word mechanics.
   // If multiple lengths are unlocked and on, pick one at random for variety.
   const unlockedMechanics = getUnlockedItems('mechanic');
-  const availableStartLengths = [5, 6].filter(len =>
+  const availableStartLengths = [3, 5, 6, 7, 8, 9, 10].filter(len =>
     unlockedMechanics.includes(`${len}-letter-start`) && isMechanicOn(`${len}-letter-start`)
   );
   const startingWordLength = availableStartLengths.length > 0

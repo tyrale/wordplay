@@ -288,7 +288,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
                 >
                   {game.opponentName}
                   <span className="multiplayer-lobby__game-status">
-                    {game.status === 'waiting' ? 'waiting' : game.isMyTurn ? 'your turn' : 'waiting'}
+                    {game.status === 'waiting' ? 'waiting' : game.isMyTurn ? 'your turn' : 'their turn'}
                   </span>
                 </button>
               ))}

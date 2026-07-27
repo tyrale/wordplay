@@ -45,3 +45,66 @@
   opacity: 0.7;
   margin: 0;
 }
+
+/* Enlarged checkmark to match the prominence of the vs-bot back arrow on
+   this centered waiting screen (default .submit-button is sized for the
+   in-game rack, which is much smaller). */
+.multiplayer-game__start-button {
+  font-size: 2rem;
+  min-width: 56px;
+  height: 56px;
+}
+
+/* Matches the vs-bot back arrow exactly (see .main-screen-back-button in
+   MainScreen.css) - same size, position, color, and responsive breakpoints. */
+.multiplayer-game__back {
+  position: fixed;
+  bottom: var(--spacing-md, 20px);
+  left: var(--spacing-md, 20px);
+
+  width: 112px;
+  height: 112px;
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: calc(var(--theme-font-size-lg) * 2);
+  color: var(--theme-accent);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: all 0.2s ease;
+  z-index: 100;
+
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.multiplayer-game__back:active {
+  transform: translateY(0);
+  opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+  .multiplayer-game__back {
+    width: 96px;
+    height: 96px;
+    font-size: calc(var(--theme-font-size-md) * 2);
+    bottom: var(--spacing-sm, 8px);
+    left: var(--spacing-sm, 8px);
+  }
+}
+
+@media (max-width: 480px) {
+  .multiplayer-game__back {
+    width: 60px;
+    height: 60px;
+    bottom: var(--spacing-sm, 8px);
+    left: var(--spacing-sm, 8px);
+  }
+}

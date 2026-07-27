@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { InteractiveGame } from '../game/InteractiveGame';
+import { SubmitButton } from '../game/SubmitButton';
 import { useMultiplayerManager } from '../../hooks/useMultiplayerManager';
 import { getGameJoinInfo, startWaitingGame } from '../../adapters/supabaseMultiplayerAdapter';
 import './MultiplayerGame.css';
@@ -117,12 +118,24 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
           {state.players.length}{maxPlayers ? ` / ${maxPlayers}` : ''} joined
         </p>
         {isHost && state.players.length >= 2 && (
-          <button onClick={handleStartWaitingGame} disabled={isStarting} type="button">
-            {isStarting ? 'Starting…' : 'Start Game'}
-          </button>
+          <SubmitButton
+            isValid={true}
+            isInvalid={false}
+            isPassConfirming={false}
+            onClick={handleStartWaitingGame}
+            disabled={isStarting}
+            className="multiplayer-game__start-button"
+          />
         )}
         {!isHost && <p className="multiplayer-game__waiting-hint">Waiting on the host to start…</p>}
-        <button onClick={onExit} type="button">Back to Menu</button>
+        <button
+          className="multiplayer-game__back"
+          onClick={onExit}
+          aria-label="Back"
+          type="button"
+        >
+          ←
+        </button>
       </div>
     );
   }

@@ -33,7 +33,6 @@ export {
   julyTheme,
   brandTheme,
   salmonTheme,
-  lavendarTheme,
   bluesTheme,
   squashTheme,
   smogTheme,

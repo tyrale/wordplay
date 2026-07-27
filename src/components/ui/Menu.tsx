@@ -10,6 +10,7 @@ import { getAllBots, getBotDisplayNamesMapping } from '../../data/botRegistry';
 import { availableThemes as ALL_THEMES } from '../../types/theme';
 import type { GameTheme } from '../../types/theme';
 import { DictionariesOverlay } from './DictionariesOverlay';
+import { ThoughtsOverlay } from './ThoughtsOverlay';
 import './Menu.css';
 
 interface MenuTier2Item {
@@ -22,7 +23,7 @@ interface MenuTier2Item {
 }
 
 // Full list of mechanic ids that can exist (excludes 'dark-mode', which lives under the themes section)
-const ALL_MECHANIC_IDS = ['vanity-filter', '5-letter-start', '6-letter-start', 'time-pressure', 'gravity', 'drunk', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
+const ALL_MECHANIC_IDS = ['vanity-filter', '3-letter-start', '5-letter-start', '6-letter-start', '7-letter-start', '8-letter-start', '9-letter-start', '10-letter-start', 'time-pressure', 'gravity', 'drunk', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
 
 // Mechanic IDs that control the round length (number of turns) - mutually
 // exclusive, unlike other mechanics, so only one can be selected at a time
@@ -58,10 +59,15 @@ interface MenuTier1Item {
 
 // Map mechanic IDs to display names
 const mechanicDisplayNames: Record<string, string> = {
+  '3-letter-start': '3 letter starting word',
   '5-letter-start': '5 letter starting word',
   '6-letter-start': '6 letter starting word',
+  '7-letter-start': '7 letter starting word',
+  '8-letter-start': '8 letter starting word',
+  '9-letter-start': '9 letter starting word',
+  '10-letter-start': '10 letter starting word',
   'time-pressure': 'time pressure mode',
-  'gravity': 'falls mode',
+  'gravity': 'gravity',
   'drunk': 'drunk mode',
   'challenge-dictionary': 'challenge dictionary',
   'round-length-10': '10 turn rounds',
@@ -211,6 +217,7 @@ const getMenuItems = (
     children: [
       { id: 'the-basics', title: 'the basics' },
       { id: 'dictionaries', title: 'dictionaries' },
+      { id: 'thoughts', title: 'thoughts' },
       { id: 'debug-mode', title: 'debug mode' },
       { id: 'reset-unlocks', title: 'reset unlocks (debug)' },
     ]
@@ -250,6 +257,7 @@ export const Menu: React.FC<MenuProps> = ({
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
   const [isDictionariesOpen, setIsDictionariesOpen] = useState(false);
+  const [isThoughtsOpen, setIsThoughtsOpen] = useState(false);
   const { currentTheme, setTheme, isInverted, toggleInverted } = useTheme();
   
   // Get unlock state
@@ -404,6 +412,10 @@ export const Menu: React.FC<MenuProps> = ({
     } else if (tier1Id === 'about' && tier2Id === 'dictionaries') {
       // Show the dictionaries overlay
       setIsDictionariesOpen(true);
+      handleClose(); // Close menu behind the overlay
+    } else if (tier1Id === 'about' && tier2Id === 'thoughts') {
+      // Show the thoughts overlay
+      setIsThoughtsOpen(true);
       handleClose(); // Close menu behind the overlay
     } else if (tier1Id === 'about' && (tier2Id === 'debug' || tier2Id === 'debug-mode')) {
       // Open debug dialog
@@ -641,6 +653,10 @@ export const Menu: React.FC<MenuProps> = ({
       <DictionariesOverlay
         isVisible={isDictionariesOpen}
         onClose={() => setIsDictionariesOpen(false)}
+      />
+      <ThoughtsOverlay
+        isVisible={isThoughtsOpen}
+        onClose={() => setIsThoughtsOpen(false)}
       />
     </>
   );

@@ -49,7 +49,7 @@
 
 /* Optional supplementary content (e.g. scores) below the lines */
 .alert-overlay__meta {
-  margin-top: var(--spacing-xl);
+  margin-top: var(--spacing-sm);
   font-family: var(--theme-font-family);
   font-size: var(--theme-font-size-md);
   color: var(--theme-text);
@@ -62,7 +62,7 @@
 .alert-overlay__meta-pattern {
   font-size: calc(var(--theme-font-size-md) * 2.2);
   letter-spacing: 0.15em;
-  line-height: 1.4;
+  line-height: 1.1;
 }
 
 /* Dictionary definition line — normal case/style to read naturally as a sentence */
@@ -107,7 +107,8 @@
   bottom: var(--spacing-xl);
   left: 50%;
   transform: translateX(-50%);
-  background: none;
+  background: var(--theme-surface, #000);
+  border-radius: 50%;
   border: none;
   cursor: pointer;
   font-family: var(--theme-font-family);
@@ -123,6 +124,7 @@
   min-height: 44px;
   transition: opacity 0.2s ease;
   -webkit-tap-highlight-color: transparent;
+  z-index: 1;
 }
 
 .alert-overlay__close:hover {

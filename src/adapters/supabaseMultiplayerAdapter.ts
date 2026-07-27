@@ -447,7 +447,7 @@ export async function listMyActiveGames(): Promise<ActiveGameSummary[]> {
 
     return {
       gameId: game.id,
-      opponentName: opponentInfo?.display_name || opponentInfo?.username || 'Waiting for opponent…',
+      opponentName: opponentInfo?.display_name || opponentInfo?.username || 'Waiting',
       isMyTurn: !!me && me.player_index === game.current_player_index,
       status: game.status as 'waiting' | 'active'
     };

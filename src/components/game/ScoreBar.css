@@ -14,11 +14,19 @@
      clipped in one mode and the word trail to overflow above the viewport
      in another. */
   position: absolute;
-  top: 0;
+  /* top:0 aligns with the padding box of the positioned ancestor
+     (.interactive-game), which sits flush with its border edge - i.e. it
+     does NOT inherit .interactive-game's own padding-top. Without an
+     explicit top offset here, the score bar renders right at the true top
+     edge of the viewport, clipping the first row's text under the device
+     status bar / notch. Match .interactive-game's padding-md so the score
+     bar sits at the same inset as the rest of the game, plus any device
+     safe-area inset (notch/Dynamic Island) on top of that. */
+  top: calc(var(--spacing-md) + env(safe-area-inset-top, 0px));
   left: 0;
   right: 0;
   margin: 0 auto;
-  padding: var(--spacing-sm) 0;
+  padding: 0;
   box-sizing: border-box;
   z-index: 20;
   pointer-events: none;

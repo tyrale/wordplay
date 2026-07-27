@@ -31,7 +31,7 @@ function getSlangWords() {
     
     // Gaming/Tech slang
     'NOOB', 'PWNED', 'EPIC', 'FAIL', 'WIN', 'OWNED', 'LEET', 'HAXOR',
-    'MOD', 'ADMIN', 'PING', 'LAG', 'BUFF', 'NERF', 'GANK', 'AFK',
+    'MOD', 'ADMIN', 'PING', 'LAG', 'BUFF', 'NERF', 'GANK', 'AFK', 'SUS',
     'RAGEQUIT', 'SPEEDRUN', 'RESPAWN', 'KILLSTREAK', 'HEADSHOT',
     
     // General modern slang
@@ -41,7 +41,7 @@ function getSlangWords() {
     
     // Abbreviated forms that are now words
     'APP', 'APPS', 'TECH', 'STARTUP', 'CRYPTO', 'BITCOIN', 'NFTS',
-    'AI', 'VR', 'AR', 'FOMO', 'YOLO', 'SWAG', 'HYPE', 'VIBE',
+    'AI', 'VR', 'AR', 'YOLO', 'SWAG', 'HYPE', 'VIBE',
     'VIBES', 'MOOD', 'ENERGY', 'CHAOS', 'RANDOM', 'WEIRD', 'CRINGE'
   ];
 }
@@ -106,23 +106,6 @@ async function extractProfanityWords() {
     fs.writeFileSync(slangFilePath, JSON.stringify(slangData, null, 2));
     console.log(`✅ Created shared slang file: ${outputDir}/slang-words.json`);
     
-    // Create minified versions for production
-    const minifiedProfanityData = {
-      words: uppercaseProfanityWords
-    };
-    
-    const minifiedSlangData = {
-      words: slangWords
-    };
-    
-    const minProfanityFilePath = path.join(fullPath, 'profanity-words.min.json');
-    fs.writeFileSync(minProfanityFilePath, JSON.stringify(minifiedProfanityData));
-    console.log(`✅ Created minified profanity file: ${outputDir}/profanity-words.min.json`);
-    
-    const minSlangFilePath = path.join(fullPath, 'slang-words.min.json');
-    fs.writeFileSync(minSlangFilePath, JSON.stringify(minifiedSlangData));
-    console.log(`✅ Created minified slang file: ${outputDir}/slang-words.min.json`);
-    
     // Generate extraction report
     const report = [
       '# Word Data Extraction Report',
@@ -142,9 +125,7 @@ async function extractProfanityWords() {
       '',
       '## Output Files',
       `- \`public/data/profanity-words.json\` (${uppercaseProfanityWords.length} words)`,
-      `- \`public/data/profanity-words.min.json\` (minified)`,
       `- \`public/data/slang-words.json\` (${slangWords.length} words)`,
-      `- \`public/data/slang-words.min.json\` (minified)`,
       '',
       '## Platform Integration',
       'All platforms (Web, iOS, Android, React Native, Node.js) will load these shared files',

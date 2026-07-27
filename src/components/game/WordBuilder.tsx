@@ -51,6 +51,23 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
   const lastTouchTimeRef = useRef<number>(0);
   const lastWordRef = useRef<string>(currentWord);
   const inputMethodRef = useRef<string | null>(null);
+  // Drag-drop-target detection (querySelectorAll + getBoundingClientRect) forces a
+  // synchronous layout reflow. Native pointer-move events can fire 60-250+ times/sec,
+  // so running that measurement on every single event causes severe layout-thrashing
+  // lag. These refs let us coalesce the work to at most once per animation frame
+  // while still tracking the latest pointer position for smooth, accurate results.
+  const dragRafIdRef = useRef<number | null>(null);
+  const latestPointerXRef = useRef<number>(0);
+
+  const cancelScheduledDragMeasurement = useCallback(() => {
+    if (dragRafIdRef.current !== null) {
+      cancelAnimationFrame(dragRafIdRef.current);
+      dragRafIdRef.current = null;
+    }
+  }, []);
+
+  // Clean up any in-flight animation frame on unmount.
+  useEffect(() => cancelScheduledDragMeasurement, [cancelScheduledDragMeasurement]);
 
   // Reset drag state when word changes externally
   useEffect(() => {
@@ -140,31 +157,45 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
 
     if (isDragging && containerRef.current) {
       setDragOffsetX(e.clientX - dragStartPos.x);
+      latestPointerXRef.current = e.clientX;
 
-      const elements = containerRef.current.querySelectorAll('[data-letter-index]');
-      let newDropTarget = null;
-      
-      for (let i = 0; i < elements.length; i++) {
-        const element = elements[i] as HTMLElement;
-        const rect = element.getBoundingClientRect();
-        const elementCenter = rect.left + rect.width / 2;
-        
-        if (e.clientX < elementCenter) {
-          newDropTarget = i;
-          break;
-        }
-      }
-      
-      if (newDropTarget === null) {
-        newDropTarget = currentWord.length;
-      }
-      
-      if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1 && newDropTarget !== dropTargetIndex) {
-        triggerHapticFeedback('move');
-        setDropTargetIndex(newDropTarget);
+      // Coalesce the layout-forcing measurement to at most once per frame,
+      // always reading the latest pointer position when it runs.
+      if (dragRafIdRef.current === null) {
+        dragRafIdRef.current = requestAnimationFrame(() => {
+          dragRafIdRef.current = null;
+          if (!containerRef.current) return;
+
+          const pointerX = latestPointerXRef.current;
+          const elements = containerRef.current.querySelectorAll('[data-letter-index]');
+          let newDropTarget = null;
+
+          for (let i = 0; i < elements.length; i++) {
+            const element = elements[i] as HTMLElement;
+            const rect = element.getBoundingClientRect();
+            const elementCenter = rect.left + rect.width / 2;
+
+            if (pointerX < elementCenter) {
+              newDropTarget = i;
+              break;
+            }
+          }
+
+          if (newDropTarget === null) {
+            newDropTarget = currentWord.length;
+          }
+
+          setDropTargetIndex(prevDropTarget => {
+            if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1 && newDropTarget !== prevDropTarget) {
+              triggerHapticFeedback('move');
+              return newDropTarget;
+            }
+            return prevDropTarget;
+          });
+        });
       }
     }
-  }, [draggedIndex, dragStartPos, isDragging, currentWord.length, dropTargetIndex]);
+  }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
 
   const handleMouseUp = useCallback((_e: React.MouseEvent) => {
     if (draggedIndex === null || inputMethodRef.current !== 'mouse') {
@@ -196,8 +227,9 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       setDragOffsetX(0);
       setDropTargetIndex(null);
       inputMethodRef.current = null;
+      cancelScheduledDragMeasurement();
     }
-  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick]);
+  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick, cancelScheduledDragMeasurement]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent, index: number) => {
     if (disabled) return;
@@ -224,34 +256,48 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       // Update drop target during drag
       if (isDragging && containerRef.current) {
         setDragOffsetX(touch.clientX - dragStartPos.x);
+        latestPointerXRef.current = touch.clientX;
 
-        const elements = containerRef.current.querySelectorAll('[data-letter-index]');
-        let newDropTarget = null;
-        
-        for (let i = 0; i < elements.length; i++) {
-          const element = elements[i] as HTMLElement;
-          const rect = element.getBoundingClientRect();
-          const elementCenter = rect.left + rect.width / 2;
-          
-          if (touch.clientX < elementCenter) {
-            newDropTarget = i;
-            break;
-          }
-        }
-        
-        // If no element found, drop at the end
-        if (newDropTarget === null) {
-          newDropTarget = currentWord.length;
-        }
-        
-        // Don't set drop target to the same position as dragged letter
-        if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1 && newDropTarget !== dropTargetIndex) {
-          triggerHapticFeedback('move');
-          setDropTargetIndex(newDropTarget);
+        // Coalesce the layout-forcing measurement to at most once per frame,
+        // always reading the latest pointer position when it runs.
+        if (dragRafIdRef.current === null) {
+          dragRafIdRef.current = requestAnimationFrame(() => {
+            dragRafIdRef.current = null;
+            if (!containerRef.current) return;
+
+            const pointerX = latestPointerXRef.current;
+            const elements = containerRef.current.querySelectorAll('[data-letter-index]');
+            let newDropTarget = null;
+
+            for (let i = 0; i < elements.length; i++) {
+              const element = elements[i] as HTMLElement;
+              const rect = element.getBoundingClientRect();
+              const elementCenter = rect.left + rect.width / 2;
+
+              if (pointerX < elementCenter) {
+                newDropTarget = i;
+                break;
+              }
+            }
+
+            // If no element found, drop at the end
+            if (newDropTarget === null) {
+              newDropTarget = currentWord.length;
+            }
+
+            setDropTargetIndex(prevDropTarget => {
+              // Don't set drop target to the same position as dragged letter
+              if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1 && newDropTarget !== prevDropTarget) {
+                triggerHapticFeedback('move');
+                return newDropTarget;
+              }
+              return prevDropTarget;
+            });
+          });
         }
       }
     }
-  }, [draggedIndex, dragStartPos, isDragging, currentWord.length, dropTargetIndex]);
+  }, [draggedIndex, dragStartPos, isDragging, currentWord.length]);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     e.stopPropagation();
@@ -285,8 +331,9 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
       setDragOffsetX(0);
       setDropTargetIndex(null);
       inputMethodRef.current = null;
+      cancelScheduledDragMeasurement();
     }
-  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick]);
+  }, [draggedIndex, isDragging, dropTargetIndex, currentWord, onWordChange, handleLetterClick, cancelScheduledDragMeasurement]);
 
   return (
     <div 

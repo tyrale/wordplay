@@ -252,16 +252,19 @@ const mechanicDisplayNames: Record<string, string> = {
 ## Mechanic Unlocks Checklist
 
 ### Currently Defined (Unlocks Work, Game Logic Missing)
+- 🟧 three - 3 Letter Start
 - 🟧 five - 5 Letter Start
 - 🟧 six - 6 Letter Start
+- 🟧 seven - 7 Letter Start
+- 🟧 eight - 8 Letter Start
+- 🟧 nine - 9 Letter Start
+- 🟧 ten - 10 Letter Start (also unlocks the `round-length-10` mechanic via the same word)
 
 ### Currently Defined and Fully Working
 - ✅ shit - Vanity Filter (`vanity-filter`) — unlike the other mechanics above, this one is fully implemented as a working toggle in `Menu.tsx`; see `VANITY_FILTER_SYSTEM.md`
 - ✅ time - Time Pressure Mode (`time-pressure`) — 7 second per-turn countdown shown next to the submit/pass control; auto-passes the player's turn when it hits zero
 
 ### Future Word Length Mechanics
-- [ ] three - 3 Letter Start
-- [ ] seven - 7 Letter Start
 - [ ] starts - Random Length Start
 
 ### Future Turn Mechanics

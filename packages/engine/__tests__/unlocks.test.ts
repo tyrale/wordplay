@@ -86,8 +86,8 @@ describe('Unlock Engine', () => {
       expect(unlockEngine.isUnlocked('mechanic', '5-letter-start')).toBe(true);
     });
 
-    it('should unlock the gravity mechanic with the "falls" word trigger', async () => {
-      const results = await unlockEngine.checkWordTriggers('falls');
+    it('should unlock the gravity mechanic with the "gravity" word trigger', async () => {
+      const results = await unlockEngine.checkWordTriggers('gravity');
 
       expect(results).toHaveLength(1);
       expect(results[0]).toMatchObject({
@@ -113,13 +113,40 @@ describe('Unlock Engine', () => {
     });
 
     it.each([
-      ['ten', 'round-length-10'],
       ['fifteen', 'round-length-15'],
       ['thirty', 'round-length-30'],
       ['forty', 'round-length-40'],
       ['fifty', 'round-length-50'],
       ['hundred', 'round-length-100']
     ])('should unlock the %s round length mechanic with the "%s" word trigger', async (word, target) => {
+      const results = await unlockEngine.checkWordTriggers(word);
+
+      expect(results).toHaveLength(1);
+      expect(results[0]).toMatchObject({
+        category: 'mechanic',
+        target,
+        wasAlreadyUnlocked: false
+      });
+
+      expect(unlockEngine.isUnlocked('mechanic', target)).toBe(true);
+    });
+
+    it('should unlock both the 10-turn round length and 10-letter starting word mechanics with the "ten" word trigger', async () => {
+      const results = await unlockEngine.checkWordTriggers('ten');
+
+      expect(results).toHaveLength(2);
+      expect(results.map(r => r.target).sort()).toEqual(['10-letter-start', 'round-length-10'].sort());
+
+      expect(unlockEngine.isUnlocked('mechanic', 'round-length-10')).toBe(true);
+      expect(unlockEngine.isUnlocked('mechanic', '10-letter-start')).toBe(true);
+    });
+
+    it.each([
+      ['three', '3-letter-start'],
+      ['seven', '7-letter-start'],
+      ['eight', '8-letter-start'],
+      ['nine', '9-letter-start']
+    ])('should unlock the %s letter starting word mechanic with the "%s" word trigger', async (word, target) => {
       const results = await unlockEngine.checkWordTriggers(word);
 
       expect(results).toHaveLength(1);

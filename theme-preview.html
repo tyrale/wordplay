@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Wordplay Theme Preview</title>
+<style>
+  body {
+    font-family: Inter, system-ui, sans-serif;
+    background: #111;
+    color: #eee;
+    margin: 0;
+    padding: 24px;
+  }
+  h1 { margin: 0 0 16px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    background: #1a1a1a;
+  }
+  .card-header {
+    padding: 8px 12px;
+    font-weight: 700;
+    font-size: 14px;
+    background: #222;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .swatch {
+    height: 56px;
+    position: relative;
+  }
+  .swatch span {
+    position: absolute;
+    bottom: 2px;
+    left: 4px;
+    font-size: 9px;
+    font-family: monospace;
+    color: rgba(0,0,0,0.6);
+    background: rgba(255,255,255,0.6);
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+  .preview {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .preview .word {
+    font-weight: 900;
+    font-size: 22px;
+  }
+  .preview .tile {
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+  }
+</style>
+</head>
+<body>
+<h1>Wordplay Theme Preview</h1>
+<p id="count"></p>
+<div class="grid" id="grid"></div>
+
+<script>
+// Raw [name, background, text, accent] triples copied from src/types/theme.ts
+const rawThemes = [
+  ["default", "#ffffff", "#1e3a8a", "#3b82f6"],
+  ["amber", "#ffffff", "#F59E0B", "#FDE047"],
+  ["american", "#BFD7EA", "#0B3954", "#FF6663"],
+  ["autumn", "#F4F1DE", "#3D405B", "#E07A5F"],
+  ["berry", "#F61067", "#5E239D", "#00F0B5"],
+  ["black", "#FFFFFC", "#000000", "#BEB7A4"],
+  ["blue", "#ffffff", "#2563EB", "#60A5FA"],
+  ["blues", "#F5F7FA", "#207BFF", "#4EA5FF"],
+  ["boots", "#E8DAB2", "#4F6D7A", "#DD6E42"],
+  ["bougie", "#FFEEDB", "#4C3B4D", "#ADA8B6"],
+  ["brand", "#FBFFFE", "#6D676E", "#FAA916"],
+  ["brick", "#DB2B39", "#29335C", "#F3A712"],
+  ["brown", "#ffffff", "#92400E", "#A78BFA"],
+  ["camping", "#EDEBD7", "#423E37", "#E3B23C"],
+  ["citrus", "#FEEFE5", "#00916E", "#FFCF00"],
+  ["contrast", "#FDFFFC", "#011627", "#2EC4B6"],
+  ["coral", "#ffffff", "#DC2626", "#F87171"],
+  ["craft", "#EED2CC", "#6C9A8B", "#E8998D"],
+  ["crimson", "#F1FAEE", "#E63946", "#A8DADC"],
+  ["cyan", "#ffffff", "#0891B2", "#22D3EE"],
+  ["delicate", "#F5D547", "#1446A0", "#DB3069"],
+  ["denim", "#ffffff", "#1E40AF", "#3B82F6"],
+  ["dew", "#EBF2FA", "#064789", "#427AA1"],
+  ["female", "#F6E8EA", "#22181C", "#EF626C"],
+  ["foggy", "#EDF6F9", "#006D77", "#83C5BE"],
+  ["gear", "#CDD7D6", "#102542", "#F87060"],
+  ["gentle", "#FFF275", "#6699CC", "#FF8C42"],
+  ["grandma", "#FFFFFF", "#588B8B", "#FFD5C2"],
+  ["grandpa", "#FFFFFF", "#4C5454", "#FF715B"],
+  ["grass", "#A7C957", "#386641", "#6A994E"],
+  ["gray", "#ffffff", "#374151", "#9CA3AF"],
+  ["green", "#ffffff", "#059669", "#34D399"],
+  ["indigo", "#ffffff", "#4F46E5", "#818CF8"],
+  ["intense", "#F2F5EA", "#2C363F", "#E75A7C"],
+  ["july", "#FDFFFC", "#235789", "#C1292E"],
+  ["lagoon", "#EBF5EE", "#283044", "#78A1BB"],
+  ["lavender", "#F1DEDE", "#5D576B", "#D496A7"],
+  ["lime", "#ffffff", "#65A30D", "#A3E635"],
+  ["market", "#FF8552", "#297373", "#E9D758"],
+  ["midnight", "#3A506B", "#0B132B", "#cccccc"],
+  ["mint", "#ffffff", "#10B981", "#6EE7B7"],
+  ["moles", "#F5E9E2", "#773344", "#E3B5A4"],
+  ["orange", "#ffffff", "#EA580C", "#FB923C"],
+  ["peaceful", "#BCE784", "#348AA7", "#5DD39E"],
+  ["pink", "#ffffff", "#BE185D", "#F472B6"],
+  ["pinks", "#EFCFE3", "#E27396", "#EA9AB2"],
+  ["playful", "#F8E16C", "#156064", "#00C49A"],
+  ["plum", "#ffffff", "#8B5CF6", "#C4B5FD"],
+  ["purple", "#ffffff", "#7C3AED", "#A78BFA"],
+  ["purples", "#EFBCD5", "#2E294E", "#BE97C6"],
+  ["racing", "#7EBDC2", "#231F20", "#BB4430"],
+  ["red", "#ffffff", "#B91C1C", "#F87171"],
+  ["reds", "#F7EBE8", "#E54B4B", "#FFA987"],
+  ["robust", "#EDAE49", "#00798C", "#D1495B"],
+  ["roots", "#FFF3B0", "#335C67", "#E09F3E"],
+  ["salmon", "#FFFCF9", "#FF6978", "#B1EDE8"],
+  ["seaglass", "#E0FBFC", "#3D5A80", "#98C1D9"],
+  ["serene", "#C1C1C1", "#2C4251", "#D16666"],
+  ["skins", "#F9EAE1", "#7D4F50", "#CC8B86"],
+  ["sky", "#D9F0FF", "#83C9F4", "#A3D5FF"],
+  ["smog", "#FBF6EF", "#EAD7C3", "#DCE0D9"],
+  ["softness", "#FFFFFF", "#B0D0D3", "#FFCAD4"],
+  ["squash", "#FBF5F3", "#000022", "#E28413"],
+  ["storm", "#B8D8D8", "#4F6367", "#7A9E9F"],
+  ["teal", "#ffffff", "#0D9488", "#2DD4BF"],
+  ["tile", "#5AAA95", "#095256", "#087F8C"],
+  ["tomato", "#F4F1BB", "#ED6A5A", "#9BC1BC"],
+  ["touch", "#F7EDF0", "#F4AFAB", "#F4CBC6"],
+  ["tweed", "#FCBA04", "#590004", "#A50104"],
+  ["vibrant", "#8390FA", "#1D2F6F", "#FAC748"],
+  ["vintage", "#F1C40F", "#2274A5", "#F75C03"],
+  ["warmer", "#E9B872", "#151515", "#A63D40"],
+  ["winter", "#EAEBED", "#006989", "#A3BAC3"],
+  ["yellow", "#ffffff", "#D97706", "#FCD34D"]
+];
+
+// Mirror the derivation logic from src/types/theme.ts createTheme()
+function buildTheme([name, background, text, accent]) {
+  const isWhite = background.toLowerCase() === "#ffffff";
+  const surface = isWhite ? "#f8fafc" : `${background}dd`;
+  const surfaceHover = isWhite ? "#f1f5f9" : `${background}bb`;
+  const textSecondary = `${text}80`;
+  const disabled = `${text}40`;
+  return {
+    name,
+    background,
+    text,
+    textSecondary,
+    surface,
+    surfaceHover,
+    accent,
+    accentText: background,
+    locked: "#f59e0b",
+    disabled
+  };
+}
+
+const grid = document.getElementById("grid");
+const themes = rawThemes.map(buildTheme);
+document.getElementById("count").textContent = `${themes.length} themes`;
+
+function swatch(label, color) {
+  const div = document.createElement("div");
+  div.className = "swatch";
+  div.style.background = color;
+  const span = document.createElement("span");
+  span.textContent = label;
+  div.appendChild(span);
+  return div;
+}
+
+themes.forEach(t => {
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const header = document.createElement("div");
+  header.className = "card-header";
+  header.textContent = t.name;
+  card.appendChild(header);
+
+  const preview = document.createElement("div");
+  preview.className = "preview";
+  preview.style.background = t.background;
+  preview.innerHTML = `
+    <div class="word" style="color:${t.text}">Word</div>
+    <div class="tile" style="background:${t.surface}; color:${t.text}; border:1px solid ${t.disabled}">A</div>
+    <div class="tile" style="background:${t.accent}; color:${t.accentText}">B</div>
+  `;
+  card.appendChild(preview);
+
+  const swatches = document.createElement("div");
+  swatches.className = "swatches";
+  swatches.appendChild(swatch("bg", t.background));
+  swatches.appendChild(swatch("text", t.text));
+  swatches.appendChild(swatch("accent", t.accent));
+  card.appendChild(swatches);
+
+  grid.appendChild(card);
+});
+</script>
+</body>
+</html>

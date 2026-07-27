@@ -103,14 +103,15 @@ class NodeWordData implements WordDataDependencies {
         this.wordsByLength.get(length)!.push(word);
       }
 
-      // Initialize slang words
-      this.slangWords = new Set([
-        'BRUH', 'YEAH', 'NOPE', 'YEET', 'FOMO', 'SELFIE', 'EMOJI', 'BLOG',
-        'VLOG', 'WIFI', 'UBER', 'GOOGLE', 'TWEET', 'UNFRIEND', 'HASHTAG',
-        'PHOTOBOMB', 'MANSPLAIN', 'GHOSTING', 'CATFISH', 'TROLL', 'MEME',
-        'VIRAL', 'CLICKBAIT', 'SPAM', 'PHISHING', 'MALWARE', 'AVATAR',
-        'NOOB', 'PWNED', 'EPIC', 'FAIL', 'WIN', 'OWNED', 'LEET', 'HAXOR'
-      ]);
+      // Load slang words from shared data file
+      try {
+        const slangData = JSON.parse(readFileSync(join(__dirname, '../../public/data/slang-words.json'), 'utf-8'));
+        this.slangWords = new Set(slangData.words || []);
+        console.log(`Slang words loaded: ${this.slangWords.size} words`);
+      } catch (slangError) {
+        console.warn('Error loading slang words:', slangError);
+        this.slangWords = new Set();
+      }
 
       // Load profanity words from shared data file
       try {

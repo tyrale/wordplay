@@ -559,14 +559,6 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     target: 'tweed',
     immediate_effect: { type: 'apply_theme', value: 'tweed' }
   },
-  {
-    id: 'unlock_lavendar_theme',
-    category: 'theme',
-    trigger: { type: 'word', value: 'lavendar', timing: 'word_submission' },
-    target: 'lavendar',
-    immediate_effect: { type: 'apply_theme', value: 'lavendar' }
-  },
-
   // Reveal unlocks - playing the category name previews all its (still-locked) options in the menu
   {
     id: 'reveal_bots',
@@ -607,6 +599,12 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     target: 'vanity-filter'
   },
   {
+    id: 'unlock_three_letter_start',
+    category: 'mechanic',
+    trigger: { type: 'word', value: 'three', timing: 'word_submission' },
+    target: '3-letter-start'
+  },
+  {
     id: 'unlock_five_letter_start',
     category: 'mechanic',
     trigger: { type: 'word', value: 'five', timing: 'word_submission' },
@@ -619,6 +617,30 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     target: '6-letter-start'
   },
   {
+    id: 'unlock_seven_letter_start',
+    category: 'mechanic',
+    trigger: { type: 'word', value: 'seven', timing: 'word_submission' },
+    target: '7-letter-start'
+  },
+  {
+    id: 'unlock_eight_letter_start',
+    category: 'mechanic',
+    trigger: { type: 'word', value: 'eight', timing: 'word_submission' },
+    target: '8-letter-start'
+  },
+  {
+    id: 'unlock_nine_letter_start',
+    category: 'mechanic',
+    trigger: { type: 'word', value: 'nine', timing: 'word_submission' },
+    target: '9-letter-start'
+  },
+  {
+    id: 'unlock_ten_letter_start',
+    category: 'mechanic',
+    trigger: { type: 'word', value: 'ten', timing: 'word_submission' },
+    target: '10-letter-start'
+  },
+  {
     id: 'unlock_time_pressure',
     category: 'mechanic',
     trigger: { type: 'word', value: 'time', timing: 'word_submission' },
@@ -627,7 +649,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
   {
     id: 'unlock_gravity',
     category: 'mechanic',
-    trigger: { type: 'word', value: 'falls', timing: 'word_submission' },
+    trigger: { type: 'word', value: 'gravity', timing: 'word_submission' },
     target: 'gravity'
   },
   {

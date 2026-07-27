@@ -90,7 +90,6 @@ export const brandTheme = createTheme("brand", ["#FBFFFE", "#6D676E", "#FAA916"]
 export const brickTheme = createTheme("brick", ["#DB2B39", "#29335C", "#F3A712"]);
 export const brownTheme = createTheme("brown", ["#ffffff", "#92400E", "#A78BFA"]);
 export const campingTheme = createTheme("camping", ["#EDEBD7", "#423E37", "#E3B23C"]);
-export const camping2Theme = createTheme("camping", ["#E9C46A", "#264653", "#2A9D8F"]);
 export const citrusTheme = createTheme("citrus", ["#FEEFE5", "#00916E", "#FFCF00"]);
 export const contrastTheme = createTheme("contrast", ["#FDFFFC", "#011627", "#2EC4B6"]);
 export const coralTheme = createTheme("coral", ["#ffffff", "#DC2626", "#F87171"]);
@@ -113,7 +112,6 @@ export const indigoTheme = createTheme("indigo", ["#ffffff", "#4F46E5", "#818CF8
 export const intenseTheme = createTheme("intense", ["#F2F5EA", "#2C363F", "#E75A7C"]);
 export const julyTheme = createTheme("july", ["#FDFFFC", "#235789", "#C1292E"]);
 export const lagoonTheme = createTheme("lagoon", ["#EBF5EE", "#283044", "#78A1BB"]);
-export const lavendarTheme = createTheme("lavendar", ["#F8F7FF", "#9381FF", "#B8B8FF"]);
 export const lavenderTheme = createTheme("lavender", ["#F1DEDE", "#5D576B", "#D496A7"]);
 export const limeTheme = createTheme("lime", ["#ffffff", "#65A30D", "#A3E635"]);
 export const marketTheme = createTheme("market", ["#FF8552", "#297373", "#E9D758"]);
@@ -134,7 +132,6 @@ export const redsTheme = createTheme("reds", ["#F7EBE8", "#E54B4B", "#FFA987"]);
 export const robustTheme = createTheme("robust", ["#EDAE49", "#00798C", "#D1495B"]);
 export const rootsTheme = createTheme("roots", ["#FFF3B0", "#335C67", "#E09F3E"]);
 export const salmonTheme = createTheme("salmon", ["#FFFCF9", "#FF6978", "#B1EDE8"]);
-export const salmon2Theme = createTheme("salmon", ["#FAF3DD", "#FFA69E", "#B8F2E6"]);
 export const seaglassTheme = createTheme("seaglass", ["#E0FBFC", "#3D5A80", "#98C1D9"]);
 export const sereneTheme = createTheme("serene", ["#C1C1C1", "#2C4251", "#D16666"]);
 export const skinsTheme = createTheme("skins", ["#F9EAE1", "#7D4F50", "#CC8B86"]);
@@ -216,7 +213,6 @@ export const availableThemes = [
   intenseTheme,
   julyTheme,
   lagoonTheme,
-  lavendarTheme,
   lavenderTheme,
   limeTheme,
   marketTheme,

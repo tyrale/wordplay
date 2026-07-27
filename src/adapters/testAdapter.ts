@@ -101,7 +101,7 @@ class TestWordData implements WordDataDependencies {
 
     // Initialize test slang words
     this.slangWords = new Set([
-      'BRUH', 'YEAH', 'NOPE', 'YEET', 'FOMO', 'SELFIE', 'EMOJI', 'BLOG'
+      'BRUH', 'YEAH', 'NOPE', 'YEET', 'FOMO', 'SELFIE', 'EMOJI', 'BLOG', 'SUS'
     ]);
 
     // Initialize test common proper nouns (months, days, common names)

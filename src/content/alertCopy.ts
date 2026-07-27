@@ -101,8 +101,13 @@ export const alertCopy = {
       lines: ['NEW', 'FEATURE', '{item}'],
       meta: 'Now available in the game',
       metaByItem: {
+        '3-letter-start': 'Toggle is on in the menu.',
         '5-letter-start': 'Toggle is on in the menu.',
         '6-letter-start': 'Toggle is on in the menu.',
+        '7-letter-start': 'Toggle is on in the menu.',
+        '8-letter-start': 'Toggle is on in the menu.',
+        '9-letter-start': 'Toggle is on in the menu.',
+        '10-letter-start': 'Toggle is on in the menu.',
         'vanity-filter': 'Let the explitives fly!',
         'time-pressure': '7 second turn timer. The pressure is on!',
         'gravity': 'Letters fall and roll freely now',
