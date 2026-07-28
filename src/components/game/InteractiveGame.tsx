@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useGameState, useGameStats, useWordState } from '../../hooks/useGameState';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { usePlayerStats } from '../../hooks/usePlayerStats';
 import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
 import { useAlert } from '../ui/AlertProvider';
 import { AlphabetGrid } from './AlphabetGrid';
@@ -114,6 +115,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   
   // Unlock system integration
   const { handleWordSubmission, handleGameCompletion, getUnlockedItems } = useUnlockSystem();
+  const { recordGameResult } = usePlayerStats();
   const { isMechanicOn } = useMechanicsSettings();
   const { showCustomAlert } = useAlert();
 
@@ -155,7 +157,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     externalManager,
     localPlayerId,
     skipSavedGamePersistence: currentGameMode === 'tutorial',
-    onGameStateChange: async (state) => {
+    onGameStateChange: (state) => {
       if (state.gameStatus === 'finished' && onGameEnd) {
         const localId = localPlayerId ?? 'human';
         const opponentId = localPlayerId
@@ -163,11 +165,37 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
           : 'bot';
         const humanScore = state.players.find(p => p.id === localId)?.score || 0;
         const botScore = state.players.find(p => p.id === opponentId)?.score || 0;
-        
-        // Check for unlock triggers on game completion
-        await handleGameCompletion(state.winner?.id || null, config?.botId);
-        
+
+        // Show the win/loss overlay immediately - don't block it on unlock
+        // checks, which may involve slow/unreliable network calls (community
+        // unlock recording via Supabase) and would otherwise leave the board
+        // blank (it unmounts as soon as the game is no longer active) for an
+        // indeterminate amount of time before the overlay appears.
         onGameEnd(state.winner?.id || null, { human: humanScore, bot: botScore });
+
+        // Check for unlock triggers on game completion in the background;
+        // any resulting unlock notification will show over the overlay once ready.
+        handleGameCompletion(state.winner?.id || null, config?.botId).catch(err =>
+          console.warn('Failed to check game completion unlock triggers:', err)
+        );
+
+        // Record this game into the player's lifetime stats log, also in the background
+        const won = state.winner?.id === localId;
+        const tied = humanScore === botScore;
+        const gameDurationMs = state.gameStartTime && state.lastMoveTime
+          ? state.lastMoveTime - state.gameStartTime
+          : null;
+        recordGameResult({
+          playerId: localId,
+          botId: config?.botId,
+          won,
+          tied,
+          turnHistory: state.turnHistory,
+          totalTurns: state.totalMoves,
+          finalScore: humanScore,
+          gameDurationMs,
+          timestamp: Date.now()
+        }).catch(err => console.warn('Failed to record game result stats:', err));
       }
     }
   });

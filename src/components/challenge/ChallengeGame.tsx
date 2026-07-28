@@ -518,9 +518,12 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     return <div key={index}>{line}</div>;
   };
 
+  // The trailing "N turns" line is only appended by generateSharingText for
+  // completed challenges - forfeited/in-progress share text ends with a real
+  // pattern row, which must not be sliced off (or it loses its pattern styling).
   const shareLines = (overlayData?.shareText || '').split('\n').filter(line => line.trim());
-  const shareContent = shareLines.slice(0, -1);
-  const stepCount = shareLines[shareLines.length - 1];
+  const shareContent = overlayData?.isWinner ? shareLines.slice(0, -1) : shareLines;
+  const stepCount = overlayData?.isWinner ? shareLines[shareLines.length - 1] : null;
   // For the win screen, the headline already shows "start → finish", so drop the
   // redundant words line (always the 2nd line) from the meta content below it.
   const winMetaContent = shareContent.filter((line, index) => !(index === 1 && !isPatternLine(line)));
@@ -660,7 +663,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         meta={
           <>
             {(overlayData?.isWinner ? winMetaContent : shareContent).map(renderShareLine)}
-            <div>{stepCount}</div>
+            {stepCount && <div>{stepCount}</div>}
           </>
         }
         actions={[{ label: 'share', onClick: () => handleOverlayShare(overlayData?.shareText || '') }]}

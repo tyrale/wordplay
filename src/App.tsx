@@ -4,7 +4,6 @@ import type { MultiplayerGameResult } from './components/multiplayer/Multiplayer
 import { ChallengeGame } from './components/challenge/ChallengeGame';
 import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
 import { TUTORIAL_INITIAL_CONFIG } from './components/tutorial/tutorialSteps';
-import { ConfirmationDialog } from './components/ui/ConfirmationDialog';
 import { AnimationProvider } from './animations';
 import { UnlockProvider } from './components/unlock/UnlockProvider';
 import { VanityFilterProvider } from './contexts/VanityFilterContext';
@@ -26,8 +25,8 @@ type AppState = 'main' | 'game' | 'challenge' | 'quitter' | 'winner' | 'loser' |
 
 interface ConfirmationState {
   isVisible: boolean;
-  title: string;
-  message: string;
+  lines: string[];
+  meta?: string;
   onConfirm: () => void;
 }
 
@@ -66,16 +65,15 @@ function AppContent() {
   const [gameInstanceKey, setGameInstanceKey] = useState(0);
   const [confirmationState, setConfirmationState] = useState<ConfirmationState>({
     isVisible: false,
-    title: '',
-    message: '',
+    lines: [],
     onConfirm: () => {}
   });
 
-  const showConfirmation = (title: string, message: string, onConfirm: () => void) => {
+  const showConfirmation = (lines: string[], meta: string | undefined, onConfirm: () => void) => {
     setConfirmationState({
       isVisible: true,
-      title,
-      message,
+      lines,
+      meta,
       onConfirm
     });
   };
@@ -100,8 +98,8 @@ function AppContent() {
       // Check if we need confirmation for game transition
       if (appState === 'challenge') {
         showConfirmation(
-          'Start New Game?',
-          `Do you want to exit the current challenge and start a new game with ${botId}?`,
+          ['START', 'NEW', 'GAME?'],
+          `Exit the current challenge and play ${getBotDisplayName(botId)}?`,
           () => {
             setSelectedBotId(botId);
             setTutorialActive(!hasSeenTutorial());
@@ -125,8 +123,8 @@ function AppContent() {
     } else if (gameType === 'challenge') {
       if (appState === 'game') {
         showConfirmation(
-          'Start Challenge?',
-          'Do you want to end the current game and start today\'s challenge?',
+          ['START', 'CHALLENGE?'],
+          'Exit the current game and start today\'s challenge?',
           () => {
             setAppState('challenge');
             hideConfirmation();
@@ -378,13 +376,13 @@ function AppContent() {
                 />
               )}
               
-              {/* Confirmation Dialog */}
-              <ConfirmationDialog
+              {/* Confirmation Alert */}
+              <AlertOverlay
                 isVisible={confirmationState.isVisible}
-                title={confirmationState.title}
-                message={confirmationState.message}
-                onConfirm={confirmationState.onConfirm}
-                onCancel={hideConfirmation}
+                lines={confirmationState.lines}
+                meta={confirmationState.meta}
+                actions={[{ label: 'yes', onClick: confirmationState.onConfirm }]}
+                onClose={hideConfirmation}
               />
               
               {/* Quitter Overlay */}

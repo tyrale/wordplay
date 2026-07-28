@@ -809,4 +809,98 @@ export interface UnlockEngine {
   
   // Admin/Debug
   resetState(): Promise<void>;
-} 
+}
+
+/**
+ * Player Stats Interfaces
+ *
+ * Platform-agnostic, local-device log of a player's lifetime stats.
+ * Used to power unlocks, progress tracking, and stat displays.
+ */
+
+export interface BotRecord {
+  wins: number;
+  losses: number;
+  gamesPlayed: number;
+}
+
+export interface PlayerStats {
+  // Words
+  totalWordsPlayed: number;
+  totalPasses: number;
+  longestWordPlayed: string;
+  longestWordLength: number;
+  shortestWordPlayed: string;
+  shortestWordLength: number;
+  totalLettersAdded: number;
+  totalLettersRemoved: number;
+  totalRearranges: number;
+  totalSubstitutions: number;
+  letterUsageCounts: Record<string, number>;
+
+  // Games
+  gamesPlayed: number;
+  gamesWon: number;
+  gamesLost: number;
+  gamesTied: number;
+  currentWinStreak: number;
+  longestWinStreak: number;
+  totalTurnsPlayed: number;
+  longestGameTurns: number;
+  shortestGameTurns: number;
+  totalScore: number;
+  highestGameScore: number;
+  highestSingleMoveScore: number;
+  perfectGames: number;
+  totalPlayTimeMs: number;
+  longestGameDurationMs: number;
+  fastestWinDurationMs: number;
+
+  // Bots
+  botRecords: Record<string, BotRecord>;
+  botsBeaten: string[];
+
+  // Key letters
+  keyLetterUsageCounts: Record<string, number>;
+  totalKeyLetterPoints: number;
+
+  // Meta
+  totalUnlocksEarned: number;
+  firstPlayedAt: number | null;
+  lastPlayedAt: number | null;
+  currentDailyStreak: number;
+  longestDailyStreak: number;
+}
+
+/**
+ * Summary of a single completed game, derived from `GameState` by the
+ * platform adapter/UI layer and passed into the stats engine to update
+ * the persisted `PlayerStats` log.
+ */
+export interface GameResultSummary {
+  /** id of the local human player within `GameState.players` (e.g. 'human') */
+  playerId: string;
+  /** Bot identifier from `GameConfig.botId`, if this was a bot game */
+  botId?: string;
+  won: boolean;
+  tied: boolean;
+  turnHistory: TurnHistory[];
+  totalTurns: number;
+  finalScore: number;
+  gameDurationMs: number | null;
+  timestamp: number;
+}
+
+export interface PlayerStatsDependencies {
+  loadState(): Promise<PlayerStats>;
+  saveState(state: PlayerStats): Promise<void>;
+  getTimestamp(): number;
+}
+
+export interface PlayerStatsEngine {
+  initialize(): Promise<void>;
+  recordGameResult(result: GameResultSummary): Promise<PlayerStats>;
+  recordUnlockEarned(): Promise<PlayerStats>;
+  getStats(): PlayerStats;
+  resetStats(): Promise<void>;
+}
