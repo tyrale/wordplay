@@ -1,0 +1,153 @@
+/**
+ * Word Path Explorer Styles
+ *
+ * Flat, full-screen overlay - same visual language as StatsOverlay /
+ * DictionariesOverlay, with the active/typed word styled like the in-game
+ * word display (large, bold) and the on-screen alphabet grid reused for
+ * letter entry.
+ */
+
+.word-path-explorer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--theme-background);
+  z-index: 20000;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-xl) var(--spacing-lg) calc(var(--spacing-xl) * 3);
+}
+
+.word-path-explorer__content {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--spacing-md);
+}
+
+.word-path-explorer__title {
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 10vw;
+  line-height: 1;
+  color: var(--theme-accent);
+  text-align: center;
+  text-transform: uppercase;
+  margin: 0 0 var(--spacing-lg);
+}
+
+.word-path-explorer__word-display {
+  width: 100%;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.word-path-explorer__clear-active {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 28px;
+  line-height: 1;
+  color: var(--theme-disabled);
+  padding: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.word-path-explorer__clear-active:active {
+  transform: scale(0.95);
+}
+
+.word-path-explorer__results {
+  width: 100%;
+  min-height: 40px;
+  margin: var(--spacing-md) 0 var(--spacing-lg);
+  text-align: center;
+}
+
+.word-path-explorer__hint {
+  font-family: var(--theme-font-family);
+  font-size: var(--theme-font-size-md);
+  color: var(--theme-text);
+  opacity: 0.6;
+  margin: 0;
+}
+
+.word-path-explorer__connections {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.word-path-explorer__connection {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: var(--theme-font-size-xl);
+  color: var(--theme-text);
+  letter-spacing: 0.05em;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  transition: color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.word-path-explorer__connection:active {
+  color: var(--theme-accent);
+}
+
+.word-path-explorer__grid {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: var(--spacing-lg);
+}
+
+/* Close X - always present, centered at the bottom */
+.word-path-explorer__close {
+  position: fixed;
+  bottom: var(--spacing-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 32px;
+  line-height: 1;
+  color: var(--theme-text);
+  padding: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.word-path-explorer__close:hover {
+  opacity: 0.7;
+}

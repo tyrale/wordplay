@@ -23,7 +23,7 @@ export interface UseUnlocksReturn {
   // Triggers
   checkWordTriggers: (word: string) => Promise<UnlockResult[]>;
   checkAchievementTriggers: (achievement: string) => Promise<UnlockResult[]>;
-  
+  checkWordSequenceTriggers: (wordPath: string[]) => Promise<UnlockResult[]>;  
   // Debug/Admin
   resetUnlocks: () => Promise<void>;
 }
@@ -114,19 +114,38 @@ export function useUnlocks(): UseUnlocksReturn {
 
   const checkAchievementTriggers = useCallback(async (achievement: string): Promise<UnlockResult[]> => {
     if (!engineRef.current) return [];
-    
+
     try {
       const results = await engineRef.current.checkAchievementTriggers(achievement);
-      
+
       // Update local state if any unlocks occurred
       if (results.length > 0) {
         const newState = engineRef.current.getCurrentState();
         setUnlockState(newState);
       }
-      
+
       return results;
     } catch (error) {
       console.error('Error checking achievement triggers:', error);
+      return [];
+    }
+  }, []);
+
+  const checkWordSequenceTriggers = useCallback(async (wordPath: string[]): Promise<UnlockResult[]> => {
+    if (!engineRef.current) return [];
+
+    try {
+      const results = await engineRef.current.checkWordSequenceTriggers(wordPath);
+
+      // Update local state if any unlocks occurred
+      if (results.length > 0) {
+        const newState = engineRef.current.getCurrentState();
+        setUnlockState(newState);
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Error checking word sequence triggers:', error);
       return [];
     }
   }, []);
@@ -152,6 +171,7 @@ export function useUnlocks(): UseUnlocksReturn {
     getUnlockProgress,
     checkWordTriggers,
     checkAchievementTriggers,
+    checkWordSequenceTriggers,
     resetUnlocks
   };
 } 

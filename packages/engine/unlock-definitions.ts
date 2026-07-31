@@ -799,13 +799,35 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     description: 'Unlock dark mode by playing "tyrale"',
     trigger: { type: 'word', value: 'tyrale', timing: 'word_submission' },
     target: 'dark-mode'
+  },
+
+  // Dr. Seuss unlock - playing STINK → STANK → STUNK in consecutive order
+  // unlocks both the Grinch theme and the Grinchbot.
+  // This is a new "word_sequence" trigger mechanism: it fires when the tail
+  // of the game's word path matches the defined sequence exactly.
+  {
+    id: 'unlock_grinch_theme',
+    category: 'theme',
+    name: 'Grinch Theme',
+    description: 'Unlock the Grinch theme by playing STINK, STANK, STUNK in order',
+    trigger: { type: 'word_sequence', sequence: ['STINK', 'STANK', 'STUNK'] },
+    target: 'grinch',
+    immediate_effect: { type: 'apply_theme', value: 'grinch' }
+  },
+  {
+    id: 'unlock_grinch_bot',
+    category: 'bot',
+    name: 'Grinch Bot',
+    description: 'Unlock the Grinchbot by playing STINK, STANK, STUNK in order',
+    trigger: { type: 'word_sequence', sequence: ['STINK', 'STANK', 'STUNK'] },
+    target: 'grinch-bot'
   }
 ];
 
 /**
  * Helper function to get unlock definitions by trigger type
  */
-export function getUnlocksByTriggerType(triggerType: 'word' | 'achievement'): UnlockDefinition[] {
+export function getUnlocksByTriggerType(triggerType: 'word' | 'achievement' | 'word_sequence'): UnlockDefinition[] {
   return UNLOCK_DEFINITIONS.filter(unlock => unlock.trigger.type === triggerType);
 }
 
@@ -820,8 +842,25 @@ export function getUnlocksByCategory(category: 'theme' | 'mechanic' | 'bot'): Un
  * Helper function to find unlock definition by trigger value
  */
 export function findUnlockByTrigger(triggerType: 'word' | 'achievement', value: string): UnlockDefinition[] {
-  return UNLOCK_DEFINITIONS.filter(unlock => 
-    unlock.trigger.type === triggerType && 
+  return UNLOCK_DEFINITIONS.filter(unlock =>
+    unlock.trigger.type === triggerType &&
     unlock.trigger.value?.toLowerCase() === value.toLowerCase()
   );
+}
+
+/**
+ * Find unlock definitions whose word_sequence trigger matches the tail of
+ * the given word path. A sequence of length N matches when the last N words
+ * in the path (case-insensitive) equal the sequence entries in order.
+ */
+export function findUnlockBySequenceTrigger(wordPath: string[]): UnlockDefinition[] {
+  return UNLOCK_DEFINITIONS.filter(unlock => {
+    if (unlock.trigger.type !== 'word_sequence' || !unlock.trigger.sequence) {
+      return false;
+    }
+    const seq = unlock.trigger.sequence;
+    if (wordPath.length < seq.length) return false;
+    const tail = wordPath.slice(-seq.length);
+    return tail.every((word, i) => word.toUpperCase() === seq[i].toUpperCase());
+  });
 } 

@@ -5,7 +5,7 @@
  * Maintains architectural purity by avoiding web-specific useGameState hook.
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { AlphabetGrid, type LetterState } from '../game/AlphabetGrid';
 import { WordTrail, type WordMove } from '../game/WordTrail';
 import { WordBuilder } from '../game/WordBuilder';
@@ -16,6 +16,7 @@ import { AlertOverlay } from '../ui/AlertOverlay';
 import { alertCopy } from '../../content/alertCopy';
 import { useChallenge } from '../../hooks/useChallenge';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
+import { useWordPathGraph } from '../../hooks/useWordPathGraph';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import { shareChallengeResult, getShareResultMessage } from '../../utils/shareUtils';
 import { useAlert } from '../ui/AlertProvider';
@@ -75,12 +76,13 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const { showAlert, showCustomAlert } = useAlert();
 
   // Unlock system integration
-  const { handleWordSubmission, getUnlockedItems } = useUnlockSystem();
+  const { handleWordSubmission, handleWordPathChange, getUnlockedItems } = useUnlockSystem();
 
   // Player stats integration - the daily challenge is tracked via its own
   // separate challengesPlayed/Completed/Failed counters (see recordChallengeResult),
   // not folded into gamesWon/gamesLost or the bot win streak.
   const { recordMove, recordChallengeResult } = usePlayerStats();
+  const { recordTransition: recordWordPathTransition, syncToServer: syncWordPathGraph } = useWordPathGraph();
   const { isMechanicOn } = useMechanicsSettings();
 
   // Drunk mechanic: unlocked via the "drunk" word and toggled on in the mechanics menu.
@@ -148,6 +150,21 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       setPendingWord(challengeState.currentWord);
     }
   }, [challengeState?.currentWord]);
+
+  // Check for word-sequence unlocks (e.g. STINK → STANK → STUNK) whenever
+  // the challenge word path grows. challengeState.wordSequence is the full
+  // chain: [startWord, word1, word2, ...].
+  const lastCheckedSeqLenRef = useRef(0);
+  useEffect(() => {
+    const seq = challengeState?.wordSequence;
+    if (!seq || seq.length <= lastCheckedSeqLenRef.current) return;
+    lastCheckedSeqLenRef.current = seq.length;
+    if (seq.length >= 3) {
+      handleWordPathChange(seq).catch(err =>
+        console.warn('Failed to check word sequence unlock triggers:', err)
+      );
+    }
+  }, [challengeState?.wordSequence, handleWordPathChange]);
 
   // Validate pending word using agnostic game engine
   const validatePendingWord = useCallback((word: string): ValidationResult => {
@@ -390,6 +407,12 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
           const isProfane = !!wordData?.profanityWords.has(pendingWord.trim().toUpperCase());
           await handleWordSubmission(pendingWord, isProfane);
 
+          // Track this transition in the local word path graph (challenge
+          // mode is human-only, so every submitted move is recorded).
+          recordWordPathTransition(previousWord, pendingWord).catch(err =>
+            console.warn('Failed to record challenge word path transition:', err)
+          );
+
           // Record this move live for word/letter stats - challenge mode has
           // no bot opponent or turn-based win condition, so only the shared
           // Words/Key Letters stats apply here (see recordChallengeResult
@@ -419,7 +442,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         setIsProcessingMove(false);
       }
     }
-  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord, handleWordSubmission, wordData, handleWordChange, gameDependencies, recordMove]);
+  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord, handleWordSubmission, wordData, handleWordChange, gameDependencies, recordMove, recordWordPathTransition]);
 
   const handleMenuClose = useCallback(() => {
     setIsMenuOpen(false);
@@ -484,8 +507,12 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         stepCount: challengeState.wordSequence.length,
         timestamp: Date.now()
       }).catch(err => console.warn('Failed to record challenge result stats:', err));
+
+      syncWordPathGraph().catch(err =>
+        console.warn('Failed to sync word path graph:', err)
+      );
     }
-  }, [challengeState?.completed, challengeState?.failed, challengeState?.wordSequence.length, generateSharingText, recordChallengeResult]);
+  }, [challengeState?.completed, challengeState?.failed, challengeState?.wordSequence.length, generateSharingText, recordChallengeResult, syncWordPathGraph]);
 
   // Generate letter states (no special states in challenge mode)
   const letterStates: LetterState[] = useMemo(() => {

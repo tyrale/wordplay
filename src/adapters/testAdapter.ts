@@ -35,6 +35,8 @@ class TestWordData implements WordDataDependencies {
   public slangWords: Set<string> = new Set();
   public profanityWords: Set<string> = new Set();
   public properNounWords: Set<string> = new Set();
+  public seussCanonicalWords: Set<string> = new Set();
+  public seussInventedWords: Set<string> = new Set();
   public wordCount: number = 0;
   private wordsByLength: Map<number, string[]> = new Map();
   private loaded = true; // Always loaded for tests
@@ -124,6 +126,22 @@ class TestWordData implements WordDataDependencies {
       this.profanityWords = new Set([
         'DAMN', 'HELL', 'CRAP', 'PISS', 'SHIT', 'FUCK', 'BITCH', 'ASSHOLE'
       ]);
+    }
+
+    // Load Seuss words from shared data files for testing
+    try {
+      const canonicalPath = path.join(process.cwd(), 'public/data/seuss-words-canonical.json');
+      const canonicalData = JSON.parse(fs.readFileSync(canonicalPath, 'utf-8'));
+      this.seussCanonicalWords = new Set(canonicalData.words || []);
+    } catch {
+      this.seussCanonicalWords = new Set(['GRINCH', 'LORAX', 'WOCKET', 'NERD']);
+    }
+    try {
+      const inventedPath = path.join(process.cwd(), 'public/data/seuss-words-invented.json');
+      const inventedData = JSON.parse(fs.readFileSync(inventedPath, 'utf-8'));
+      this.seussInventedWords = new Set(inventedData.words || []);
+    } catch {
+      this.seussInventedWords = new Set();
     }
 
     // loaded property is already set to true in constructor
@@ -230,6 +248,17 @@ const testDictionaryDependencies: GameStateDictionaryDependencies = {
       return words[Math.floor(Math.random() * words.length)];
     }
     return null;
+  },
+
+  getRandomSeussCanonicalWord: (length?: number): string | null => {
+    let words = Array.from(testWordData.seussCanonicalWords);
+    if (length !== undefined) {
+      words = words.filter(w => w.length === length);
+    }
+    if (words.length > 0) {
+      return words[Math.floor(Math.random() * words.length)];
+    }
+    return null;
   }
 };
 
@@ -284,9 +313,19 @@ const testBotDependencies: GameStateBotDependencies = {
       // Bot-specific profanity checking
       isProfanity: (word: string): boolean => {
         return testWordData.profanityWords.has(word.toUpperCase());
+      },
+
+      // Bot-specific Seuss dictionary checking (used by grinch-bot strategy)
+      isSeussWord: (word: string): boolean => {
+        const w = word.toUpperCase();
+        return testWordData.seussCanonicalWords.has(w) || testWordData.seussInventedWords.has(w);
+      },
+
+      isSeussCanonicalWord: (word: string): boolean => {
+        return testWordData.seussCanonicalWords.has(word.toUpperCase());
       }
     };
-    
+
     return generateBotMoveWithDependencies(word, botDeps, options);
   }
 };

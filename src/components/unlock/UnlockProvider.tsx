@@ -16,12 +16,25 @@ import { availableThemes } from '../../types/theme';
 import type { UseUnlocksReturn } from '../../hooks/useUnlocks';
 import type { UnlockResult } from '../../../packages/engine/interfaces';
 
+export interface HandleWordSubmissionOptions {
+  /**
+   * Whether this submission came from the local player's own input (vs a
+   * bot move or a remote opponent's move observed via game state). Defaults
+   * to `true`. Only the local player's own "RESET" submission wipes their
+   * unlocks - a bot/opponent playing "RESET" is treated as a normal word
+   * so it can't clobber another player's progress.
+   */
+  isLocalMove?: boolean;
+}
+
 export interface UnlockContextType extends UseUnlocksReturn {
   // Enhanced functionality
-  handleWordSubmission: (word: string, isProfane?: boolean) => Promise<UnlockResult[]>;
+  handleWordSubmission: (word: string, isProfane?: boolean, options?: HandleWordSubmissionOptions) => Promise<UnlockResult[]>;
   handleGameCompletion: (winner: string | null, botId?: string) => Promise<UnlockResult[]>;
+  /** Check the game's word path for sequence-triggered unlocks (e.g. STINK→STANK→STUNK). */
+  handleWordPathChange: (wordPath: string[]) => Promise<UnlockResult[]>;
   showUnlockNotification: (results: UnlockResult[]) => void;
-  
+
   // Testing/Debug functions
   resetUnlocksToFresh: () => Promise<void>;
 }
@@ -133,10 +146,22 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
     }
   }, [setTheme, availableThemes]);
 
-  // Enhanced word submission handler
-  const handleWordSubmission = useCallback(async (word: string, isProfane?: boolean): Promise<UnlockResult[]> => {
-    // Special case: playing "RESET" wipes out all unlocks instead of granting one
-    if (word === 'RESET') {
+  // Enhanced word submission handler.
+  //
+  // Called for every word played in a game the local player is part of:
+  //   - the local player's own submissions (isLocalMove = true, the default)
+  //   - bot moves and remote opponent moves observed via game state
+  //     (isLocalMove = false)
+  // Unlocks fire for any of these so that, e.g., a bot playing "midnight"
+  // unlocks the midnight theme for the local player too. The only
+  // local-only behavior is the "RESET" developer cheat: a bot/opponent
+  // playing "RESET" is treated as a normal word and must never wipe the
+  // local player's unlock progress.
+  const handleWordSubmission = useCallback(async (word: string, isProfane?: boolean, options?: HandleWordSubmissionOptions): Promise<UnlockResult[]> => {
+    const isLocalMove = options?.isLocalMove ?? true;
+    // Special case: the local player playing "RESET" wipes out all unlocks
+    // instead of granting one. Skipped for non-local moves (see above).
+    if (isLocalMove && word === 'RESET') {
       console.log('[Unlock] "RESET" played - resetting all unlocks');
       await unlocks.resetUnlocks();
       showAlert('generic', 'resetTrigger');
@@ -150,13 +175,13 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
       const profanityResults = await unlocks.checkAchievementTriggers('played_profanity');
       results.push(...profanityResults);
     }
-    
+
     if (results.length > 0) {
       console.log(`[Unlock] Word "${word}" triggered ${results.length} unlock(s):`, results);
       handleImmediateEffects(results);
       showUnlockNotification(results);
     }
-    
+
     return results;
   }, [unlocks.checkWordTriggers, unlocks.checkAchievementTriggers, handleImmediateEffects, showUnlockNotification]);
 
@@ -190,6 +215,23 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
     return results;
   }, [unlocks.checkAchievementTriggers, handleImmediateEffects, showUnlockNotification]);
 
+  // Handle word-path (sequence) triggered unlocks.
+  // Called whenever the game's word path changes (e.g. after each move).
+  // Fires when the tail of the path matches a defined word_sequence trigger.
+  const handleWordPathChange = useCallback(async (wordPath: string[]): Promise<UnlockResult[]> => {
+    if (wordPath.length === 0) return [];
+
+    const results = await unlocks.checkWordSequenceTriggers(wordPath);
+
+    if (results.length > 0) {
+      console.log(`[Unlock] Word path sequence triggered ${results.length} unlock(s):`, results);
+      handleImmediateEffects(results);
+      showUnlockNotification(results);
+    }
+
+    return results;
+  }, [unlocks.checkWordSequenceTriggers, handleImmediateEffects, showUnlockNotification]);
+
   // Reset unlocks to fresh user state (for testing)
   const resetUnlocksToFresh = useCallback(async (): Promise<void> => {
     console.log('[Unlock] Resetting to fresh user state...');
@@ -201,6 +243,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
     ...unlocks,
     handleWordSubmission,
     handleGameCompletion,
+    handleWordPathChange,
     showUnlockNotification,
     resetUnlocksToFresh
   };

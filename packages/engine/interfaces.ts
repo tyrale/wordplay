@@ -83,6 +83,10 @@ export interface WordDataDependencies {
   slangWords: Set<string>;
   profanityWords: Set<string>;
   properNounWords: Set<string>;
+  /** Canonical Dr. Seuss words (verified from the books). Unlocked via the STINK→STANK→STUNK sequence. */
+  seussCanonicalWords: Set<string>;
+  /** Invented Seuss-style nonsense words (draft, for optional expansion). */
+  seussInventedWords: Set<string>;
   wordCount: number;
 }
 
@@ -180,6 +184,20 @@ export interface BotDependencies extends DictionaryDependencies, UtilityDependen
    * @returns true if word is profanity
    */
   isProfanity?: (word: string) => boolean;
+
+  /**
+   * Check if a word is a Dr. Seuss word (canonical or invented)
+   * @param word - Word to check
+   * @returns true if word is in the Seuss dictionary
+   */
+  isSeussWord?: (word: string) => boolean;
+
+  /**
+   * Check if a word is a canonical Dr. Seuss word only (not invented)
+   * @param word - Word to check
+   * @returns true if word is in the canonical Seuss dictionary
+   */
+  isSeussCanonicalWord?: (word: string) => boolean;
 }
 
 /**
@@ -202,6 +220,9 @@ export interface GameEngineDependencies extends BotDependencies, ScoringDependen
 export interface GameStateDictionaryDependencies {
   validateWord: (word: string, options?: ValidationOptions) => ValidationResult;
   getRandomWordByLength: (length: number) => string | null;
+  /** Pick a random canonical Dr. Seuss word (for Grinchbot game starts).
+   *  If `length` is given, restricts to canonical Seuss words of that length. */
+  getRandomSeussCanonicalWord?: (length?: number) => string | null;
 }
 
 /**
@@ -755,9 +776,11 @@ export interface UnlockResult {
 }
 
 export interface UnlockTrigger {
-  type: 'word' | 'achievement';
+  type: 'word' | 'achievement' | 'word_sequence';
   condition?: string; // New format
   value?: string; // Old format compatibility
+  /** For 'word_sequence' triggers: the ordered list of words that must be played consecutively */
+  sequence?: string[];
   timing?: string; // Old format compatibility
   unlocks?: Array<{
     category: 'theme' | 'mechanic' | 'bot' | 'reveal';
@@ -800,7 +823,9 @@ export interface UnlockEngine {
   // Trigger checking
   checkWordTriggers(word: string): Promise<UnlockResult[]>;
   checkAchievementTriggers(achievement: string): Promise<UnlockResult[]>;
-  
+  /** Check if the tail of the word path matches any word_sequence trigger */
+  checkWordSequenceTriggers(wordPath: string[]): Promise<UnlockResult[]>;
+
   // State queries
   getUnlockedItems(category: 'theme' | 'mechanic' | 'bot' | 'reveal'): string[];
   isUnlocked(category: 'theme' | 'mechanic' | 'bot' | 'reveal', itemId: string): boolean;

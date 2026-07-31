@@ -127,7 +127,7 @@
   bottom: var(--spacing-xl);
   left: 50%;
   transform: translateX(-50%);
-  background: var(--theme-surface, #000);
+  background: var(--theme-background);
   border-radius: 50%;
   border: none;
   cursor: pointer;

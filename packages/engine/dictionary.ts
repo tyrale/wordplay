@@ -17,6 +17,8 @@ export interface ValidationOptions {
   allowSlang?: boolean;
   allowProperNouns?: boolean;
   allowProfanity?: boolean;
+  /** Allow Dr. Seuss dictionary words (canonical + invented). Used when the Grinchbot is active. */
+  allowSeuss?: boolean;
   checkLength?: boolean;
   previousWord?: string;
 }
@@ -87,6 +89,7 @@ export function validateWordWithDependencies(
     isBot = false,
     allowSlang = true,
     allowProperNouns = true,
+    allowSeuss = false,
     checkLength = true,
     previousWord
   } = options;
@@ -159,9 +162,10 @@ export function validateWordWithDependencies(
   const isSlang = wordData.slangWords.has(normalizedWord);
   const isProperNoun = wordData.properNounWords.has(normalizedWord);
   const isProfanity = wordData.profanityWords.has(normalizedWord);
+  const isSeuss = allowSeuss && (wordData.seussCanonicalWords.has(normalizedWord) || wordData.seussInventedWords.has(normalizedWord));
 
-  // Word must be in dictionary, accepted slang, or an accepted common proper noun
-  if (!isInEnable && !(allowSlang && isSlang) && !(allowProperNouns && isProperNoun)) {
+  // Word must be in dictionary, accepted slang, an accepted common proper noun, or (if unlocked) a Seuss word
+  if (!isInEnable && !(allowSlang && isSlang) && !(allowProperNouns && isProperNoun) && !isSeuss) {
     return {
       isValid: false,
       reason: 'NOT_IN_DICTIONARY',
@@ -185,6 +189,22 @@ export function validateWordWithDependencies(
 export function isValidDictionaryWordWithDependencies(word: string, wordData: WordDataDependencies): boolean {
   const normalizedWord = word.trim().toUpperCase();
   return wordData.enableWords.has(normalizedWord) || wordData.slangWords.has(normalizedWord) || wordData.properNounWords.has(normalizedWord);
+}
+
+/**
+ * Check if a word is a Dr. Seuss word (canonical or invented) using dependency injection
+ */
+export function isSeussWordWithDependencies(word: string, wordData: WordDataDependencies): boolean {
+  const normalizedWord = word.trim().toUpperCase();
+  return wordData.seussCanonicalWords.has(normalizedWord) || wordData.seussInventedWords.has(normalizedWord);
+}
+
+/**
+ * Check if a word is a canonical Dr. Seuss word only (not invented)
+ */
+export function isSeussCanonicalWordWithDependencies(word: string, wordData: WordDataDependencies): boolean {
+  const normalizedWord = word.trim().toUpperCase();
+  return wordData.seussCanonicalWords.has(normalizedWord);
 }
 
 /**

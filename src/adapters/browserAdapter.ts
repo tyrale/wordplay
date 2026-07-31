@@ -28,6 +28,8 @@ class BrowserWordData implements WordDataDependencies {
   public slangWords: Set<string> = new Set();
   public profanityWords: Set<string> = new Set();
   public properNounWords: Set<string> = new Set();
+  public seussCanonicalWords: Set<string> = new Set();
+  public seussInventedWords: Set<string> = new Set();
   public wordCount: number = 0;
   private wordsByLength: Map<number, string[]> = new Map();
   private loaded = false;
@@ -143,7 +145,37 @@ class BrowserWordData implements WordDataDependencies {
         console.warn('Error loading common proper nouns:', properNounError);
         this.properNounWords = new Set();
       }
-      
+
+      // Load canonical Dr. Seuss words from shared data file
+      try {
+        const seussCanonicalResponse = await fetch('/data/seuss-words-canonical.json');
+        if (seussCanonicalResponse.ok) {
+          const seussCanonicalData = await seussCanonicalResponse.json();
+          this.seussCanonicalWords = new Set(seussCanonicalData.words || []);
+          console.log(`Seuss canonical words loaded: ${this.seussCanonicalWords.size} words`);
+        } else {
+          this.seussCanonicalWords = new Set();
+        }
+      } catch (seussCanonicalError) {
+        console.warn('Error loading Seuss canonical words:', seussCanonicalError);
+        this.seussCanonicalWords = new Set();
+      }
+
+      // Load invented Dr. Seuss-style words from shared data file
+      try {
+        const seussInventedResponse = await fetch('/data/seuss-words-invented.json');
+        if (seussInventedResponse.ok) {
+          const seussInventedData = await seussInventedResponse.json();
+          this.seussInventedWords = new Set(seussInventedData.words || []);
+          console.log(`Seuss invented words loaded: ${this.seussInventedWords.size} words`);
+        } else {
+          this.seussInventedWords = new Set();
+        }
+      } catch (seussInventedError) {
+        console.warn('Error loading Seuss invented words:', seussInventedError);
+        this.seussInventedWords = new Set();
+      }
+
       this.loaded = true;
       console.log('Dictionary loaded successfully.'); // Log successful load
     } catch (error) {
@@ -167,7 +199,9 @@ class BrowserWordData implements WordDataDependencies {
     // Use empty profanity set for fallback
     this.profanityWords = new Set();
     this.properNounWords = new Set();
-    
+    this.seussCanonicalWords = new Set();
+    this.seussInventedWords = new Set();
+
     this.loaded = true;
   }
 }
@@ -194,6 +228,15 @@ const browserDictionaryDependencies: GameStateDictionaryDependencies = {
 
   getRandomWordByLength: (length: number): string | null => {
     return getBrowserWordData().getRandomWordByLength(length);
+  },
+
+  getRandomSeussCanonicalWord: (length?: number): string | null => {
+    let words = Array.from(getBrowserWordData().seussCanonicalWords);
+    if (length !== undefined) {
+      words = words.filter(w => w.length === length);
+    }
+    if (words.length === 0) return null;
+    return words[Math.floor(Math.random() * words.length)];
   }
 };
 
@@ -241,6 +284,17 @@ const browserBotDependencies: GameStateBotDependencies = {
       // Bot-specific profanity checking
       isProfanity: (word: string): boolean => {
         return getBrowserWordData().profanityWords.has(word.toUpperCase());
+      },
+
+      // Bot-specific Seuss dictionary checking (used by grinch-bot strategy)
+      isSeussWord: (word: string): boolean => {
+        const w = word.toUpperCase();
+        const data = getBrowserWordData();
+        return data.seussCanonicalWords.has(w) || data.seussInventedWords.has(w);
+      },
+
+      isSeussCanonicalWord: (word: string): boolean => {
+        return getBrowserWordData().seussCanonicalWords.has(word.toUpperCase());
       }
     };
     return generateBotMoveWithDependencies(word, botDeps, { ...options, botId: options?.botId });

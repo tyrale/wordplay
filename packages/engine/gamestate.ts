@@ -93,9 +93,16 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     // Get random word (4 letters by default, or config.startingWordLength) if no initial word provided
     let initialWord = config.initialWord;
     if (!initialWord) {
-      const wordLength = config.startingWordLength || 4;
-      const randomWord = this.dependencies.getRandomWordByLength(wordLength);
-      initialWord = randomWord || 'WORD'; // fallback to 'WORD' if no words of that length found
+      // Grinchbot games always start on a 5-letter canonical Dr. Seuss word
+      if (config.botId === 'grinch-bot' && this.dependencies.getRandomSeussCanonicalWord) {
+        const seussWord = this.dependencies.getRandomSeussCanonicalWord(5);
+        initialWord = seussWord || undefined; // fall through to normal random if no Seuss words loaded
+      }
+      if (!initialWord) {
+        const wordLength = config.startingWordLength || 4;
+        const randomWord = this.dependencies.getRandomWordByLength(wordLength);
+        initialWord = randomWord || 'WORD'; // fallback to 'WORD' if no words of that length found
+      }
     }
 
     const defaultConfig: GameConfig = {

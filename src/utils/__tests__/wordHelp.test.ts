@@ -17,6 +17,8 @@ function makeWordData(overrides: Partial<WordDataDependencies> = {}): WordDataDe
     slangWords: new Set(['BRUH']),
     profanityWords: new Set(),
     properNounWords: new Set(['PARIS']),
+    seussCanonicalWords: new Set(),
+    seussInventedWords: new Set(),
     wordCount: 3,
     ...overrides
   };

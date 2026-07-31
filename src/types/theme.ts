@@ -151,6 +151,9 @@ export const warmerTheme = createTheme("warmer", ["#E9B872", "#151515", "#A63D40
 export const winterTheme = createTheme("winter", ["#EAEBED", "#006989", "#A3BAC3"]);
 export const yellowTheme = createTheme("yellow", ["#ffffff", "#D97706", "#FCD34D"]);
 
+// Dr. Seuss "Grinch" theme - Grinch green with red Santa accents
+export const grinchTheme = createTheme("grinch", ["#F7F7E8", "#1E6B3A", "#C72B29"]);
+
 // Keep the original default theme for backwards compatibility
 export const defaultTheme: GameTheme = {
   name: "Classic Blue",
@@ -250,7 +253,8 @@ export const availableThemes = [
   vintageTheme,
   warmerTheme,
   winterTheme,
-  yellowTheme
+  yellowTheme,
+  grinchTheme
 ];
 
 export type ThemeContextType = {

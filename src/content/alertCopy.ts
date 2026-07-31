@@ -94,7 +94,8 @@ export const alertCopy = {
         'hard-bot': 'Bring your best moves',
         'expert-bot': 'The ultimate challenge',
         'pirate-bot': 'Arrr, ready to play',
-        'noob-bot': 'Only ever adds an S'
+        'noob-bot': 'Only ever adds an S',
+        'grinch-bot': 'Plays Dr. Seuss words. You stink, stank, stunk!'
       }
     },
     mechanic: {
@@ -129,6 +130,14 @@ export const alertCopy = {
     shareSuccess: { lines: ['SHARED'] },
     shareError: { lines: ['SHARE', 'FAILED'] },
     resetTrigger: { lines: ['DUH', "yeah it happened. i wouldn't use that word"] }
+  },
+
+  /** First-time feature hints - each shown only once (gated by tutorialStorage). */
+  hints: {
+    clearWord: {
+      lines: ['CLEARED'],
+      meta: 'This is a feature. If you tap the X before doing anything else it will clear the letters in play. Then you can "type" out the word you want. Sometimes this is faster.'
+    }
   },
 
   /** Shown to *both* players in a vs-human match when either one resigns mid-game. */

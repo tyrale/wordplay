@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useGameState, useGameStats, useWordState } from '../../hooks/useGameState';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
+import { useWordPathGraph } from '../../hooks/useWordPathGraph';
 import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
 import { useAlert } from '../ui/AlertProvider';
 import { AlphabetGrid } from './AlphabetGrid';
@@ -24,6 +25,7 @@ import {
 } from '../../utils/wordHelp';
 import { triggerHapticFeedback } from '../../utils/haptics';
 import { triggerSoundFeedback } from '../../utils/sound';
+import { hasSeenClearHint, markClearHintSeen } from '../../utils/tutorialStorage';
 import type { WordDataDependencies, ScoringAction, GameConfig, MoveAttempt, GameState, IGameStateManager } from '../../../packages/engine/interfaces';
 
 // Dictionary validation using pure dependency injection
@@ -120,14 +122,15 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const { isValidDictionaryWord, wordData } = useDictionaryValidation();
   
   // Unlock system integration
-  const { handleWordSubmission, handleGameCompletion, getUnlockedItems } = useUnlockSystem();
+  const { handleWordSubmission, handleGameCompletion, handleWordPathChange, getUnlockedItems } = useUnlockSystem();
   const { recordMove, recordGameResult } = usePlayerStats();
+  const { recordTransition: recordWordPathTransition, syncToServer: syncWordPathGraph } = useWordPathGraph();
 
   // Tracks how many turnHistory entries have already been sent to recordMove,
   // so word/letter stats update live per move instead of only at game end.
   const recordedMoveCountRef = useRef(0);
   const { isMechanicOn } = useMechanicsSettings();
-  const { showCustomAlert } = useAlert();
+  const { showCustomAlert, showAlert } = useAlert();
 
   // Determine starting word length from unlocked + enabled starting-word mechanics.
   // If multiple lengths are unlocked and on, pick one at random for variety.
@@ -177,9 +180,50 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         recordedMoveCountRef.current = state.turnHistory.length;
         const localId = localPlayerId ?? 'human';
         for (const entry of newEntries) {
+          // Word path graph tracks every word seen - both the local player's
+          // and any bot/opponent's moves - so it's recorded unconditionally,
+          // unlike recordMove (player stats) which only tracks the local player.
+          recordWordPathTransition(entry.previousWord, entry.newWord).catch(err =>
+            console.warn('Failed to record word path transition:', err)
+          );
+
           if (entry.playerId === localId) {
             recordMove(entry).catch(err => console.warn('Failed to record move stats:', err));
+          } else {
+            // The local player's own submissions are checked for unlocks in
+            // the submit handler (handleWordSubmission). For any OTHER
+            // participant's move - a bot or a remote human opponent - we
+            // check for unlocks here so that an unlockable word played by
+            // anyone in the game unlocks for the local player too. This is
+            // purely local: each client observes the shared game state and
+            // grants the unlock into its own storage. isLocalMove=false
+            // ensures a bot/opponent playing "RESET" can't wipe the local
+            // player's unlocks.
+            const isProfane = !!wordData?.profanityWords.has(entry.newWord.toUpperCase());
+            handleWordSubmission(entry.newWord, isProfane, { isLocalMove: false }).catch(err =>
+              console.warn('Failed to check non-local move unlock triggers:', err)
+            );
           }
+        }
+
+        // Check for word-sequence unlocks (e.g. STINK → STANK → STUNK).
+        // The word path is the full chain of words played in the game, in
+        // order, regardless of who played them (human, bot, or remote
+        // opponent). We reconstruct it from turnHistory: the first entry's
+        // previousWord is the starting word, and each entry's newWord is
+        // the word played that turn.
+        const wordPath: string[] = [];
+        if (state.turnHistory.length > 0) {
+          wordPath.push(state.turnHistory[0].previousWord.toUpperCase());
+        }
+        for (const entry of state.turnHistory) {
+          wordPath.push(entry.newWord.toUpperCase());
+        }
+        // Only check when we have at least 3 words (the shortest sequence trigger)
+        if (wordPath.length >= 3) {
+          handleWordPathChange(wordPath).catch(err =>
+            console.warn('Failed to check word sequence unlock triggers:', err)
+          );
         }
       }
 
@@ -202,6 +246,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         // any resulting unlock notification will show over the overlay once ready.
         handleGameCompletion(state.winner?.id || null, config?.botId).catch(err =>
           console.warn('Failed to check game completion unlock triggers:', err)
+        );
+
+        // Upload any newly-discovered word path edges to the server's
+        // master graph, also in the background.
+        syncWordPathGraph().catch(err =>
+          console.warn('Failed to sync word path graph:', err)
         );
 
         // Record this game into the player's lifetime stats log, also in the background
@@ -551,6 +601,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     // mistaken for "no changes".
     const wordUnchanged = pendingWord === wordState.currentWord;
     if (!isValidSubmit && wordUnchanged && !showValidationError) {
+      // First time the player uses this clear shortcut, explain the feature
+      // (gated by localStorage so it only ever shows once).
+      if (!hasSeenClearHint()) {
+        markClearHintSeen();
+        showAlert('hints', 'clearWord');
+      }
       handleWordChange('');
       return;
     }
@@ -587,7 +643,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         setShowValidationError(false);
       }
     }
-  }, [isPlayerTurn, isProcessingMove, pendingWord, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, wordData, actionState, handleWordChange]);
+  }, [isPlayerTurn, isProcessingMove, pendingWord, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, wordData, actionState, handleWordChange, showAlert]);
 
   const handleStartGame = useCallback(async () => {
     await actions.startGame();

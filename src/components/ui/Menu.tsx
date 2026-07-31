@@ -12,6 +12,7 @@ import type { GameTheme } from '../../types/theme';
 import { DictionariesOverlay } from './DictionariesOverlay';
 import { ThoughtsOverlay } from './ThoughtsOverlay';
 import { StatsOverlay } from './StatsOverlay';
+import { WordPathExplorer } from './WordPathExplorer';
 import { triggerSoundFeedback } from '../../utils/sound';
 import './Menu.css';
 
@@ -215,6 +216,11 @@ const getMenuItems = (
     ]
   }] : []),
   {
+    id: 'word-paths',
+    title: 'word paths'
+    // No children - opens the Word Path Explorer overlay directly
+  },
+  {
     id: 'about',
     title: 'about',
     children: [
@@ -263,6 +269,7 @@ export const Menu: React.FC<MenuProps> = ({
   const [isDictionariesOpen, setIsDictionariesOpen] = useState(false);
   const [isThoughtsOpen, setIsThoughtsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [isWordPathsOpen, setIsWordPathsOpen] = useState(false);
   const { currentTheme, setTheme, isInverted, toggleInverted } = useTheme();
   
   // Get unlock state
@@ -338,6 +345,12 @@ export const Menu: React.FC<MenuProps> = ({
     if (itemId === 'resign') {
       onResign?.();
       handleClose(); // Close menu after resign
+      return;
+    }
+
+    if (itemId === 'word-paths') {
+      setIsWordPathsOpen(true);
+      handleClose(); // Close menu behind the overlay
       return;
     }
     
@@ -675,6 +688,10 @@ export const Menu: React.FC<MenuProps> = ({
       <StatsOverlay
         isVisible={isStatsOpen}
         onClose={() => setIsStatsOpen(false)}
+      />
+      <WordPathExplorer
+        isVisible={isWordPathsOpen}
+        onClose={() => setIsWordPathsOpen(false)}
       />
     </>
   );

@@ -33,7 +33,7 @@
  * Dictionary validation interface for agnostic usage
  */
 export interface DictionaryValidation {
-  validateWord: (word: string, options?: { isBot?: boolean }) => { isValid: boolean; reason?: string; word: string };
+  validateWord: (word: string, options?: { isBot?: boolean; allowSeuss?: boolean }) => { isValid: boolean; reason?: string; word: string };
   isValidDictionaryWord: (word: string) => boolean;
 }
 
@@ -206,11 +206,12 @@ export function generateSubstituteMoves(currentWord: string, protectedLetters: s
  * Filters valid candidates using dependency-injected dictionary validation
  */
 export function filterValidCandidatesWithDependencies(
-  candidates: MoveCandidate[], 
-  dictionaryValidation: DictionaryValidation
+  candidates: MoveCandidate[],
+  dictionaryValidation: DictionaryValidation,
+  options?: { allowSeuss?: boolean }
 ): MoveCandidate[] {
   return candidates.filter(candidate => {
-    const validation = dictionaryValidation.validateWord(candidate.word, { isBot: false });
+    const validation = dictionaryValidation.validateWord(candidate.word, { isBot: false, allowSeuss: options?.allowSeuss });
     return validation.isValid;
   });
 }
@@ -366,6 +367,35 @@ function filterPirateBotCandidates(candidates: MoveCandidate[], dependencies: Bo
 }
 
 /**
+ * Grinch bot strategy - prioritizes Dr. Seuss dictionary words.
+ * Canonical Seuss words are preferred over invented ones; both are preferred
+ * over normal dictionary words. Falls back to all valid candidates if no
+ * Seuss words are available.
+ */
+function filterGrinchBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies): MoveCandidate[] {
+  // First, look for candidates that are canonical Seuss words
+  const canonicalSeussCandidates = candidates.filter(candidate => {
+    return dependencies.isSeussCanonicalWord ? dependencies.isSeussCanonicalWord(candidate.word) : false;
+  });
+
+  if (canonicalSeussCandidates.length > 0) {
+    return canonicalSeussCandidates;
+  }
+
+  // Second, look for invented Seuss words
+  const inventedSeussCandidates = candidates.filter(candidate => {
+    return dependencies.isSeussWord ? dependencies.isSeussWord(candidate.word) : false;
+  });
+
+  if (inventedSeussCandidates.length > 0) {
+    return inventedSeussCandidates;
+  }
+
+  // Fallback: use all valid candidates (normal play)
+  return candidates;
+}
+
+/**
  * Generates bot move using dependency injection (NEW ARCHITECTURE)
  */
 export function generateBotMoveWithDependencies(
@@ -426,7 +456,10 @@ export function generateBotMoveWithDependencies(
   const candidatesToCheck = allCandidates.slice(0, maxCandidates);
   
   // Filter valid candidates using dependency injection
-  const validCandidates = filterValidCandidatesWithDependencies(candidatesToCheck, dependencies);
+  // Grinchbot gets allowSeuss so Seuss words pass validation during candidate filtering
+  const validCandidates = filterValidCandidatesWithDependencies(candidatesToCheck, dependencies, {
+    allowSeuss: botId === 'grinch-bot'
+  });
 
   // Apply bot strategy if applicable
   let filteredCandidates = validCandidates;
@@ -440,6 +473,8 @@ export function generateBotMoveWithDependencies(
     filteredCandidates = filterHardBotCandidates(validCandidates, dependencies, currentWord);
   } else if (botId === 'pirate-bot') {
     filteredCandidates = filterPirateBotCandidates(validCandidates, dependencies, currentWord);
+  } else if (botId === 'grinch-bot') {
+    filteredCandidates = filterGrinchBotCandidates(validCandidates, dependencies);
   }
 
   // Score valid candidates using dependency injection

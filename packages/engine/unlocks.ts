@@ -12,10 +12,11 @@ import type {
   UnlockState, 
   UnlockResult 
 } from './interfaces';
-import { 
-  UNLOCK_DEFINITIONS, 
+import {
+  UNLOCK_DEFINITIONS,
   INITIAL_UNLOCK_STATE,
-  findUnlockByTrigger 
+  findUnlockByTrigger,
+  findUnlockBySequenceTrigger
 } from './unlock-definitions';
 
 /**
@@ -177,6 +178,58 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
   }
 
   /**
+   * Check for word-sequence-triggered unlocks.
+   * Fires when the tail of the word path matches a defined sequence
+   * (e.g. STINK → STANK → STUNK unlocks the Grinch theme + Grinchbot).
+   */
+  async function checkWordSequenceTriggers(wordPath: string[]): Promise<UnlockResult[]> {
+    const state = await ensureStateLoaded();
+    const sequenceUnlocks = findUnlockBySequenceTrigger(wordPath);
+    console.log(`[Unlock] Checking word sequence (length ${wordPath.length}) for unlocks, found ${sequenceUnlocks.length} potential unlocks:`, sequenceUnlocks);
+    const results: UnlockResult[] = [];
+
+    for (const unlock of sequenceUnlocks) {
+      const target = unlock.target || unlock.itemId || '';
+      const wasAlreadyUnlocked = isItemUnlocked(state, unlock.category, target);
+      console.log(`[Unlock] Sequence unlock "${unlock.id}" (${unlock.category}:${target}) - already unlocked: ${wasAlreadyUnlocked}`);
+
+      if (!wasAlreadyUnlocked && target) {
+        if (unlock.category === 'theme') {
+          state.themes.push(target);
+        } else if (unlock.category === 'mechanic') {
+          state.mechanics.push(target);
+        } else if (unlock.category === 'bot') {
+          state.bots.push(target);
+        } else if (unlock.category === 'reveal') {
+          state.reveals.push(target);
+        }
+
+        const result: UnlockResult = {
+          unlockId: unlock.id,
+          category: unlock.category,
+          itemId: unlock.target || unlock.itemId || '',
+          name: unlock.name || unlock.target || '',
+          description: unlock.description || `Unlocked ${unlock.target}`,
+          isNew: true,
+          target: unlock.target,
+          immediateEffect: unlock.immediate_effect,
+          wasAlreadyUnlocked
+        };
+
+        results.push(result);
+      }
+    }
+
+    if (results.length > 0) {
+      await saveState();
+    }
+
+    await recordCommunityUnlocks(results);
+
+    return results;
+  }
+
+  /**
    * Report each genuinely-new unlock to the community-wide counter (if a
    * `recordCommunityUnlock` dependency was provided). Attaches the returned
    * count/total-players onto each result so callers can display rarity
@@ -299,6 +352,7 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
     initialize,
     checkWordTriggers,
     checkAchievementTriggers,
+    checkWordSequenceTriggers,
     getUnlockedItems,
     isUnlocked,
     getCurrentState,

@@ -59,24 +59,31 @@ export const BOT_REGISTRY: Bot[] = [
   },
 
   // Themed Bots (unlocked by playing specific words)
-  { 
-    id: 'pirate-bot', 
-    displayName: 'piratebot', 
+  {
+    id: 'pirate-bot',
+    displayName: 'piratebot',
     theme: 'pirate',
     category: 'themed',
     description: 'Unlocked by playing "pirate"'
   },
+  {
+    id: 'grinch-bot',
+    displayName: 'grinchbot',
+    theme: 'grinch',
+    category: 'themed',
+    description: 'Unlocked by playing STINK, STANK, STUNK in order. Prioritizes Dr. Seuss words; games start on a Seuss word.'
+  },
 
   // Behavior Bots (unlocked by various means)
-  { 
-    id: 'noob-bot', 
-    displayName: 'noobbot', 
+  {
+    id: 'noob-bot',
+    displayName: 'noobbot',
     category: 'behavior',
     description: 'Only knows one move: adds an S, rules be damned. Unlocked by playing "noob"'
   },
-  { 
-    id: 'bruh-bot', 
-    displayName: 'bruhbot', 
+  {
+    id: 'bruh-bot',
+    displayName: 'bruhbot',
     category: 'behavior',
     description: 'bruh'
   }
