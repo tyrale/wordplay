@@ -916,6 +916,14 @@ export interface PlayerStatsDependencies {
 
 export interface PlayerStatsEngine {
   initialize(): Promise<void>;
+  /**
+   * Record a single completed move (word played or pass) immediately, so
+   * word/letter-level stats update live as the player plays rather than
+   * waiting for the game to reach a terminal state. Only word-level fields
+   * are updated here; game-level outcome stats (win/loss, streaks, bot
+   * records, etc.) are still updated once via `recordGameResult`.
+   */
+  recordMove(move: TurnHistory): Promise<PlayerStats>;
   recordGameResult(result: GameResultSummary): Promise<PlayerStats>;
   recordChallengeResult(result: ChallengeResultSummary): Promise<PlayerStats>;
   recordUnlockEarned(): Promise<PlayerStats>;

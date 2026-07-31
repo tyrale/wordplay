@@ -80,7 +80,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   // Player stats integration - the daily challenge is tracked via its own
   // separate challengesPlayed/Completed/Failed counters (see recordChallengeResult),
   // not folded into gamesWon/gamesLost or the bot win streak.
-  const { recordChallengeResult } = usePlayerStats();
+  const { recordMove, recordChallengeResult } = usePlayerStats();
   const { isMechanicOn } = useMechanicsSettings();
 
   // Drunk mechanic: unlocked via the "drunk" word and toggled on in the mechanics menu.
@@ -380,6 +380,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
           triggerHapticFeedback('submit');
           triggerSoundFeedback('submit');
           // Word was successfully submitted, pending word becomes current word
+          const previousWord = challengeState?.currentWord || '';
           setPendingWord(pendingWord); // Keep the word that was just submitted
           setValidationResult(null);
           setShowValidationError(false);
@@ -388,6 +389,24 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
           // (the vanity filter mechanic unlock is handled here via UNLOCK_DEFINITIONS)
           const isProfane = !!wordData?.profanityWords.has(pendingWord.trim().toUpperCase());
           await handleWordSubmission(pendingWord, isProfane);
+
+          // Record this move live for word/letter stats - challenge mode has
+          // no bot opponent or turn-based win condition, so only the shared
+          // Words/Key Letters stats apply here (see recordChallengeResult
+          // for the separate challengesPlayed/Completed/Failed counters).
+          if (gameDependencies) {
+            const moveScoring = gameDependencies.calculateScore(previousWord, pendingWord, { keyLetters: [] });
+            recordMove({
+              turnNumber: (challengeState?.wordSequence.length || 0) + 1,
+              playerId: 'human',
+              previousWord,
+              newWord: pendingWord,
+              score: moveScoring.totalScore,
+              keyLettersUsed: moveScoring.keyLettersUsed || [],
+              scoringBreakdown: moveScoring,
+              timestamp: Date.now()
+            }).catch(err => console.warn('Failed to record challenge move stats:', err));
+          }
           
           // Check if challenge is complete (challengeState will be updated by useChallenge)
           // The completion check will happen in the next render cycle
@@ -400,7 +419,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         setIsProcessingMove(false);
       }
     }
-  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord, handleWordSubmission, wordData, handleWordChange]);
+  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord, handleWordSubmission, wordData, handleWordChange, gameDependencies, recordMove]);
 
   const handleMenuClose = useCallback(() => {
     setIsMenuOpen(false);

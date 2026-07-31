@@ -10,12 +10,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPlayerStatsEngine } from '../../packages/engine/player-stats';
 import { getInitialPlayerStats } from '../../packages/engine/player-stats-definitions';
 import { createPlayerStatsDependencies } from '../adapters/browserPlayerStatsAdapter';
-import type { PlayerStatsEngine, PlayerStats, GameResultSummary, ChallengeResultSummary } from '../../packages/engine/interfaces';
+import type { PlayerStatsEngine, PlayerStats, GameResultSummary, ChallengeResultSummary, TurnHistory } from '../../packages/engine/interfaces';
 
 export interface UsePlayerStatsReturn {
   stats: PlayerStats;
   isLoading: boolean;
 
+  recordMove: (move: TurnHistory) => Promise<PlayerStats>;
   recordGameResult: (result: GameResultSummary) => Promise<PlayerStats>;
   recordChallengeResult: (result: ChallengeResultSummary) => Promise<PlayerStats>;
   recordUnlockEarned: () => Promise<PlayerStats>;
@@ -58,6 +59,19 @@ export function usePlayerStats(): UsePlayerStatsReturn {
       mounted = false;
     };
   }, []);
+
+  const recordMove = useCallback(async (move: TurnHistory): Promise<PlayerStats> => {
+    if (!engineRef.current) return stats;
+
+    try {
+      const newStats = await engineRef.current.recordMove(move);
+      setStats(newStats);
+      return newStats;
+    } catch (error) {
+      console.error('Error recording move:', error);
+      return stats;
+    }
+  }, [stats]);
 
   const recordGameResult = useCallback(async (result: GameResultSummary): Promise<PlayerStats> => {
     if (!engineRef.current) return stats;
@@ -112,6 +126,7 @@ export function usePlayerStats(): UsePlayerStatsReturn {
   return {
     stats,
     isLoading,
+    recordMove,
     recordGameResult,
     recordChallengeResult,
     recordUnlockEarned,

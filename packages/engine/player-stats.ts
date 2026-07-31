@@ -13,6 +13,7 @@ import type {
   PlayerStats,
   GameResultSummary,
   ChallengeResultSummary,
+  TurnHistory,
   BotRecord
 } from './interfaces';
 import { getInitialPlayerStats } from './player-stats-definitions';
@@ -95,51 +96,67 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
     stats.longestDailyStreak = Math.max(stats.longestDailyStreak, stats.currentDailyStreak);
   }
 
+  /**
+   * Apply a single move's word/letter-level effects onto a mutable stats
+   * object. Shared by `recordMove` (called live, once per move as the
+   * player plays) so word stats aren't duplicated when the game later
+   * finishes via `recordGameResult`.
+   */
+  function applyMoveToWordStats(stats: PlayerStats, move: TurnHistory): void {
+    if (isPassEntry(move)) {
+      stats.totalPasses += 1;
+      return;
+    }
+
+    stats.totalWordsPlayed += 1;
+    const wordLength = move.newWord.length;
+
+    if (wordLength > stats.longestWordLength) {
+      stats.longestWordLength = wordLength;
+      stats.longestWordPlayed = move.newWord;
+    }
+
+    if (stats.shortestWordLength === 0 || wordLength < stats.shortestWordLength) {
+      stats.shortestWordLength = wordLength;
+      stats.shortestWordPlayed = move.newWord;
+    }
+
+    if (move.score > stats.highestSingleMoveScore) {
+      stats.highestSingleMoveScore = move.score;
+    }
+
+    for (const action of move.scoringBreakdown?.actions ?? []) {
+      if (action.type === 'add') {
+        stats.totalLettersAdded += action.letters?.length ?? 0;
+        incrementLetterCounts(stats.letterUsageCounts, action.letters ?? []);
+      } else if (action.type === 'remove') {
+        stats.totalLettersRemoved += action.letters?.length ?? 0;
+      } else if (action.type === 'rearrange') {
+        stats.totalRearranges += 1;
+      } else if (action.type === 'substitute') {
+        stats.totalSubstitutions += 1;
+      }
+    }
+
+    incrementLetterCounts(stats.keyLetterUsageCounts, move.keyLettersUsed ?? []);
+    stats.totalKeyLetterPoints += move.scoringBreakdown?.keyLetterScore ?? 0;
+  }
+
+  async function recordMove(move: TurnHistory): Promise<PlayerStats> {
+    const stats = await ensureStateLoaded();
+    applyMoveToWordStats(stats, move);
+    await saveState();
+    return getStats();
+  }
+
   async function recordGameResult(result: GameResultSummary): Promise<PlayerStats> {
     const stats = await ensureStateLoaded();
     const timestamp = result.timestamp ?? dependencies.getTimestamp();
 
+    // Word/letter-level stats are recorded live via `recordMove` as each
+    // move happens - only the pass count is needed here (for perfectGames).
     const playerMoves = result.turnHistory.filter(entry => entry.playerId === result.playerId);
-    const wordMoves = playerMoves.filter(entry => !isPassEntry(entry));
     const passMoves = playerMoves.filter(isPassEntry);
-
-    // Words
-    stats.totalWordsPlayed += wordMoves.length;
-    stats.totalPasses += passMoves.length;
-
-    for (const move of wordMoves) {
-      const wordLength = move.newWord.length;
-
-      if (wordLength > stats.longestWordLength) {
-        stats.longestWordLength = wordLength;
-        stats.longestWordPlayed = move.newWord;
-      }
-
-      if (stats.shortestWordLength === 0 || wordLength < stats.shortestWordLength) {
-        stats.shortestWordLength = wordLength;
-        stats.shortestWordPlayed = move.newWord;
-      }
-
-      if (move.score > stats.highestSingleMoveScore) {
-        stats.highestSingleMoveScore = move.score;
-      }
-
-      for (const action of move.scoringBreakdown?.actions ?? []) {
-        if (action.type === 'add') {
-          stats.totalLettersAdded += action.letters?.length ?? 0;
-          incrementLetterCounts(stats.letterUsageCounts, action.letters ?? []);
-        } else if (action.type === 'remove') {
-          stats.totalLettersRemoved += action.letters?.length ?? 0;
-        } else if (action.type === 'rearrange') {
-          stats.totalRearranges += 1;
-        } else if (action.type === 'substitute') {
-          stats.totalSubstitutions += 1;
-        }
-      }
-
-      incrementLetterCounts(stats.keyLetterUsageCounts, move.keyLettersUsed ?? []);
-      stats.totalKeyLetterPoints += move.scoringBreakdown?.keyLetterScore ?? 0;
-    }
 
     // Games
     stats.gamesPlayed += 1;
@@ -261,6 +278,7 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
 
   return {
     initialize,
+    recordMove,
     recordGameResult,
     recordChallengeResult,
     recordUnlockEarned,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useGameState, useGameStats, useWordState } from '../../hooks/useGameState';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
@@ -121,7 +121,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   
   // Unlock system integration
   const { handleWordSubmission, handleGameCompletion, getUnlockedItems } = useUnlockSystem();
-  const { recordGameResult } = usePlayerStats();
+  const { recordMove, recordGameResult } = usePlayerStats();
+
+  // Tracks how many turnHistory entries have already been sent to recordMove,
+  // so word/letter stats update live per move instead of only at game end.
+  const recordedMoveCountRef = useRef(0);
   const { isMechanicOn } = useMechanicsSettings();
   const { showCustomAlert } = useAlert();
 
@@ -164,6 +168,21 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     localPlayerId,
     skipSavedGamePersistence: currentGameMode === 'tutorial',
     onGameStateChange: (state) => {
+      // Record each of the local player's newly-completed moves live, so
+      // word/letter stats update as the game is played rather than only
+      // once it reaches a terminal state (which may never happen if the
+      // player force-quits, crashes, or otherwise abandons the game).
+      if (state.turnHistory.length > recordedMoveCountRef.current) {
+        const newEntries = state.turnHistory.slice(recordedMoveCountRef.current);
+        recordedMoveCountRef.current = state.turnHistory.length;
+        const localId = localPlayerId ?? 'human';
+        for (const entry of newEntries) {
+          if (entry.playerId === localId) {
+            recordMove(entry).catch(err => console.warn('Failed to record move stats:', err));
+          }
+        }
+      }
+
       if (state.gameStatus === 'finished' && onGameEnd) {
         const localId = localPlayerId ?? 'human';
         const opponentId = localPlayerId

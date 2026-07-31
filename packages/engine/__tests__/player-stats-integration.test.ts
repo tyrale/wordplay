@@ -62,6 +62,15 @@ describe('Player Stats + GameStateManager Integration', () => {
       : null;
 
     const statsEngine = createPlayerStatsEngine(createInMemoryPlayerStatsDependencies());
+
+    // InteractiveGame.tsx records each of the local player's moves live, as
+    // they happen, rather than waiting for the game to finish.
+    for (const entry of state.turnHistory) {
+      if (entry.playerId === localId) {
+        await statsEngine.recordMove(entry);
+      }
+    }
+
     const result = await statsEngine.recordGameResult({
       playerId: localId,
       botId: config.botId,

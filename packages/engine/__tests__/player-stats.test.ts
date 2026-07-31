@@ -83,29 +83,34 @@ describe('Player Stats Engine', () => {
     });
   });
 
-  describe('Word Stats', () => {
-    it('counts words played and passes for the local player only', async () => {
-      const result = makeGameResult({
-        turnHistory: [
-          makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' }),
-          makeTurn({ playerId: 'human', previousWord: 'CATS', newWord: 'CATS' }), // pass
-          makeTurn({ playerId: 'basicBot', previousWord: 'CATS', newWord: 'SCAT' })
-        ]
-      });
+  describe('Word Stats (recorded live via recordMove)', () => {
+    it('counts words played and passes as each move happens', async () => {
+      await engine.recordMove(makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' }));
+      await engine.recordMove(makeTurn({ playerId: 'human', previousWord: 'CATS', newWord: 'CATS' })); // pass
 
-      const stats = await engine.recordGameResult(result);
+      const stats = engine.getStats();
       expect(stats.totalWordsPlayed).toBe(1);
       expect(stats.totalPasses).toBe(1);
     });
 
-    it('tracks longest and shortest word played', async () => {
+    it('does not double-count word stats when recordGameResult runs afterwards', async () => {
+      await engine.recordMove(makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' }));
       await engine.recordGameResult(makeGameResult({
         turnHistory: [
-          makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CAT' }),
           makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' }),
-          makeTurn({ playerId: 'human', previousWord: 'CATS', newWord: 'SCATTER' })
+          makeTurn({ playerId: 'basicBot', previousWord: 'CATS', newWord: 'SCAT' })
         ]
       }));
+
+      const stats = engine.getStats();
+      expect(stats.totalWordsPlayed).toBe(1);
+      expect(stats.gamesPlayed).toBe(1);
+    });
+
+    it('tracks longest and shortest word played', async () => {
+      await engine.recordMove(makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CAT' }));
+      await engine.recordMove(makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' }));
+      await engine.recordMove(makeTurn({ playerId: 'human', previousWord: 'CATS', newWord: 'SCATTER' }));
 
       const stats = engine.getStats();
       expect(stats.longestWordPlayed).toBe('SCATTER');
@@ -115,21 +120,17 @@ describe('Player Stats Engine', () => {
     });
 
     it('accumulates letter usage counts from add actions', async () => {
-      await engine.recordGameResult(makeGameResult({
-        turnHistory: [
-          makeTurn({
-            playerId: 'human',
-            previousWord: 'CAT',
-            newWord: 'CATS',
-            scoringBreakdown: makeScoring({ actions: [{ type: 'add', letters: ['S'], score: 1 }] })
-          }),
-          makeTurn({
-            playerId: 'human',
-            previousWord: 'CATS',
-            newWord: 'SCATS',
-            scoringBreakdown: makeScoring({ actions: [{ type: 'add', letters: ['S'], score: 1 }] })
-          })
-        ]
+      await engine.recordMove(makeTurn({
+        playerId: 'human',
+        previousWord: 'CAT',
+        newWord: 'CATS',
+        scoringBreakdown: makeScoring({ actions: [{ type: 'add', letters: ['S'], score: 1 }] })
+      }));
+      await engine.recordMove(makeTurn({
+        playerId: 'human',
+        previousWord: 'CATS',
+        newWord: 'SCATS',
+        scoringBreakdown: makeScoring({ actions: [{ type: 'add', letters: ['S'], score: 1 }] })
       }));
 
       const stats = engine.getStats();
@@ -138,16 +139,12 @@ describe('Player Stats Engine', () => {
     });
 
     it('tracks key letter usage and points', async () => {
-      await engine.recordGameResult(makeGameResult({
-        turnHistory: [
-          makeTurn({
-            playerId: 'human',
-            previousWord: 'CAT',
-            newWord: 'CATS',
-            keyLettersUsed: ['S'],
-            scoringBreakdown: makeScoring({ keyLetterScore: 3, keyLettersUsed: ['S'] })
-          })
-        ]
+      await engine.recordMove(makeTurn({
+        playerId: 'human',
+        previousWord: 'CAT',
+        newWord: 'CATS',
+        keyLettersUsed: ['S'],
+        scoringBreakdown: makeScoring({ keyLetterScore: 3, keyLettersUsed: ['S'] })
       }));
 
       const stats = engine.getStats();
@@ -206,9 +203,11 @@ describe('Player Stats Engine', () => {
     });
 
     it('tracks highest game score and highest single move score', async () => {
+      const turn = makeTurn({ playerId: 'human', score: 9, previousWord: 'CAT', newWord: 'SCATTER' });
+      await engine.recordMove(turn);
       await engine.recordGameResult(makeGameResult({
         finalScore: 15,
-        turnHistory: [makeTurn({ playerId: 'human', score: 9, previousWord: 'CAT', newWord: 'SCATTER' })]
+        turnHistory: [turn]
       }));
 
       const stats = engine.getStats();
