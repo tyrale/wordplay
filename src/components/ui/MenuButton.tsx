@@ -1,4 +1,5 @@
 import React from 'react';
+import { triggerSoundFeedback } from '../../utils/sound';
 import './MenuButton.css';
 
 interface MenuButtonProps {
@@ -15,7 +16,10 @@ export const MenuButton: React.FC<MenuButtonProps> = ({
   return (
     <button
       className={`menu-button ${isMenuOpen ? 'menu-button--open' : ''} ${className}`.trim()}
-      onClick={onClick}
+      onClick={() => {
+        triggerSoundFeedback('click');
+        onClick();
+      }}
       aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
       type="button"
     >

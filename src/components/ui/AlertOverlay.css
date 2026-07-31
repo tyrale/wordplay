@@ -74,6 +74,26 @@
   opacity: 0.75;
 }
 
+/* Reason line emphasized when the word is not playable — full opacity + accent
+   color so it can't be overlooked next to a dictionary definition. */
+.alert-overlay__meta-reason--invalid {
+  color: var(--theme-accent);
+  opacity: 1;
+  font-weight: bold;
+}
+
+/* Explanatory note for variant/non-standard words that have a dictionary entry
+   but are not accepted in the game (e.g. dialectal plurals like "gords").
+   Readable as a sentence — overrides the parent's uppercase transform. */
+.alert-overlay__meta-variant-note {
+  margin-top: var(--spacing-sm);
+  max-width: 80vw;
+  text-transform: none;
+  font-style: normal;
+  opacity: 0.9;
+  color: var(--theme-accent);
+}
+
 /* Optional extra actions (e.g. Share) above the close button */
 .alert-overlay__actions {
   display: flex;

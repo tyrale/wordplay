@@ -22,6 +22,44 @@ export function getWordLegalityReason(word: string, wordData: WordDataDependenci
   return 'Not currently a valid word';
 }
 
+/**
+ * Reports whether a word is playable in the game, i.e. present in any of the
+ * accepted word sets (standard dictionary, slang, or recognized proper nouns).
+ */
+export function isPlayableWord(word: string, wordData: WordDataDependencies | null): boolean {
+  const upper = word.trim().toUpperCase();
+  if (!upper) return false;
+  return !!(
+    wordData &&
+    (wordData.enableWords.has(upper) ||
+      wordData.slangWords.has(upper) ||
+      wordData.properNounWords.has(upper))
+  );
+}
+
+/**
+ * Returns an explanatory note for words that are NOT playable in the game but
+ * DO have an entry in a broader external dictionary (Wiktionary /
+ * dictionaryapi.dev). Such words are typically archaic, dialectal, or variant
+ * spellings (e.g. "gords", the plural of the dialectal "gord"). Without this
+ * note, players see a dictionary definition and assume the word is playable.
+ *
+ * Returns `null` when the note does not apply (the word is playable, or no
+ * external definition was found).
+ */
+export function getVariantDefinitionNote(
+  word: string,
+  wordData: WordDataDependencies | null,
+  definition: string | null
+): string | null {
+  const upper = word.trim().toUpperCase();
+  // Word data is required to confidently say the word is not playable; without
+  // it we can't tell a disallowed variant apart from "dictionary not loaded yet".
+  if (!upper || !definition || !wordData) return null;
+  if (isPlayableWord(upper, wordData)) return null;
+  return 'The dictionary entry below is a variant or non-standard form, and is not accepted as a valid word in this game.';
+}
+
 const DEFINITION_FETCH_TIMEOUT_MS = 4000;
 
 /** Strips HTML tags/entities from a Wiktionary definition string. */

@@ -7,6 +7,7 @@
  */
 
 import React from 'react';
+import { triggerSoundFeedback } from '../../utils/sound';
 import './DictionariesOverlay.css';
 
 export interface DictionariesOverlayProps {
@@ -69,7 +70,10 @@ export const DictionariesOverlay: React.FC<DictionariesOverlayProps> = ({ isVisi
 
       <button
         className="dictionaries-overlay__close"
-        onClick={onClose}
+        onClick={() => {
+          triggerSoundFeedback('click');
+          onClose();
+        }}
         aria-label="Close"
       >
         ×

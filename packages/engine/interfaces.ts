@@ -860,6 +860,13 @@ export interface PlayerStats {
   botRecords: Record<string, BotRecord>;
   botsBeaten: string[];
 
+  // Daily challenge ("vs world") - tracked separately from bot games since
+  // it has no scoring/turn system and shouldn't affect gamesWon/gamesLost
+  // or the bot win streak.
+  challengesPlayed: number;
+  challengesCompleted: number;
+  challengesFailed: number;
+
   // Key letters
   keyLetterUsageCounts: Record<string, number>;
   totalKeyLetterPoints: number;
@@ -891,6 +898,16 @@ export interface GameResultSummary {
   timestamp: number;
 }
 
+/**
+ * Summary of a single completed/forfeited daily challenge run, passed into
+ * the stats engine to update the persisted `PlayerStats` log.
+ */
+export interface ChallengeResultSummary {
+  completed: boolean;
+  stepCount: number;
+  timestamp: number;
+}
+
 export interface PlayerStatsDependencies {
   loadState(): Promise<PlayerStats>;
   saveState(state: PlayerStats): Promise<void>;
@@ -900,6 +917,7 @@ export interface PlayerStatsDependencies {
 export interface PlayerStatsEngine {
   initialize(): Promise<void>;
   recordGameResult(result: GameResultSummary): Promise<PlayerStats>;
+  recordChallengeResult(result: ChallengeResultSummary): Promise<PlayerStats>;
   recordUnlockEarned(): Promise<PlayerStats>;
   getStats(): PlayerStats;
   resetStats(): Promise<void>;

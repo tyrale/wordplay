@@ -16,8 +16,14 @@ import { getBotDisplayName } from '../../data/botRegistry';
 import { getDisplayName as getVanityName, setDisplayName, markDisplayNameConfirmed } from '../../adapters/supabaseAuthAdapter';
 import { NamePromptOverlay } from '../multiplayer/NamePromptOverlay';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
-import { getWordLegalityReason, fetchWordDefinition } from '../../utils/wordHelp';
+import {
+  getWordLegalityReason,
+  getVariantDefinitionNote,
+  isPlayableWord,
+  fetchWordDefinition
+} from '../../utils/wordHelp';
 import { triggerHapticFeedback } from '../../utils/haptics';
+import { triggerSoundFeedback } from '../../utils/sound';
 import type { WordDataDependencies, ScoringAction, GameConfig, MoveAttempt, GameState, IGameStateManager } from '../../../packages/engine/interfaces';
 
 // Dictionary validation using pure dependency injection
@@ -381,13 +387,20 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     const word = pendingWord.trim().toUpperCase();
     if (!word) return;
 
-    const reason = getWordLegalityReason(word, wordData);
     const definition = await fetchWordDefinition(word);
+    const reason = getWordLegalityReason(word, wordData);
+    const variantNote = getVariantDefinitionNote(word, wordData, definition);
+    const isInvalid = !isPlayableWord(word, wordData);
 
     showCustomAlert([word], {
       meta: (
         <>
-          <div>{reason}</div>
+          <div className={isInvalid ? 'alert-overlay__meta-reason--invalid' : ''}>
+            {reason}
+          </div>
+          {variantNote && (
+            <div className="alert-overlay__meta-variant-note">{variantNote}</div>
+          )}
           <div className="alert-overlay__meta-definition">
             {definition || 'No definition available'}
           </div>
@@ -450,6 +463,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     // Add letter to pending word
     if (pendingWord.length < 10) { // Max word length
       triggerHapticFeedback('add');
+      triggerSoundFeedback('add');
       const newWord = pendingWord + letter;
       handleWordChange(newWord);
     }
@@ -467,6 +481,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const handleWordBuilderMouseUp = useCallback((_e: React.MouseEvent) => {
     if (draggedLetter && pendingWord.length < 10) {
       triggerHapticFeedback('add');
+      triggerSoundFeedback('add');
       const newWord = pendingWord + draggedLetter;
       handleWordChange(newWord);
     }
@@ -476,6 +491,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const handleWordBuilderTouchEnd = useCallback((_e: React.TouchEvent) => {
     if (draggedLetter && pendingWord.length < 10) {
       triggerHapticFeedback('add');
+      triggerSoundFeedback('add');
       const newWord = pendingWord + draggedLetter;
       handleWordChange(newWord);
     }
@@ -541,6 +557,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       const success = actions.applyMove(pendingMoveAttempt);
       if (success) {
         triggerHapticFeedback('submit');
+        triggerSoundFeedback('submit');
         // Check for unlock triggers when word is successfully submitted
         // (the vanity filter mechanic unlock is handled here via UNLOCK_DEFINITIONS)
         const isProfane = !!wordData?.profanityWords.has(pendingMoveAttempt.newWord.toUpperCase());
@@ -619,11 +636,33 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, []);
 
   const handleResign = useCallback(() => {
+    // Resigning counts as a loss for the player's lifetime stats log - record
+    // it now, since a resigned game never reaches gameStatus 'finished' and
+    // would otherwise leave no trace at all.
+    if (gameState.gameStatus === 'playing') {
+      const localId = localPlayerId ?? 'human';
+      const humanScore = gameState.players.find(p => p.id === localId)?.score || 0;
+      const gameDurationMs = gameState.gameStartTime
+        ? Date.now() - gameState.gameStartTime
+        : null;
+      recordGameResult({
+        playerId: localId,
+        botId: config?.botId,
+        won: false,
+        tied: false,
+        turnHistory: gameState.turnHistory,
+        totalTurns: gameState.totalMoves,
+        finalScore: humanScore,
+        gameDurationMs,
+        timestamp: Date.now()
+      }).catch(err => console.warn('Failed to record resigned game stats:', err));
+    }
+
     // Call the parent's resign handler to show quitter overlay
     if (onResign) {
       onResign();
     }
-  }, [onResign]);
+  }, [onResign, gameState, localPlayerId, config?.botId, recordGameResult]);
 
   const handleOwnNameTap = useCallback(() => {
     setIsRenamingSelf(true);

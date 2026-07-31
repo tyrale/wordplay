@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useVanityFilter } from '../../hooks/useVanityFilter';
 import { triggerHapticFeedback } from '../../utils/haptics';
+import { triggerSoundFeedback } from '../../utils/sound';
 import './WordBuilder.css';
 import { LockIcon } from '../ui/LockIcon';
 
@@ -126,6 +127,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
 
     if (onLetterClick) {
       triggerHapticFeedback('remove');
+      triggerSoundFeedback('remove');
       onLetterClick({ letter: currentWord[index], index: index });
     }
   }, [disabled, isDragging, onLetterClick, currentWord, wordHighlights]);
@@ -188,6 +190,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
           setDropTargetIndex(prevDropTarget => {
             if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1 && newDropTarget !== prevDropTarget) {
               triggerHapticFeedback('move');
+              triggerSoundFeedback('move');
               return newDropTarget;
             }
             return prevDropTarget;
@@ -289,6 +292,7 @@ export const WordBuilder: React.FC<WordBuilderProps> = ({
               // Don't set drop target to the same position as dragged letter
               if (newDropTarget !== draggedIndex && newDropTarget !== draggedIndex + 1 && newDropTarget !== prevDropTarget) {
                 triggerHapticFeedback('move');
+                triggerSoundFeedback('move');
                 return newDropTarget;
               }
               return prevDropTarget;

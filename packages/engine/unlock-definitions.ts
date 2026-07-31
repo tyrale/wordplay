@@ -736,6 +736,15 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     trigger: { type: 'word', value: 'world', timing: 'word_submission' },
     target: 'community-stats'
   },
+  {
+    id: 'unlock_player_stats',
+    category: 'mechanic',
+    itemId: 'player-stats',
+    name: 'Stats',
+    description: 'Unlock a "stats" menu item under "about" listing your lifetime player stats by playing "stats"',
+    trigger: { type: 'word', value: 'stats', timing: 'word_submission' },
+    target: 'player-stats'
+  },
 
   // Bot unlocks - mixed triggers (achievements and words)
   {

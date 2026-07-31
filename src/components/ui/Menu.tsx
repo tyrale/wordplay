@@ -11,6 +11,8 @@ import { availableThemes as ALL_THEMES } from '../../types/theme';
 import type { GameTheme } from '../../types/theme';
 import { DictionariesOverlay } from './DictionariesOverlay';
 import { ThoughtsOverlay } from './ThoughtsOverlay';
+import { StatsOverlay } from './StatsOverlay';
+import { triggerSoundFeedback } from '../../utils/sound';
 import './Menu.css';
 
 interface MenuTier2Item {
@@ -95,7 +97,8 @@ const getMenuItems = (
   vanityFilterOn: boolean = true,
   isMechanicOn: (mechanicId: string) => boolean = () => true,
   revealedCategories: string[] = [],
-  selectedRoundLength: number = 0
+  selectedRoundLength: number = 0,
+  isPlayerStatsUnlocked: boolean = false
 ): MenuTier1Item[] => {
   // Locked theme previews - only computed once 'themes' has been revealed
   const lockedThemeItems: MenuTier2Item[] = revealedCategories.includes('themes')
@@ -168,11 +171,11 @@ const getMenuItems = (
   },
   // Show mechanics section if there are unlocked mechanics (excluding dark mode,
   // which lives under the themes section instead) or if locked previews are revealed
-  ...(unlockedMechanics.filter(id => id !== 'dark-mode' && id !== 'unlock-counter' && id !== 'community-stats').length > 0 || lockedMechanicItems.length > 0 ? [{
+  ...(unlockedMechanics.filter(id => id !== 'dark-mode' && id !== 'unlock-counter' && id !== 'community-stats' && id !== 'player-stats').length > 0 || lockedMechanicItems.length > 0 ? [{
     id: 'mechanics',
     title: 'mechanics',
     children: [
-      ...unlockedMechanics.filter(mechanicId => mechanicId !== 'dark-mode' && mechanicId !== 'unlock-counter' && mechanicId !== 'community-stats').map(mechanicId => {
+      ...unlockedMechanics.filter(mechanicId => mechanicId !== 'dark-mode' && mechanicId !== 'unlock-counter' && mechanicId !== 'community-stats' && mechanicId !== 'player-stats').map(mechanicId => {
         // Special handling for vanity filter - make it a toggle
         if (mechanicId === 'vanity-filter') {
           return {
@@ -218,6 +221,7 @@ const getMenuItems = (
       { id: 'the-basics', title: 'the basics' },
       { id: 'dictionaries', title: 'dictionaries' },
       { id: 'thoughts', title: 'thoughts' },
+      ...(isPlayerStatsUnlocked ? [{ id: 'stats', title: 'stats' }] : []),
       { id: 'debug-mode', title: 'debug mode' },
       { id: 'reset-unlocks', title: 'reset unlocks (debug)' },
     ]
@@ -258,6 +262,7 @@ export const Menu: React.FC<MenuProps> = ({
   const [isClosing, setIsClosing] = useState(false);
   const [isDictionariesOpen, setIsDictionariesOpen] = useState(false);
   const [isThoughtsOpen, setIsThoughtsOpen] = useState(false);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
   const { currentTheme, setTheme, isInverted, toggleInverted } = useTheme();
   
   // Get unlock state
@@ -293,7 +298,9 @@ export const Menu: React.FC<MenuProps> = ({
     }
   }, []);
 
-  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn(), isMechanicOn, revealedCategories, roundLength);
+  const isPlayerStatsUnlocked = isUnlocked('mechanic', 'player-stats');
+
+  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn(), isMechanicOn, revealedCategories, roundLength, isPlayerStatsUnlocked);
 
   // "unlock" mechanic - shows a small "x/x unlocked" progress indicator under home
   const isUnlockCounterOn = isUnlocked('mechanic', 'unlock-counter');
@@ -304,6 +311,7 @@ export const Menu: React.FC<MenuProps> = ({
   const communityProgress = useCommunityUnlockStats(isCommunityStatsOn);
 
   const handleClose = useCallback(() => {
+    triggerSoundFeedback('click');
     setIsClosing(true);
     // Wait for animation to complete before actually closing
     setTimeout(() => {
@@ -319,6 +327,7 @@ export const Menu: React.FC<MenuProps> = ({
   }, [handleClose]);
 
   const handleTier1Click = useCallback((itemId: string) => {
+    triggerSoundFeedback('click');
     // Handle standalone tier 1 items that perform actions directly
     if (itemId === 'home') {
       onNavigateHome?.();
@@ -389,6 +398,7 @@ export const Menu: React.FC<MenuProps> = ({
   }, []);
 
   const handleTier2Click = useCallback((tier1Id: string, tier2Id: string) => {
+    triggerSoundFeedback('click');
     // Handle specific actions that should close the menu
     if (tier1Id === 'themes') {
       if (tier2Id === 'inverted') {
@@ -416,6 +426,10 @@ export const Menu: React.FC<MenuProps> = ({
     } else if (tier1Id === 'about' && tier2Id === 'thoughts') {
       // Show the thoughts overlay
       setIsThoughtsOpen(true);
+      handleClose(); // Close menu behind the overlay
+    } else if (tier1Id === 'about' && tier2Id === 'stats') {
+      // Show the player stats overlay
+      setIsStatsOpen(true);
       handleClose(); // Close menu behind the overlay
     } else if (tier1Id === 'about' && (tier2Id === 'debug' || tier2Id === 'debug-mode')) {
       // Open debug dialog
@@ -657,6 +671,10 @@ export const Menu: React.FC<MenuProps> = ({
       <ThoughtsOverlay
         isVisible={isThoughtsOpen}
         onClose={() => setIsThoughtsOpen(false)}
+      />
+      <StatsOverlay
+        isVisible={isStatsOpen}
+        onClose={() => setIsStatsOpen(false)}
       />
     </>
   );

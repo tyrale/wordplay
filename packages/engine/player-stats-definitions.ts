@@ -49,6 +49,11 @@ export function getInitialPlayerStats(): PlayerStats {
     botRecords: {},
     botsBeaten: [],
 
+    // Daily challenge ("vs world")
+    challengesPlayed: 0,
+    challengesCompleted: 0,
+    challengesFailed: 0,
+
     // Key letters
     keyLetterUsageCounts: {},
     totalKeyLetterPoints: 0,

@@ -14,6 +14,7 @@
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { triggerHapticFeedback } from '../../utils/haptics';
+import { triggerSoundFeedback } from '../../utils/sound';
 import './AlertOverlay.css';
 
 export interface AlertOverlayAction {
@@ -106,7 +107,9 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({
 
   useEffect(() => {
     if (isVisible) {
-      triggerHapticFeedback(variant === 'unlock' ? 'unlock' : 'overlay');
+      const pattern = variant === 'unlock' ? 'unlock' : 'overlay';
+      triggerHapticFeedback(pattern);
+      triggerSoundFeedback(pattern);
     }
   }, [isVisible, variant]);
 
@@ -138,7 +141,10 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({
             <button
               key={action.label}
               className="alert-overlay__action"
-              onClick={action.onClick}
+              onClick={() => {
+                triggerSoundFeedback('click');
+                action.onClick();
+              }}
             >
               {action.label}
             </button>
@@ -148,7 +154,10 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({
 
       <button
         className="alert-overlay__close"
-        onClick={onClose}
+        onClick={() => {
+          triggerSoundFeedback('click');
+          onClose();
+        }}
         aria-label="Close"
       >
         ×

@@ -3,6 +3,7 @@ import { Menu } from './Menu';
 import { AlertOverlay } from './AlertOverlay';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { getAllBots } from '../../data/botRegistry';
+import { triggerSoundFeedback } from '../../utils/sound';
 import './MainScreen.css';
 
 interface MainScreenProps {
@@ -23,6 +24,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
   const availableBots = getAllBots().filter(bot => unlockedBotIds.includes(bot.id));
 
   const handleGameTypeSelect = useCallback((gameType: string) => {
+    triggerSoundFeedback('click');
     if (gameType === 'vs-bot') {
       setCurrentView('bots');
     } else if (gameType === 'challenge') {
@@ -38,10 +40,12 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
   }, [onStartGame, onStartMultiplayer]);
 
   const handleBotSelect = useCallback((botId: string) => {
+    triggerSoundFeedback('click');
     onStartGame('bot', botId);
   }, [onStartGame]);
 
   const handleMenuOpen = useCallback(() => {
+    triggerSoundFeedback('click');
     setIsMenuOpen(true);
   }, []);
 
@@ -50,8 +54,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
   }, []);
 
   const handleBack = useCallback(() => {
-    // From a submenu (e.g. bot selection), go back to the previous view
-    // rather than leaving the app - matches the alphabet grid's back arrow.
+    triggerSoundFeedback('click');
     setCurrentView('main');
   }, []);
 

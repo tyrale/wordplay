@@ -275,6 +275,44 @@ describe('Player Stats Engine', () => {
     });
   });
 
+  describe('recordChallengeResult', () => {
+    it('increments challengesPlayed/Completed on a successful challenge', async () => {
+      const stats = await engine.recordChallengeResult({ completed: true, stepCount: 4, timestamp: 1_700_000_000_000 });
+      expect(stats.challengesPlayed).toBe(1);
+      expect(stats.challengesCompleted).toBe(1);
+      expect(stats.challengesFailed).toBe(0);
+    });
+
+    it('increments challengesPlayed/Failed on a forfeited/failed challenge', async () => {
+      const stats = await engine.recordChallengeResult({ completed: false, stepCount: 2, timestamp: 1_700_000_000_000 });
+      expect(stats.challengesPlayed).toBe(1);
+      expect(stats.challengesCompleted).toBe(0);
+      expect(stats.challengesFailed).toBe(1);
+    });
+
+    it('does not affect gamesPlayed/won/lost or the bot win streak', async () => {
+      await engine.recordGameResult(makeGameResult({ won: true }));
+      await engine.recordChallengeResult({ completed: false, stepCount: 1, timestamp: 1_700_000_000_000 });
+
+      const stats = engine.getStats();
+      expect(stats.gamesPlayed).toBe(1);
+      expect(stats.gamesWon).toBe(1);
+      expect(stats.gamesLost).toBe(0);
+      expect(stats.currentWinStreak).toBe(1);
+    });
+
+    it('updates the daily streak the same way a game does', async () => {
+      const day1 = new Date(2025, 0, 1, 10, 0, 0).getTime();
+      const day2 = new Date(2025, 0, 2, 10, 0, 0).getTime();
+
+      await engine.recordChallengeResult({ completed: true, stepCount: 3, timestamp: day1 });
+      expect(engine.getStats().currentDailyStreak).toBe(1);
+
+      await engine.recordChallengeResult({ completed: true, stepCount: 3, timestamp: day2 });
+      expect(engine.getStats().currentDailyStreak).toBe(2);
+    });
+  });
+
   describe('recordUnlockEarned', () => {
     it('increments totalUnlocksEarned', async () => {
       await engine.recordUnlockEarned();

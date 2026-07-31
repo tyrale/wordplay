@@ -12,6 +12,7 @@ import type {
   PlayerStatsDependencies,
   PlayerStats,
   GameResultSummary,
+  ChallengeResultSummary,
   BotRecord
 } from './interfaces';
 import { getInitialPlayerStats } from './player-stats-definitions';
@@ -208,6 +209,29 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
     return getStats();
   }
 
+  async function recordChallengeResult(result: ChallengeResultSummary): Promise<PlayerStats> {
+    const stats = await ensureStateLoaded();
+    const timestamp = result.timestamp ?? dependencies.getTimestamp();
+
+    stats.challengesPlayed += 1;
+    if (result.completed) {
+      stats.challengesCompleted += 1;
+    } else {
+      stats.challengesFailed += 1;
+    }
+
+    // Meta - playing the daily challenge counts toward the daily streak,
+    // same as a bot game would.
+    if (stats.firstPlayedAt === null) {
+      stats.firstPlayedAt = timestamp;
+    }
+    updateDailyStreak(stats, timestamp);
+    stats.lastPlayedAt = timestamp;
+
+    await saveState();
+    return getStats();
+  }
+
   async function recordUnlockEarned(): Promise<PlayerStats> {
     const stats = await ensureStateLoaded();
     stats.totalUnlocksEarned += 1;
@@ -238,6 +262,7 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
   return {
     initialize,
     recordGameResult,
+    recordChallengeResult,
     recordUnlockEarned,
     getStats,
     resetStats

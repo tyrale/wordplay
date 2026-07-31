@@ -7,6 +7,7 @@
  */
 
 import React from 'react';
+import { triggerSoundFeedback } from '../../utils/sound';
 import './ThoughtsOverlay.css';
 
 export interface ThoughtsOverlayProps {
@@ -42,7 +43,10 @@ export const ThoughtsOverlay: React.FC<ThoughtsOverlayProps> = ({ isVisible, onC
 
       <button
         className="thoughts-overlay__close"
-        onClick={onClose}
+        onClick={() => {
+          triggerSoundFeedback('click');
+          onClose();
+        }}
         aria-label="Close"
       >
         ×

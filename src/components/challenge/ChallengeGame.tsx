@@ -15,13 +15,20 @@ import { Menu } from '../ui/Menu';
 import { AlertOverlay } from '../ui/AlertOverlay';
 import { alertCopy } from '../../content/alertCopy';
 import { useChallenge } from '../../hooks/useChallenge';
+import { usePlayerStats } from '../../hooks/usePlayerStats';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import { shareChallengeResult, getShareResultMessage } from '../../utils/shareUtils';
 import { useAlert } from '../ui/AlertProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
-import { getWordLegalityReason, fetchWordDefinition } from '../../utils/wordHelp';
+import {
+  getWordLegalityReason,
+  getVariantDefinitionNote,
+  isPlayableWord,
+  fetchWordDefinition
+} from '../../utils/wordHelp';
 import { triggerHapticFeedback } from '../../utils/haptics';
+import { triggerSoundFeedback } from '../../utils/sound';
 import { hasSeenChallengeIntro, markChallengeIntroSeen } from '../../utils/tutorialStorage';
 import { ChallengeIntroOverlay } from './ChallengeIntroOverlay';
 import type { GameStateDependencies } from '../../../packages/engine/gamestate';
@@ -69,6 +76,11 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
 
   // Unlock system integration
   const { handleWordSubmission, getUnlockedItems } = useUnlockSystem();
+
+  // Player stats integration - the daily challenge is tracked via its own
+  // separate challengesPlayed/Completed/Failed counters (see recordChallengeResult),
+  // not folded into gamesWon/gamesLost or the bot win streak.
+  const { recordChallengeResult } = usePlayerStats();
   const { isMechanicOn } = useMechanicsSettings();
 
   // Drunk mechanic: unlocked via the "drunk" word and toggled on in the mechanics menu.
@@ -232,6 +244,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     const newWord = pendingWord + letter;
     if (newWord.length <= 10) {
       triggerHapticFeedback('add');
+      triggerSoundFeedback('add');
       handleWordChange(newWord);
     }
   }, [pendingWord, isProcessingMove, challengeState, handleWordChange]);
@@ -255,6 +268,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const handleWordBuilderMouseUp = useCallback((_e: React.MouseEvent) => {
     if (draggedLetter && pendingWord.length < 10) {
       triggerHapticFeedback('add');
+      triggerSoundFeedback('add');
       handleWordChange(pendingWord + draggedLetter);
     }
     setDraggedLetter(null);
@@ -263,6 +277,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const handleWordBuilderTouchEnd = useCallback((_e: React.TouchEvent) => {
     if (draggedLetter && pendingWord.length < 10) {
       triggerHapticFeedback('add');
+      triggerSoundFeedback('add');
       handleWordChange(pendingWord + draggedLetter);
     }
     setDraggedLetter(null);
@@ -272,13 +287,20 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     const word = pendingWord.trim().toUpperCase();
     if (!word) return;
 
-    const reason = getWordLegalityReason(word, wordData);
     const definition = await fetchWordDefinition(word);
+    const reason = getWordLegalityReason(word, wordData);
+    const variantNote = getVariantDefinitionNote(word, wordData, definition);
+    const isInvalid = !isPlayableWord(word, wordData);
 
     showCustomAlert([word], {
       meta: (
         <>
-          <div>{reason}</div>
+          <div className={isInvalid ? 'alert-overlay__meta-reason--invalid' : ''}>
+            {reason}
+          </div>
+          {variantNote && (
+            <div className="alert-overlay__meta-variant-note">{variantNote}</div>
+          )}
           <div className="alert-overlay__meta-definition">
             {definition || 'No definition available'}
           </div>
@@ -356,6 +378,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         
         if (result.success) {
           triggerHapticFeedback('submit');
+          triggerSoundFeedback('submit');
           // Word was successfully submitted, pending word becomes current word
           setPendingWord(pendingWord); // Keep the word that was just submitted
           setValidationResult(null);
@@ -436,8 +459,14 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         shareText
       });
       setShowCompletionOverlay(true);
+
+      recordChallengeResult({
+        completed: isWinner,
+        stepCount: challengeState.wordSequence.length,
+        timestamp: Date.now()
+      }).catch(err => console.warn('Failed to record challenge result stats:', err));
     }
-  }, [challengeState?.completed, challengeState?.failed, generateSharingText]);
+  }, [challengeState?.completed, challengeState?.failed, challengeState?.wordSequence.length, generateSharingText, recordChallengeResult]);
 
   // Generate letter states (no special states in challenge mode)
   const letterStates: LetterState[] = useMemo(() => {
