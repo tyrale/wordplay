@@ -83,7 +83,12 @@ export const StatsOverlay: React.FC<StatsOverlayProps> = ({ isVisible, onClose }
   const challengeStats: StatRow[] = [
     { label: 'Challenges played', value: String(stats.challengesPlayed) },
     { label: 'Challenges completed', value: String(stats.challengesCompleted) },
-    { label: 'Challenges failed', value: String(stats.challengesFailed) }
+    { label: 'Challenges failed', value: String(stats.challengesFailed) },
+    { label: 'Current completion streak', value: String(stats.currentChallengeStreak) },
+    { label: 'Longest completion streak', value: String(stats.longestChallengeStreak) },
+    { label: 'Shortest challenge (steps)', value: String(stats.shortestChallengeSteps) },
+    { label: 'Longest challenge (steps)', value: String(stats.longestChallengeSteps) },
+    { label: 'Fewest steps to complete', value: stats.fewestStepsToComplete > 0 ? String(stats.fewestStepsToComplete) : 'none yet' }
   ];
 
   const botStats: StatRow[] = Object.entries(stats.botRecords).map(([botId, record]) => ({

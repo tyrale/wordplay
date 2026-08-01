@@ -154,6 +154,16 @@ export const yellowTheme = createTheme("yellow", ["#ffffff", "#D97706", "#FCD34D
 // Dr. Seuss "Grinch" theme - Grinch green with red Santa accents
 export const grinchTheme = createTheme("grinch", ["#F7F7E8", "#1E6B3A", "#C72B29"]);
 
+// "Boss battle" themes - unlocked by playing GUS and beating the boss chain.
+// boss: a normal 3-color gray/black/red theme. megaboss and gigaboss share the
+// same escalating dark+red base palette, but layer extra visual effects on top
+// (red letter outlines for megaboss; animated monster-shadow background +
+// escalating procedural music for gigaboss). Those effects are driven by CSS
+// keyed off the theme name, not by the GameTheme object itself.
+export const bossTheme = createTheme("boss", ["#9CA3AF", "#000000", "#DC2626"]);
+export const megaBossTheme = createTheme("megaboss", ["#1F1F1F", "#9CA3AF", "#DC2626"]);
+export const gigaBossTheme = createTheme("gigaboss", ["#000000", "#6B7280", "#B91C1C"]);
+
 // Keep the original default theme for backwards compatibility
 export const defaultTheme: GameTheme = {
   name: "Classic Blue",
@@ -254,7 +264,10 @@ export const availableThemes = [
   warmerTheme,
   winterTheme,
   yellowTheme,
-  grinchTheme
+  grinchTheme,
+  bossTheme,
+  megaBossTheme,
+  gigaBossTheme
 ];
 
 export type ThemeContextType = {

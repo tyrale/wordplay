@@ -346,6 +346,38 @@ function selectExpertBotMove(scoredMoves: BotMove[]): BotMove | null {
   return best;
 }
 
+// Giga boss - the final boss of the "GUS" chain. Uses the same uncommon/
+// doubled-letter re-rank as the expert bot, but with a much stronger bias
+// toward obscure letters (and a small doubled-letter bump) so it deliberately
+// drifts toward harder-to-follow words, making the final fight feel nastier
+// than a plain expert bot. Operates on the already-scored candidate list
+// produced by scoreCandidatesWithDependencies.
+function selectGigaBossMove(scoredMoves: BotMove[]): BotMove | null {
+  if (scoredMoves.length === 0) return null;
+
+  const ranked = scoredMoves
+    .map(move => ({
+      move,
+      priority: move.score
+        + countUncommonLetters(move.word) * 1.2   // stronger obscure bias than expert (0.5)
+        + countDoubledLetters(move.word) * 0.4
+    }))
+    .sort((a, b) => b.priority - a.priority);
+
+  const best = ranked[0].move;
+  const uncommonCount = countUncommonLetters(best.word);
+  const doubledCount = countDoubledLetters(best.word);
+
+  best.reasoning = [
+    ...best.reasoning,
+    'GIGA BOSS - obscure-letter specialist',
+    uncommonCount > 0 ? `Uses ${uncommonCount} uncommon letter(s)` : '',
+    doubledCount > 0 ? `Uses ${doubledCount} doubled letter(s)` : ''
+  ].filter(Boolean);
+
+  return best;
+}
+
 // Add a new strategy for pirate bot - prioritizes profanity/bad words
 function filterPirateBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string): MoveCandidate[] {
   // First, look for candidates that result in profanity words
@@ -404,12 +436,16 @@ export function generateBotMoveWithDependencies(
   options: BotOptions = {}
 ): BotResult {
   const startTime = performance.now();
-  const { 
-    keyLetters = [], 
+  const {
+    keyLetters = [],
     lockedLetters = [],
     maxCandidates = 200,
     botId
   } = options;
+
+  // Giga boss considers a wider candidate pool so it can dig up more obscure,
+  // harder-to-follow words than the standard 200-candidate cap allows.
+  const effectiveMaxCandidates = botId === 'giga-boss-bot' ? 600 : maxCandidates;
 
   // Noob bot bypasses normal move generation/validation entirely - it
   // always adds an S, whether or not that's a legal move or a real word.
@@ -453,8 +489,8 @@ export function generateBotMoveWithDependencies(
   const totalCandidatesGenerated = allCandidates.length;
   
   // Limit candidates for performance
-  const candidatesToCheck = allCandidates.slice(0, maxCandidates);
-  
+  const candidatesToCheck = allCandidates.slice(0, effectiveMaxCandidates);
+
   // Filter valid candidates using dependency injection
   // Grinchbot gets allowSeuss so Seuss words pass validation during candidate filtering
   const validCandidates = filterValidCandidatesWithDependencies(candidatesToCheck, dependencies, {
@@ -467,9 +503,11 @@ export function generateBotMoveWithDependencies(
     filteredCandidates = filterBasicBotCandidates(validCandidates, keyLetters);
   } else if (botId === 'easy-bot') {
     filteredCandidates = filterEasyBotCandidates(validCandidates, dependencies, currentWord, keyLetters);
-  } else if (botId === 'medium-bot') {
+  } else if (botId === 'medium-bot' || botId === 'boss-bot') {
+    // Boss bot fights like the medium bot.
     filteredCandidates = filterMediumBotCandidates(validCandidates, dependencies, currentWord);
-  } else if (botId === 'hard-bot') {
+  } else if (botId === 'hard-bot' || botId === 'mega-boss-bot') {
+    // Mega boss fights like the hard bot.
     filteredCandidates = filterHardBotCandidates(validCandidates, dependencies, currentWord);
   } else if (botId === 'pirate-bot') {
     filteredCandidates = filterPirateBotCandidates(validCandidates, dependencies, currentWord);
@@ -480,10 +518,15 @@ export function generateBotMoveWithDependencies(
   // Score valid candidates using dependency injection
   const scoredCandidates = scoreCandidatesWithDependencies(filteredCandidates, currentWord, dependencies, keyLetters);
 
-  // Choose best move - expert bot re-ranks by uncommon/doubled letter usage on top of score
+  // Choose best move:
+  //  - expert bot re-ranks by uncommon/doubled letter usage on top of score
+  //  - giga boss uses the same expert re-rank but with a stronger obscure-letter
+  //    bias, so it deliberately gravitates toward harder-to-track words
   const bestMove = botId === 'expert-bot'
     ? selectExpertBotMove(scoredCandidates)
-    : (scoredCandidates.length > 0 ? scoredCandidates[0] : null);
+    : botId === 'giga-boss-bot'
+      ? selectGigaBossMove(scoredCandidates)
+      : (scoredCandidates.length > 0 ? scoredCandidates[0] : null);
 
   const processingTime = performance.now() - startTime;
 

@@ -38,6 +38,33 @@ export function isPlayableWord(word: string, wordData: WordDataDependencies | nu
 }
 
 /**
+ * Checks if a word is a Dr. Seuss word (canonical or invented).
+ */
+export function isSeussWord(word: string, wordData: WordDataDependencies | null): boolean {
+  const upper = word.trim().toUpperCase();
+  if (!upper || !wordData) return false;
+  return wordData.seussCanonicalWords.has(upper) || wordData.seussInventedWords.has(upper);
+}
+
+/**
+ * Checks if a word is a canonical Dr. Seuss word only (not invented).
+ */
+export function isSeussCanonicalWord(word: string, wordData: WordDataDependencies | null): boolean {
+  const upper = word.trim().toUpperCase();
+  if (!upper || !wordData) return false;
+  return wordData.seussCanonicalWords.has(upper);
+}
+
+/**
+ * Checks if a word is an invented Dr. Seuss-style word only (not canonical).
+ */
+export function isSeussInventedWord(word: string, wordData: WordDataDependencies | null): boolean {
+  const upper = word.trim().toUpperCase();
+  if (!upper || !wordData) return false;
+  return wordData.seussInventedWords.has(upper);
+}
+
+/**
  * Returns an explanatory note for words that are NOT playable in the game but
  * DO have an entry in a broader external dictionary (Wiktionary /
  * dictionaryapi.dev). Such words are typically archaic, dialectal, or variant

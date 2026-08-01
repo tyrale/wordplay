@@ -229,6 +229,36 @@ export type Database = {
           total_players?: number
         }
       }
+      user_challenge_results: {
+        Row: {
+          user_id: string
+          challenge_date: string
+          step_count: number
+          completed_at: string
+        }
+        Insert: {
+          user_id: string
+          challenge_date: string
+          step_count: number
+          completed_at?: string
+        }
+        Update: Record<string, never>
+      }
+      challenge_leaderboard: {
+        Row: {
+          challenge_date: string
+          step_count: number
+          player_count: number
+        }
+        Insert: {
+          challenge_date: string
+          step_count: number
+          player_count?: number
+        }
+        Update: {
+          player_count?: number
+        }
+      }
     }
   }
-} 
+}

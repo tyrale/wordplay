@@ -2,9 +2,9 @@
  * Word Path Explorer Styles
  *
  * Flat, full-screen overlay - same visual language as StatsOverlay /
- * DictionariesOverlay, with the active/typed word styled like the in-game
- * word display (large, bold) and the on-screen alphabet grid reused for
- * letter entry.
+ * DictionariesOverlay, with the active/typed word styled exactly like the
+ * in-game word display (via WordBuilder) and a native text input for
+ * letter entry (device keyboard, not the on-screen game grid).
  */
 
 .word-path-explorer {
@@ -31,23 +31,14 @@
   margin-top: var(--spacing-md);
 }
 
-.word-path-explorer__title {
-  font-family: var(--theme-font-family);
-  font-weight: var(--theme-font-weight);
-  font-size: 10vw;
-  line-height: 1;
-  color: var(--theme-accent);
-  text-align: center;
-  text-transform: uppercase;
-  margin: 0 0 var(--spacing-lg);
-}
-
 .word-path-explorer__word-display {
+  position: relative;
   width: 100%;
   min-height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: var(--spacing-lg);
 }
 
 .word-path-explorer__clear-active {
@@ -96,32 +87,64 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 2px;
 }
 
 .word-path-explorer__connection {
+  position: relative;
+  display: inline-block;
   background: none;
   border: none;
   cursor: pointer;
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: var(--theme-font-size-xl);
-  color: var(--theme-text);
+  font-size: calc(var(--theme-font-size-xl) * 0.7);
+  color: var(--theme-accent);
   letter-spacing: 0.05em;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  transition: color 0.15s ease;
+  padding: 2px var(--spacing-sm);
+  transition: opacity 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.word-path-explorer__connection:active {
-  color: var(--theme-accent);
+/* Absolutely positioned so the icons float beside the word without taking
+   up layout space - the word stays centered whether or not it has icons. */
+.word-path-explorer__connection-icons {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: var(--spacing-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: calc(var(--theme-font-size-md) * 1.2);
+  color: var(--theme-text);
+  white-space: nowrap;
+  pointer-events: none;
 }
 
-.word-path-explorer__grid {
+.word-path-explorer__connection:active {
+  opacity: 0.7;
+}
+
+/* Overlays the WordBuilder display exactly, so typing and the active word
+   render in the same place - only a native caret is visible, the typed
+   text itself is rendered by WordBuilder underneath. */
+.word-path-explorer__input {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  display: flex;
-  justify-content: center;
-  margin-top: var(--spacing-lg);
+  height: 100%;
+  border: none;
+  outline: none;
+  background: none;
+  color: transparent;
+  caret-color: var(--theme-accent);
+  text-align: center;
+  font-size: 24px;
+  cursor: text;
 }
 
 /* Close X - always present, centered at the bottom */

@@ -15,7 +15,7 @@
   font-family: var(--theme-font-family, 'Inter, system-ui, sans-serif');
   font-weight: var(--theme-font-weight, 900);
   color: var(--theme-text);
-  font-size: var(--theme-font-size-md, 16px);
+  font-size: calc(var(--theme-font-size-md, 16px) * 1.2);
   
   /* Touch target */
   min-height: 44px;
@@ -62,12 +62,12 @@
 /* Responsive sizing */
 @media (max-width: 768px) {
   .menu-button {
-    font-size: var(--theme-font-size-md, 14px);
+    font-size: calc(var(--theme-font-size-md, 14px) * 1.2);
   }
 }
 
 @media (max-width: 480px) {
   .menu-button {
-    font-size: var(--theme-font-size-sm, 12px);
+    font-size: calc(var(--theme-font-size-sm, 12px) * 1.2);
   }
-} 
+}

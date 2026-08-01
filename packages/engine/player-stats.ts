@@ -233,8 +233,27 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
     stats.challengesPlayed += 1;
     if (result.completed) {
       stats.challengesCompleted += 1;
+      stats.currentChallengeStreak += 1;
+      stats.longestChallengeStreak = Math.max(
+        stats.longestChallengeStreak,
+        stats.currentChallengeStreak
+      );
+
+      if (stats.fewestStepsToComplete === 0 || result.stepCount < stats.fewestStepsToComplete) {
+        stats.fewestStepsToComplete = result.stepCount;
+      }
     } else {
       stats.challengesFailed += 1;
+      stats.currentChallengeStreak = 0;
+    }
+
+    // Step-count extremes across every challenge played (won or lost),
+    // mirroring shortestGameTurns/longestGameTurns.
+    if (stats.shortestChallengeSteps === 0 || result.stepCount < stats.shortestChallengeSteps) {
+      stats.shortestChallengeSteps = result.stepCount;
+    }
+    if (result.stepCount > stats.longestChallengeSteps) {
+      stats.longestChallengeSteps = result.stepCount;
     }
 
     // Meta - playing the daily challenge counts toward the daily streak,

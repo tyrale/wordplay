@@ -18,6 +18,7 @@ import { useChallenge } from '../../hooks/useChallenge';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
 import { useWordPathGraph } from '../../hooks/useWordPathGraph';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
+import { recordChallengeCompletion } from '../../adapters/supabaseChallengeLeaderboardAdapter';
 import { shareChallengeResult, getShareResultMessage } from '../../utils/shareUtils';
 import { useAlert } from '../ui/AlertProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
@@ -26,6 +27,7 @@ import {
   getWordLegalityReason,
   getVariantDefinitionNote,
   isPlayableWord,
+  isSeussWord,
   fetchWordDefinition
 } from '../../utils/wordHelp';
 import { triggerHapticFeedback } from '../../utils/haptics';
@@ -41,6 +43,12 @@ export interface ChallengeGameProps {
   onNavigateHome?: () => void;
   onResetChallenge?: () => void;
   onStartGame?: (gameType: 'bot' | 'challenge', botId?: string) => void;
+  /**
+   * Fired when the player submits a word that should trigger the boss battle
+   * encounter (currently "GUS"). ChallengeGame forfeits the in-progress
+   * challenge before forwarding, since the boss battle abandons this view.
+   */
+  onBossTrigger?: (word: string) => void;
 }
 
 export const ChallengeGame: React.FC<ChallengeGameProps> = ({
@@ -48,7 +56,8 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   onBack,
   onNavigateHome,
   onResetChallenge,
-  onStartGame
+  onStartGame,
+  onBossTrigger
 }) => {
   // Interface for validation result (compatible with existing UI components)
   interface ValidationResult {
@@ -304,6 +313,20 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     const word = pendingWord.trim().toUpperCase();
     if (!word) return;
 
+    // If the player has unlocked the Grinchbot and the word is a Dr. Seuss
+    // word, show a special Seuss message instead of a dictionary definition.
+    const grinchBotUnlocked = getUnlockedItems('bot').includes('grinch-bot');
+    if (grinchBotUnlocked && isSeussWord(word, wordData)) {
+      showCustomAlert([word], {
+        meta: (
+          <div className="alert-overlay__meta-definition">
+            This is a Dr. Seuss word and it's fantastic.
+          </div>
+        )
+      });
+      return;
+    }
+
     const definition = await fetchWordDefinition(word);
     const reason = getWordLegalityReason(word, wordData);
     const variantNote = getVariantDefinitionNote(word, wordData, definition);
@@ -324,7 +347,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         </>
       )
     });
-  }, [pendingWord, wordData, showCustomAlert]);
+  }, [pendingWord, wordData, showCustomAlert, getUnlockedItems]);
 
   const handleActionClick = useCallback((action: string) => {
     // Home navigation should always be reachable, even mid-move.
@@ -407,11 +430,26 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
           const isProfane = !!wordData?.profanityWords.has(pendingWord.trim().toUpperCase());
           await handleWordSubmission(pendingWord, isProfane);
 
+          // "GUS" triggers the boss battle encounter from the challenge too.
+          // Forfeit the in-progress challenge (the boss battle abandons this
+          // view) then forward the trigger to the parent.
+          if (onBossTrigger && pendingWord.trim().toUpperCase() === 'GUS') {
+            try {
+              await forfeitChallenge();
+            } catch (err) {
+              console.warn('Failed to forfeit challenge on boss trigger:', err);
+            }
+            onBossTrigger(pendingWord);
+            return;
+          }
+
           // Track this transition in the local word path graph (challenge
-          // mode is human-only, so every submitted move is recorded).
-          recordWordPathTransition(previousWord, pendingWord).catch(err =>
-            console.warn('Failed to record challenge word path transition:', err)
-          );
+          // mode is human-only, so every submitted move is recorded), then
+          // upload it to the server's master graph right away rather than
+          // waiting for the challenge to finish.
+          recordWordPathTransition(previousWord, pendingWord)
+            .then(() => syncWordPathGraph())
+            .catch(err => console.warn('Failed to record/sync challenge word path transition:', err));
 
           // Record this move live for word/letter stats - challenge mode has
           // no bot opponent or turn-based win condition, so only the shared
@@ -442,7 +480,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         setIsProcessingMove(false);
       }
     }
-  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord, handleWordSubmission, wordData, handleWordChange, gameDependencies, recordMove, recordWordPathTransition]);
+  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord, handleWordSubmission, wordData, handleWordChange, gameDependencies, recordMove, recordWordPathTransition, syncWordPathGraph, onBossTrigger]);
 
   const handleMenuClose = useCallback(() => {
     setIsMenuOpen(false);
@@ -508,11 +546,21 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         timestamp: Date.now()
       }).catch(err => console.warn('Failed to record challenge result stats:', err));
 
+      // Upload the completion to the server-side leaderboard histogram. Only
+      // completions count (forfeitures are excluded), and the backend de-dupes
+      // by (player, date) so a re-fire of this effect or a reset+replay won't
+      // double-count. Uses stepCount (number of word-change moves), which is
+      // the value the leaderboard highlights against.
+      if (challengeState.completed) {
+        recordChallengeCompletion(challengeState.date, challengeState.stepCount)
+          .catch(err => console.warn('Failed to record challenge completion to leaderboard:', err));
+      }
+
       syncWordPathGraph().catch(err =>
         console.warn('Failed to sync word path graph:', err)
       );
     }
-  }, [challengeState?.completed, challengeState?.failed, challengeState?.wordSequence.length, generateSharingText, recordChallengeResult, syncWordPathGraph]);
+  }, [challengeState?.completed, challengeState?.failed, challengeState?.wordSequence.length, generateSharingText, recordChallengeResult, syncWordPathGraph, challengeState?.date, challengeState?.stepCount]);
 
   // Generate letter states (no special states in challenge mode)
   const letterStates: LetterState[] = useMemo(() => {

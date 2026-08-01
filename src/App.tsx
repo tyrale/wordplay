@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { ThemeProvider, InteractiveGame, MainScreen, MultiplayerLobby, MultiplayerGame } from './components';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ThemeProvider, useTheme, InteractiveGame, MainScreen, MultiplayerLobby, MultiplayerGame } from './components';
 import type { MultiplayerGameResult } from './components/multiplayer/MultiplayerGame';
 import { ChallengeGame } from './components/challenge/ChallengeGame';
 import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
 import { TUTORIAL_INITIAL_CONFIG } from './components/tutorial/tutorialSteps';
 import { AnimationProvider } from './animations';
-import { UnlockProvider } from './components/unlock/UnlockProvider';
+import { UnlockProvider, useUnlockSystem } from './components/unlock/UnlockProvider';
 import { VanityFilterProvider } from './contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from './contexts/MechanicsSettingsContext';
 import { RoundLengthProvider, useRoundLength } from './contexts/RoundLengthContext';
@@ -19,9 +19,19 @@ import { AlertProvider } from './components/ui/AlertProvider';
 import { clearActiveGame } from './adapters/browserGameSaveAdapter';
 import { ensureAnonymousSession } from './adapters/supabaseAuthAdapter';
 import type { GameState } from '../packages/engine/interfaces';
+import { defaultTheme } from './types/theme';
+import { BOSS_BATTLE_MAX_TURNS, BOSS_STAGES, BOSS_THEME_NAMES, getBossTheme, getThemeByName } from './data/bossBattle';
+import type { BossStage } from './data/bossBattle';
 import './App.css';
 
-type AppState = 'main' | 'game' | 'challenge' | 'quitter' | 'winner' | 'loser' | 'multiplayer-lobby' | 'multiplayer-game' | 'multiplayer-resigned';
+type AppState = 'main' | 'game' | 'challenge' | 'quitter' | 'winner' | 'loser' | 'multiplayer-lobby' | 'multiplayer-game' | 'multiplayer-resigned' | 'boss';
+
+/**
+ * Sub-state of the "GUS" boss battle encounter (only meaningful while
+ * appState === 'boss'). 'battle' renders the boss InteractiveGame; the rest
+ * render a full-screen AlertOverlay and tear down the board.
+ */
+type BossPhase = 'idle' | 'intro' | 'battle' | 'advance' | 'victory' | 'defeat' | 'timeout';
 
 interface ConfirmationState {
   isVisible: boolean;
@@ -40,6 +50,8 @@ function getMultiplayerGameIdFromUrl(): string | null {
 
 function AppContent() {
   const { roundLength } = useRoundLength();
+  const { currentTheme, setTheme } = useTheme();
+  const { isUnlocked, isLoading: unlocksLoading } = useUnlockSystem();
   const initialMultiplayerGameId = getMultiplayerGameIdFromUrl();
   const [appState, setAppState] = useState<AppState>(initialMultiplayerGameId ? 'multiplayer-game' : 'main');
   const [selectedBotId, setSelectedBotId] = useState<string>('basicBot');
@@ -53,6 +65,20 @@ function AppContent() {
   // vs-human multiplayer game, so closing it returns to the multiplayer
   // lobby (the "last view") instead of the main menu.
   const [isMultiplayerResult, setIsMultiplayerResult] = useState(false);
+
+  // "GUS" boss battle encounter state. This is a transient, retryable chain
+  // (boss -> megaboss -> gigaboss), NOT a permanent unlock. Playing GUS grants
+  // one fresh chance; losing/resigning/timing out wipes the chain and reverts
+  // the theme. Permanently unlocking boss-bot + the three themes only happens
+  // after beating gigaboss (see unlock-definitions.ts, beat_giga_boss_bot).
+  const [bossPhase, setBossPhase] = useState<BossPhase>('idle');
+  const [bossStage, setBossStage] = useState<BossStage>('boss');
+  // Theme name to restore if the player loses/resigns/times out (the theme
+  // they had immediately before GUS triggered the encounter). Null only
+  // outside an active encounter.
+  const [bossPrevThemeName, setBossPrevThemeName] = useState<string | null>(null);
+  // Bumped per boss battle so each stage mounts a fresh InteractiveGame.
+  const [bossBattleKey, setBossBattleKey] = useState(0);
 
   // Tutorial: layered on top of a real bot game (not a separate game instance)
   const [tutorialActive, setTutorialActive] = useState(false);
@@ -198,6 +224,120 @@ function AppContent() {
     setAppState('quitter');
   };
 
+  // ---------------------------------------------------------------------------
+  // "GUS" boss battle encounter handlers
+  // ---------------------------------------------------------------------------
+
+  /** Apply a boss stage's GameTheme immediately. */
+  const applyBossTheme = (stage: BossStage) => {
+    const theme = getBossTheme(stage);
+    setTheme(theme);
+  };
+
+  /** Restore the theme the player had before GUS triggered the encounter. */
+  const revertBossTheme = () => {
+    if (bossPrevThemeName) {
+      const prev = getThemeByName(bossPrevThemeName);
+      if (prev) setTheme(prev);
+    } else {
+      setTheme(defaultTheme);
+    }
+  };
+
+  // GUS was just submitted in any game mode (bot, challenge, multiplayer,
+  // tutorial). Snapshot the current theme, apply the boss theme immediately,
+  // and show the intro alert. Closing the alert abandons the in-progress game
+  // and drops the player straight into the boss fight. Retryable: every GUS
+  // play grants a fresh chance.
+  const handleBossTrigger = (word: string) => {
+    if (word.toUpperCase() !== 'GUS') return;
+    // Ignore if an encounter is already in progress.
+    if (bossPhase !== 'idle') return;
+
+    // If triggered from a vs-human multiplayer game, clear its id + URL param
+    // so returning to main after the boss doesn't re-enter the abandoned match.
+    // (The multiplayer manager resigns the match server-side before this fires
+    // - see MultiplayerGame's onBossTrigger wrapper - so the opponent is
+    // notified; here we just drop the local references.)
+    if (appState === 'multiplayer-game') {
+      setMultiplayerGameId(null);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('mgame');
+      window.history.replaceState({}, '', url.toString());
+    }
+
+    setBossPrevThemeName(currentTheme.name);
+    setBossStage('boss');
+    applyBossTheme('boss');
+    setBossPhase('intro');
+    setAppState('boss');
+    // The game GUS was played in is being abandoned - clear its single-player
+    // auto-save so starting a new bot game later begins fresh instead of
+    // restoring the abandoned (unfinished) game. (No-op for multiplayer.)
+    clearActiveGame().catch(err => console.warn('Failed to clear saved game on boss trigger:', err));
+  };
+
+  // Intro alert closed (X) -> start the first boss battle.
+  const startBossBattle = () => {
+    setBossBattleKey(k => k + 1);
+    setBossPhase('battle');
+  };
+
+  // Advance alert closed (X) -> start the next stage's boss battle.
+  const advanceBossBattle = () => {
+    setBossBattleKey(k => k + 1);
+    setBossPhase('battle');
+  };
+
+  // A boss battle reached 20 turns. Per the spec the player must have MORE
+  // points than the boss to win - a tie counts as a loss (the engine's
+  // `winner` is ambiguous on ties, so we decide strictly from the scores).
+  // Win advances the chain (or ends it victoriously at giga); lose/tie ends
+  // the encounter in defeat.
+  const handleBossGameEnd = (_winner: string | null, finalScores: { human: number; bot: number }) => {
+    if (finalScores.human > finalScores.bot) {
+      const next = BOSS_STAGES[bossStage].next;
+      if (next) {
+        // Apply the next (harder) stage's theme right away so the advance
+        // alert already feels like an escalation.
+        setBossStage(next);
+        applyBossTheme(next);
+        setBossPhase('advance');
+      } else {
+        // Beat gigaboss - keep the giga theme as the reward (do NOT revert).
+        // The permanent boss-bot + theme unlocks fire via handleGameCompletion
+        // inside InteractiveGame (beat_giga_boss_bot achievement).
+        setBossPhase('victory');
+      }
+    } else {
+      revertBossTheme();
+      setBossPhase('defeat');
+    }
+  };
+
+  // The whole-game boss countdown hit zero -> player loses by timeout.
+  const handleBossTimeout = () => {
+    clearActiveGame().catch(err => console.warn('Failed to clear saved game on boss timeout:', err));
+    revertBossTheme();
+    setBossPhase('timeout');
+  };
+
+  // Resigned mid-boss-battle -> same as a loss (encounter ends, theme reverts).
+  const handleBossResign = () => {
+    clearActiveGame().catch(err => console.warn('Failed to clear saved game on boss resign:', err));
+    revertBossTheme();
+    setBossPhase('defeat');
+  };
+
+  // Victory/defeat/timeout overlay closed -> return to the main screen and
+  // reset the encounter state so the next GUS play starts a fresh chain.
+  const endBoss = () => {
+    setAppState('main');
+    setBossPhase('idle');
+    setBossStage('boss');
+    setBossPrevThemeName(null);
+  };
+
   const handleStartMultiplayer = () => {
     setAppState('multiplayer-lobby');
   };
@@ -309,17 +449,31 @@ function AppContent() {
     ensureAnonymousSession().catch(err => console.warn('Failed to establish anonymous session:', err));
   }, []);
 
+  // Reload guard: if the app was reloaded while a boss battle was mid-flight,
+  // the saved theme will be a boss theme (boss/megaboss/gigaboss) that the
+  // player hasn't permanently unlocked (those only unlock on a giga win). In
+  // that case restore the default theme so the player isn't stuck in a boss
+  // theme with no active encounter. Runs once after unlock state loads; an
+  // active encounter handled by the live state machine (bossPhase !== 'idle')
+  // is left alone.
+  const bossGuardRanRef = useRef(false);
+  useEffect(() => {
+    if (unlocksLoading || bossGuardRanRef.current) return;
+    bossGuardRanRef.current = true;
+    if (bossPhase !== 'idle') return;
+    if (BOSS_THEME_NAMES.includes(currentTheme.name) && !isUnlocked('theme', currentTheme.name)) {
+      setTheme(defaultTheme);
+    }
+  }, [unlocksLoading, bossPhase, currentTheme, isUnlocked, setTheme]);
+
   return (
-    <ThemeProvider>
-      <AlertProvider>
-        <UnlockProvider>
-          <VanityFilterProvider>
-            <MechanicsSettingsProvider>
-            <AnimationProvider initialTheme="default">
-              <ResponsiveTest>
-              {appState === 'main' && (
-                <MainScreen onStartGame={handleStartGame} onStartMultiplayer={handleStartMultiplayer} />
-              )}
+    <VanityFilterProvider>
+      <MechanicsSettingsProvider>
+      <AnimationProvider initialTheme="default">
+        <ResponsiveTest>
+        {appState === 'main' && (
+          <MainScreen onStartGame={handleStartGame} onStartMultiplayer={handleStartMultiplayer} />
+        )}
               {appState === 'multiplayer-lobby' && (
                 <MultiplayerLobby onGameReady={handleMultiplayerGameReady} onBack={handleMultiplayerExit} />
               )}
@@ -328,6 +482,7 @@ function AppContent() {
                   gameId={multiplayerGameId}
                   onExit={handleMultiplayerExit}
                   onGameEnd={handleMultiplayerGameEnd}
+                  onBossTrigger={handleBossTrigger}
                 />
               )}
               {appState === 'game' && (
@@ -355,6 +510,8 @@ function AppContent() {
                     onStartGame={handleStartGame}
                     onGameStateChange={tutorialActive ? setTutorialGameState : undefined}
                     disableLetterRemoval={tutorialActive && tutorialStepId === 3}
+                    // GUS triggers the boss battle encounter from any game mode.
+                    onBossTrigger={handleBossTrigger}
                   />
                   {tutorialActive && (
                     <TutorialOverlay
@@ -366,6 +523,32 @@ function AppContent() {
                   )}
                 </div>
               )}
+              {appState === 'boss' && bossPhase === 'battle' && (
+                <div
+                  key={bossBattleKey}
+                  className={`game-screen boss-battle boss-battle--${bossStage}`}
+                  data-boss-stage={bossStage}
+                  data-boss-theme={BOSS_STAGES[bossStage].themeName}
+                >
+                  <InteractiveGame
+                    config={{
+                      maxTurns: BOSS_BATTLE_MAX_TURNS,
+                      allowBotPlayer: true,
+                      enableKeyLetters: true,
+                      enableLockedLetters: true,
+                      botId: BOSS_STAGES[bossStage].botId,
+                      // Whole-game countdown for this boss stage (90/60/45s).
+                      gameTimeLimitSeconds: BOSS_STAGES[bossStage].timeLimitSeconds
+                    }}
+                    onGameEnd={handleBossGameEnd}
+                    onResign={handleBossResign}
+                    onGameTimeout={handleBossTimeout}
+                    onNavigateHome={handleNavigateHome}
+                    currentGameMode="boss"
+                    bossStage={bossStage}
+                  />
+                </div>
+              )}
               {appState === 'challenge' && (
                 <ChallengeGame
                   onComplete={handleChallengeComplete}
@@ -373,6 +556,7 @@ function AppContent() {
                   onNavigateHome={handleNavigateHome}
                   onResetChallenge={handleResetChallenge}
                   onStartGame={handleStartGame}
+                  onBossTrigger={handleBossTrigger}
                 />
               )}
               
@@ -427,20 +611,61 @@ function AppContent() {
                 onClose={handleMultiplayerResignedComplete}
                 meta={alertCopy.multiplayerResigned.meta}
               />
+
+              {/* "GUS" boss battle overlays. Each shows while appState === 'boss'
+                  and the boss board is torn down (intro/advance) or just finished
+                  (victory/defeat/timeout). Closing intro/advance starts the next
+                  battle; closing victory/defeat/timeout returns to the main screen. */}
+              <AlertOverlay
+                isVisible={appState === 'boss' && bossPhase === 'intro'}
+                lines={[...alertCopy.boss.intro.lines]}
+                meta={alertCopy.boss.intro.meta}
+                onClose={startBossBattle}
+              />
+              <AlertOverlay
+                isVisible={appState === 'boss' && bossPhase === 'advance'}
+                lines={[...alertCopy.boss.advance.lines]}
+                meta={alertCopy.boss.advance.meta}
+                onClose={advanceBossBattle}
+              />
+              <AlertOverlay
+                isVisible={appState === 'boss' && bossPhase === 'victory'}
+                lines={[...alertCopy.boss.victory.lines]}
+                meta={alertCopy.boss.victory.meta}
+                variant="win"
+                onClose={endBoss}
+              />
+              <AlertOverlay
+                isVisible={appState === 'boss' && bossPhase === 'defeat'}
+                lines={[...alertCopy.boss.defeat.lines]}
+                meta={alertCopy.boss.defeat.meta}
+                variant="lose"
+                onClose={endBoss}
+              />
+              <AlertOverlay
+                isVisible={appState === 'boss' && bossPhase === 'timeout'}
+                lines={[...alertCopy.boss.timeout.lines]}
+                meta={alertCopy.boss.defeat.meta}
+                variant="lose"
+                onClose={endBoss}
+              />
                           </ResponsiveTest>
-            </AnimationProvider>
-            </MechanicsSettingsProvider>
-          </VanityFilterProvider>
-        </UnlockProvider>
-      </AlertProvider>
-    </ThemeProvider>
+      </AnimationProvider>
+      </MechanicsSettingsProvider>
+    </VanityFilterProvider>
   );
 }
 
 function App() {
   return (
     <RoundLengthProvider>
-      <AppContent />
+      <ThemeProvider>
+        <AlertProvider>
+          <UnlockProvider>
+            <AppContent />
+          </UnlockProvider>
+        </AlertProvider>
+      </ThemeProvider>
     </RoundLengthProvider>
   );
 }

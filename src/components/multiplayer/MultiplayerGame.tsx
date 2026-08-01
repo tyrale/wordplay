@@ -22,6 +22,13 @@ export interface MultiplayerGameProps {
   gameId: string;
   onExit: () => void;
   onGameEnd?: (result: MultiplayerGameResult) => void;
+  /**
+   * Fired when the local player submits a word that should trigger the boss
+   * battle encounter (currently "GUS"). When set, MultiplayerGame resigns the
+   * match server-side (so the opponent is notified) before forwarding the
+   * trigger to the parent, which abandons this view for the boss battle.
+   */
+  onBossTrigger?: (word: string) => void;
 }
 
 /**
@@ -31,7 +38,7 @@ export interface MultiplayerGameProps {
  * `InteractiveGame`'s `externalManager`/`localPlayerId` props. This keeps
  * the board layout/behavior identical between game modes.
  */
-export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit, onGameEnd }) => {
+export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit, onGameEnd, onBossTrigger }) => {
   const { manager, localPlayerId, isLoading, error } = useMultiplayerManager(gameId);
   const [maxPlayers, setMaxPlayers] = useState<number | null>(null);
   const [isStarting, setIsStarting] = useState(false);
@@ -81,6 +88,20 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
       onExit();
     }
   }, [manager, onExit]);
+
+  // GUS triggers the boss battle from multiplayer too. Resign the match
+  // server-side first (fire-and-forget) so the opponent is notified the local
+  // player left, then forward the trigger to the parent, which switches away
+  // from this view to the boss battle. We don't await the resign because the
+  // parent tears down this component immediately on the trigger - awaiting
+  // would never resolve from the unmounted component.
+  const handleBossTrigger = useCallback((word: string) => {
+    if (word.toUpperCase() !== 'GUS') return;
+    if (manager) {
+      manager.resign().catch(err => console.warn('Failed to resign multiplayer game on boss trigger:', err));
+    }
+    onBossTrigger?.(word);
+  }, [manager, onBossTrigger]);
 
   if (isLoading) {
     return (
@@ -165,6 +186,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
       }}
       onResign={handleResign}
       onNavigateHome={onExit}
+      onBossTrigger={onBossTrigger ? handleBossTrigger : undefined}
     />
   );
 };

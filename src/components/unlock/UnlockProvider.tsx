@@ -192,11 +192,12 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
     // Check for bot-beating achievements
     if (winner === 'human' && botId) {
       // Generate achievement string to match unlock definitions
-      // For botId like "easy-bot" -> achievement "beat_easy_bot"
-      // For botId like "basicBot" -> achievement "beat_basicBot"
+      // For botId like "easy-bot"      -> achievement "beat_easy_bot"
+      // For botId like "giga-boss-bot" -> achievement "beat_giga_boss_bot"
+      // For botId like "basicBot"      -> achievement "beat_basicBot"
       let achievement: string;
       if (botId.endsWith('-bot')) {
-        achievement = `beat_${botId.replace('-', '_')}`;
+        achievement = `beat_${botId.split('-').join('_')}`;
       } else {
         achievement = `beat_${botId}`;
       }

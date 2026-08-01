@@ -6,13 +6,14 @@ import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
 import { useRoundLength } from '../../contexts/RoundLengthContext';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
 import { useCommunityUnlockStats } from '../../hooks/useCommunityUnlockStats';
-import { getAllBots, getBotDisplayNamesMapping } from '../../data/botRegistry';
+import { getVisibleBots, getBotDisplayNamesMapping } from '../../data/botRegistry';
 import { availableThemes as ALL_THEMES } from '../../types/theme';
 import type { GameTheme } from '../../types/theme';
 import { DictionariesOverlay } from './DictionariesOverlay';
 import { ThoughtsOverlay } from './ThoughtsOverlay';
 import { StatsOverlay } from './StatsOverlay';
 import { WordPathExplorer } from './WordPathExplorer';
+import { LeaderboardOverlay } from './LeaderboardOverlay';
 import { triggerSoundFeedback } from '../../utils/sound';
 import './Menu.css';
 
@@ -99,7 +100,8 @@ const getMenuItems = (
   isMechanicOn: (mechanicId: string) => boolean = () => true,
   revealedCategories: string[] = [],
   selectedRoundLength: number = 0,
-  isPlayerStatsUnlocked: boolean = false
+  isPlayerStatsUnlocked: boolean = false,
+  isWordPathsUnlocked: boolean = false
 ): MenuTier1Item[] => {
   // Locked theme previews - only computed once 'themes' has been revealed
   const lockedThemeItems: MenuTier2Item[] = revealedCategories.includes('themes')
@@ -127,10 +129,13 @@ const getMenuItems = (
       )
     : [];
 
-  // Locked bot previews - only computed once 'bots' has been revealed
+  // Locked bot previews - only computed once 'bots' has been revealed.
+  // Excludes hidden encounter-only bots (megabossbot, gigabossbot) so the boss
+  // chain isn't spoiled in the menu. boss-bot itself IS shown as a locked
+  // preview until unlocked by beating the chain.
   const lockedBotItems: MenuTier2Item[] = revealedCategories.includes('bots')
     ? shuffleLockedItems(
-        getAllBots()
+        getVisibleBots()
           .filter(bot => !availableBots.includes(bot.id))
           .map(bot => ({
             id: `locked-bot-${bot.id}`,
@@ -172,11 +177,11 @@ const getMenuItems = (
   },
   // Show mechanics section if there are unlocked mechanics (excluding dark mode,
   // which lives under the themes section instead) or if locked previews are revealed
-  ...(unlockedMechanics.filter(id => id !== 'dark-mode' && id !== 'unlock-counter' && id !== 'community-stats' && id !== 'player-stats').length > 0 || lockedMechanicItems.length > 0 ? [{
+  ...(unlockedMechanics.filter(id => id !== 'dark-mode' && id !== 'unlock-counter' && id !== 'community-stats' && id !== 'player-stats' && id !== 'word-paths').length > 0 || lockedMechanicItems.length > 0 ? [{
     id: 'mechanics',
     title: 'mechanics',
     children: [
-      ...unlockedMechanics.filter(mechanicId => mechanicId !== 'dark-mode' && mechanicId !== 'unlock-counter' && mechanicId !== 'community-stats' && mechanicId !== 'player-stats').map(mechanicId => {
+      ...unlockedMechanics.filter(mechanicId => mechanicId !== 'dark-mode' && mechanicId !== 'unlock-counter' && mechanicId !== 'community-stats' && mechanicId !== 'player-stats' && mechanicId !== 'word-paths').map(mechanicId => {
         // Special handling for vanity filter - make it a toggle
         if (mechanicId === 'vanity-filter') {
           return {
@@ -215,11 +220,11 @@ const getMenuItems = (
       ...lockedBotItems
     ]
   }] : []),
-  {
+  ...(isWordPathsUnlocked ? [{
     id: 'word-paths',
-    title: 'word paths'
+    title: 'paths'
     // No children - opens the Word Path Explorer overlay directly
-  },
+  }] : []),
   {
     id: 'about',
     title: 'about',
@@ -228,7 +233,6 @@ const getMenuItems = (
       { id: 'dictionaries', title: 'dictionaries' },
       { id: 'thoughts', title: 'thoughts' },
       ...(isPlayerStatsUnlocked ? [{ id: 'stats', title: 'stats' }] : []),
-      { id: 'debug-mode', title: 'debug mode' },
       { id: 'reset-unlocks', title: 'reset unlocks (debug)' },
     ]
   },
@@ -270,6 +274,7 @@ export const Menu: React.FC<MenuProps> = ({
   const [isThoughtsOpen, setIsThoughtsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isWordPathsOpen, setIsWordPathsOpen] = useState(false);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const { currentTheme, setTheme, isInverted, toggleInverted } = useTheme();
   
   // Get unlock state
@@ -307,7 +312,9 @@ export const Menu: React.FC<MenuProps> = ({
 
   const isPlayerStatsUnlocked = isUnlocked('mechanic', 'player-stats');
 
-  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn(), isMechanicOn, revealedCategories, roundLength, isPlayerStatsUnlocked);
+  const isWordPathsUnlocked = isUnlocked('mechanic', 'word-paths');
+
+  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn(), isMechanicOn, revealedCategories, roundLength, isPlayerStatsUnlocked, isWordPathsUnlocked);
 
   // "unlock" mechanic - shows a small "x/x unlocked" progress indicator under home
   const isUnlockCounterOn = isUnlocked('mechanic', 'unlock-counter');
@@ -456,6 +463,10 @@ export const Menu: React.FC<MenuProps> = ({
       // Start daily challenge
       onStartGame?.('challenge');
       handleClose(); // Close menu after starting challenge
+    } else if (tier1Id === 'vsworld' && tier2Id === 'leaderboard') {
+      // Show the leaderboard overlay
+      setIsLeaderboardOpen(true);
+      handleClose(); // Close menu behind the overlay
     } else if (tier1Id === 'vsworld' && tier2Id === 'reset-challenge') {
       // Reset daily challenge for testing
       resetDailyChallenge();
@@ -692,6 +703,10 @@ export const Menu: React.FC<MenuProps> = ({
       <WordPathExplorer
         isVisible={isWordPathsOpen}
         onClose={() => setIsWordPathsOpen(false)}
+      />
+      <LeaderboardOverlay
+        isVisible={isLeaderboardOpen}
+        onClose={() => setIsLeaderboardOpen(false)}
       />
     </>
   );

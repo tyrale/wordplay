@@ -261,6 +261,7 @@ export interface ValidationOptions {
   isBot?: boolean;
   previousWord?: string;
   allowProfanity?: boolean;
+  allowSeussCanonical?: boolean;
   customValidator?: (word: string) => boolean;
 }
 
@@ -610,6 +611,14 @@ export interface GameConfig {
   botId?: string;
   /** Desired length of the randomly-generated starting word, used when initialWord isn't set. Defaults to 4. */
   startingWordLength?: number;
+  /** Allow canonical Dr. Seuss words as valid plays (unlocked by beating the Grinchbot). */
+  allowSeussCanonical?: boolean;
+  /**
+   * Optional whole-game countdown (seconds) for the "GUS" boss battle. When
+   * set, the game shows a single ticking countdown (instead of the per-turn
+   * time-pressure timer) and fires onGameTimeout when it reaches zero.
+   */
+  gameTimeLimitSeconds?: number;
 }
 
 export interface TurnHistory {
@@ -891,6 +900,18 @@ export interface PlayerStats {
   challengesPlayed: number;
   challengesCompleted: number;
   challengesFailed: number;
+  // Step-count extremes across every challenge played (mirrors
+  // shortestGameTurns/longestGameTurns). 0 means "none yet".
+  shortestChallengeSteps: number;
+  longestChallengeSteps: number;
+  // Fewest steps among completed challenges only (mirrors
+  // fastestWinDurationMs). 0 means "none yet".
+  fewestStepsToComplete: number;
+  // Consecutive-completion streak (mirrors currentWinStreak /
+  // longestWinStreak). A failed/forfeited challenge resets the current
+  // streak but does not count as a win.
+  currentChallengeStreak: number;
+  longestChallengeStreak: number;
 
   // Key letters
   keyLetterUsageCounts: Record<string, number>;

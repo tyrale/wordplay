@@ -81,6 +81,15 @@ export const alertCopy = {
     lose: { lines: ['HAHA', 'QUITTER'] }
   },
 
+  /** "GUS" boss battle chain - intro, stage advance, victory, defeat. */
+  boss: {
+    intro: { lines: ['BOSS', 'BATTLE'], meta: 'A special idea from my son. Beat the clock. Beat the boss.' },
+    advance: { lines: ['NEXT', 'BOSS'], meta: 'The next boss is coming...' },
+    victory: { lines: ['YOU', 'BEAT', 'THE', 'BOSS'], meta: 'bossbot unlocked. themes unlocked.' },
+    defeat: { lines: ['BOSS', 'WINS'], meta: 'Maybe next time. Play GUS to try again.' },
+    timeout: { lines: ['OUT', 'OF', 'TIME'] }
+  },
+
   /** Unlock notifications (theme/bot/mechanic/vanity filter/etc.) */
   unlocks: {
     /** Theme copy stays generic — no per-theme variation needed. */
@@ -114,7 +123,8 @@ export const alertCopy = {
         'gravity': 'Letters fall and roll freely now',
         'drunk': 'Toggle is on in the menu. Everything gets a little hazy...',
         'unlock-counter': 'Check under home to track your progress',
-        'community-stats': 'Check under home to see what the whole community has found'
+        'community-stats': 'Check under home to see what the whole community has found',
+        'seuss-canonical-words': 'Dr. Seuss words are now playable. Check the dictionaries list!'
       }
     },
     vanityFilter: { lines: ['FILTER', 'TOGGLE', 'UNLOCKED'], meta: 'Toggle it in the menu' },

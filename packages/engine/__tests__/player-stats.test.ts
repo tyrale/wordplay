@@ -310,6 +310,64 @@ describe('Player Stats Engine', () => {
       await engine.recordChallengeResult({ completed: true, stepCount: 3, timestamp: day2 });
       expect(engine.getStats().currentDailyStreak).toBe(2);
     });
+
+    it('tracks shortest/longest challenge steps across every challenge played', async () => {
+      await engine.recordChallengeResult({ completed: true, stepCount: 5, timestamp: 1_700_000_000_000 });
+      let stats = engine.getStats();
+      expect(stats.shortestChallengeSteps).toBe(5);
+      expect(stats.longestChallengeSteps).toBe(5);
+
+      await engine.recordChallengeResult({ completed: true, stepCount: 3, timestamp: 1_700_000_000_001 });
+      stats = engine.getStats();
+      expect(stats.shortestChallengeSteps).toBe(3);
+      expect(stats.longestChallengeSteps).toBe(5);
+
+      // A failed challenge still counts toward step-count extremes.
+      await engine.recordChallengeResult({ completed: false, stepCount: 8, timestamp: 1_700_000_000_002 });
+      stats = engine.getStats();
+      expect(stats.shortestChallengeSteps).toBe(3);
+      expect(stats.longestChallengeSteps).toBe(8);
+    });
+
+    it('tracks fewestStepsToComplete only among completed challenges', async () => {
+      // A failed challenge must not set fewestStepsToComplete.
+      await engine.recordChallengeResult({ completed: false, stepCount: 2, timestamp: 1_700_000_000_000 });
+      expect(engine.getStats().fewestStepsToComplete).toBe(0);
+
+      await engine.recordChallengeResult({ completed: true, stepCount: 6, timestamp: 1_700_000_000_001 });
+      expect(engine.getStats().fewestStepsToComplete).toBe(6);
+
+      await engine.recordChallengeResult({ completed: true, stepCount: 4, timestamp: 1_700_000_000_002 });
+      expect(engine.getStats().fewestStepsToComplete).toBe(4);
+
+      // A later longer completion must not overwrite the fewest.
+      await engine.recordChallengeResult({ completed: true, stepCount: 9, timestamp: 1_700_000_000_003 });
+      expect(engine.getStats().fewestStepsToComplete).toBe(4);
+    });
+
+    it('increments the completion streak on wins and resets it on failures', async () => {
+      await engine.recordChallengeResult({ completed: true, stepCount: 3, timestamp: 1_700_000_000_000 });
+      let stats = engine.getStats();
+      expect(stats.currentChallengeStreak).toBe(1);
+      expect(stats.longestChallengeStreak).toBe(1);
+
+      await engine.recordChallengeResult({ completed: true, stepCount: 3, timestamp: 1_700_000_000_001 });
+      stats = engine.getStats();
+      expect(stats.currentChallengeStreak).toBe(2);
+      expect(stats.longestChallengeStreak).toBe(2);
+
+      // A failure resets the current streak but preserves the longest.
+      await engine.recordChallengeResult({ completed: false, stepCount: 1, timestamp: 1_700_000_000_002 });
+      stats = engine.getStats();
+      expect(stats.currentChallengeStreak).toBe(0);
+      expect(stats.longestChallengeStreak).toBe(2);
+
+      // A new win starts a fresh streak.
+      await engine.recordChallengeResult({ completed: true, stepCount: 3, timestamp: 1_700_000_000_003 });
+      stats = engine.getStats();
+      expect(stats.currentChallengeStreak).toBe(1);
+      expect(stats.longestChallengeStreak).toBe(2);
+    });
   });
 
   describe('recordUnlockEarned', () => {

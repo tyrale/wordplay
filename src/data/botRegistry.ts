@@ -12,6 +12,14 @@ export interface Bot {
   difficulty?: 'basic' | 'easy' | 'medium' | 'hard' | 'expert';
   theme?: string;
   category?: 'progression' | 'themed' | 'behavior';
+  /**
+   * When true, the bot is excluded from the menu's "locked bot" previews and
+   * the playable bot list. Used for encounter-only bosses (megabossbot,
+   * gigabossbot) that are never selectable from the menu. boss-bot itself is
+   * NOT hidden: it shows as a locked preview until unlocked by beating the
+   * boss chain, then becomes playable.
+   */
+  hidden?: boolean;
 }
 
 /**
@@ -86,6 +94,37 @@ export const BOT_REGISTRY: Bot[] = [
     displayName: 'bruhbot',
     category: 'behavior',
     description: 'bruh'
+  },
+
+  // Boss battle bots - encountered by playing "GUS". boss-bot uses medium
+  // logic, mega-boss-bot uses hard logic, giga-boss-bot uses expert logic with
+  // an obscure-letter preference. Beating the whole chain (giga) permanently
+  // unlocks boss-bot as a playable bot. mega/giga are encounter-only (hidden).
+  {
+    id: 'boss-bot',
+    displayName: 'bossbot',
+    difficulty: 'medium',
+    theme: 'boss',
+    category: 'themed',
+    description: 'Unlocked by beating the boss chain triggered with "GUS"'
+  },
+  {
+    id: 'mega-boss-bot',
+    displayName: 'megabossbot',
+    difficulty: 'hard',
+    theme: 'megaboss',
+    category: 'themed',
+    hidden: true,
+    description: 'Encounter-only. Plays hard-bot logic.'
+  },
+  {
+    id: 'giga-boss-bot',
+    displayName: 'gigabossbot',
+    difficulty: 'expert',
+    theme: 'gigaboss',
+    category: 'themed',
+    hidden: true,
+    description: 'Encounter-only. Plays expert logic favoring obscure letters.'
   }
 ];
 
@@ -109,6 +148,15 @@ export function getBotById(botId: string): Bot | undefined {
  */
 export function getAllBots(): Bot[] {
   return [...BOT_REGISTRY];
+}
+
+/**
+ * Get all bots that should appear in menu lists / locked previews.
+ * Excludes `hidden` encounter-only bots (e.g. megabossbot, gigabossbot)
+ * which are never unlockable from the menu and would otherwise spoil the boss.
+ */
+export function getVisibleBots(): Bot[] {
+  return BOT_REGISTRY.filter(bot => !bot.hidden);
 }
 
 /**

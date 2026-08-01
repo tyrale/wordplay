@@ -21,11 +21,16 @@ import {
   getWordLegalityReason,
   getVariantDefinitionNote,
   isPlayableWord,
+  isSeussWord,
+  isSeussInventedWord,
   fetchWordDefinition
 } from '../../utils/wordHelp';
 import { triggerHapticFeedback } from '../../utils/haptics';
 import { triggerSoundFeedback } from '../../utils/sound';
 import { hasSeenClearHint, markClearHintSeen } from '../../utils/tutorialStorage';
+import { useTheme } from '../theme/ThemeProvider';
+import { useBossMusic } from '../../hooks/useBossMusic';
+import type { BossStage } from '../../data/bossBattle';
 import type { WordDataDependencies, ScoringAction, GameConfig, MoveAttempt, GameState, IGameStateManager } from '../../../packages/engine/interfaces';
 
 // Dictionary validation using pure dependency injection
@@ -104,6 +109,21 @@ export interface InteractiveGameProps {
   externalManager?: IGameStateManager;
   /** The authenticated player id to treat as "the local player" when using `externalManager`. */
   localPlayerId?: string;
+  /**
+   * Fired when the whole-game boss countdown (config.gameTimeLimitSeconds)
+   * reaches zero. The game is torn down by the parent (App) in response.
+   */
+  onGameTimeout?: () => void;
+  /**
+   * Fired when the local player submits a word that should trigger the boss
+   * battle encounter (currently "GUS"). The parent (App) decides whether to
+   * act - InteractiveGame just reports the submitted word. Only wired for
+   * normal bot games (not boss/tutorial/multiplayer).
+   */
+  onBossTrigger?: (word: string) => void;
+  /** Current boss stage, used to drive boss-theme visual effects (red outline,
+   *  monster shadow, music). Only meaningful when currentGameMode === 'boss'. */
+  bossStage?: BossStage;
 }
 
 export const InteractiveGame: React.FC<InteractiveGameProps> = ({
@@ -116,7 +136,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   onGameStateChange,
   disableLetterRemoval = false,
   externalManager,
-  localPlayerId
+  localPlayerId,
+  onGameTimeout,
+  onBossTrigger,
+  bossStage
 }) => {
   // Initialize dictionary validation hook
   const { isValidDictionaryWord, wordData } = useDictionaryValidation();
@@ -131,6 +154,24 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const recordedMoveCountRef = useRef(0);
   const { isMechanicOn } = useMechanicsSettings();
   const { showCustomAlert, showAlert } = useAlert();
+  const { currentTheme } = useTheme();
+
+  // "GUS" boss battle: a whole-game countdown (config.gameTimeLimitSeconds)
+  // replaces the per-turn time-pressure timer, and the per-turn pressure
+  // auto-pass is disabled so the boss fight is governed solely by its own
+  // countdown + the 20-turn round.
+  const isBossBattle = currentGameMode === 'boss' && typeof config?.gameTimeLimitSeconds === 'number';
+  const bossTimeLimitSeconds = isBossBattle ? (config!.gameTimeLimitSeconds as number) : null;
+
+  // Boss-theme visual effect tier, derived from the active theme name so it
+  // also applies correctly if a boss theme is selected from the menu after
+  // being permanently unlocked. 'boss' = base 3-color (no extra effect),
+  // 'megaboss' = red letter outlines, 'gigaboss' = red outlines + animated
+  // monster-shadow background + escalating music.
+  const bossEffectTier: 'none' | 'mega' | 'giga' =
+    currentTheme.name === 'gigaboss' ? 'giga'
+      : currentTheme.name === 'megaboss' ? 'mega'
+        : 'none';
 
   // Determine starting word length from unlocked + enabled starting-word mechanics.
   // If multiple lengths are unlocked and on, pick one at random for variety.
@@ -142,8 +183,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     ? availableStartLengths[Math.floor(Math.random() * availableStartLengths.length)]
     : undefined;
 
-  // Time-pressure mechanic: unlocked via the "time" word and toggled on in the mechanics menu
-  const isTimePressureOn = unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
+  // Time-pressure mechanic: unlocked via the "time" word and toggled on in the mechanics menu.
+  // Suppressed during a boss battle - the boss has its own whole-game countdown
+  // and the per-turn 7s auto-pass would otherwise conflict with it.
+  const isTimePressureOn = !isBossBattle && unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
 
   // Gravity mechanic: unlocked via the "gravity" word and toggled on in the mechanics menu.
   // Makes the alphabet grid letters fall and roll freely around the viewport.
@@ -152,6 +195,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // Drunk mechanic: unlocked via the "drunk" word and toggled on in the mechanics menu.
   // Makes the whole game view hazy and wobbly, like looking at it drunk.
   const isDrunkOn = unlockedMechanics.includes('drunk') && isMechanicOn('drunk');
+
+  // Seuss canonical words: unlocked by beating the Grinchbot. Allows the
+  // player to play canonical Dr. Seuss words (LORAX, GRINCH, WOCKET, etc.)
+  // as valid words in any game mode. No toggle — once unlocked, always on.
+  const allowSeussCanonical = unlockedMechanics.includes('seuss-canonical-words');
 
   // Game state management
   const {
@@ -166,10 +214,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     lastError,
     clearError
   } = useGameState({
-    config: { ...config, startingWordLength },
+    config: { ...config, startingWordLength, allowSeussCanonical },
     externalManager,
     localPlayerId,
-    skipSavedGamePersistence: currentGameMode === 'tutorial',
+    skipSavedGamePersistence: currentGameMode === 'tutorial' || currentGameMode === 'boss',
     onGameStateChange: (state) => {
       // Record each of the local player's newly-completed moves live, so
       // word/letter stats update as the game is played rather than only
@@ -183,9 +231,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
           // Word path graph tracks every word seen - both the local player's
           // and any bot/opponent's moves - so it's recorded unconditionally,
           // unlike recordMove (player stats) which only tracks the local player.
-          recordWordPathTransition(entry.previousWord, entry.newWord).catch(err =>
-            console.warn('Failed to record word path transition:', err)
-          );
+          // Synced to the server's master graph right away, per turn, rather
+          // than waiting for the game to finish.
+          recordWordPathTransition(entry.previousWord, entry.newWord)
+            .then(() => syncWordPathGraph())
+            .catch(err => console.warn('Failed to record/sync word path transition:', err));
 
           if (entry.playerId === localId) {
             recordMove(entry).catch(err => console.warn('Failed to record move stats:', err));
@@ -244,7 +294,14 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
         // Check for unlock triggers on game completion in the background;
         // any resulting unlock notification will show over the overlay once ready.
-        handleGameCompletion(state.winner?.id || null, config?.botId).catch(err =>
+        // Boss battles use a strict win condition (player must have MORE points
+        // than the boss - a tie is a loss per the boss spec), so the permanent
+        // boss unlocks only fire on a real win, not on a tie the engine might
+        // otherwise award to the human via sortedPlayers[0].
+        const completionWinner = isBossBattle
+          ? (humanScore > botScore ? 'human' : null)
+          : (state.winner?.id || null);
+        handleGameCompletion(completionWinner, config?.botId).catch(err =>
           console.warn('Failed to check game completion unlock triggers:', err)
         );
 
@@ -294,6 +351,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   const [showValidationError, setShowValidationError] = useState(false);
   const [turnTimeRemaining, setTurnTimeRemaining] = useState<number | null>(null);
+  // Whole-game boss countdown (seconds remaining). Null outside a boss battle.
+  const [bossTimeRemaining, setBossTimeRemaining] = useState<number | null>(null);
+  // Guards against firing onGameTimeout more than once per boss battle.
+  const bossTimeoutFiredRef = useRef(false);
   const [isRenamingSelf, setIsRenamingSelf] = useState(false);
 
   // Initialize pending word with current word
@@ -365,6 +426,35 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       setTurnTimeRemaining(null);
     }
   }, [turnTimeRemaining, isTimePressureOn, isPlayerTurn, isGameActive, actions, wordState.currentWord]);
+
+  // Boss battle whole-game countdown: starts ticking from bossTimeLimitSeconds
+  // the moment the boss game becomes active, and fires onGameTimeout once it
+  // hits zero (the player loses by timeout). Unlike the per-turn timer this
+  // runs continuously across both the player's and the bot's turns.
+  useEffect(() => {
+    if (!isBossBattle || !bossTimeLimitSeconds || !isGameActive) {
+      setBossTimeRemaining(null);
+      return;
+    }
+    bossTimeoutFiredRef.current = false;
+    setBossTimeRemaining(bossTimeLimitSeconds);
+
+    const intervalId = setInterval(() => {
+      setBossTimeRemaining(prev => (prev !== null ? Math.max(prev - 1, 0) : null));
+    }, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [isBossBattle, bossTimeLimitSeconds, isGameActive]);
+
+  // Fire onGameTimeout exactly once when the boss countdown reaches zero.
+  useEffect(() => {
+    if (bossTimeRemaining === 0 && isBossBattle && isGameActive && !bossTimeoutFiredRef.current) {
+      bossTimeoutFiredRef.current = true;
+      onGameTimeout?.();
+    }
+  }, [bossTimeRemaining, isBossBattle, isGameActive, onGameTimeout]);
 
   // Letter grid state
   const letterStates: LetterState[] = React.useMemo(() => {
@@ -456,6 +546,27 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     const word = pendingWord.trim().toUpperCase();
     if (!word) return;
 
+    // If the player has unlocked the Grinchbot and the word is a Dr. Seuss
+    // word, show a special Seuss message instead of a dictionary definition.
+    const grinchBotUnlocked = getUnlockedItems('bot').includes('grinch-bot');
+    if (grinchBotUnlocked && isSeussWord(word, wordData)) {
+      // Invented Seuss words get a sassy Grinch response when playing the grinchbot
+      if (config?.botId === 'grinch-bot' && isSeussInventedWord(word, wordData)) {
+        showCustomAlert(['DONT', 'QUESTION', 'ME!'], {
+          meta: "Im the Grinch I can say what i want."
+        });
+      } else {
+        showCustomAlert([word], {
+          meta: (
+            <div className="alert-overlay__meta-definition">
+              This is a Dr. Seuss word and it's fantastic.
+            </div>
+          )
+        });
+      }
+      return;
+    }
+
     const definition = await fetchWordDefinition(word);
     const reason = getWordLegalityReason(word, wordData);
     const variantNote = getVariantDefinitionNote(word, wordData, definition);
@@ -476,7 +587,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         </>
       )
     });
-  }, [pendingWord, wordData, showCustomAlert]);
+  }, [pendingWord, wordData, showCustomAlert, getUnlockedItems]);
 
   const handleSettings = useCallback(() => {
     setIsMenuOpen(true);
@@ -637,13 +748,20 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         // (the vanity filter mechanic unlock is handled here via UNLOCK_DEFINITIONS)
         const isProfane = !!wordData?.profanityWords.has(pendingMoveAttempt.newWord.toUpperCase());
         await handleWordSubmission(pendingMoveAttempt.newWord, isProfane);
-        
+
+        // "GUS" boss trigger: report the submitted word to the parent so it can
+        // decide whether to start the boss encounter. Only fires for the local
+        // player's own submissions in a normal bot game (gated by App).
+        if (onBossTrigger && pendingMoveAttempt.newWord.toUpperCase() === 'GUS') {
+          onBossTrigger(pendingMoveAttempt.newWord);
+        }
+
         setPendingWord(pendingMoveAttempt.newWord);
         setPendingMoveAttempt(null);
         setShowValidationError(false);
       }
     }
-  }, [isPlayerTurn, isProcessingMove, pendingWord, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, wordData, actionState, handleWordChange, showAlert]);
+  }, [isPlayerTurn, isProcessingMove, pendingWord, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, wordData, actionState, handleWordChange, showAlert, onBossTrigger]);
 
   const handleStartGame = useCallback(async () => {
     await actions.startGame();
@@ -753,8 +871,32 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     setIsRenamingSelf(false);
   }, []);
 
+  // Boss battle music: an original, escalating procedural "final-countdown"-style
+  // synth motif (Web Audio API, no audio assets). Plays for EVERY boss battle
+  // and escalates per stage (boss = single voice, mega = +octave, giga = +octave
+  // + faster + brighter waveform), so each fight in the chain feels more intense.
+  useBossMusic({
+    enabled: isBossBattle && isGameActive,
+    stage: isBossBattle ? (bossStage ?? null) : null
+  });
+
   return (
-    <div className={`interactive-game${isDrunkOn ? ' interactive-game--drunk' : ''}`}>
+    <div
+      className={
+        'interactive-game' +
+        (isDrunkOn ? ' interactive-game--drunk' : '') +
+        (bossEffectTier !== 'none' ? ` interactive-game--boss-${bossEffectTier}` : '') +
+        (isBossBattle ? ' interactive-game--boss-battle' : '')
+      }
+      data-boss-stage={isBossBattle ? bossStage : undefined}
+    >
+      {/* Gigaboss animated monster-shadow background. Pure CSS/SVG, no art
+          assets. Rendered behind the board and ignored for reduced-motion. */}
+      {bossEffectTier === 'giga' && (
+        <div className="boss-monster-bg" aria-hidden="true">
+          <div className="boss-monster-bg__shadow" />
+        </div>
+      )}
 
       {/* Score bar - shows all players' names/avatars and scores */}
       <ScoreBar
@@ -828,7 +970,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 isPassMode={false}
                 validationError={pendingMoveAttempt?.validationResult?.userMessage || null}
                 showValidationError={showValidationError}
-                timerSeconds={isTimePressureOn && isPlayerTurn ? turnTimeRemaining : null}
+                timerSeconds={
+                  isBossBattle
+                    ? bossTimeRemaining
+                    : (isTimePressureOn && isPlayerTurn ? turnTimeRemaining : null)
+                }
               />
             </div>
 

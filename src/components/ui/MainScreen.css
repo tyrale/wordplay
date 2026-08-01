@@ -16,7 +16,7 @@
   /* Typography - match GridCell action button */
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: calc(var(--theme-font-size-lg) * 2);
+  font-size: calc(var(--theme-font-size-lg) * 2.4);
   color: var(--theme-accent); /* Accent color like alphabet grid */
   
   /* Layout */
@@ -54,7 +54,7 @@
 
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: calc(var(--theme-font-size-lg) * 2);
+  font-size: calc(var(--theme-font-size-lg) * 2.4);
   color: var(--theme-accent);
 
   display: flex;
@@ -190,7 +190,7 @@
     /* Match GridCell responsive sizing */
     width: 96px;
     height: 96px;
-    font-size: calc(var(--theme-font-size-md) * 2);
+    font-size: calc(var(--theme-font-size-md) * 2.4);
     /* Keep same position - bottom-right corner */
     bottom: var(--spacing-sm, 8px);
     right: var(--spacing-sm, 8px);
@@ -199,7 +199,7 @@
   .main-screen-back-button {
     width: 96px;
     height: 96px;
-    font-size: calc(var(--theme-font-size-md) * 2);
+    font-size: calc(var(--theme-font-size-md) * 2.4);
     bottom: var(--spacing-sm, 8px);
     left: var(--spacing-sm, 8px);
   }

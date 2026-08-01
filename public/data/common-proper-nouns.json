@@ -68,10 +68,11 @@
       "JACOB",
       "AIDEN",
       "SAMUEL",
-      "TYRALE"
+      "TYRALE",
+      "GUS"
     ]
   },
-  "totalWords": 60,
+  "totalWords": 61,
   "words": [
     "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER",
     "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY",
@@ -79,6 +80,7 @@
     "MARY", "PATRICIA", "JENNIFER", "LINDA", "ELIZABETH", "BARBARA", "SUSAN", "JESSICA", "SARAH", "KAREN",
     "EMMA", "OLIVIA", "AVA", "SOPHIA", "ISABELLA", "MIA", "AMELIA", "HARPER", "EVELYN",
     "LIAM", "NOAH", "OLIVER", "ELIJAH", "LUCAS", "MASON", "LOGAN", "ETHAN", "JACOB", "AIDEN", "SAMUEL",
-    "TYRALE"
+    "TYRALE",
+    "GUS"
   ]
 }

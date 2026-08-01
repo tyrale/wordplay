@@ -266,6 +266,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     // Word validation using dependency injection
     const validationResult = this.dependencies.validateWord(normalizedNewWord, {
       isBot: currentPlayer.isBot,
+      allowSeussCanonical: this.state.config.allowSeussCanonical,
       previousWord: this.state.currentWord
     });
 

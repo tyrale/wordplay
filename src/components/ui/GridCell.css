@@ -67,7 +67,7 @@
 /* Action buttons (special bottom row) */
 .grid-cell--action {
   color: var(--theme-accent);
-  font-size: calc(var(--theme-font-size-lg) * 2);
+  font-size: calc(var(--theme-font-size-lg) * 2.4);
 }
 
 
@@ -102,7 +102,7 @@
   }
   
   .grid-cell--action {
-    font-size: calc(var(--theme-font-size-md) * 2);
+    font-size: calc(var(--theme-font-size-md) * 2.4);
   }
   
   .grid-cell__lock {

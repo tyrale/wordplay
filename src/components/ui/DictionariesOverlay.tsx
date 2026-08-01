@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { triggerSoundFeedback } from '../../utils/sound';
+import { useUnlockSystem } from '../unlock/UnlockProvider';
 import './DictionariesOverlay.css';
 
 export interface DictionariesOverlayProps {
@@ -39,8 +40,18 @@ const DICTIONARIES: DictionaryEntry[] = [
   }
 ];
 
+const SEUSS_DICTIONARY: DictionaryEntry = {
+  name: 'Dr. Seuss Words',
+  description: 'Canonical Dr. Seuss words (LORAX, GRINCH, WOCKET, etc.) accepted as valid plays. Unlocked by beating the Grinchbot.'
+};
+
 export const DictionariesOverlay: React.FC<DictionariesOverlayProps> = ({ isVisible, onClose }) => {
+  const { getUnlockedItems } = useUnlockSystem();
+  const seussUnlocked = getUnlockedItems('mechanic').includes('seuss-canonical-words');
+
   if (!isVisible) return null;
+
+  const dictionaries = seussUnlocked ? [...DICTIONARIES, SEUSS_DICTIONARY] : DICTIONARIES;
 
   return (
     <div
@@ -55,7 +66,7 @@ export const DictionariesOverlay: React.FC<DictionariesOverlayProps> = ({ isVisi
         </h2>
 
         <ul className="dictionaries-overlay__list">
-          {DICTIONARIES.map(entry => (
+          {dictionaries.map(entry => (
             <li key={entry.name} className="dictionaries-overlay__item">
               <div className="dictionaries-overlay__item-name">{entry.name}</div>
               <div className="dictionaries-overlay__item-description">{entry.description}</div>

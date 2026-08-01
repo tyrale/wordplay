@@ -53,6 +53,11 @@ export function getInitialPlayerStats(): PlayerStats {
     challengesPlayed: 0,
     challengesCompleted: 0,
     challengesFailed: 0,
+    shortestChallengeSteps: 0,
+    longestChallengeSteps: 0,
+    fewestStepsToComplete: 0,
+    currentChallengeStreak: 0,
+    longestChallengeStreak: 0,
 
     // Key letters
     keyLetterUsageCounts: {},

@@ -745,6 +745,15 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     trigger: { type: 'word', value: 'stats', timing: 'word_submission' },
     target: 'player-stats'
   },
+  {
+    id: 'unlock_word_paths',
+    category: 'mechanic',
+    itemId: 'word-paths',
+    name: 'Paths',
+    description: 'Reveals the "paths" menu item, letting you explore your local word path graph, by beating the Expert Bot',
+    trigger: { type: 'achievement', value: 'beat_expert_bot', timing: 'game_completion' },
+    target: 'word-paths'
+  },
 
   // Bot unlocks - mixed triggers (achievements and words)
   {
@@ -821,6 +830,56 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     description: 'Unlock the Grinchbot by playing STINK, STANK, STUNK in order',
     trigger: { type: 'word_sequence', sequence: ['STINK', 'STANK', 'STUNK'] },
     target: 'grinch-bot'
+  },
+
+  // Beat the Grinchbot → unlock canonical Dr. Seuss words as playable
+  // dictionary words in all game modes. Invented Seuss words remain locked.
+  {
+    id: 'unlock_seuss_canonical_words',
+    category: 'mechanic',
+    name: 'Dr. Seuss Words',
+    description: 'Unlock canonical Dr. Seuss words by beating the Grinchbot',
+    trigger: { type: 'achievement', value: 'beat_grinch_bot', timing: 'game_completion' },
+    target: 'seuss-canonical-words'
+  },
+
+  // "GUS" boss battle chain - encounter-only (not permanently unlocked by
+  // playing GUS; that just starts a single, retryable chance). Permanently
+  // unlocking boss-bot as a playable bot AND the three boss themes only
+  // happens after beating the whole chain (the gigaboss). The transient battle
+  // state machine itself lives in App.tsx / src/data/bossBattle.ts.
+  // Boss bot as a playable opponent + the three escalating boss themes:
+  {
+    id: 'unlock_boss_bot_playable',
+    category: 'bot',
+    name: 'Boss Bot',
+    description: 'Unlocked by beating gigabossbot - the final boss of the GUS chain',
+    trigger: { type: 'achievement', value: 'beat_giga_boss_bot', timing: 'game_completion' },
+    target: 'boss-bot'
+  },
+  {
+    id: 'unlock_boss_theme',
+    category: 'theme',
+    name: 'Boss Theme',
+    description: 'Unlocked by beating gigabossbot',
+    trigger: { type: 'achievement', value: 'beat_giga_boss_bot', timing: 'game_completion' },
+    target: 'boss'
+  },
+  {
+    id: 'unlock_megaboss_theme',
+    category: 'theme',
+    name: 'Megaboss Theme',
+    description: 'Unlocked by beating gigabossbot',
+    trigger: { type: 'achievement', value: 'beat_giga_boss_bot', timing: 'game_completion' },
+    target: 'megaboss'
+  },
+  {
+    id: 'unlock_gigaboss_theme',
+    category: 'theme',
+    name: 'Gigaboss Theme',
+    description: 'Unlocked by beating gigabossbot',
+    trigger: { type: 'achievement', value: 'beat_giga_boss_bot', timing: 'game_completion' },
+    target: 'gigaboss'
   }
 ];
 

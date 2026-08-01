@@ -5,22 +5,31 @@
  * path graph (every word they've ever seen, connected by moves that
  * actually changed the word). Two modes:
  *
- *  - "typing": the player builds a word letter-by-letter with the same
- *    alphabet grid used in-game. As soon as a word they've seen is typed,
- *    its connected words are listed below it.
+ *  - "typing": the player types a word with the device's own keyboard. As
+ *    soon as a word they've seen is typed, its connected words are listed
+ *    below it.
  *  - "browsing": after tapping a connected word from the list, that word
  *    becomes the active word (its own connections are listed below it in
  *    turn). An X below the active word clears it and returns to typing mode.
  */
 
-import React, { useState, useCallback } from 'react';
-import { AlphabetGrid } from '../game/AlphabetGrid';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { WordBuilder } from '../game/WordBuilder';
-import { CurrentWord } from '../game/CurrentWord';
 import { useWordPathGraph } from '../../hooks/useWordPathGraph';
 import { triggerHapticFeedback } from '../../utils/haptics';
 import { triggerSoundFeedback } from '../../utils/sound';
+import { calculateScore } from '../../../packages/engine/scoring';
 import './WordPathExplorer.css';
+
+/** Builds the +/-/~ action-icon string (add/remove/rearrange) for the move from `fromWord` to `toWord`, matching the icons shown during gameplay (see `ScoreDisplay`). */
+function getActionIcons(fromWord: string, toWord: string): string {
+  const { actions } = calculateScore(fromWord, toWord);
+  const icons: string[] = [];
+  if (actions.some(action => action.type === 'rearrange')) icons.push('~');
+  if (actions.some(action => action.type === 'remove')) icons.push('-');
+  if (actions.some(action => action.type === 'add')) icons.push('+');
+  return icons.join(' ');
+}
 
 export interface WordPathExplorerProps {
   isVisible: boolean;
@@ -33,21 +42,17 @@ export const WordPathExplorer: React.FC<WordPathExplorerProps> = ({ isVisible, o
   const { hasSeenWord, getConnectedWords } = useWordPathGraph();
   const [word, setWord] = useState('');
   const [mode, setMode] = useState<'typing' | 'browsing'>('typing');
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleLetterClick = useCallback((letter: string) => {
-    setWord(prev => (prev.length < MAX_WORD_LENGTH ? prev + letter : prev));
-    triggerHapticFeedback('add');
-    triggerSoundFeedback('add');
-  }, []);
+  useEffect(() => {
+    if (isVisible && mode === 'typing') {
+      inputRef.current?.focus();
+    }
+  }, [isVisible, mode]);
 
-  const handleLetterRemove = useCallback((info: { index: number }) => {
-    setWord(prev => {
-      const letters = prev.split('');
-      letters.splice(info.index, 1);
-      return letters.join('');
-    });
-    triggerHapticFeedback('remove');
-    triggerSoundFeedback('remove');
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const sanitized = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, MAX_WORD_LENGTH);
+    setWord(sanitized);
   }, []);
 
   const handleSelectConnectedWord = useCallback((connectedWord: string) => {
@@ -81,20 +86,24 @@ export const WordPathExplorer: React.FC<WordPathExplorerProps> = ({ isVisible, o
       className="word-path-explorer"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="word-path-explorer-title"
+      aria-label="Word Path Explorer"
     >
       <div className="word-path-explorer__content">
-        <h2 id="word-path-explorer-title" className="word-path-explorer__title">
-          word paths
-        </h2>
-
         <div className="word-path-explorer__word-display">
-          {mode === 'browsing' ? (
-            <CurrentWord word={word} />
-          ) : (
-            <WordBuilder
-              currentWord={word}
-              onLetterClick={handleLetterRemove}
+          <WordBuilder currentWord={word} />
+
+          {mode === 'typing' && (
+            <input
+              ref={inputRef}
+              className="word-path-explorer__input"
+              type="text"
+              inputMode="text"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              value={word}
+              onChange={handleInputChange}
+              aria-label="Type a word"
             />
           )}
         </div>
@@ -125,23 +134,15 @@ export const WordPathExplorer: React.FC<WordPathExplorerProps> = ({ isVisible, o
                     onClick={() => handleSelectConnectedWord(connectedWord)}
                   >
                     {connectedWord}
+                    <span className="word-path-explorer__connection-icons">
+                      {getActionIcons(trimmedWord, connectedWord)}
+                    </span>
                   </button>
                 </li>
               ))}
             </ul>
           )}
         </div>
-
-        {mode === 'typing' && (
-          <div className="word-path-explorer__grid">
-            <AlphabetGrid
-              letterStates={[]}
-              onLetterClick={handleLetterClick}
-              onActionClick={() => {}}
-              enableDrag={false}
-            />
-          </div>
-        )}
       </div>
 
       <button

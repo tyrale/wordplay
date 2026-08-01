@@ -19,6 +19,8 @@ export interface ValidationOptions {
   allowProfanity?: boolean;
   /** Allow Dr. Seuss dictionary words (canonical + invented). Used when the Grinchbot is active. */
   allowSeuss?: boolean;
+  /** Allow canonical Dr. Seuss words only (not invented). Unlocked by beating the Grinchbot. */
+  allowSeussCanonical?: boolean;
   checkLength?: boolean;
   previousWord?: string;
 }
@@ -90,6 +92,7 @@ export function validateWordWithDependencies(
     allowSlang = true,
     allowProperNouns = true,
     allowSeuss = false,
+    allowSeussCanonical = false,
     checkLength = true,
     previousWord
   } = options;
@@ -162,7 +165,9 @@ export function validateWordWithDependencies(
   const isSlang = wordData.slangWords.has(normalizedWord);
   const isProperNoun = wordData.properNounWords.has(normalizedWord);
   const isProfanity = wordData.profanityWords.has(normalizedWord);
-  const isSeuss = allowSeuss && (wordData.seussCanonicalWords.has(normalizedWord) || wordData.seussInventedWords.has(normalizedWord));
+  const isSeussCanonical = wordData.seussCanonicalWords.has(normalizedWord);
+  const isSeussInvented = wordData.seussInventedWords.has(normalizedWord);
+  const isSeuss = (allowSeuss && (isSeussCanonical || isSeussInvented)) || (allowSeussCanonical && isSeussCanonical);
 
   // Word must be in dictionary, accepted slang, an accepted common proper noun, or (if unlocked) a Seuss word
   if (!isInEnable && !(allowSlang && isSlang) && !(allowProperNouns && isProperNoun) && !isSeuss) {
