@@ -152,7 +152,7 @@ export const winterTheme = createTheme("winter", ["#EAEBED", "#006989", "#A3BAC3
 export const yellowTheme = createTheme("yellow", ["#ffffff", "#D97706", "#FCD34D"]);
 
 // Dr. Seuss "Grinch" theme - Grinch green with red Santa accents
-export const grinchTheme = createTheme("grinch", ["#F7F7E8", "#1E6B3A", "#C72B29"]);
+export const grinchTheme = createTheme("grinch", ["#C72B29", "#1E6B3A", "#F7F7E8"]);
 
 // "Boss battle" themes - unlocked by playing GUS and beating the boss chain.
 // boss: a normal 3-color gray/black/red theme. megaboss and gigaboss share the

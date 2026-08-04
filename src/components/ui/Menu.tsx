@@ -24,6 +24,7 @@ interface MenuTier2Item {
   onClick?: () => void;
   theme?: GameTheme; // For theme items, store the theme object
   isLocked?: boolean; // Grayed-out '????' preview for a not-yet-unlocked item
+  isPermanentUnlock?: boolean; // Unlocked mechanic with no on/off toggle - shown with a checkmark instead
 }
 
 // Full list of mechanic ids that can exist (excludes 'dark-mode', which lives under the themes section)
@@ -32,6 +33,17 @@ const ALL_MECHANIC_IDS = ['vanity-filter', '3-letter-start', '5-letter-start', '
 // Mechanic IDs that control the round length (number of turns) - mutually
 // exclusive, unlike other mechanics, so only one can be selected at a time
 const ROUND_LENGTH_MECHANIC_IDS = new Set(['round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100']);
+
+// "dark-mode" is a mechanic-category unlock but lives under the themes
+// section instead of the mechanics section.
+const DARK_MODE_MECHANIC_ID = 'dark-mode';
+
+// Mechanic-category unlocks that are permanent once unlocked - there's no
+// on/off state to toggle, so they're listed under mechanics as plain
+// (non-toggle) items rather than as a switch. Order here controls their
+// display order under mechanics; player-stats and word-paths are listed
+// first since they also act as shortcuts to their own overlays.
+const PERMANENT_MECHANIC_IDS = ['player-stats', 'word-paths', 'zen-mode', 'unlock-counter', 'community-stats'];
 
 // Extracts the numeric turn count from a round-length mechanic id (e.g. 'round-length-10' -> 10)
 const getRoundLengthValue = (mechanicId: string): number => parseInt(mechanicId.replace('round-length-', ''), 10);
@@ -59,6 +71,8 @@ interface MenuTier1Item {
   title: string;
   children?: MenuTier2Item[]; // Made optional for standalone tier 1 items
   onClick?: () => void;
+  /** "N of N unlocked" count shown to the left of the label, in the accent color */
+  count?: { unlocked: number; total: number };
 }
 
 // Map mechanic IDs to display names
@@ -79,7 +93,12 @@ const mechanicDisplayNames: Record<string, string> = {
   'round-length-30': '30 turn rounds',
   'round-length-40': '40 turn rounds',
   'round-length-50': '50 turn rounds',
-  'round-length-100': '100 turn rounds'
+  'round-length-100': '100 turn rounds',
+  'player-stats': 'stats',
+  'word-paths': 'paths',
+  'zen-mode': 'zen mode',
+  'unlock-counter': 'unlock counter',
+  'community-stats': 'community stats'
 };
 
 // Updated menu structure based on requirements and unlock state
@@ -99,9 +118,7 @@ const getMenuItems = (
   vanityFilterOn: boolean = true,
   isMechanicOn: (mechanicId: string) => boolean = () => true,
   revealedCategories: string[] = [],
-  selectedRoundLength: number = 0,
-  isPlayerStatsUnlocked: boolean = false,
-  isWordPathsUnlocked: boolean = false
+  selectedRoundLength: number = 0
 ): MenuTier1Item[] => {
   // Locked theme previews - only computed once 'themes' has been revealed
   const lockedThemeItems: MenuTier2Item[] = revealedCategories.includes('themes')
@@ -163,8 +180,9 @@ const getMenuItems = (
   {
     id: 'themes',
     title: 'themes', 
+    count: { unlocked: availableThemes.length, total: ALL_THEMES.length },
     children: [
-      ...(unlockedMechanics.includes('dark-mode') ? [{ id: 'inverted', title: 'dark mode', isSelected: isInverted }] : []),
+      ...(unlockedMechanics.includes(DARK_MODE_MECHANIC_ID) ? [{ id: 'inverted', title: 'dark mode', isSelected: isInverted }] : []),
       ...availableThemes.map(theme => ({
         id: theme.name.toLowerCase().replace(/\s+/g, '-'),
         title: theme.name.toLowerCase(),
@@ -176,11 +194,29 @@ const getMenuItems = (
   },
   // Show mechanics section if there are unlocked mechanics (excluding dark mode,
   // which lives under the themes section instead) or if locked previews are revealed
-  ...(unlockedMechanics.filter(id => id !== 'dark-mode' && id !== 'unlock-counter' && id !== 'community-stats' && id !== 'player-stats' && id !== 'word-paths').length > 0 || lockedMechanicItems.length > 0 ? [{
+  ...(unlockedMechanics.filter(id => id !== DARK_MODE_MECHANIC_ID).length > 0 || lockedMechanicItems.length > 0 ? [{
     id: 'mechanics',
     title: 'mechanics',
+    count: {
+      unlocked: unlockedMechanics.filter(id => id !== DARK_MODE_MECHANIC_ID).length,
+      total: ALL_MECHANIC_IDS.length + PERMANENT_MECHANIC_IDS.length
+    },
     children: [
-      ...unlockedMechanics.filter(mechanicId => mechanicId !== 'dark-mode' && mechanicId !== 'unlock-counter' && mechanicId !== 'community-stats' && mechanicId !== 'player-stats' && mechanicId !== 'word-paths').map(mechanicId => {
+      // Permanent unlocks (no on/off state) are listed first, plain - no toggle
+      ...PERMANENT_MECHANIC_IDS
+        .filter(mechanicId => unlockedMechanics.includes(mechanicId))
+        .map(mechanicId => ({
+          id: mechanicId,
+          title: getMechanicTitle(mechanicId),
+          isPermanentUnlock: true
+        })),
+      ...unlockedMechanics
+        .filter(mechanicId => mechanicId !== DARK_MODE_MECHANIC_ID && !PERMANENT_MECHANIC_IDS.includes(mechanicId))
+        // Sort by ALL_MECHANIC_IDS' order (grouped logically: filter, letter-start
+        // lengths, gameplay modifiers, round lengths) instead of unlock order,
+        // so the menu doesn't reshuffle based on the order mechanics were found.
+        .sort((a, b) => ALL_MECHANIC_IDS.indexOf(a) - ALL_MECHANIC_IDS.indexOf(b))
+        .map(mechanicId => {
         // Special handling for vanity filter - make it a toggle
         if (mechanicId === 'vanity-filter') {
           return {
@@ -211,6 +247,7 @@ const getMenuItems = (
   ...(availableBots.length > 0 || lockedBotItems.length > 0 ? [{
     id: 'bots',
     title: 'bots',
+    count: { unlocked: availableBots.length, total: getVisibleBots().length },
     children: [
       ...availableBots.map((botId: string) => ({
         id: botId,
@@ -219,11 +256,6 @@ const getMenuItems = (
       ...lockedBotItems
     ]
   }] : []),
-  ...(isWordPathsUnlocked ? [{
-    id: 'word-paths',
-    title: 'paths'
-    // No children - opens the Word Path Explorer overlay directly
-  }] : []),
   {
     id: 'about',
     title: 'about',
@@ -231,7 +263,6 @@ const getMenuItems = (
       { id: 'the-basics', title: 'the basics' },
       { id: 'dictionaries', title: 'dictionaries' },
       { id: 'thoughts', title: 'thoughts' },
-      ...(isPlayerStatsUnlocked ? [{ id: 'stats', title: 'stats' }] : []),
       { id: 'reset-unlocks', title: 'reset unlocks (debug)' },
     ]
   },
@@ -277,7 +308,7 @@ export const Menu: React.FC<MenuProps> = ({
   const { currentTheme, setTheme, isInverted, toggleInverted } = useTheme();
   
   // Get unlock state
-  const { getUnlockedItems, resetUnlocksToFresh, isLoading, isUnlocked, getUnlockProgress } = useUnlockSystem();
+  const { getUnlockedItems, resetUnlocksToFresh, isLoading, isUnlocked } = useUnlockSystem();
   
   // Get vanity filter state
   const { isVanityFilterUnlocked, isVanityFilterOn, toggleVanityFilter } = useVanityFilter();
@@ -298,17 +329,9 @@ export const Menu: React.FC<MenuProps> = ({
   // Filter themes based on unlock state
   const unlockedThemes = useUnlockedThemes({ unlockedThemes: unlockedThemeIds });
 
-  const isPlayerStatsUnlocked = isUnlocked('mechanic', 'player-stats');
+  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn(), isMechanicOn, revealedCategories, roundLength);
 
-  const isWordPathsUnlocked = isUnlocked('mechanic', 'word-paths');
-
-  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn(), isMechanicOn, revealedCategories, roundLength, isPlayerStatsUnlocked, isWordPathsUnlocked);
-
-  // "unlock" mechanic - shows a small "x/x unlocked" progress indicator under home
-  const isUnlockCounterOn = isUnlocked('mechanic', 'unlock-counter');
-  const unlockProgress = getUnlockProgress();
-
-  // "world" mechanic - shows a second "x/x found worldwide" progress indicator under home
+  // "world" mechanic - shows a "x/x found worldwide" progress indicator under home
   const isCommunityStatsOn = isUnlocked('mechanic', 'community-stats');
   const communityProgress = useCommunityUnlockStats(isCommunityStatsOn);
 
@@ -343,12 +366,6 @@ export const Menu: React.FC<MenuProps> = ({
       return;
     }
 
-    if (itemId === 'word-paths') {
-      setIsWordPathsOpen(true);
-      handleClose(); // Close menu behind the overlay
-      return;
-    }
-    
     // For items with children, toggle expansion
     setExpandedItem(prevExpanded => 
       prevExpanded === itemId ? null : itemId
@@ -435,10 +452,6 @@ export const Menu: React.FC<MenuProps> = ({
       // Show the thoughts overlay
       setIsThoughtsOpen(true);
       handleClose(); // Close menu behind the overlay
-    } else if (tier1Id === 'about' && tier2Id === 'stats') {
-      // Show the player stats overlay
-      setIsStatsOpen(true);
-      handleClose(); // Close menu behind the overlay
     } else if (tier1Id === 'about' && (tier2Id === 'debug' || tier2Id === 'debug-mode')) {
       // Open debug dialog
       onDebugOpen?.();
@@ -459,14 +472,26 @@ export const Menu: React.FC<MenuProps> = ({
       if (tier2Id === 'vanity-filter') {
         // Toggle vanity filter
         toggleVanityFilter();
+        // Don't close menu after toggle
       } else if (ROUND_LENGTH_MECHANIC_IDS.has(tier2Id)) {
         // Select this round length (mutually exclusive with other round lengths)
         setRoundLength(getRoundLengthValue(tier2Id));
+        // Don't close menu after selection
+      } else if (tier2Id === 'player-stats') {
+        // Show the player stats overlay
+        setIsStatsOpen(true);
+        handleClose(); // Close menu behind the overlay
+      } else if (tier2Id === 'word-paths') {
+        // Show the word path explorer overlay
+        setIsWordPathsOpen(true);
+        handleClose(); // Close menu behind the overlay
+      } else if (PERMANENT_MECHANIC_IDS.includes(tier2Id)) {
+        // Permanent unlocks (e.g. zen mode) have no on/off state - clicking does nothing
       } else {
         // Toggle the mechanic on/off
         toggleMechanic(tier2Id);
+        // Don't close menu after toggle
       }
-      // Don't close menu after toggle
     } else if (tier1Id === 'bots') {
       // Bot selection - this will trigger confirmation in App.tsx
       onStartGame?.('bot', tier2Id);
@@ -509,21 +534,13 @@ export const Menu: React.FC<MenuProps> = ({
                     color: tier1Item.id === 'resign' ? 'var(--theme-accent)' : undefined
                   }}
                 >
+                  {tier1Item.count && (
+                    <span className="menu-tier1-item__count">
+                      {tier1Item.count.unlocked}/{tier1Item.count.total}
+                    </span>
+                  )}
                   {renderVsWorldTitle(tier1Item.title)}
                 </button>
-
-                {tier1Item.id === 'home' && isUnlockCounterOn && (
-                  <div
-                    className={`menu-unlock-progress ${isClosing ? 'menu-unlock-progress--closing' : ''}`}
-                    style={{
-                      animationDelay: isClosing
-                        ? `${(menuItems.length - tier1Index - 1) * 0.05}s`
-                        : `${tier1Index * 0.1 + 0.05}s`
-                    }}
-                  >
-                    {unlockProgress.unlocked}/{unlockProgress.total} unlocked
-                  </div>
-                )}
 
                 {tier1Item.id === 'home' && isCommunityStatsOn && !communityProgress.isLoading && (
                   <div
@@ -531,7 +548,7 @@ export const Menu: React.FC<MenuProps> = ({
                     style={{
                       animationDelay: isClosing
                         ? `${(menuItems.length - tier1Index - 1) * 0.05}s`
-                        : `${tier1Index * 0.1 + (isUnlockCounterOn ? 0.1 : 0.05)}s`
+                        : `${tier1Index * 0.1 + 0.05}s`
                     }}
                   >
                     {communityProgress.unlocked}/{communityProgress.total} found worldwide
@@ -648,6 +665,10 @@ export const Menu: React.FC<MenuProps> = ({
                               <div className={`dark-mode-toggle ${tier2Item.isSelected ? 'dark-mode-toggle--active' : ''}`}>
                                 <div className="dark-mode-toggle__slider"></div>
                               </div>
+                            )}
+                            {/* Checkmark for permanent unlocks - no toggle, always on */}
+                            {tier2Item.isPermanentUnlock && (
+                              <span className="menu-tier2-item__checkmark">✓</span>
                             )}
                           </button>
                         );
