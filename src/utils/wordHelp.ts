@@ -139,7 +139,16 @@ async function fetchFromWiktionary(word: string, signal: AbortSignal): Promise<s
     const entries = data?.en;
     if (!Array.isArray(entries)) return null;
 
-    for (const entry of entries) {
+    // Wiktionary's "en" bucket includes entries for words in *other* languages
+    // that happen to use Latin script (e.g. "las" is also a Catalan adjective
+    // and a Translingual ISO 639-3 code). Prefer entries whose `language` is
+    // actually English so we don't surface a foreign-language definition.
+    const englishFirst = [
+      ...entries.filter((entry) => entry?.language === 'English'),
+      ...entries.filter((entry) => entry?.language !== 'English')
+    ];
+
+    for (const entry of englishFirst) {
       const rawDefinition = entry?.definitions?.[0]?.definition;
       if (typeof rawDefinition === 'string') {
         const cleaned = stripHtml(rawDefinition);
