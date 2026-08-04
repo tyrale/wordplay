@@ -21,10 +21,11 @@
   padding: var(--spacing-lg);
 }
 
-/* Line stack - 105% viewport width so text slightly overlaps the edges */
+/* Line stack - 105% of the app frame width so text slightly overlaps the
+   edges (cqw resolves against the 430px phone frame, not the full viewport). */
 .alert-overlay__lines {
-  width: 105vw;
-  max-width: 105vw;
+  width: 105cqw;
+  max-width: 105cqw;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -34,7 +35,7 @@
 .alert-overlay__line {
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: 14vw;
+  font-size: 14cqw;
   line-height: 0.8;
   color: var(--theme-accent);
   text-align: center;
@@ -68,7 +69,7 @@
 /* Dictionary definition line — normal case/style to read naturally as a sentence */
 .alert-overlay__meta-definition {
   margin-top: var(--spacing-sm);
-  max-width: 80vw;
+  max-width: 80cqw;
   text-transform: none;
   font-style: italic;
   opacity: 0.75;
@@ -87,7 +88,7 @@
    Readable as a sentence — overrides the parent's uppercase transform. */
 .alert-overlay__meta-variant-note {
   margin-top: var(--spacing-sm);
-  max-width: 80vw;
+  max-width: 80cqw;
   text-transform: none;
   font-style: normal;
   opacity: 0.9;

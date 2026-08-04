@@ -301,14 +301,22 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
     return `Letter ${content}`;
   };
 
-  // Rendered via a portal directly into `document.body` so this overlay's
-  // `position: fixed` elements anchor to the true viewport. Without this,
-  // any ancestor with a CSS `transform` (e.g. `.interactive-game__grid-positioned`,
-  // which uses `transform: translateX(-50%)` to center the normal grid)
-  // becomes the containing block for `position: fixed` descendants per the
-  // CSS spec - collapsing this overlay into that ancestor's box (which has
-  // no explicit height, so it shrinks to 0) and sending every letter tile
-  // far below the actual visible screen.
+  // Rendered via a portal into `#root` (falling back to `document.body` if
+  // `#root` isn't present). Portaling out of the normal React subtree is still
+  // required: any ancestor with a CSS `transform` (e.g.
+  // `.interactive-game__grid-positioned`, which uses `transform: translateX(-50%)`
+  // to center the normal grid) becomes the containing block for `position: fixed`
+  // descendants per the CSS spec - collapsing this overlay into that ancestor's
+  // box (which has no explicit height, so it shrinks to 0) and sending every
+  // letter tile far below the actual visible screen.
+  //
+  // Targeting `#root` instead of `document.body` keeps the overlay inside the
+  // phone-shaped app frame on desktop: `#root` is the frame (430px, centered,
+  // and given `transform: translateZ(0)` on wide screens so it becomes the
+  // containing block for these fixed tiles). On mobile `#root` has no transform
+  // and fills the viewport, so `position: fixed; inset: 0` resolves against the
+  // viewport exactly as it did when portaled to `document.body`.
+  const portalTarget = document.getElementById('root') ?? document.body;
   return createPortal(
     <div ref={containerRef} className="gravity-letter-grid" role="grid" aria-label="Alphabet grid (gravity mode)">
       {ALL_TILES.map((content) => {
@@ -345,6 +353,6 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
         );
       })}
     </div>,
-    document.body
+    portalTarget
   );
 };

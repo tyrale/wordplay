@@ -72,8 +72,18 @@ function useFitLineFontSizes(lines: string[], containerRef: React.RefObject<HTML
 
       ctx.font = `${fontWeight} ${MEASURE_FONT_SIZE}px ${fontFamily}`;
 
-      const targetWidthPx = window.innerWidth * TARGET_WIDTH_VW;
-      const maxFontSizePx = window.innerHeight * MAX_FONT_SIZE_VH_FRACTION;
+      // Measure the overlay (the container's parent .alert-overlay) instead of
+      // the browser viewport. On desktop the app is constrained to a 430px phone
+      // frame, so window.innerWidth would be the full monitor width and produce
+      // oversized text. .alert-overlay is position:fixed; inset:0, so its
+      // clientWidth equals the frame width on desktop and the viewport width on
+      // mobile - matching the old behavior on phones while fixing desktop.
+      const overlayEl = container.parentElement;
+      const frameWidth = overlayEl?.clientWidth ?? window.innerWidth;
+      const frameHeight = overlayEl?.clientHeight ?? window.innerHeight;
+
+      const targetWidthPx = frameWidth * TARGET_WIDTH_VW;
+      const maxFontSizePx = frameHeight * MAX_FONT_SIZE_VH_FRACTION;
 
       const sizes = lines.map(line => {
         const measuredWidth = ctx.measureText(line).width;

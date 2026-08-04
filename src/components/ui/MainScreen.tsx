@@ -7,7 +7,7 @@ import { triggerSoundFeedback } from '../../utils/sound';
 import './MainScreen.css';
 
 interface MainScreenProps {
-  onStartGame: (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => void;
+  onStartGame: (gameType: 'bot' | 'challenge' | 'tutorial' | 'zen', botId?: string) => void;
   onStartMultiplayer?: () => void;
 }
 
@@ -17,11 +17,15 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
   const [isVsHumanLockedOpen, setIsVsHumanLockedOpen] = useState(false);
   
   // Get unlock state
-  const { getUnlockedItems } = useUnlockSystem();
+  const { getUnlockedItems, isUnlocked } = useUnlockSystem();
   const unlockedBotIds = getUnlockedItems('bot');
   
   // Filter bots based on unlock state
   const availableBots = getAllBots().filter(bot => unlockedBotIds.includes(bot.id));
+
+  // Zen mode ("vsnobody"): a free-play, score-free, opponent-free mode.
+  // Unlocked by playing the word "zen" (see unlock-definitions.ts).
+  const isZenModeUnlocked = isUnlocked('mechanic', 'zen-mode');
 
   const handleGameTypeSelect = useCallback((gameType: string) => {
     triggerSoundFeedback('click');
@@ -29,6 +33,8 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
       setCurrentView('bots');
     } else if (gameType === 'challenge') {
       onStartGame('challenge');
+    } else if (gameType === 'zen') {
+      onStartGame('zen');
     } else if (gameType === 'vs-human') {
       if (onStartMultiplayer) {
         onStartMultiplayer();
@@ -102,6 +108,14 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
             >
               <span className="main-screen__vs-text">vs</span> bot
             </button>
+            {isZenModeUnlocked && (
+              <button
+                className="main-screen__game-option"
+                onClick={() => handleGameTypeSelect('zen')}
+              >
+                <span className="main-screen__vs-text">vs</span>nobody
+              </button>
+            )}
           </div>
         )}
 

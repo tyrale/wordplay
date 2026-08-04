@@ -112,7 +112,7 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .word-trail__container {
     gap: calc(var(--spacing-xs) / 2);
   }
@@ -127,7 +127,7 @@
   }
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .word-trail__word {
     font-size: var(--theme-font-size-sm);
   }
@@ -318,14 +318,6 @@
   user-select: none;
 }
 
-.word-trail__arrow--right {
-  /* Removed margin-left */
-}
-
-.word-trail__arrow--left {
-  /* Removed margin-right */
-}
-
 /* Challenge mode start and target word styling */
 .word-trail__word--start,
 .word-trail__word--target {
@@ -340,7 +332,7 @@
 }
 
 /* Responsive adjustments for challenge mode */
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .word-trail__challenge-container {
     padding: 0; /* No padding needed with calc() positioning */
   }
@@ -358,7 +350,7 @@
   }
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .word-trail__challenge-container {
     padding: 0; /* No padding needed with calc() positioning */
   }

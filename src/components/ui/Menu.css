@@ -363,7 +363,7 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .menu-content {
     padding: var(--spacing-sm, 8px);
     padding-bottom: var(--spacing-md, 20px);
@@ -383,7 +383,7 @@
   }
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .menu-tier1-item {
     font-size: 20px;
   }

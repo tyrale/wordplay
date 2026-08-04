@@ -145,66 +145,58 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
   }
 
   /**
-   * Generate start and target words for a given date
+   * Generate start and target words for a given date.
+   *
+   * MUST be fully deterministic: the same dateString has to produce the same
+   * pair on every client worldwide. That means every pick here has to come
+   * from indexing a stable (sorted), fully-enumerated candidate list with the
+   * seeded RNG - never from dictionary.getRandomWordByLength(), which is
+   * backed by Math.random() and would silently make the challenge different
+   * per browser/session even on the same UTC date.
    */
   function generateDailyWords(dateString: string): { startWord: string; targetWord: string } {
     const seed = generateDailySeed(dateString);
     const rng = new SeededRandom(seed);
-    
-    // Get a random start word (5 letters only for optimal difficulty balance)
+
+    // Get a start word (5 letters only for optimal difficulty balance),
+    // deterministically indexed from every valid (no repeating letters)
+    // dictionary word of that length, sorted for a stable order.
     const startLength = 5;
-    
-    // For testing with mock dictionary, use different selection method
-    let startWord: string | null = null;
-    let attempts = 0;
-    const maxAttempts = 50; // Increased attempts due to additional constraint
-    
-    // Try to get a valid start word (no repeating letters)
-    while (!startWord && attempts < maxAttempts) {
-      const candidateWord = dictionary.getRandomWordByLength(startLength);
-      
-      if (candidateWord && isValidStartWord(candidateWord)) {
-        // Use the RNG to vary selection even with deterministic mock
-        if (rng.next() < 0.7 || attempts >= maxAttempts - 5) {
-          startWord = candidateWord;
-        }
-        // Otherwise skip this word to get variation
-      }
-      
-      attempts++;
-    }
-    
+    const startCandidates = dictionary.getWordsByLength(startLength)
+      .map(word => word.toUpperCase())
+      .filter(isValidStartWord)
+      .sort();
+
+    let startWord: string | null = startCandidates.length > 0
+      ? startCandidates[rng.nextInt(0, startCandidates.length - 1)]
+      : null;
+
     if (!startWord) {
-      // Fallback words if random generation fails - all 5 letters, no repeating letters
+      // Fallback words if the dictionary has no valid 5-letter words - all
+      // 5 letters, no repeating letters.
       const fallbacks = ['GAMES', 'WORDS', 'PLAYS', 'TIMES', 'MAKES', 'WORLD', 'HOUSE', 'LIGHT', 'SOUND', 'NIGHT'];
       startWord = fallbacks[rng.nextInt(0, fallbacks.length - 1)];
     }
-    
-    // Generate target word with new constraints:
+
+    // Generate target word with constraints:
     // 1. Must be ≥5 letters
     // 2. Must have ≤2 letters in common with start word
     const targetLength = startWord.length + rng.nextInt(-1, 1);
     const minTargetLength = Math.max(5, targetLength); // Enforce minimum 5 letters
     const maxTargetLength = Math.min(8, targetLength);
     const finalTargetLength = Math.max(minTargetLength, Math.min(maxTargetLength, targetLength));
-    
-    let targetWord: string | null = null;
-    attempts = 0;
-    const maxTargetAttempts = 50; // Increased attempts for additional constraints
-    
-    // Try to get a valid target word with all constraints
-    while ((!targetWord || !isValidTargetWord(startWord, targetWord)) && attempts < maxTargetAttempts) {
-      targetWord = dictionary.getRandomWordByLength(finalTargetLength);
-      attempts++;
-      
-      // Use the RNG to vary selection
-      if (targetWord && isValidTargetWord(startWord, targetWord) && rng.next() < 0.3 && attempts < maxTargetAttempts) {
-        targetWord = null; // Skip this word sometimes to get variation
-      }
-    }
-    
-    if (!targetWord || !isValidTargetWord(startWord, targetWord)) {
-      // Enhanced fallback logic with words that meet new criteria
+
+    const targetCandidates = dictionary.getWordsByLength(finalTargetLength)
+      .map(word => word.toUpperCase())
+      .filter(word => isValidTargetWord(startWord as string, word))
+      .sort();
+
+    let targetWord: string | null = targetCandidates.length > 0
+      ? targetCandidates[rng.nextInt(0, targetCandidates.length - 1)]
+      : null;
+
+    if (!targetWord) {
+      // Enhanced fallback logic with words that meet the constraints above
       const fallbacks = getFallbackTargetWords(startWord, finalTargetLength);
       targetWord = fallbacks[rng.nextInt(0, fallbacks.length - 1)];
     }
@@ -302,13 +294,15 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
   }
 
   /**
-   * Get current date string in YYYY-MM-DD format
+   * Get current date string in YYYY-MM-DD format (UTC).
+   *
+   * UTC is used so the daily challenge is identical for every player worldwide
+   * and rolls over at 00:00 UTC, matching the UTC date the web hook passes in
+   * (new Date().toISOString().split('T')[0]). Using local time here would let
+   * players in different timezones see different challenges at the same instant.
    */
   function getCurrentDateString(): string {
-    const now = new Date();
-    return now.getFullYear() + '-' + 
-           String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-           String(now.getDate()).padStart(2, '0');
+    return new Date().toISOString().split('T')[0];
   }
 
   /**

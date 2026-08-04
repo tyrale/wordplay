@@ -10,6 +10,20 @@ import type { DictionaryEngine, UtilityDependencies } from './interfaces';
 // Mock dictionary for testing with call counter
 let mockCallCounter = 0;
 
+// Words by length, shared between getRandomWordByLength (intentionally
+// non-deterministic, mimics the real Math.random()-backed adapter) and
+// getWordsByLength (must be deterministic - same list every call, which is
+// what the daily challenge generator relies on).
+const MOCK_WORDS_BY_LENGTH: Record<number, string[]> = {
+  4: ['GAME', 'NAME', 'SAME', 'CAME', 'MAKE', 'TAKE', 'FAKE', 'TIME', 'LIME', 'LIFE', 'FILE', 'PILE', 'MILE'],
+  5: ['GAMES', 'GAMER', 'NAMES', 'MAKES', 'TAKES', 'TIMES', 'LIMES', 'FILES', 'PILES', 'MILES',
+      'QUICK', 'JUMPY', 'FRIZZ', 'BLITZ', 'WALTZ', 'QUIRK', 'ZINGY', 'PROXY', 'FUZZY', 'WHISK',
+      'JERKY', 'MIXED', 'VINYL', 'ZEBRA', 'HAPPY', 'WORLD', 'HOUSE', 'MOUSE', 'BROWN', 'CROWN'],
+  6: ['QUARTZ', 'FRIZZY', 'JOCKEY', 'WHISKY', 'ZEPHYR', 'OXYGEN', 'PYTHON', 'RHYTHM', 'SPHINX',
+      'FLYWAY', 'GIZMOS', 'HIJACK', 'JAUNTY', 'HOUSES', 'MOUSES', 'BROWNS', 'CROWNS'],
+  7: ['QUICKLY', 'FIZZING', 'JOCKEYS', 'WHISKEY', 'ZEPHYRS', 'PYTHONS', 'RHYTHMS', 'FLYWAYS']
+};
+
 const mockDictionary: DictionaryEngine = {
   validateWord: (word: string) => ({ isValid: true, word }),
   isValidDictionaryWord: (word: string) => {
@@ -29,19 +43,16 @@ const mockDictionary: DictionaryEngine = {
     return testWords.includes(word.toUpperCase());
   },
   getRandomWordByLength: (length: number) => {
-    const words = {
-      4: ['GAME', 'NAME', 'SAME', 'CAME', 'MAKE', 'TAKE', 'FAKE', 'TIME', 'LIME', 'LIFE', 'FILE', 'PILE', 'MILE'],
-      5: ['GAMES', 'GAMER', 'NAMES', 'MAKES', 'TAKES', 'TIMES', 'LIMES', 'FILES', 'PILES', 'MILES',
-          'QUICK', 'JUMPY', 'FRIZZ', 'BLITZ', 'WALTZ', 'QUIRK', 'ZINGY', 'PROXY', 'FUZZY', 'WHISK',
-          'JERKY', 'MIXED', 'VINYL', 'ZEBRA', 'HAPPY', 'WORLD', 'HOUSE', 'MOUSE', 'BROWN', 'CROWN'],
-      6: ['QUARTZ', 'FRIZZY', 'JOCKEY', 'WHISKY', 'ZEPHYR', 'OXYGEN', 'PYTHON', 'RHYTHM', 'SPHINX',
-          'FLYWAY', 'GIZMOS', 'HIJACK', 'JAUNTY', 'HOUSES', 'MOUSES', 'BROWNS', 'CROWNS'],
-      7: ['QUICKLY', 'FIZZING', 'JOCKEYS', 'WHISKEY', 'ZEPHYRS', 'PYTHONS', 'RHYTHMS', 'FLYWAYS']
-    };
-    const wordList = words[length as keyof typeof words] || [];
-    // Use a counter to vary word selection
+    const wordList = MOCK_WORDS_BY_LENGTH[length] || [];
+    // Use a counter to vary word selection - mimics the real adapter's
+    // Math.random()-backed selection being non-deterministic across calls.
     mockCallCounter++;
     return wordList.length > 0 ? wordList[mockCallCounter % wordList.length] : null;
+  },
+  // Deterministic: same length always returns the same list, which is what
+  // the daily challenge generator now relies on for cross-client consistency.
+  getWordsByLength: (length: number) => {
+    return [...(MOCK_WORDS_BY_LENGTH[length] || [])];
   },
   getDictionaryInfo: () => ({ wordCount: 50, isLoaded: true, loadTime: 100 })
 };
@@ -93,6 +104,41 @@ describe('Challenge Engine', () => {
       expect(challenge1.startWord).toBe(challenge2.startWord);
       expect(challenge1.targetWord).toBe(challenge2.targetWord);
       expect(challenge1.date).toBe(date);
+    });
+
+    test('should generate identical challenges across independent engine instances for the same date (worldwide consistency)', async () => {
+      // Regression test: the above test alone doesn't prove determinism,
+      // since the second call can just hit the same engine's cached/persisted
+      // state without regenerating anything. This simulates two separate
+      // browsers/sessions (independent storage, independent engine instance,
+      // no shared cache) requesting the same date's challenge for the first
+      // time, which is what must produce identical words worldwide.
+      const date = '2024-03-08';
+
+      const storageA = new Map<string, ChallengeState>();
+      const storageB = new Map<string, ChallengeState>();
+
+      const engineA = createChallengeEngine({
+        dictionary: mockDictionary,
+        utilities: mockUtilities,
+        loadState: async (d: string) => storageA.get(d) || null,
+        saveState: async (s: ChallengeState) => { storageA.set(s.date, s); }
+      });
+      const engineB = createChallengeEngine({
+        dictionary: mockDictionary,
+        utilities: mockUtilities,
+        loadState: async (d: string) => storageB.get(d) || null,
+        saveState: async (s: ChallengeState) => { storageB.set(s.date, s); }
+      });
+
+      await engineA.initialize();
+      await engineB.initialize();
+
+      const challengeA = await engineA.getDailyChallengeState(date);
+      const challengeB = await engineB.getDailyChallengeState(date);
+
+      expect(challengeA.startWord).toBe(challengeB.startWord);
+      expect(challengeA.targetWord).toBe(challengeB.targetWord);
     });
 
     test('should generate different challenges for different dates', async () => {

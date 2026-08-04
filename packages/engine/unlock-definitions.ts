@@ -754,6 +754,15 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     trigger: { type: 'achievement', value: 'beat_expert_bot', timing: 'game_completion' },
     target: 'word-paths'
   },
+  {
+    id: 'unlock_zen_mode',
+    category: 'mechanic',
+    itemId: 'zen-mode',
+    name: 'Zen Mode',
+    description: 'Reveals "vsnobody" on the main menu - a quiet, score-free, opponent-free way to play - by playing the word "zen"',
+    trigger: { type: 'word', value: 'zen', timing: 'word_submission' },
+    target: 'zen-mode'
+  },
 
   // Bot unlocks - mixed triggers (achievements and words)
   {

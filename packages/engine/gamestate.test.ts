@@ -60,6 +60,36 @@ describe('LocalGameStateManager', () => {
     });
   });
 
+  describe('Reset', () => {
+    it('resetGame() with no arguments should pick a fresh random word, not silently reuse the previous one forever', () => {
+      // Regression test: initializeGameState() writes whatever word it picks
+      // back into state.config.initialWord. A bare resetGame() used to reuse
+      // this.state.config as-is, so it kept seeing a truthy initialWord and
+      // never rolled a new one - every reset silently produced the exact
+      // same starting word forever.
+      const testAdapter2 = createTestAdapter();
+      const fourLetterWords = ['CATS', 'DOGS', 'BATS', 'RATS', 'HATS', 'MATS', 'FAST', 'LAST', 'GAME', 'NAME', 'SAME', 'CAME', 'FAME', 'TAME', 'LAME', 'DAME'];
+      fourLetterWords.forEach(word => testAdapter2.addWord(word));
+
+      // No explicit initialWord here - let the manager pick one randomly,
+      // matching how a real vs-bot game or zen mode session is created.
+      const manager = new LocalGameStateManager(testAdapter2.getGameDependencies(), { allowBotPlayer: false });
+
+      const seenWords = new Set<string>();
+      for (let i = 0; i < 20; i++) {
+        manager.resetGame();
+        seenWords.add(manager.getState().currentWord);
+      }
+
+      expect(seenWords.size).toBeGreaterThan(1);
+    });
+
+    it('resetGame(newConfig) with an explicit initialWord should still respect it (existing behavior)', () => {
+      gameManager.resetGame({ initialWord: 'CAT', allowBotPlayer: true });
+      expect(gameManager.getState().currentWord).toBe('CAT');
+    });
+  });
+
   describe('Key Letters and Locking', () => {
     it('should lock a used key letter', () => {
       // Use a valid move: CAT -> CART (add R)

@@ -88,7 +88,21 @@ export function useChallenge(): ChallengeHookState {
           getRandomWordByLength: (length: number) => {
             return gameAdapter.getDictionaryDependencies().getRandomWordByLength(length);
           },
-          
+
+          // Deterministic (no Math.random): the same dictionary snapshot
+          // filtered/sorted the same way on every client, so a seeded RNG
+          // index into this list picks the same word worldwide. Used by the
+          // challenge engine's daily start/target word selection - it must
+          // NOT go through getRandomWordByLength, which is intentionally
+          // randomized and would make the "same challenge for everyone"
+          // guarantee impossible.
+          getWordsByLength: (length: number) => {
+            const wordData = gameAdapter.getWordData();
+            return Array.from(wordData.enableWords)
+              .filter(word => word.length === length && !wordData.profanityWords.has(word))
+              .sort();
+          },
+
           getDictionaryInfo: () => {
             const status = gameAdapter.getDictionaryStatus();
             return {

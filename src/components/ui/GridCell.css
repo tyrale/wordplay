@@ -94,7 +94,7 @@
 /* Removed focus styles */
 
 /* Responsive sizing */
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .grid-cell {
     width: 96px;
     height: 96px;
@@ -110,7 +110,7 @@
   }
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .grid-cell {
     width: 60px;
     height: 60px;
@@ -150,11 +150,6 @@
 
 .grid-cell[draggable="true"]:active {
   cursor: grabbing;
-}
-
-/* Letter-specific styles */
-.grid-cell--letter {
-  /* Letter-specific styles */
 }
 
 /* Drag feedback states */

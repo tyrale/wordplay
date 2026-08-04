@@ -228,13 +228,13 @@
   font-size: 32px;
 }
 
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .interactive-game__word-trail-positioned .word-trail__word {
     font-size: 28px;
   }
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .interactive-game__word-trail-positioned .word-trail__word {
     font-size: 24px;
   }
@@ -278,13 +278,13 @@
 }
 
 /* Responsive sizing for word trail */
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .interactive-game__word-trail .word-trail__word {
     font-size: 28px;
   }
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .interactive-game__word-trail .word-trail__word {
     font-size: 24px;
   }
@@ -443,7 +443,7 @@
 }
 
 /* Responsive design */
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .interactive-game {
     padding: var(--spacing-sm);
   }
@@ -466,7 +466,7 @@
   }
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .interactive-game__word-builder {
     padding: var(--spacing-sm);
   }
@@ -478,47 +478,25 @@
 
 /* ===========================================================================
    Boss battle themes - "GUS" encounter
-   boss: a normal 3-color gray/black/red theme (no extra effect).
-   megaboss: adds a red outline to every alphabet-grid letter cell + the
-             word currently in play.
-   gigaboss: megaboss's red outline + an animated CSS/SVG monster-shadow
-             background + escalating procedural music (music handled in JS).
+   boss: a normal 3-color gray/black/red theme.
+   megaboss: same as boss - a normal 3-color theme, no extra effect.
+   gigaboss: red letters on black (from the GameTheme itself - see
+             src/types/theme.ts gigaBossTheme) with a darker red accent color,
+             PLUS an animated CSS/SVG monster-shadow background + escalating
+             procedural music (music handled in JS). No border/outline effect
+             on the letters - just plain color, same as any other theme.
    The base palette comes from the GameTheme objects in src/types/theme.ts;
-   these rules layer the extra visual effects on top, keyed off classes the
-   InteractiveGame root gets based on the active theme name.
+   these rules layer the extra visual effects (monster shadow) on top, keyed
+   off classes the InteractiveGame root gets based on the active theme name.
    ========================================================================= */
 
-/* Mega + Giga: red outline on alphabet-grid letter cells and the word in play.
-   Uses a CSS variable so the giga tier can intensify the glow. */
-.interactive-game--boss-mega,
-.interactive-game--boss-giga {
-  --boss-outline-color: #DC2626;
-  --boss-outline-width: 2px;
-  --boss-outline-glow: 0 0 0 rgba(220, 38, 38, 0);
-}
-
-.interactive-game--boss-giga {
-  --boss-outline-width: 3px;
-  --boss-outline-glow: 0 0 6px rgba(220, 38, 38, 0.55);
-}
-
-.interactive-game--boss-mega .grid-cell--letter,
-.interactive-game--boss-giga .grid-cell--letter {
-  border-color: var(--boss-outline-color);
-  border-width: var(--boss-outline-width);
-  box-shadow: var(--boss-outline-glow);
-}
-
-.interactive-game--boss-mega .word-builder__letter,
-.interactive-game--boss-giga .word-builder__letter {
-  border-color: var(--boss-outline-color);
-  border-width: var(--boss-outline-width);
-  box-shadow: var(--boss-outline-glow);
-}
-
-/* Gigaboss: animated monster-shadow background. A large, dark, blurred
-   silhouette that slowly breathes/sways behind the board. Pure CSS - no image
-   assets. Hidden for users who prefer reduced motion (see media query below). */
+/* Gigaboss old-school boss reveal. The background stays pure black (the giga
+   theme bg), but a "lightning strike" periodically flashes a gray layer behind
+   a flat 2D boss silhouette. The silhouette is solid black (same as the bg), so
+   it's invisible in the dark and only appears when the flash lights the
+   background - exactly like a lightning strike revealing a monster. Two faint
+   red glowing eyes are always barely visible so something feels present even in
+   the dark. Pure CSS/SVG, no image assets. */
 .boss-monster-bg {
   position: absolute;
   inset: 0;
@@ -527,45 +505,95 @@
   z-index: 0;
 }
 
-/* The monster is built from two stacked radial gradients shaped vaguely like
-   a hunched creature: a broad body and a head. Kept very dark + blurry so it
-   reads as a shadowy presence rather than a literal monster. */
-.boss-monster-bg__shadow {
+/* App-level variant: rendered by App.tsx behind the gigaboss advance alert
+   overlay (which lives outside the InteractiveGame frame), so it covers the
+   full viewport and sits behind the AlertOverlay (z-index 0; AlertOverlay is
+   position:fixed at a higher z). Centers the silhouette vertically. */
+.boss-monster-bg--app {
+  position: fixed;
+  z-index: 0;
+}
+
+/* Lightning flash layer - gray, sits BEHIND the silhouette so the flash lights
+   the background the silhouette is drawn against. Mostly transparent; flickers
+   on briefly every several seconds like a lightning strike. */
+.boss-monster-bg__lightning {
+  position: absolute;
+  inset: 0;
+  background: #6b6b78;
+  opacity: 0;
+  animation: boss-lightning 7s linear infinite;
+}
+
+/* Flat 2D boss silhouette - solid black, anchored to the bottom center, large.
+   Drawn as one SVG path (horns, head, hunched shoulders, body). Same black as
+   the giga bg so it's invisible until the flash reveals it. Sits above the
+   lightning layer. */
+.boss-monster-bg__silhouette {
   position: absolute;
   left: 50%;
-  bottom: -18%;
-  width: 140%;
-  height: 75%;
-  transform: translateX(-50%);
-  background:
-    radial-gradient(60% 70% at 50% 80%, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 70%),
-    radial-gradient(28% 38% at 50% 30%, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 72%),
-    radial-gradient(18% 18% at 38% 22%, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 70%),
-    radial-gradient(18% 18% at 62% 22%, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 70%);
-  filter: blur(8px);
-  opacity: 0.55;
-  animation: boss-monster-breathe 5.5s ease-in-out infinite;
-  transform-origin: 50% 100%;
+  top: 50%;
+  width: 75%;
+  max-width: 520px;
+  height: 78%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  overflow: visible;
+}
+
+/* Body fill - pure black so it vanishes into the black bg and only shows
+   against the lightning flash. */
+.boss-monster-bg__body {
+  fill: #000000;
+}
+
+/* Eyes: the same black body path is re-drawn here as eye-shaped cutouts with a
+   fill-rule evenodd effect via a separate path rendered ON TOP in dim red, so
+   two faint glowing eyes are always visible in the dark. They brighten during
+   the flash. */
+.boss-monster-bg__eyes {
+  fill: #b91c1c;
+  filter: drop-shadow(0 0 3px rgba(185, 28, 28, 0.8));
+  animation: boss-eyes-flicker 3.2s ease-in-out infinite;
 }
 
 /* Keep the board above the background. */
 .interactive-game--boss-giga .interactive-game__board,
 .interactive-game--boss-giga .score-bar {
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
-@keyframes boss-monster-breathe {
-  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.5; }
-  50%      { transform: translateX(-50%) scale(1.05); opacity: 0.62; }
+/* Lightning: long dark gap, then a quick strobe of gray flickers near the end
+   of each loop - reads like a lightning strike. The flash reveals the black
+   silhouette against the gray. */
+@keyframes boss-lightning {
+  0%, 90%, 100% { opacity: 0; }
+  91% { opacity: 0.9; }
+  92% { opacity: 0.05; }
+  93% { opacity: 0.75; }
+  94% { opacity: 0; }
+  95% { opacity: 0.6; }
+  96% { opacity: 0.1; }
+  97% { opacity: 0.45; }
+  98% { opacity: 0; }
 }
 
-/* Respect reduced motion: drop the animation (and dim the shadow) for users
-   who prefer reduced motion, while still leaving a static presence. */
+@keyframes boss-eyes-flicker {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.6; }
+}
+
+/* Respect reduced motion: drop the lightning + border pulse, leave a static
+   dim gray background + faint eyes so the boss is still subtly present. */
 @media (prefers-reduced-motion: reduce) {
-  .boss-monster-bg__shadow {
+  .boss-monster-bg__lightning {
     animation: none;
-    opacity: 0.4;
+    opacity: 0.15;
+  }
+  .boss-monster-bg__eyes {
+    animation: none;
+    opacity: 0.5;
   }
 }
 

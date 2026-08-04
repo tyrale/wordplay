@@ -664,7 +664,17 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * Reset game to initial state
    */
   public resetGame(newConfig?: GameConfig): void {
-        const configToUse = newConfig ? { ...this.state.config, ...newConfig } : this.state.config;
+    // Clear the previous game's initialWord before re-initializing. Without
+    // this, this.state.config.initialWord still holds whatever word
+    // initializeGameState() actually picked/used last time (it always writes
+    // the resolved word back into config), so a bare resetGame() with no
+    // arguments would see a truthy initialWord and skip picking a new random
+    // word - silently reusing the exact same starting word on every reset
+    // forever. Callers that want a specific word can still get one by
+    // passing it explicitly via newConfig (see gamestate.test.ts), which is
+    // applied after this clear and therefore takes precedence.
+    const baseConfig = { ...this.state.config, initialWord: undefined };
+    const configToUse = newConfig ? { ...baseConfig, ...newConfig } : baseConfig;
     this.state = this.initializeGameState(configToUse);
     this.botMoveInProgress = false; // Reset bot move flag
 

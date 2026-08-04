@@ -60,13 +60,13 @@
 }
 
 /* Responsive sizing */
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .menu-button {
     font-size: calc(var(--theme-font-size-md, 14px) * 1.2);
   }
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .menu-button {
     font-size: calc(var(--theme-font-size-sm, 12px) * 1.2);
   }

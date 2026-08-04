@@ -162,7 +162,9 @@ export const grinchTheme = createTheme("grinch", ["#F7F7E8", "#1E6B3A", "#C72B29
 // keyed off the theme name, not by the GameTheme object itself.
 export const bossTheme = createTheme("boss", ["#9CA3AF", "#000000", "#DC2626"]);
 export const megaBossTheme = createTheme("megaboss", ["#1F1F1F", "#9CA3AF", "#DC2626"]);
-export const gigaBossTheme = createTheme("gigaboss", ["#000000", "#6B7280", "#B91C1C"]);
+// Gigaboss: red letters on black, with a darker red accent (key letters/highlights)
+// for contrast against the letter color. No border/outline effect - just color.
+export const gigaBossTheme = createTheme("gigaboss", ["#000000", "#EF4444", "#7F1D1D"]);
 
 // Keep the original default theme for backwards compatibility
 export const defaultTheme: GameTheme = {

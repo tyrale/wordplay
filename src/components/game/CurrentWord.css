@@ -49,7 +49,7 @@
 }
 
 /* Responsive typography */
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .current-word {
     font-size: calc(var(--theme-font-size-xl) * 0.75);
     margin: var(--spacing-md, 20px) 0;

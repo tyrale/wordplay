@@ -2,8 +2,10 @@
 
 /* Base styles for the root container */
 #root {
-  /* Mobile-first approach: default to mobile styles */
-  max-width: 100vw;
+  /* Mobile-first approach: default to mobile styles.
+     Width/max-width is governed by src/index.css (full width on phones, a
+     centered 430px phone frame on desktop) - not set here to avoid overriding
+     it. */
   min-height: 100vh;
   margin: 0;
   padding: var(--spacing-md, 20px);
@@ -96,34 +98,10 @@ button, [role="button"], .grid-cell {
   }
 }
 
-/* Tablet devices (768px - 1023px) */
-@media (min-width: 768px) and (max-width: 1023px) {
-  #root {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: var(--spacing-lg, 24px);
-  }
-}
-
-/* Desktop devices (1024px and up) */
-@media (min-width: 1024px) {
-  #root {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: var(--spacing-xl, 32px);
-  }
-  
-  .app {
-    gap: var(--spacing-xl, 32px);
-  }
-}
-
-/* Large desktop devices (1440px and up) */
-@media (min-width: 1440px) {
-  #root {
-    max-width: 1280px;
-  }
-}
+/* Tablet / desktop / large-desktop #root width rules removed: the phone
+   frame in src/index.css now constrains #root to a centered 430px column on
+   every viewport wider than a phone, so these wide max-widths no longer
+   apply. */
 
 /* Accessibility improvements */
 

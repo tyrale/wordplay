@@ -22,7 +22,7 @@
 
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .alphabet-grid {
     gap: calc(var(--spacing-xs, 6px) / 2);
   }

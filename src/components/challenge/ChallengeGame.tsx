@@ -41,7 +41,6 @@ export interface ChallengeGameProps {
   onComplete?: (completed: boolean, stepCount: number) => void;
   onBack?: () => void;
   onNavigateHome?: () => void;
-  onResetChallenge?: () => void;
   onStartGame?: (gameType: 'bot' | 'challenge', botId?: string) => void;
   /**
    * Fired when the player submits a word that should trigger the boss battle
@@ -55,7 +54,6 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   onComplete,
   onBack,
   onNavigateHome,
-  onResetChallenge,
   onStartGame,
   onBossTrigger
 }) => {
@@ -762,12 +760,13 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         onResign={handleResign} // Use proper resign handler
         onNavigateHome={onNavigateHome}
         onStartGame={(gameType, botId) => {
-          if (gameType === 'challenge') {
-            onResetChallenge?.();
-          } else if (gameType === 'bot' && botId) {
+          if (gameType === 'bot' && botId) {
             // Forward bot selection to parent App.tsx for confirmation dialog
             onStartGame?.(gameType, botId);
           }
+          // 'challenge' is a no-op here: the player is already on the daily
+          // challenge board, so re-selecting it just dismisses the menu and
+          // keeps their in-progress state intact (no reset, one attempt).
         }}
         isInGame={true}
         currentGameMode="challenge"

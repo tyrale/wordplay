@@ -71,6 +71,72 @@
     justify-content: center;
     font-weight: 900;
   }
+  /* Boss theme tagging + effects (mirrors src/components/game/InteractiveGame.css) */
+  .boss-tag {
+    font-size: 9px;
+    font-family: monospace;
+    font-weight: 400;
+    background: #DC2626;
+    color: #fff;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  /* Gigaboss card: mini lightning-reveal preview. ::before is the gray
+     lightning flash (behind the silhouette SVG injected by JS). */
+  .card--boss-giga { position: relative; }
+  .preview--boss-giga {
+    position: relative;
+    overflow: hidden;
+  }
+  .preview--boss-giga::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: #6b6b78;
+    opacity: 0;
+    animation: boss-lightning 7s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .preview--boss-giga > * { position: relative; z-index: 2; }
+  .boss-silhouette-mini {
+    position: absolute;
+    left: 50%;
+    bottom: -6%;
+    width: 90%;
+    height: 90%;
+    transform: translateX(-50%);
+    z-index: 1;
+    overflow: visible;
+  }
+  .boss-silhouette-mini .body { fill: #000000; }
+  .boss-silhouette-mini .eyes {
+    fill: #b91c1c;
+    filter: drop-shadow(0 0 2px rgba(185, 28, 28, 0.8));
+    animation: boss-eyes-flicker 3.2s ease-in-out infinite;
+  }
+  @keyframes boss-lightning {
+    0%, 90%, 100% { opacity: 0; }
+    91% { opacity: 0.9; }
+    92% { opacity: 0.05; }
+    93% { opacity: 0.75; }
+    94% { opacity: 0; }
+    95% { opacity: 0.6; }
+    96% { opacity: 0.1; }
+    97% { opacity: 0.45; }
+    98% { opacity: 0; }
+  }
+  @keyframes boss-eyes-flicker {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 0.6; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .preview--boss-giga::before { animation: none; opacity: 0.15; }
+    .boss-silhouette-mini .eyes { animation: none; opacity: 0.5; }
+  }
 </style>
 </head>
 <body>
@@ -154,7 +220,15 @@ const rawThemes = [
   ["vintage", "#F1C40F", "#2274A5", "#F75C03"],
   ["warmer", "#E9B872", "#151515", "#A63D40"],
   ["winter", "#EAEBED", "#006989", "#A3BAC3"],
-  ["yellow", "#ffffff", "#D97706", "#FCD34D"]
+  ["yellow", "#ffffff", "#D97706", "#FCD34D"],
+  // "GUS" boss battle themes, escalating per stage.
+  // boss + megaboss: normal 3-color themes, no extra effect.
+  // gigaboss: red letters on black with a darker red accent, plus an animated
+  // monster-shadow bg + escalating music (shown below via the boss-effect
+  // badge + silhouette on the preview tile). No border/outline effect.
+  ["boss", "#9CA3AF", "#000000", "#DC2626"],
+  ["megaboss", "#1F1F1F", "#9CA3AF", "#DC2626"],
+  ["gigaboss", "#000000", "#EF4444", "#7F1D1D"]
 ];
 
 // Mirror the derivation logic from src/types/theme.ts createTheme()
@@ -192,21 +266,47 @@ function swatch(label, color) {
   return div;
 }
 
+// Boss effect tier per theme name: "mega" = red outline on letters,
+// "giga" = red outline (stronger, with glow) + animated monster-shadow bg +
+// escalating music. boss = base 3-color, no extra effect.
+function bossEffect(name) {
+  if (name === "gigaboss") return "giga";
+  if (name === "megaboss") return "mega";
+  return "none";
+}
+
 themes.forEach(t => {
   const card = document.createElement("div");
   card.className = "card";
+  if (t.name === "gigaboss") card.classList.add("card--boss-giga");
 
   const header = document.createElement("div");
   header.className = "card-header";
   header.textContent = t.name;
+  // Tag boss themes so the escalation is obvious at a glance.
+  const effect = bossEffect(t.name);
+  if (effect !== "none") {
+    const tag = document.createElement("span");
+    tag.className = "boss-tag";
+    tag.textContent = effect === "giga" ? "outline + monster + music" : "red outline";
+    header.appendChild(tag);
+  }
   card.appendChild(header);
 
   const preview = document.createElement("div");
   preview.className = "preview";
   preview.style.background = t.background;
+  if (effect === "giga") preview.classList.add("preview--boss-giga");
+
+  // No border/outline on any tier - gigaboss is just red letters on black
+  // (via its theme text color) with a darker red accent color, same as any
+  // other theme's plain tile styling.
+  const tileBorder = `border:1px solid ${t.disabled};`;
+
   preview.innerHTML = `
+    ${effect === "giga" ? '<svg class="boss-silhouette-mini" viewBox="0 0 240 300" preserveAspectRatio="xMidYMax meet"><path class="body" d="M 30 38 L 64 96 L 80 100 Q 120 74 160 100 L 176 96 L 210 38 L 197 112 L 224 140 L 207 154 L 216 200 L 199 236 L 189 300 L 51 300 L 41 236 L 24 200 L 33 154 L 16 140 L 43 112 Z" /><path class="eyes" d="M 92 112 L 108 120 L 92 128 Z M 148 112 L 132 120 L 148 128 Z" /></svg>' : ''}
     <div class="word" style="color:${t.text}">Word</div>
-    <div class="tile" style="background:${t.surface}; color:${t.text}; border:1px solid ${t.disabled}">A</div>
+    <div class="tile" style="background:${t.surface}; color:${t.text}; ${tileBorder}">A</div>
     <div class="tile" style="background:${t.accent}; color:${t.accentText}">B</div>
   `;
   card.appendChild(preview);

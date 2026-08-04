@@ -59,7 +59,7 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .word-builder {
     padding: var(--spacing-sm);
   }
@@ -77,7 +77,7 @@
   }
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .word-builder__letter {
     font-size: 40px;
   }

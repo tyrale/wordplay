@@ -133,7 +133,7 @@
 }
 
 /* Mobile responsive */
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .debug-dialog-overlay {
     padding: var(--spacing-sm);
   }

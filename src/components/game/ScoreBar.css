@@ -99,7 +99,7 @@
 }
 
 /* Responsive */
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .score-bar {
     gap: var(--spacing-sm);
   }

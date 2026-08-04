@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wordplay Boss Shadow Preview</title>
+<style>
+  /* Mirrors the gigaboss theme + monster-shadow effect from
+     src/components/game/InteractiveGame.css and src/types/theme.ts so this
+     page renders the in-game background as faithfully as possible. */
+  :root {
+    --theme-background: #000000;
+    --theme-text: #EF4444;
+    --theme-accent: #7F1D1D;
+    --theme-surface: #000000dd;
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+  }
+  body {
+    font-family: Inter, system-ui, sans-serif;
+    font-weight: 900;
+    background: var(--theme-background);
+    color: var(--theme-text);
+    overflow: hidden;
+  }
+
+  /* The "game" frame - fills the viewport like the real interactive-game root. */
+  .interactive-game {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    padding: 24px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  h1 {
+    font-size: 20px;
+    color: var(--theme-accent);
+    margin: 0 0 4px;
+    position: relative;
+    z-index: 2;
+  }
+  p.hint {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--theme-text);
+    margin: 0 0 24px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Gigaboss animated monster-shadow background - full size, exactly as in-game. */
+  .boss-monster-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+  /* Lightning flash layer - gray, behind the silhouette. */
+  .boss-monster-bg__lightning {
+    position: absolute;
+    inset: 0;
+    background: #6b6b78;
+    opacity: 0;
+    animation: boss-lightning 7s linear infinite;
+  }
+  /* Flat 2D boss silhouette - solid black, large, bottom-center. Same black as
+     the giga bg so it's invisible until the flash reveals it. */
+  .boss-monster-bg__silhouette {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 75%;
+    max-width: 520px;
+    height: 78%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    overflow: visible;
+  }
+  .boss-monster-bg__body { fill: #000000; }
+  .boss-monster-bg__eyes {
+    fill: #b91c1c;
+    filter: drop-shadow(0 0 3px rgba(185, 28, 28, 0.8));
+    animation: boss-eyes-flicker 3.2s ease-in-out infinite;
+  }
+  @keyframes boss-lightning {
+    0%, 90%, 100% { opacity: 0; }
+    91% { opacity: 0.9; }
+    92% { opacity: 0.05; }
+    93% { opacity: 0.75; }
+    94% { opacity: 0; }
+    95% { opacity: 0.6; }
+    96% { opacity: 0.1; }
+    97% { opacity: 0.45; }
+    98% { opacity: 0; }
+  }
+  @keyframes boss-eyes-flicker {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 0.6; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .boss-monster-bg__lightning { animation: none; opacity: 0.15; }
+    .boss-monster-bg__eyes { animation: none; opacity: 0.5; }
+  }
+
+  /* A few gameboard letters on top so you can see the shadow behind real
+     tiles. No borders/outlines on any tier - just the theme's own colors
+     (gigaboss = red letters, darker red accent/key-letter color). */
+  .board {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+  .grid-cell {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    background: var(--theme-surface);
+    color: var(--theme-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+  .grid-cell--accent {
+    background: var(--theme-accent);
+    color: var(--theme-background);
+  }
+
+  /* Word in play - same plain theme coloring, no outline. */
+  .word-builder {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 24px;
+  }
+  .word-builder__letter {
+    width: 44px;
+    height: 56px;
+    border-radius: 8px;
+    background: var(--theme-surface);
+    color: var(--theme-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+  }
+
+  .controls {
+    position: relative;
+    z-index: 2;
+    margin-top: 24px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .controls button {
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--theme-accent);
+    background: transparent;
+    color: var(--theme-accent);
+    cursor: pointer;
+  }
+  .controls button.active {
+    background: var(--theme-accent);
+    color: var(--theme-background);
+  }
+</style>
+</head>
+<body>
+  <div class="interactive-game" id="frame">
+    <h1>Gigaboss — lightning reveal preview</h1>
+    <p class="hint">Background stays black; a lightning strike flashes it gray and reveals the flat 2D boss silhouette (with glowing eyes). Letters are red with a darker red accent - no border/outline. Watch for the flash.</p>
+
+    <div class="boss-monster-bg" id="monsterBg">
+      <div class="boss-monster-bg__lightning"></div>
+      <svg class="boss-monster-bg__silhouette" viewBox="0 0 240 300" preserveAspectRatio="xMidYMax meet">
+        <path class="boss-monster-bg__body" d="M 30 38 L 64 96 L 80 100 Q 120 74 160 100 L 176 96 L 210 38 L 197 112 L 224 140 L 207 154 L 216 200 L 199 236 L 189 300 L 51 300 L 41 236 L 24 200 L 33 154 L 16 140 L 43 112 Z" />
+        <path class="boss-monster-bg__eyes" d="M 92 112 L 108 120 L 92 128 Z M 148 112 L 132 120 L 148 128 Z" />
+      </svg>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="word-builder" id="word"></div>
+
+    <div class="controls">
+      <button data-tier="boss">boss (plain)</button>
+      <button data-tier="mega">megaboss (plain)</button>
+      <button data-tier="giga" class="active">gigaboss (red letters + shadow)</button>
+    </div>
+  </div>
+
+<script>
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const WORD = "GUS";
+
+// Matches the actual GameTheme objects in src/types/theme.ts.
+const tierVars = {
+  boss: {
+    bg: "#9CA3AF", text: "#000000", accent: "#DC2626", surface: "#9CA3AFdd",
+    showShadow: false
+  },
+  mega: {
+    bg: "#1F1F1F", text: "#9CA3AF", accent: "#DC2626", surface: "#1F1F1Fdd",
+    showShadow: false
+  },
+  giga: {
+    // Red letters, darker red accent, no outline/border - just color.
+    bg: "#000000", text: "#EF4444", accent: "#7F1D1D", surface: "#000000dd",
+    showShadow: true
+  }
+};
+
+function applyTier(tier) {
+  const v = tierVars[tier];
+  const root = document.documentElement;
+  root.style.setProperty("--theme-background", v.bg);
+  root.style.setProperty("--theme-text", v.text);
+  root.style.setProperty("--theme-accent", v.accent);
+  root.style.setProperty("--theme-surface", v.surface);
+  document.getElementById("monsterBg").style.display = v.showShadow ? "" : "none";
+  // Toggle the tier class on the frame - only one of these three is ever
+  // present at a time. (This drives any future tier-specific CSS; currently
+  // all styling is done via the CSS variables above.)
+  const frame = document.getElementById("frame");
+  frame.classList.remove("interactive-game--boss-boss", "interactive-game--boss-mega", "interactive-game--boss-giga");
+  frame.classList.add(`interactive-game--boss-${tier}`);
+}
+
+// Build a 4x6 alphabet grid (first 24 letters) with a couple of accent tiles.
+const board = document.getElementById("board");
+ALPHABET.slice(0, 24).forEach((letter, i) => {
+  const cell = document.createElement("div");
+  cell.className = "grid-cell" + (i === 7 ? " grid-cell--accent" : "");
+  cell.textContent = letter;
+  board.appendChild(cell);
+});
+
+// Build the word-in-play.
+const word = document.getElementById("word");
+WORD.split("").forEach(letter => {
+  const l = document.createElement("div");
+  l.className = "word-builder__letter";
+  l.textContent = letter;
+  word.appendChild(l);
+});
+
+document.querySelectorAll(".controls button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".controls button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    applyTier(btn.dataset.tier);
+  });
+});
+
+applyTier("giga");
+</script>
+</body>
+</html>

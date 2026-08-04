@@ -7,6 +7,13 @@
   --spacing-xl: 32px;
   --vh: 1vh; /* This will be updated by JavaScript */
 
+  /* Phone-frame constraint for desktop / wide screens. The app is mobile-first;
+     on viewports wider than a phone it renders inside a centered 430px column
+     (see the #root desktop rule below + container queries in component CSS) so
+     desktop players see the same layout as mobile without opening DevTools. */
+  --app-max-width: 430px;
+  --app-desk-background: #0f1115;
+
   /* Theme variables (will be updated by ThemeProvider) */
   --theme-primary: #3b82f6;
   --theme-text: #1e3a8a;
@@ -94,7 +101,7 @@ button {
 }
 
 #root {
-  max-width: 1280px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
@@ -103,6 +110,12 @@ button {
   max-height: calc(var(--vh, 1vh) * 100);
   overflow-y: auto; /* Allow scrolling within root container */
   overflow-x: hidden;
+  /* Establish a query container so component CSS can size off the app's actual
+     rendered width (the 430px phone frame on desktop) instead of the browser
+     viewport. inline-size only contains the width axis, so #root's height
+     (100vh / --vh) is unaffected. */
+  container-type: inline-size;
+  container-name: app;
 }
 
 /* Reset button styles for theme compatibility */
@@ -119,6 +132,28 @@ button {
 @media (max-width: 768px) {
   #root {
     padding: 1rem;
+  }
+}
+
+/* Desktop / wide screens: constrain the app to a centered phone-width column.
+   Real phones (<=480px) are unaffected - #root fills their viewport and all
+   the @container app rules below resolve to that width, exactly as the old
+   @media (max-width: ...) rules did. The transform establishes #root as the
+   containing block for position: fixed descendants (overlays, the gravity
+   grid, menu buttons) so they anchor to the 430px frame, not the full-width
+   viewport. */
+@media (min-width: 481px) {
+  body {
+    background-color: var(--app-desk-background);
+  }
+
+  #root {
+    max-width: var(--app-max-width);
+    margin: 0 auto;
+    transform: translateZ(0);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 10px 50px rgba(0, 0, 0, 0.5);
   }
 }
 

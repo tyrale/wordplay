@@ -1,6 +1,7 @@
 const TUTORIAL_SEEN_KEY = 'wordplay-tutorial-seen';
 const CHALLENGE_INTRO_SEEN_KEY = 'wordplay-challenge-intro-seen';
 const CLEAR_HINT_SEEN_KEY = 'wordplay-clear-hint-seen';
+const ZEN_INTRO_SEEN_KEY = 'wordplay-zen-intro-seen';
 
 export const hasSeenTutorial = (): boolean => {
   try {
@@ -50,6 +51,25 @@ export const hasSeenClearHint = (): boolean => {
 export const markClearHintSeen = (): void => {
   try {
     localStorage.setItem(CLEAR_HINT_SEEN_KEY, 'true');
+  } catch {
+    // Ignore storage errors (e.g. private browsing)
+  }
+};
+
+/** First-time "vsnobody" (zen mode) intro banner - explains the free-play
+ * mode and the double-tap-reset gesture. Separate flag from the other
+ * mode intros since a player may try any mode first. */
+export const hasSeenZenIntro = (): boolean => {
+  try {
+    return localStorage.getItem(ZEN_INTRO_SEEN_KEY) === 'true';
+  } catch {
+    return false;
+  }
+};
+
+export const markZenIntroSeen = (): void => {
+  try {
+    localStorage.setItem(ZEN_INTRO_SEEN_KEY, 'true');
   } catch {
     // Ignore storage errors (e.g. private browsing)
   }

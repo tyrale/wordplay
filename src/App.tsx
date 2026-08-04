@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ThemeProvider, useTheme, InteractiveGame, MainScreen, MultiplayerLobby, MultiplayerGame } from './components';
 import type { MultiplayerGameResult } from './components/multiplayer/MultiplayerGame';
 import { ChallengeGame } from './components/challenge/ChallengeGame';
+import { ZenGame } from './components/zen/ZenGame';
 import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
 import { TUTORIAL_INITIAL_CONFIG } from './components/tutorial/tutorialSteps';
 import { AnimationProvider } from './animations';
@@ -22,9 +23,10 @@ import type { GameState } from '../packages/engine/interfaces';
 import { defaultTheme } from './types/theme';
 import { BOSS_BATTLE_MAX_TURNS, BOSS_STAGES, BOSS_THEME_NAMES, getBossTheme, getThemeByName } from './data/bossBattle';
 import type { BossStage } from './data/bossBattle';
+import { useBossMusic } from './hooks/useBossMusic';
 import './App.css';
 
-type AppState = 'main' | 'game' | 'challenge' | 'quitter' | 'winner' | 'loser' | 'multiplayer-lobby' | 'multiplayer-game' | 'multiplayer-resigned' | 'boss';
+type AppState = 'main' | 'game' | 'challenge' | 'zen' | 'quitter' | 'winner' | 'loser' | 'multiplayer-lobby' | 'multiplayer-game' | 'multiplayer-resigned' | 'boss';
 
 /**
  * Sub-state of the "GUS" boss battle encounter (only meaningful while
@@ -119,13 +121,13 @@ function AppContent() {
     setGameInstanceKey(prev => prev + 1);
   };
 
-  const handleStartGame = (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => {
+  const handleStartGame = (gameType: 'bot' | 'challenge' | 'tutorial' | 'zen', botId?: string) => {
     if (gameType === 'bot' && botId) {
       // Check if we need confirmation for game transition
-      if (appState === 'challenge') {
+      if (appState === 'challenge' || appState === 'zen') {
         showConfirmation(
           ['START', 'NEW', 'GAME?'],
-          `Exit the current challenge and play ${getBotDisplayName(botId)}?`,
+          `Exit ${appState === 'zen' ? 'zen mode' : 'the current challenge'} and play ${getBotDisplayName(botId)}?`,
           () => {
             setSelectedBotId(botId);
             setTutorialActive(!hasSeenTutorial());
@@ -159,6 +161,20 @@ function AppContent() {
       } else {
         // No current game or already in challenge, start directly
         setAppState('challenge');
+      }
+    } else if (gameType === 'zen') {
+      if (appState === 'game') {
+        showConfirmation(
+          ['START', 'ZEN?'],
+          'Exit the current game and play zen mode?',
+          () => {
+            setAppState('zen');
+            hideConfirmation();
+          }
+        );
+      } else {
+        // No current game or already in zen, start directly
+        setAppState('zen');
       }
     } else if (gameType === 'tutorial') {
       // "the basics" in the menu - force-replay the tutorial on a fresh bot game
@@ -338,6 +354,17 @@ function AppContent() {
     setBossPrevThemeName(null);
   };
 
+  // Boss battle music - an original, escalating procedural "final-countdown"-style
+  // synth motif (Web Audio API, no audio assets). Owned by App (not InteractiveGame)
+  // so it starts on the intro/advance overlay BEFORE each battle, plays continuously
+  // across the alert + the battle, escalates per stage (boss -> mega -> giga), and
+  // stops when the encounter resolves (victory/defeat/timeout). bossStage is already
+  // advanced to the upcoming stage before the advance alert shows, so each alert
+  // plays the music for the battle it's introducing.
+  const bossMusicActive = appState === 'boss' &&
+    (bossPhase === 'intro' || bossPhase === 'battle' || bossPhase === 'advance');
+  useBossMusic({ enabled: bossMusicActive, stage: bossMusicActive ? bossStage : null });
+
   const handleStartMultiplayer = () => {
     setAppState('multiplayer-lobby');
   };
@@ -382,15 +409,6 @@ function AppContent() {
   const handleQuitterComplete = () => {
     // Return to main screen after quitter animation completes
     setAppState('main');
-  };
-
-  const handleResetChallenge = () => {
-    // Reset challenge and reload if in challenge mode
-    if (appState === 'challenge') {
-      // Force re-render of challenge component by toggling state
-      setAppState('main');
-      setTimeout(() => setAppState('challenge'), 100);
-    }
   };
 
   // Clears the finished multiplayer game id/URL and returns to the lobby -
@@ -554,9 +572,14 @@ function AppContent() {
                   onComplete={handleChallengeComplete}
                   onBack={handleChallengeBack}
                   onNavigateHome={handleNavigateHome}
-                  onResetChallenge={handleResetChallenge}
                   onStartGame={handleStartGame}
                   onBossTrigger={handleBossTrigger}
+                />
+              )}
+              {appState === 'zen' && (
+                <ZenGame
+                  onNavigateHome={handleNavigateHome}
+                  onStartGame={handleStartGame}
                 />
               )}
               
@@ -622,6 +645,29 @@ function AppContent() {
                 meta={alertCopy.boss.intro.meta}
                 onClose={startBossBattle}
               />
+              {/* Gigaboss lightning-reveal shadow on the advance overlay (the
+                  buildup to the final boss). bossStage is already 'giga' here
+                  (advanced before the alert shows). The actual battle renders
+                  its own copy inside InteractiveGame; this one covers the alert. */}
+              {appState === 'boss' && bossPhase === 'advance' && bossStage === 'giga' && (
+                <div className="boss-monster-bg boss-monster-bg--app" aria-hidden="true">
+                  <div className="boss-monster-bg__lightning" />
+                  <svg
+                    className="boss-monster-bg__silhouette"
+                    viewBox="0 0 240 300"
+                    preserveAspectRatio="xMidYMax meet"
+                  >
+                    <path
+                      className="boss-monster-bg__body"
+                      d="M 30 38 L 64 96 L 80 100 Q 120 74 160 100 L 176 96 L 210 38 L 197 112 L 224 140 L 207 154 L 216 200 L 199 236 L 189 300 L 51 300 L 41 236 L 24 200 L 33 154 L 16 140 L 43 112 Z"
+                    />
+                    <path
+                      className="boss-monster-bg__eyes"
+                      d="M 92 112 L 108 120 L 92 128 Z M 148 112 L 132 120 L 148 128 Z"
+                    />
+                  </svg>
+                </div>
+              )}
               <AlertOverlay
                 isVisible={appState === 'boss' && bossPhase === 'advance'}
                 lines={[...alertCopy.boss.advance.lines]}

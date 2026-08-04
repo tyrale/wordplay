@@ -388,7 +388,22 @@ export interface DictionaryEngine {
    * @returns Random word or null
    */
   getRandomWordByLength(length: number): string | null;
-  
+
+  /**
+   * Get every dictionary word of a specific length, in a stable order.
+   *
+   * Unlike getRandomWordByLength (which is backed by Math.random() and is
+   * intentionally non-deterministic), this must return the exact same list
+   * for the same length every time, on every client. It's what lets
+   * seed-driven selection (e.g. the daily challenge's start/target words)
+   * pick an index with a seeded RNG and get an identical result worldwide -
+   * routing that pick through getRandomWordByLength instead would silently
+   * reintroduce real randomness into what's supposed to be deterministic.
+   * @param length - Desired length
+   * @returns All dictionary words of that length (order must be stable across calls/clients)
+   */
+  getWordsByLength(length: number): string[];
+
   /**
    * Get dictionary statistics
    * @returns Dictionary information

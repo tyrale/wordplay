@@ -158,7 +158,6 @@ const getMenuItems = (
     children: [
       { id: 'challenge-mode', title: 'daily challenge' },
       { id: 'leaderboard', title: 'leaderboard' },
-      { id: 'reset-challenge', title: 'reset daily challenge (testing)' },
     ]
   },
   {
@@ -298,17 +297,6 @@ export const Menu: React.FC<MenuProps> = ({
 
   // Filter themes based on unlock state
   const unlockedThemes = useUnlockedThemes({ unlockedThemes: unlockedThemeIds });
-
-  // Simple reset function that doesn't require the challenge hook
-  const resetDailyChallenge = useCallback(() => {
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      localStorage.removeItem(`wordplay-challenge-${today}`);
-      console.log('Daily challenge reset for', today);
-    } catch (err) {
-      console.warn('Failed to reset daily challenge:', err);
-    }
-  }, []);
 
   const isPlayerStatsUnlocked = isUnlocked('mechanic', 'player-stats');
 
@@ -467,10 +455,6 @@ export const Menu: React.FC<MenuProps> = ({
       // Show the leaderboard overlay
       setIsLeaderboardOpen(true);
       handleClose(); // Close menu behind the overlay
-    } else if (tier1Id === 'vsworld' && tier2Id === 'reset-challenge') {
-      // Reset daily challenge for testing
-      resetDailyChallenge();
-      // Keep menu open for testing workflow
     } else if (tier1Id === 'mechanics') {
       if (tier2Id === 'vanity-filter') {
         // Toggle vanity filter
@@ -491,7 +475,7 @@ export const Menu: React.FC<MenuProps> = ({
     
     // For other items (challenge, mechanics, other about items), keep menu open
     // These are placeholder items that don't have functionality yet
-  }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, toggleVanityFilter, toggleMechanic, setRoundLength, resetUnlocksToFresh, resetDailyChallenge]);
+  }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, toggleVanityFilter, toggleMechanic, setRoundLength, resetUnlocksToFresh]);
 
   return (
     <>

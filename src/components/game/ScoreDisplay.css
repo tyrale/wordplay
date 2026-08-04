@@ -148,7 +148,7 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .score-display__left,
   .score-display__right {
     font-size: 28.8px; /* Keep consistent sizing */
@@ -164,7 +164,7 @@
   }
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .score-display {
     padding: var(--spacing-xs);
     min-width: 100px;

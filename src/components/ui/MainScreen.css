@@ -185,7 +185,7 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@container app (max-width: 768px) {
   .main-screen-menu-button {
     /* Match GridCell responsive sizing */
     width: 96px;
@@ -215,7 +215,7 @@
 
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .main-screen-menu-button {
     /* Match GridCell mobile sizing */
     width: 60px;

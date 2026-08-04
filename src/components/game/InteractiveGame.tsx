@@ -29,7 +29,6 @@ import { triggerHapticFeedback } from '../../utils/haptics';
 import { triggerSoundFeedback } from '../../utils/sound';
 import { hasSeenClearHint, markClearHintSeen } from '../../utils/tutorialStorage';
 import { useTheme } from '../theme/ThemeProvider';
-import { useBossMusic } from '../../hooks/useBossMusic';
 import type { BossStage } from '../../data/bossBattle';
 import type { WordDataDependencies, ScoringAction, GameConfig, MoveAttempt, GameState, IGameStateManager } from '../../../packages/engine/interfaces';
 
@@ -377,25 +376,26 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, [isGameFinished, showGameEnd]);
 
   // Auto-trigger bot moves only when it becomes bot's turn
+  const makeBotMove = actions.makeBotMove;
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    
+
     if (isBotTurn && isGameActive && !isBotThinking) {
             // Add delay for better UX
       timeoutId = setTimeout(async () => {
-                const botMove = await actions.makeBotMove();
+                const botMove = await makeBotMove();
                 if (botMove) {
           // setBotMoveHistory(prev => [...prev, botMove]);
         }
       }, 1000); // 1 second delay to show bot is "thinking"
     }
-    
+
     return () => {
       if (timeoutId) {
                 clearTimeout(timeoutId);
       }
     };
-  }, [isBotTurn, isGameActive, isBotThinking, actions.makeBotMove]); // Removed gameState.players to prevent retriggering
+  }, [isBotTurn, isGameActive, isBotThinking, makeBotMove]); // Removed gameState.players to prevent retriggering
 
   // Time-pressure countdown: resets to 7 seconds each time the player's turn starts,
   // and clears when it's no longer the player's turn.
@@ -587,7 +587,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         </>
       )
     });
-  }, [pendingWord, wordData, showCustomAlert, getUnlockedItems]);
+  }, [pendingWord, wordData, showCustomAlert, getUnlockedItems, config?.botId]);
 
   const handleSettings = useCallback(() => {
     setIsMenuOpen(true);
@@ -699,6 +699,13 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     handleWordChange(newWord);
   }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange, disableLetterRemoval]);
 
+  // Determine if submit is valid
+  const isValidSubmit = pendingMoveAttempt?.canApply || false;
+
+  // The X should always be clickable unless we have a valid move to submit
+  // This allows users to pass even without attempting to change the word
+  const showInvalidX = !isValidSubmit;
+
   const handleSubmit = useCallback(async () => {
     
     if (!isPlayerTurn || isProcessingMove) return;
@@ -761,7 +768,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         setShowValidationError(false);
       }
     }
-  }, [isPlayerTurn, isProcessingMove, pendingWord, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, wordData, actionState, handleWordChange, showAlert, onBossTrigger]);
+  }, [isPlayerTurn, isProcessingMove, pendingWord, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, wordData, handleWordChange, showAlert, onBossTrigger, isValidSubmit]);
 
   const handleStartGame = useCallback(async () => {
     await actions.startGame();
@@ -781,13 +788,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     setPendingMoveAttempt(null);
     setShowGameEnd(false);
   }, [actions]);
-
-  // Determine if submit is valid
-  const isValidSubmit = pendingMoveAttempt?.canApply || false;
-  
-  // The X should always be clickable unless we have a valid move to submit
-  // This allows users to pass even without attempting to change the word
-  const showInvalidX = !isValidSubmit;
 
   // Helper function to generate word suggestions
   const generateWordSuggestions = useCallback((currentWord: string): string[] => {
@@ -871,15 +871,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     setIsRenamingSelf(false);
   }, []);
 
-  // Boss battle music: an original, escalating procedural "final-countdown"-style
-  // synth motif (Web Audio API, no audio assets). Plays for EVERY boss battle
-  // and escalates per stage (boss = single voice, mega = +octave, giga = +octave
-  // + faster + brighter waveform), so each fight in the chain feels more intense.
-  useBossMusic({
-    enabled: isBossBattle && isGameActive,
-    stage: isBossBattle ? (bossStage ?? null) : null
-  });
-
   return (
     <div
       className={
@@ -890,11 +881,34 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       }
       data-boss-stage={isBossBattle ? bossStage : undefined}
     >
-      {/* Gigaboss animated monster-shadow background. Pure CSS/SVG, no art
-          assets. Rendered behind the board and ignored for reduced-motion. */}
+      {/* Gigaboss old-school boss reveal: the background stays black, but
+          periodically a "lightning strike" flashes it gray, and during the
+          flash a flat 2D boss silhouette (with faint glowing eyes) becomes
+          visible against the gray. Pure CSS/SVG, no art assets. The board
+          always sits above this. */}
       {bossEffectTier === 'giga' && (
         <div className="boss-monster-bg" aria-hidden="true">
-          <div className="boss-monster-bg__shadow" />
+          {/* Lightning flash layer - sits behind the silhouette so the flash
+              lights the background the silhouette is drawn against. */}
+          <div className="boss-monster-bg__lightning" />
+          {/* Flat 2D boss silhouette (solid black) + glowing eyes. Same black
+              as the giga bg so it's invisible until the flash lights it up. */}
+          <svg
+            className="boss-monster-bg__silhouette"
+            viewBox="0 0 240 300"
+            preserveAspectRatio="xMidYMax meet"
+          >
+            <path
+              className="boss-monster-bg__body"
+              d="M 30 38 L 64 96 L 80 100 Q 120 74 160 100 L 176 96 L 210 38 L 197 112 L 224 140 L 207 154 L 216 200 L 199 236 L 189 300 L 51 300 L 41 236 L 24 200 L 33 154 L 16 140 L 43 112 Z"
+            />
+            {/* Eyes: cut out of the body via evenodd so the flash (or a faint
+                red glow) shows through, classic glowing-eye boss effect. */}
+            <path
+              className="boss-monster-bg__eyes"
+              d="M 92 112 L 108 120 L 92 128 Z M 148 112 L 132 120 L 148 128 Z"
+            />
+          </svg>
         </div>
       )}
 
