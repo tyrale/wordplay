@@ -46,6 +46,19 @@ async function pickRandomStartingWord(length: number): Promise<string> {
   }
 }
 
+/**
+ * Pick a random key letter for a new game, mirroring the vs-bot
+ * `LocalGameStateManager.generateRandomKeyLetter()` logic: any letter of
+ * the alphabet not already present in the starting word.
+ */
+function pickRandomKeyLetter(startingWord: string): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const wordLetters = new Set(startingWord.toUpperCase().split(''));
+  const available = alphabet.split('').filter(letter => !wordLetters.has(letter));
+  const pool = available.length > 0 ? available : alphabet.split('');
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 type GameRow = {
   id: string;
   status: 'waiting' | 'active' | 'completed' | 'abandoned';
@@ -292,7 +305,8 @@ export async function createInviteGame(
       max_turns: options.maxTurns ?? 20,
       turn_timeout_hours: options.turnTimeoutHours ?? 48,
       initial_word_length: wordLength,
-      current_word: startingWord
+      current_word: startingWord,
+      key_letters: [pickRandomKeyLetter(startingWord)]
     })
     .select('id')
     .single();
@@ -526,7 +540,7 @@ export async function findMatch(
         // (see try_match() RPC) - give it a random starting word, same as
         // vs-bot games, instead of the DB's fixed default.
         const startingWord = await pickRandomStartingWord(4);
-        await supabase.from('games').update({ current_word: startingWord }).eq('id', gameId);
+        await supabase.from('games').update({ current_word: startingWord, key_letters: [pickRandomKeyLetter(startingWord)] }).eq('id', gameId);
         onMatched(gameId);
       }
     };
@@ -589,7 +603,7 @@ export async function findMatch(
     if (data) {
       const gameId = data as string;
       const startingWord = await pickRandomStartingWord(4);
-      await supabase.from('games').update({ current_word: startingWord }).eq('id', gameId);
+      await supabase.from('games').update({ current_word: startingWord, key_letters: [pickRandomKeyLetter(startingWord)] }).eq('id', gameId);
       await settle(gameId);
     }
   };

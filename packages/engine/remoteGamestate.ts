@@ -112,6 +112,7 @@ export class RemoteGameStateManager implements IGameStateManager {
   private remote: RemoteGameDependencies;
   private gameId: string;
   private unsubscribeRemote: (() => void) | null = null;
+  private pollInterval: ReturnType<typeof setInterval> | null = null;
   private syncing = false;
   /** The raw remote status as of the last successful sync, so callers can
    * distinguish a natural finish ('completed') from a resignation
@@ -136,6 +137,17 @@ export class RemoteGameStateManager implements IGameStateManager {
         console.error('Failed to refresh remote game state:', error);
       });
     });
+    // Poll as a fallback alongside the realtime subscription above - realtime
+    // delivery isn't always guaranteed (e.g. websocket drops, tab backgrounding,
+    // or a Supabase project where the publication isn't configured), and
+    // without this an opponent's move could silently never show up until the
+    // player leaves and re-opens the game. Short interval keeps vs-human play
+    // feeling as responsive as vs-bot.
+    this.pollInterval = setInterval(() => {
+      this.refreshFromRemote().catch(error => {
+        console.error('Failed to poll remote game state:', error);
+      });
+    }, 3000);
   }
 
   /** Unsubscribe from remote updates. Call on component unmount. */
@@ -143,6 +155,10 @@ export class RemoteGameStateManager implements IGameStateManager {
     if (this.unsubscribeRemote) {
       this.unsubscribeRemote();
       this.unsubscribeRemote = null;
+    }
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
     }
   }
 

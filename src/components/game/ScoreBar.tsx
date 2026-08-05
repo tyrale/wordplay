@@ -19,14 +19,14 @@ export interface ScoreBarProps {
   className?: string;
 }
 
-function getDisplayName(player: Player, humanIndex: number, botId?: string, isMultiplayer?: boolean): string {
+function getDisplayName(player: Player, humanIndex: number, isSelf: boolean, botId?: string, isMultiplayer?: boolean): string {
   if (player.isBot) {
     return player.id === 'bot' && botId ? getBotDisplayName(botId) : player.name;
   }
   // Own display name always comes from local storage (kept in sync with the
   // server in multiplayer via setDisplayName), so a rename is reflected
   // immediately without waiting on a server refetch.
-  if (hasConfirmedDisplayName() && (isMultiplayer ? true : humanIndex === 0)) {
+  if (hasConfirmedDisplayName() && (isMultiplayer ? isSelf : humanIndex === 0)) {
     return getVanityName();
   }
   if (isMultiplayer) {
@@ -57,10 +57,10 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({ players, botId, isMultiplaye
     <div className={`score-bar ${className}`.trim()}>
       <div className="score-bar__stack">
         {players.map(player => {
-          const displayName = getDisplayName(player, humanIndex, botId, isMultiplayer);
           // In multiplayer, "self" is the authenticated localPlayerId; in
           // vs-bot/tutorial play, the first non-bot player is always self.
           const isSelf = !player.isBot && (localPlayerId ? player.id === localPlayerId : humanIndex === 0);
+          const displayName = getDisplayName(player, humanIndex, isSelf, botId, isMultiplayer);
           if (!player.isBot) humanIndex += 1;
           return (
             <PlayerRow

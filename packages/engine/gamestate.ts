@@ -163,7 +163,23 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * Get the current game state (read-only copy)
    */
   public getState(): GameState {
-    return { ...this.state };
+    // Shallow-spreading `this.state` alone isn't enough: array fields (like
+    // `turnHistory`) are mutated in place (e.g. `.push()`) rather than
+    // reassigned, so every previously-returned snapshot shares the same
+    // underlying array reference and silently "changes" out from under
+    // callers as new turns are applied. Copy each array/object field so a
+    // snapshot returned here truly reflects state as of this call, even
+    // after later mutations.
+    return {
+      ...this.state,
+      keyLetters: [...this.state.keyLetters],
+      lockedLetters: [...this.state.lockedLetters],
+      lockedKeyLetters: [...this.state.lockedKeyLetters],
+      players: this.state.players.map(player => ({ ...player })),
+      usedWords: [...this.state.usedWords],
+      usedKeyLetters: [...this.state.usedKeyLetters],
+      turnHistory: this.state.turnHistory.map(turn => ({ ...turn }))
+    };
   }
 
   /**
