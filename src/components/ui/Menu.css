@@ -292,9 +292,15 @@
   pointer-events: none;
 }
 
+/* Theme swatch locked previews: the box itself stays dimmed like the rest of the locked previews,
+   but its own opacity is reset to full and the dimming is baked into the border/background colors
+   via color-mix instead. That way the '????' text can be set to the theme's base text color and
+   remain readable-strength (not further washed out by the element's opacity). */
 .menu-tier2-item--theme.menu-tier2-item--locked {
-  border-color: var(--theme-accent) !important;
-  background-color: var(--theme-accent) !important;
+  color: var(--theme-text) !important;
+  opacity: 1 !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 40%, transparent) !important;
+  background-color: color-mix(in srgb, var(--theme-accent) 40%, transparent) !important;
 }
 
 /* Dark mode toggle styling */
@@ -326,14 +332,14 @@
 .dark-mode-toggle {
   width: 40px;
   height: 20px;
-  background-color: var(--theme-surface);
-  border: 1px solid var(--theme-text);
+  background-color: color-mix(in srgb, var(--theme-accent) 85%, black 15%);
   border-radius: 10px;
   position: relative;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
+/* On state uses the plain accent color for the slide (track) - brighter when on, darkened when off. The knob stays the same base color in both states */
 .dark-mode-toggle--active {
   background-color: var(--theme-accent);
 }
@@ -351,7 +357,6 @@
 
 .dark-mode-toggle--active .dark-mode-toggle__slider {
   transform: translateX(18px);
-  background-color: var(--theme-background);
 }
 
 .menu-tier2-item__checkmark {

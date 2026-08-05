@@ -3,7 +3,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { useVanityFilter } from '../../hooks/useVanityFilter';
 import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
-import { useRoundLength } from '../../contexts/RoundLengthContext';
+import { useRoundLength, DEFAULT_ROUND_LENGTH } from '../../contexts/RoundLengthContext';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
 import { useCommunityUnlockStats } from '../../hooks/useCommunityUnlockStats';
 import { getVisibleBots, getBotDisplayNamesMapping } from '../../data/botRegistry';
@@ -88,12 +88,12 @@ const mechanicDisplayNames: Record<string, string> = {
   'gravity': 'gravity',
   'drunk': 'drunk mode',
   'challenge-dictionary': 'challenge dictionary',
-  'round-length-10': '10 turn rounds',
-  'round-length-15': '15 turn rounds',
-  'round-length-30': '30 turn rounds',
-  'round-length-40': '40 turn rounds',
-  'round-length-50': '50 turn rounds',
-  'round-length-100': '100 turn rounds',
+  'round-length-10': '10 rounds',
+  'round-length-15': '15 rounds',
+  'round-length-30': '30 rounds',
+  'round-length-40': '40 rounds',
+  'round-length-50': '50 rounds',
+  'round-length-100': '100 rounds',
   'player-stats': 'stats',
   'word-paths': 'paths',
   'zen-mode': 'zen mode',
@@ -474,8 +474,10 @@ export const Menu: React.FC<MenuProps> = ({
         toggleVanityFilter();
         // Don't close menu after toggle
       } else if (ROUND_LENGTH_MECHANIC_IDS.has(tier2Id)) {
-        // Select this round length (mutually exclusive with other round lengths)
-        setRoundLength(getRoundLengthValue(tier2Id));
+        // Select this round length (mutually exclusive with other round lengths).
+        // Clicking the already-selected round length untoggles it, reverting to the default.
+        const value = getRoundLengthValue(tier2Id);
+        setRoundLength(roundLength === value ? DEFAULT_ROUND_LENGTH : value);
         // Don't close menu after selection
       } else if (tier2Id === 'player-stats') {
         // Show the player stats overlay
@@ -500,7 +502,7 @@ export const Menu: React.FC<MenuProps> = ({
     
     // For other items (challenge, mechanics, other about items), keep menu open
     // These are placeholder items that don't have functionality yet
-  }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, toggleVanityFilter, toggleMechanic, setRoundLength, resetUnlocksToFresh]);
+  }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, toggleVanityFilter, toggleMechanic, roundLength, setRoundLength, resetUnlocksToFresh]);
 
   return (
     <>
