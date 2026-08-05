@@ -84,7 +84,7 @@ export const alertCopy = {
   /** "GUS" boss battle chain - intro, stage advance, victory, defeat. */
   boss: {
     intro: { lines: ['BOSS', 'BATTLE'], meta: 'A special idea from my son. Beat the clock. Beat the boss.' },
-    advance: { lines: ['NEXT', 'BOSS'], meta: 'The next boss is coming...' },
+    advance: { lines: ['MEGA', 'BOSS'], meta: 'The next boss is coming...' },
     victory: { lines: ['YOU', 'BEAT', 'THE', 'BOSS'], meta: 'bossbot unlocked. themes unlocked.' },
     defeat: { lines: ['BOSS', 'WINS'], meta: 'Maybe next time. Play GUS to try again.' },
     timeout: { lines: ['OUT', 'OF', 'TIME'] }

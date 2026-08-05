@@ -454,6 +454,22 @@ export async function listMyActiveGames(): Promise<ActiveGameSummary[]> {
   });
 }
 
+/**
+ * Cancel/abandon a game from the lobby (without a manager instance). Sets
+ * the game to 'abandoned' so it drops off the active games list. Used for
+ * hanging 'waiting' games the player wants to remove without opening.
+ */
+export async function cancelGame(gameId: string): Promise<void> {
+  const { error } = await supabase
+    .from('games')
+    .update({ status: 'abandoned', completed_at: new Date().toISOString() })
+    .eq('id', gameId);
+
+  if (error) {
+    throw new Error(`Failed to cancel game: ${error.message}`);
+  }
+}
+
 export interface MatchmakingHandle {
   /** Cancel searching and remove self from the queue. */
   cancel: () => Promise<void>;

@@ -46,6 +46,27 @@
   margin: 0;
 }
 
+.multiplayer-game__cancel {
+  background: none;
+  border: 1px solid var(--theme-accent);
+  border-radius: 8px;
+  padding: var(--spacing-sm, 8px) var(--spacing-lg, 32px);
+  cursor: pointer;
+  font-family: var(--theme-font-family);
+  font-weight: var(--theme-font-weight);
+  font-size: 0.9rem;
+  color: var(--theme-accent);
+  text-transform: uppercase;
+  transition: opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  min-height: 44px;
+}
+
+.multiplayer-game__cancel:active {
+  opacity: 0.5;
+}
+
 /* Enlarged checkmark to match the prominence of the vs-bot back arrow on
    this centered waiting screen (default .submit-button is sized for the
    in-game rack, which is much smaller). */

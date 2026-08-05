@@ -120,6 +120,9 @@ const getMenuItems = (
   revealedCategories: string[] = [],
   selectedRoundLength: number = 0
 ): MenuTier1Item[] => {
+  // The "N of N unlocked" counts are only shown once the player has unlocked
+  // the "unlock counter" mechanic by playing the word "unlock".
+  const showUnlockCounts = unlockedMechanics.includes('unlock-counter');
   // Locked theme previews - only computed once 'themes' has been revealed
   const lockedThemeItems: MenuTier2Item[] = revealedCategories.includes('themes')
     ? shuffleLockedItems(
@@ -180,7 +183,7 @@ const getMenuItems = (
   {
     id: 'themes',
     title: 'themes', 
-    count: { unlocked: availableThemes.length, total: ALL_THEMES.length },
+    ...(showUnlockCounts ? { count: { unlocked: availableThemes.length, total: ALL_THEMES.length } } : {}),
     children: [
       ...(unlockedMechanics.includes(DARK_MODE_MECHANIC_ID) ? [{ id: 'inverted', title: 'dark mode', isSelected: isInverted }] : []),
       ...availableThemes.map(theme => ({
@@ -197,10 +200,12 @@ const getMenuItems = (
   ...(unlockedMechanics.filter(id => id !== DARK_MODE_MECHANIC_ID).length > 0 || lockedMechanicItems.length > 0 ? [{
     id: 'mechanics',
     title: 'mechanics',
-    count: {
-      unlocked: unlockedMechanics.filter(id => id !== DARK_MODE_MECHANIC_ID).length,
-      total: ALL_MECHANIC_IDS.length + PERMANENT_MECHANIC_IDS.length
-    },
+    ...(showUnlockCounts ? {
+      count: {
+        unlocked: unlockedMechanics.filter(id => id !== DARK_MODE_MECHANIC_ID).length,
+        total: ALL_MECHANIC_IDS.length + PERMANENT_MECHANIC_IDS.length
+      }
+    } : {}),
     children: [
       // Permanent unlocks (no on/off state) are listed first, plain - no toggle
       ...PERMANENT_MECHANIC_IDS
@@ -247,7 +252,7 @@ const getMenuItems = (
   ...(availableBots.length > 0 || lockedBotItems.length > 0 ? [{
     id: 'bots',
     title: 'bots',
-    count: { unlocked: availableBots.length, total: getVisibleBots().length },
+    ...(showUnlockCounts ? { count: { unlocked: availableBots.length, total: getVisibleBots().length } } : {}),
     children: [
       ...availableBots.map((botId: string) => ({
         id: botId,

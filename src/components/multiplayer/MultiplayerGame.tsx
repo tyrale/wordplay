@@ -89,6 +89,21 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
     }
   }, [manager, onExit]);
 
+  // Cancel from the waiting room (pre-game). Unlike handleResign, this
+  // always exits immediately since there's no in-game overlay to show.
+  const handleCancelWaiting = useCallback(async () => {
+    if (!manager) {
+      onExit();
+      return;
+    }
+    try {
+      await manager.resign();
+    } catch (err) {
+      console.error('Failed to cancel waiting game:', err);
+    }
+    onExit();
+  }, [manager, onExit]);
+
   // GUS triggers the boss battle from multiplayer too. Resign the match
   // server-side first (fire-and-forget) so the opponent is notified the local
   // player left, then forward the trigger to the parent, which switches away
@@ -149,6 +164,13 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
           />
         )}
         {!isHost && <p className="multiplayer-game__waiting-hint">Waiting on the host to start…</p>}
+        <button
+          className="multiplayer-game__cancel"
+          onClick={handleCancelWaiting}
+          type="button"
+        >
+          Cancel
+        </button>
         <button
           className="multiplayer-game__back"
           onClick={onExit}

@@ -7,6 +7,7 @@ import {
   getOpponentName,
   startWaitingGame,
   getGameJoinInfo,
+  cancelGame,
   type MatchmakingHandle,
   type MatchmakingMode,
   type ActiveGameSummary,
@@ -211,6 +212,15 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     setView('menu');
   }, []);
 
+  const handleCancelGame = useCallback(async (gameId: string) => {
+    try {
+      await cancelGame(gameId);
+      setActiveGames(prev => prev.filter(g => g.gameId !== gameId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to cancel game');
+    }
+  }, []);
+
   const handleBackToMenu = useCallback(() => {
     setView('menu');
     setError(null);
@@ -281,16 +291,28 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
             <div className="multiplayer-lobby__games">
               <p className="multiplayer-lobby__games-title">Games in Progress</p>
               {activeGames.map((game) => (
-                <button
-                  key={game.gameId}
-                  className="multiplayer-lobby__game-link"
-                  onClick={() => onGameReady(game.gameId)}
-                >
-                  {game.opponentName}
-                  <span className="multiplayer-lobby__game-status">
-                    {game.status === 'waiting' ? 'waiting' : game.isMyTurn ? 'your turn' : 'their turn'}
-                  </span>
-                </button>
+                <div key={game.gameId} className="multiplayer-lobby__game-row">
+                  <button
+                    className="multiplayer-lobby__game-link"
+                    onClick={() => onGameReady(game.gameId)}
+                  >
+                    {game.opponentName}
+                    <span className="multiplayer-lobby__game-status">
+                      {game.status === 'waiting' ? 'waiting' : game.isMyTurn ? 'your turn' : 'their turn'}
+                    </span>
+                  </button>
+                  <button
+                    className="multiplayer-lobby__game-cancel"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancelGame(game.gameId);
+                    }}
+                    aria-label="Cancel game"
+                    type="button"
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
             </div>
           )}
