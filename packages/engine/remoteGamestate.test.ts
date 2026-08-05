@@ -64,6 +64,12 @@ class FakeRemoteGameStore {
     this.listeners.forEach(l => l());
   }
 
+  /** Simulate another player joining a still-'waiting' vsmany game. */
+  addPlayer(id: string, name: string, playerIndex: number): void {
+    this.snapshot.players.push({ id, name, playerIndex, score: 0 });
+    this.listeners.forEach(l => l());
+  }
+
   onChange(listener: () => void): () => void {
     this.listeners.push(listener);
     return () => {
@@ -184,6 +190,71 @@ describe('RemoteGameStateManager', () => {
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(manager.getState().currentWord).toBe('BAT');
+    expect(manager.getState().turnHistory.length).toBe(1);
+
+    manager.dispose();
+  });
+
+  it('picks up a new player joining a waiting vsmany game', async () => {
+    // Override the default store with one that starts 'waiting' with just
+    // the host, as a freshly-created vsmany invite game would.
+    store = new FakeRemoteGameStore({
+      gameId: 'game-2',
+      status: 'waiting',
+      currentWord: 'CAT',
+      usedWords: ['CAT'],
+      keyLetters: [],
+      lockedLetters: [],
+      lockedKeyLetters: [],
+      currentTurn: 1,
+      currentPlayerIndex: 0,
+      maxTurns: 20,
+      players: [{ id: PLAYER_A, name: 'Alice', playerIndex: 0, score: 0 }],
+      turnHistory: [],
+      winnerId: null
+    });
+
+    const deps = createFakeDependencies(store, PLAYER_A);
+    const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-2');
+    await manager.initialize();
+
+    expect(manager.getState().players.map(p => p.id)).toEqual([PLAYER_A]);
+
+    // A second player joins - status, currentWord and turn count all stay
+    // the same, so this should still be picked up.
+    store.addPlayer(PLAYER_B, 'Bob', 1);
+
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(manager.getState().players.map(p => p.id)).toEqual([PLAYER_A, PLAYER_B]);
+
+    manager.dispose();
+  });
+
+  it('does not revert to the previous word on a stale read racing our own optimistic move', async () => {
+    const deps = createFakeDependencies(store, PLAYER_A);
+    const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+    await manager.initialize();
+
+    // Capture what the remote would've returned right before the move (as
+    // a poll tick or the realtime echo of our own write might, if it reads
+    // before the write is actually visible).
+    const staleSnapshot = store.fetchGame();
+
+    const success = manager.applyMove('CATS');
+    expect(success).toBe(true);
+    expect(manager.getState().currentWord).toBe('CATS');
+
+    // Let the real persistMove() settle.
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    // Simulate that stale read landing after our optimistic update.
+    deps.fetchGame = async () => staleSnapshot;
+    await (manager as unknown as { refreshFromRemote(): Promise<void> }).refreshFromRemote();
+
+    // The board should not have flashed back to 'CAT' - the stale,
+    // fewer-turns snapshot must be ignored.
+    expect(manager.getState().currentWord).toBe('CATS');
     expect(manager.getState().turnHistory.length).toBe(1);
 
     manager.dispose();

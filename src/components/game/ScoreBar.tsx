@@ -10,7 +10,11 @@ export interface ScoreBarProps {
   botId?: string;
   /** vs-human multiplayer: show each player's vanity name instead of P1/P2. */
   isMultiplayer?: boolean;
-  /** Current round/turn number, shown as "round x" at the bottom of the stack. */
+  /** Current round number - one round is every player getting a single
+   * turn - shown as "round x" at the bottom of the stack. Callers derive
+   * this from the engine's per-move `currentTurn` counter and player count
+   * (e.g. `Math.ceil(currentTurn / players.length)`), since the engine
+   * tracks individual turns rather than rounds directly. */
   currentRound?: number;
   /** Authenticated player id treated as "the local player" in multiplayer games, used to identify which row is tappable for renaming. */
   localPlayerId?: string;

@@ -117,7 +117,9 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({
 
   useEffect(() => {
     if (isVisible) {
-      const pattern = variant === 'unlock' ? 'unlock' : 'overlay';
+      const pattern = variant === 'unlock' || variant === 'win' || variant === 'lose'
+        ? variant
+        : 'overlay';
       triggerHapticFeedback(pattern);
       triggerSoundFeedback(pattern);
     }

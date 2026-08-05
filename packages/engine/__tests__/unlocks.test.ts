@@ -313,6 +313,23 @@ describe('Unlock Engine', () => {
       expect(unlockEngine.isUnlocked('bot', 'easy-bot')).toBe(false);
     });
 
+    it('should mark hasUsedReset when resetState is called with markResetUsed', async () => {
+      await unlockEngine.checkWordTriggers('red');
+
+      await unlockEngine.resetState({ markResetUsed: true });
+
+      expect(unlockEngine.getCurrentState().hasUsedReset).toBe(true);
+      expect(unlockEngine.isUnlocked('theme', 'red')).toBe(false);
+    });
+
+    it('should clear hasUsedReset on a plain (non-cheat) resetState call', async () => {
+      await unlockEngine.resetState({ markResetUsed: true });
+      expect(unlockEngine.getCurrentState().hasUsedReset).toBe(true);
+
+      await unlockEngine.resetState();
+      expect(unlockEngine.getCurrentState().hasUsedReset).toBe(false);
+    });
+
     it('should return copies of state to prevent mutation', () => {
       const state1 = unlockEngine.getCurrentState();
       const state2 = unlockEngine.getCurrentState();

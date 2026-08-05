@@ -27,7 +27,8 @@ export function createTestUnlockDependencies(
         mechanics: [...currentState.mechanics],
         bots: [...currentState.bots],
         achievements: [...currentState.achievements],
-        reveals: [...currentState.reveals]
+        reveals: [...currentState.reveals],
+        hasUsedReset: currentState.hasUsedReset
       };
     },
     
@@ -38,7 +39,8 @@ export function createTestUnlockDependencies(
         mechanics: [...state.mechanics],
         bots: [...state.bots],
         achievements: [...state.achievements],
-        reveals: [...state.reveals]
+        reveals: [...state.reveals],
+        hasUsedReset: state.hasUsedReset
       };
     },
     
@@ -61,7 +63,8 @@ export function createControlledTestUnlockDependencies(
         mechanics: [...controlledState.mechanics],
         bots: [...controlledState.bots],
         achievements: [...controlledState.achievements],
-        reveals: [...controlledState.reveals]
+        reveals: [...controlledState.reveals],
+        hasUsedReset: controlledState.hasUsedReset
       };
     },
     
@@ -72,6 +75,7 @@ export function createControlledTestUnlockDependencies(
       controlledState.bots = [...state.bots];
       controlledState.achievements = [...state.achievements];
       controlledState.reveals = [...state.reveals];
+      controlledState.hasUsedReset = state.hasUsedReset;
     },
     
     getTimestamp: () => Date.now()
@@ -98,7 +102,8 @@ export function createFailingTestUnlockDependencies(
         mechanics: [...currentState.mechanics],
         bots: [...currentState.bots],
         achievements: [...currentState.achievements],
-        reveals: [...currentState.reveals]
+        reveals: [...currentState.reveals],
+        hasUsedReset: currentState.hasUsedReset
       };
     },
     
@@ -111,7 +116,8 @@ export function createFailingTestUnlockDependencies(
         mechanics: [...state.mechanics],
         bots: [...state.bots],
         achievements: [...state.achievements],
-        reveals: [...state.reveals]
+        reveals: [...state.reveals],
+        hasUsedReset: state.hasUsedReset
       };
     },
     
@@ -135,7 +141,8 @@ export function createDeterministicTestUnlockDependencies(
         mechanics: [...currentState.mechanics],
         bots: [...currentState.bots],
         achievements: [...currentState.achievements],
-        reveals: [...currentState.reveals]
+        reveals: [...currentState.reveals],
+        hasUsedReset: currentState.hasUsedReset
       };
     },
     
@@ -145,7 +152,8 @@ export function createDeterministicTestUnlockDependencies(
         mechanics: [...state.mechanics],
         bots: [...state.bots],
         achievements: [...state.achievements],
-        reveals: [...state.reveals]
+        reveals: [...state.reveals],
+        hasUsedReset: state.hasUsedReset
       };
     },
     

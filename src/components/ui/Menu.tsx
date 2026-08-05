@@ -450,13 +450,13 @@ export const Menu: React.FC<MenuProps> = ({
       onStartGame?.('tutorial');
       handleClose(); // Close menu after starting tutorial
     } else if (tier1Id === 'about' && tier2Id === 'dictionaries') {
-      // Show the dictionaries overlay
+      // Show the dictionaries overlay on top of the menu (it fully covers the
+      // menu visually), so closing it returns to the menu instead of home.
       setIsDictionariesOpen(true);
-      handleClose(); // Close menu behind the overlay
     } else if (tier1Id === 'about' && tier2Id === 'thoughts') {
-      // Show the thoughts overlay
+      // Show the thoughts overlay on top of the menu (it fully covers the
+      // menu visually), so closing it returns to the menu instead of home.
       setIsThoughtsOpen(true);
-      handleClose(); // Close menu behind the overlay
     } else if (tier1Id === 'about' && (tier2Id === 'debug' || tier2Id === 'debug-mode')) {
       // Open debug dialog
       onDebugOpen?.();
@@ -470,9 +470,9 @@ export const Menu: React.FC<MenuProps> = ({
       onStartGame?.('challenge');
       handleClose(); // Close menu after starting challenge
     } else if (tier1Id === 'vsworld' && tier2Id === 'leaderboard') {
-      // Show the leaderboard overlay
+      // Show the leaderboard overlay on top of the menu (it fully covers the
+      // menu visually), so closing it returns to the menu instead of home.
       setIsLeaderboardOpen(true);
-      handleClose(); // Close menu behind the overlay
     } else if (tier1Id === 'mechanics') {
       if (tier2Id === 'vanity-filter') {
         // Toggle vanity filter
@@ -485,13 +485,13 @@ export const Menu: React.FC<MenuProps> = ({
         setRoundLength(roundLength === value ? DEFAULT_ROUND_LENGTH : value);
         // Don't close menu after selection
       } else if (tier2Id === 'player-stats') {
-        // Show the player stats overlay
+        // Show the player stats overlay on top of the menu (it fully covers
+        // the menu visually), so closing it returns to the menu instead of home.
         setIsStatsOpen(true);
-        handleClose(); // Close menu behind the overlay
       } else if (tier2Id === 'word-paths') {
-        // Show the word path explorer overlay
+        // Show the word path explorer overlay on top of the menu (it fully
+        // covers the menu visually), so closing it returns to the menu instead of home.
         setIsWordPathsOpen(true);
-        handleClose(); // Close menu behind the overlay
       } else if (PERMANENT_MECHANIC_IDS.includes(tier2Id)) {
         // Permanent unlocks (e.g. zen mode) have no on/off state - clicking does nothing
       } else {

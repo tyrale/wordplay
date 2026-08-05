@@ -22,7 +22,7 @@
      status bar / notch. Match .interactive-game's padding-md so the score
      bar sits at the same inset as the rest of the game, plus any device
      safe-area inset (notch/Dynamic Island) on top of that. */
-  top: calc(var(--spacing-md) + env(safe-area-inset-top, 0px));
+  top: calc(var(--spacing-md) + env(safe-area-inset-top, 0px) + 40px);
   left: 0;
   right: 0;
   margin: 0 auto;

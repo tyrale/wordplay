@@ -7,7 +7,7 @@
  * called together for consistent tactile + audible feedback.
  */
 
-export type SoundPattern = 'add' | 'remove' | 'move' | 'submit' | 'overlay' | 'unlock' | 'click';
+export type SoundPattern = 'add' | 'remove' | 'move' | 'submit' | 'overlay' | 'unlock' | 'click' | 'yourTurn' | 'win' | 'lose' | 'pass';
 
 interface ToneStep {
   frequency: number;
@@ -33,6 +33,24 @@ const SOUND_PATTERNS: Record<SoundPattern, ToneStep[]> = {
     { frequency: 1300, durationMs: 50, delayMs: 80, gain: 0.07 },
   ],
   click: [{ frequency: 400, durationMs: 20, gain: 0.04 }],
+  // A quick, bright two-note chime to call attention to a new turn.
+  yourTurn: [
+    { frequency: 880, durationMs: 30, gain: 0.06 },
+    { frequency: 1175, durationMs: 40, delayMs: 60, gain: 0.06 },
+  ],
+  // Ascending, upbeat triad for a win.
+  win: [
+    { frequency: 660, durationMs: 40, gain: 0.07 },
+    { frequency: 880, durationMs: 40, delayMs: 60, gain: 0.07 },
+    { frequency: 1320, durationMs: 90, delayMs: 120, gain: 0.08 },
+  ],
+  // Descending, muted pair for a loss.
+  lose: [
+    { frequency: 420, durationMs: 60, gain: 0.07 },
+    { frequency: 280, durationMs: 120, delayMs: 80, gain: 0.07 },
+  ],
+  // A single low, dull thud for passing a turn.
+  pass: [{ frequency: 220, durationMs: 60, gain: 0.05 }],
 };
 
 let audioContext: AudioContext | null = null;

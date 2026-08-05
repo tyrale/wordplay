@@ -70,9 +70,12 @@
       "SAMUEL",
       "TYRALE",
       "GUS"
+    ],
+    "organizations": [
+      "NASA"
     ]
   },
-  "totalWords": 61,
+  "totalWords": 62,
   "words": [
     "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER",
     "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY",
@@ -81,6 +84,7 @@
     "EMMA", "OLIVIA", "AVA", "SOPHIA", "ISABELLA", "MIA", "AMELIA", "HARPER", "EVELYN",
     "LIAM", "NOAH", "OLIVER", "ELIJAH", "LUCAS", "MASON", "LOGAN", "ETHAN", "JACOB", "AIDEN", "SAMUEL",
     "TYRALE",
-    "GUS"
+    "GUS",
+    "NASA"
   ]
 }

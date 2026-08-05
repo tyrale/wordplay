@@ -331,6 +331,11 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
       return;
     }
 
+    if (action === '?') { // Help / dictionary lookup - always reachable, even off-turn
+      handleHelp();
+      return;
+    }
+
     if (!isPlayerTurn || isProcessingMove) return;
 
     switch (action) {
@@ -349,9 +354,6 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
         }
         break;
       }
-      case '?':
-        handleHelp();
-        break;
     }
   }, [isPlayerTurn, isProcessingMove, wordState.currentWord, handleHelp, handleSettings, onNavigateHome]);
 

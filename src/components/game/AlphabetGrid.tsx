@@ -69,9 +69,10 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   }, {} as Record<string, GridCellState>);
 
   const handleCellClick = useCallback((content: string) => {
-    // The menu button should always be reachable, even when it's not the
-    // player's turn (e.g. waiting on an opponent in async multiplayer).
-    if (disabled && content !== '≡') return;
+    // The menu and dictionary/help buttons should always be reachable, even
+    // when it's not the player's turn (e.g. waiting on an opponent in async
+    // multiplayer).
+    if (disabled && content !== '≡' && content !== '?') return;
     
     if (ACTION_BUTTONS.includes(content)) {
       onActionClick?.(content);
@@ -211,9 +212,10 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
             const state = stateMap[content] || 'normal';
             const canDrag = enableDrag && !disabled && !isAction && state !== 'disabled';
             
-            // Menu button - always enabled (see handleCellClick) so the
-            // player can open the menu even when it's not their turn.
-            if (content === '≡') {
+            // Menu and dictionary/help buttons - always enabled (see
+            // handleCellClick) so the player can open the menu or look up a
+            // word even when it's not their turn.
+            if (content === '≡' || content === '?') {
               return (
                 <GridCell
                   key={content}

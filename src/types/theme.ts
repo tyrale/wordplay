@@ -118,6 +118,8 @@ export const marketTheme = createTheme("market", ["#FF8552", "#297373", "#E9D758
 export const midnightTheme = createTheme("midnight", ["#3A506B", "#0B132B", "#cccccc"]);
 export const mintTheme = createTheme("mint", ["#ffffff", "#10B981", "#6EE7B7"]);
 export const molesTheme = createTheme("moles", ["#F5E9E2", "#773344", "#E3B5A4"]);
+// NASA theme - NASA "meatball" logo colors: blue base, red accent, light gray background
+export const nasaTheme = createTheme("nasa", ["#F3F4F6", "#0B3D91", "#FC3D21"]);
 export const orangeTheme = createTheme("orange", ["#ffffff", "#EA580C", "#FB923C"]);
 export const peacefulTheme = createTheme("peaceful", ["#BCE784", "#348AA7", "#5DD39E"]);
 export const pinkTheme = createTheme("pink", ["#ffffff", "#BE185D", "#F472B6"]);
@@ -234,6 +236,7 @@ export const availableThemes = [
   midnightTheme,
   mintTheme,
   molesTheme,
+  nasaTheme,
   orangeTheme,
   peacefulTheme,
   pinkTheme,

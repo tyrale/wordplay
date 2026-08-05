@@ -173,6 +173,7 @@ const mechanicDisplayNames: Record<string, string> = {
 - [x] contrast - Contrast theme
 - [x] july - July theme
 - [x] brand - Brand theme
+- [x] nasa - NASA theme
 - [x] salmon - Salmon theme
 - [x] blues - Blues theme
 - [x] squash - Squash theme

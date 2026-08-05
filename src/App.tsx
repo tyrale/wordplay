@@ -62,6 +62,10 @@ function AppContent() {
     winner: string | null;
     finalScores: { human: number; bot: number };
     botName?: string;
+    /** Full scoreboard for multiplayer games with 3+ players, so the
+     * end-of-game overlay can list everyone rather than just you + one
+     * opponent. */
+    allPlayers?: { id: string; name: string; score: number; isLocal: boolean }[];
   } | null>(null);
   // Tracks whether the winner/loser overlay currently showing is for a
   // vs-human multiplayer game, so closing it returns to the multiplayer
@@ -390,7 +394,7 @@ function AppContent() {
   // view") instead of the main menu once it's dismissed. A resignation
   // (by either player) shows a distinct "match ended" overlay instead,
   // since it isn't a fairly-earned win/lose result.
-  const handleMultiplayerGameEnd = ({ winnerId, localPlayerId, localScore, opponentScore, opponentName, resigned }: MultiplayerGameResult) => {
+  const handleMultiplayerGameEnd = ({ winnerId, localPlayerId, localScore, opponentScore, opponentName, resigned, allPlayers }: MultiplayerGameResult) => {
     setIsMultiplayerResult(true);
 
     if (resigned) {
@@ -401,7 +405,8 @@ function AppContent() {
     setGameResults({
       winner: winnerId === null ? null : winnerId === localPlayerId ? 'human' : 'bot',
       finalScores: { human: localScore, bot: opponentScore },
-      botName: opponentName
+      botName: opponentName,
+      allPlayers
     });
     setAppState(winnerId === localPlayerId ? 'winner' : 'loser');
   };
@@ -445,6 +450,31 @@ function AppContent() {
   // both return to the multiplayer lobby.
   const handleMultiplayerResignedComplete = () => {
     returnToMultiplayerLobby();
+  };
+
+  // End-of-game score breakdown for the winner/loser overlays. For multiplayer
+  // games with a full scoreboard (3+ players), lists everyone sorted by
+  // score; otherwise falls back to the simple you-vs-bot/opponent display.
+  const renderGameResultsMeta = () => {
+    if (!gameResults?.finalScores) return null;
+    if (gameResults.allPlayers && gameResults.allPlayers.length > 2) {
+      const sorted = [...gameResults.allPlayers].sort((a, b) => b.score - a.score);
+      return (
+        <>
+          {sorted.map(player => (
+            <div key={player.id}>
+              {player.isLocal ? 'You' : player.name}: {player.score}
+            </div>
+          ))}
+        </>
+      );
+    }
+    return (
+      <>
+        <div>You: {gameResults.finalScores.human}</div>
+        <div>{gameResults.botName || 'Bot'}: {gameResults.finalScores.bot}</div>
+      </>
+    );
   };
 
   // Pick a random phrase each time a win/lose/quit screen is shown (not on every re-render)
@@ -605,12 +635,7 @@ function AppContent() {
                 lines={[...winCopy.lines]}
                 variant="win"
                 onClose={handleWinnerComplete}
-                meta={gameResults?.finalScores && (
-                  <>
-                    <div>You: {gameResults.finalScores.human}</div>
-                    <div>{gameResults.botName || 'Bot'}: {gameResults.finalScores.bot}</div>
-                  </>
-                )}
+                meta={renderGameResultsMeta()}
               />
               
               {/* Loser Overlay */}
@@ -619,12 +644,7 @@ function AppContent() {
                 lines={[...loseCopy.lines]}
                 variant="lose"
                 onClose={handleLoserComplete}
-                meta={gameResults?.finalScores && (
-                  <>
-                    <div>You: {gameResults.finalScores.human}</div>
-                    <div>{gameResults.botName || 'Bot'}: {gameResults.finalScores.bot}</div>
-                  </>
-                )}
+                meta={renderGameResultsMeta()}
               />
 
               {/* Multiplayer Resigned Overlay - shown to both players when either resigns mid-game */}

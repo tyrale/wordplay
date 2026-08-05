@@ -21,8 +21,9 @@ export interface HandleWordSubmissionOptions {
    * Whether this submission came from the local player's own input (vs a
    * bot move or a remote opponent's move observed via game state). Defaults
    * to `true`. Only the local player's own "RESET" submission wipes their
-   * unlocks - a bot/opponent playing "RESET" is treated as a normal word
-   * so it can't clobber another player's progress.
+   * unlocks (and only the first time - see `hasUsedReset`) - a bot/opponent
+   * playing "RESET" is treated as a normal word so it can't clobber another
+   * player's progress.
    */
   isLocalMove?: boolean;
 }
@@ -160,10 +161,12 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
   const handleWordSubmission = useCallback(async (word: string, isProfane?: boolean, options?: HandleWordSubmissionOptions): Promise<UnlockResult[]> => {
     const isLocalMove = options?.isLocalMove ?? true;
     // Special case: the local player playing "RESET" wipes out all unlocks
-    // instead of granting one. Skipped for non-local moves (see above).
-    if (isLocalMove && word === 'RESET') {
-      console.log('[Unlock] "RESET" played - resetting all unlocks');
-      await unlocks.resetUnlocks();
+    // instead of granting one - but only the first time it's ever played.
+    // Once used, "RESET" falls through and is treated as a normal word.
+    // Skipped for non-local moves (see above).
+    if (isLocalMove && word === 'RESET' && !unlocks.hasUsedReset()) {
+      console.log('[Unlock] "RESET" played - resetting all unlocks (one-time use)');
+      await unlocks.resetUnlocks({ markResetUsed: true });
       showAlert('generic', 'resetTrigger');
       return [];
     }
@@ -183,7 +186,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
     }
 
     return results;
-  }, [unlocks.checkWordTriggers, unlocks.checkAchievementTriggers, handleImmediateEffects, showUnlockNotification]);
+  }, [unlocks.checkWordTriggers, unlocks.checkAchievementTriggers, unlocks.resetUnlocks, unlocks.hasUsedReset, handleImmediateEffects, showUnlockNotification, showAlert]);
 
   // Enhanced game completion handler
   const handleGameCompletion = useCallback(async (winner: string | null, botId?: string): Promise<UnlockResult[]> => {

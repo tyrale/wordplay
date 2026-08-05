@@ -16,6 +16,10 @@ export interface MultiplayerGameResult {
    * max turns naturally - shown as a distinct "match ended" overlay instead
    * of a win/lose result. */
   resigned: boolean;
+  /** Every player in the match with their final score, for showing a full
+   * scoreboard on the end-of-game overlay (rather than just you + one
+   * opponent) in 3+ player games. */
+  allPlayers: { id: string; name: string; score: number; isLocal: boolean }[];
 }
 
 export interface MultiplayerGameProps {
@@ -189,7 +193,8 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
       localPlayerId={localPlayerId}
       currentGameMode="multiplayer"
       onGameEnd={(winnerId, finalScores) => {
-        const others = manager.getState().players.filter(p => p.id !== localPlayerId);
+        const allPlayers = manager.getState().players;
+        const others = allPlayers.filter(p => p.id !== localPlayerId);
         // "Opponent" for the end-of-game meta text: the winner if the local
         // player lost, otherwise the highest-scoring other player - works
         // the same as before for 2-player games, and picks the most
@@ -203,7 +208,13 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
           localScore: finalScores.human,
           opponentScore: finalScores.bot,
           opponentName: opponent?.name || 'Opponent',
-          resigned: manager.wasAbandoned()
+          resigned: manager.wasAbandoned(),
+          allPlayers: allPlayers.map(p => ({
+            id: p.id,
+            name: p.name,
+            score: p.score,
+            isLocal: p.id === localPlayerId
+          }))
         });
       }}
       onResign={handleResign}

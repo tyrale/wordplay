@@ -19,13 +19,15 @@ export interface UseUnlocksReturn {
   isUnlocked: (category: 'theme' | 'mechanic' | 'bot' | 'reveal', itemId: string) => boolean;
   getUnlockedItems: (category: 'theme' | 'mechanic' | 'bot' | 'reveal') => string[];
   getUnlockProgress: () => { unlocked: number; total: number };
+  /** Whether the local player has ever used the one-time "RESET" word cheat. */
+  hasUsedReset: () => boolean;
   
   // Triggers
   checkWordTriggers: (word: string) => Promise<UnlockResult[]>;
   checkAchievementTriggers: (achievement: string) => Promise<UnlockResult[]>;
   checkWordSequenceTriggers: (wordPath: string[]) => Promise<UnlockResult[]>;  
   // Debug/Admin
-  resetUnlocks: () => Promise<void>;
+  resetUnlocks: (options?: { markResetUsed?: boolean }) => Promise<void>;
 }
 
 /**
@@ -37,7 +39,8 @@ export function useUnlocks(): UseUnlocksReturn {
     mechanics: [],
     bots: ['basicBot'],
     achievements: [],
-    reveals: []
+    reveals: [],
+    hasUsedReset: false
   });
   const [isLoading, setIsLoading] = useState(true);
   const engineRef = useRef<UnlockEngine | null>(null);
@@ -90,6 +93,14 @@ export function useUnlocks(): UseUnlocksReturn {
   const getUnlockProgress = useCallback((): { unlocked: number; total: number } => {
     if (!engineRef.current) return { unlocked: 0, total: 0 };
     return engineRef.current.getUnlockProgress();
+  }, []);
+
+  // Reads directly from the engine (a stable ref) rather than the React
+  // `unlockState`, so it always reflects the latest value even if called
+  // from a callback closure captured on an earlier render.
+  const hasUsedReset = useCallback((): boolean => {
+    if (!engineRef.current) return false;
+    return engineRef.current.getCurrentState().hasUsedReset ?? false;
   }, []);
 
   // Trigger functions
@@ -151,11 +162,11 @@ export function useUnlocks(): UseUnlocksReturn {
   }, []);
 
   // Debug/Admin functions
-  const resetUnlocks = useCallback(async (): Promise<void> => {
+  const resetUnlocks = useCallback(async (options?: { markResetUsed?: boolean }): Promise<void> => {
     if (!engineRef.current) return;
     
     try {
-      await engineRef.current.resetState();
+      await engineRef.current.resetState(options);
       const newState = engineRef.current.getCurrentState();
       setUnlockState(newState);
     } catch (error) {
@@ -169,6 +180,7 @@ export function useUnlocks(): UseUnlocksReturn {
     isUnlocked,
     getUnlockedItems,
     getUnlockProgress,
+    hasUsedReset,
     checkWordTriggers,
     checkAchievementTriggers,
     checkWordSequenceTriggers,

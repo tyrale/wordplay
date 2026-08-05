@@ -432,7 +432,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     this.switchToNextPlayer();
 
     // Check if game is finished
-    if (this.state.currentTurn > this.state.maxTurns) {
+    if (this.state.currentTurn > this.getMaxIndividualTurns()) {
       this.finishGame();
     }
 
@@ -515,6 +515,18 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     } finally {
             this.botMoveInProgress = false;
     }
+  }
+
+  /**
+   * The game is round-based: `maxTurns` is the number of rounds (every
+   * player gets one turn per round), not a raw count of individual turns.
+   * `currentTurn`, however, counts individual turns (one per player move)
+   * so turn history/key-letter logging keep a stable per-move sequence
+   * number. This converts the round-based config into the equivalent
+   * individual-turn count the game should actually last for.
+   */
+  private getMaxIndividualTurns(): number {
+    return this.state.maxTurns * this.state.players.length;
   }
 
   /**
@@ -903,7 +915,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     this.switchToNextPlayer();
 
     // Check if game is finished
-    if (this.state.currentTurn > this.state.maxTurns) {
+    if (this.state.currentTurn > this.getMaxIndividualTurns()) {
       this.finishGame();
     }
 

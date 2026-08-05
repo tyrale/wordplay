@@ -596,7 +596,13 @@ export interface GameState {
   lockedKeyLetters: string[];
   players: Player[];
   currentPlayerIndex: number;
+  /** Individual-turn counter - increments by 1 on every player's move
+   * (a "round", where every player gets one turn, is `players.length`
+   * individual turns). See `maxTurns`. */
   currentTurn: number;
+  /** Number of *rounds* the game lasts (every player gets one turn per
+   * round), not a raw individual-turn count - the game actually ends once
+   * `currentTurn` exceeds `maxTurns * players.length`. */
   maxTurns: number;
   usedWords: string[];
   usedKeyLetters: string[];
@@ -615,6 +621,9 @@ export interface GameStateUpdate {
 }
 
 export interface GameConfig {
+  /** Number of rounds the game lasts - every player gets one turn per
+   * round, so the game actually runs for `maxTurns * players.length`
+   * individual turns. */
   maxTurns?: number;
   initialWord?: string;
   players?: Player[];
@@ -778,6 +787,14 @@ export interface UnlockState {
   bots: string[];         // Bot IDs that are unlocked (e.g., ['easy-bot', 'pirate-bot'])
   achievements: string[]; // Achievement IDs that are earned (e.g., ['beat-basicBot'])
   reveals: string[];      // Menu-preview reveals unlocked (e.g., ['bots', 'themes', 'mechanics'])
+  /**
+   * Whether this player has ever used the "RESET" word cheat to wipe their
+   * unlocks. Once true, playing "RESET" again is treated as a normal word -
+   * the cheat is a one-time-only reset per player. Defaults to `false`/
+   * absent for players who haven't used it (or state saved before this
+   * field existed).
+   */
+  hasUsedReset?: boolean;
 }
 
 export interface UnlockResult {
@@ -857,7 +874,14 @@ export interface UnlockEngine {
   getUnlockProgress(): { unlocked: number; total: number };
   
   // Admin/Debug
-  resetState(): Promise<void>;
+  /**
+   * Wipe unlock state back to the initial fresh-user state.
+   * @param options.markResetUsed - If true, marks `hasUsedReset` as used on
+   *   the resulting state instead of clearing it. Used for the one-time
+   *   "RESET" word cheat; omit (or pass false) for full debug/test resets
+   *   that should also clear the one-time-use flag.
+   */
+  resetState(options?: { markResetUsed?: boolean }): Promise<void>;
 }
 
 /**

@@ -168,12 +168,31 @@ export class RemoteGameStateManager implements IGameStateManager {
     try {
       const snapshot = await this.remote.fetchGame(this.gameId);
       this.lastRemoteStatus = snapshot.status;
-      const currentTurnCount = this.local.getState().turnHistory.length;
+      const currentState = this.local.getState();
+      const currentTurnCount = currentState.turnHistory.length;
+      // Turn history only ever grows. If this fetch has *fewer* turns than
+      // what's already loaded locally, it's a stale read racing our own
+      // just-applied optimistic move (e.g. the realtime echo of our own
+      // persistMove(), or a poll tick, landing before that write is actually
+      // visible) - applying it would flash the board back to the previous
+      // word for a moment before the next refresh catches back up. Since we
+      // already have the newer state locally, just ignore this stale one.
+      if (snapshot.turnHistory.length < currentTurnCount) {
+        return;
+      }
       const changed =
         snapshot.turnHistory.length !== currentTurnCount ||
-        this.local.getState().currentWord !== snapshot.currentWord;
-      const statusChanged = snapshot.status !== this.local.getState().gameStatus;
-      if (changed || statusChanged) {
+        currentState.currentWord !== snapshot.currentWord;
+      const statusChanged = snapshot.status !== currentState.gameStatus;
+      // Also pick up players joining/leaving while a vsmany game is still
+      // 'waiting' - the game's status/word/turn count don't change when a
+      // new player joins, so without this check the waiting-room view would
+      // never re-render to show them (only a subsequent unrelated change,
+      // like the host manually starting the game, would trigger it).
+      const playersChanged =
+        snapshot.players.length !== currentState.players.length ||
+        snapshot.players.some(p => !currentState.players.some(existing => existing.id === p.id));
+      if (changed || statusChanged || playersChanged) {
         this.local.loadState(snapshotToGameState(snapshot));
       }
     } finally {

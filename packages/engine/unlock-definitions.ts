@@ -16,7 +16,8 @@ const _INITIAL_UNLOCK_STATE = {
   mechanics: [],             // No special mechanics unlocked
   bots: ['basicBot'],         // Only basic test bot unlocked
   achievements: [],         // No achievements earned
-  reveals: []               // No menu-preview reveals unlocked
+  reveals: [],              // No menu-preview reveals unlocked
+  hasUsedReset: false        // The "RESET" word cheat hasn't been used yet
 } as const;
 
 /**
@@ -28,7 +29,8 @@ export function getInitialUnlockState(): UnlockState {
     mechanics: [..._INITIAL_UNLOCK_STATE.mechanics],
     bots: [..._INITIAL_UNLOCK_STATE.bots],
     achievements: [..._INITIAL_UNLOCK_STATE.achievements],
-    reveals: [..._INITIAL_UNLOCK_STATE.reveals]
+    reveals: [..._INITIAL_UNLOCK_STATE.reveals],
+    hasUsedReset: _INITIAL_UNLOCK_STATE.hasUsedReset
   };
 }
 
@@ -215,6 +217,13 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     trigger: { type: 'word', value: 'brand', timing: 'word_submission' },
     target: 'brand',
     immediate_effect: { type: 'apply_theme', value: 'brand' }
+  },
+  {
+    id: 'unlock_nasa_theme',
+    category: 'theme',
+    trigger: { type: 'word', value: 'nasa', timing: 'word_submission' },
+    target: 'nasa',
+    immediate_effect: { type: 'apply_theme', value: 'nasa' }
   },
   {
     id: 'unlock_salmon_theme',

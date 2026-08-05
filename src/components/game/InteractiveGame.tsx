@@ -594,9 +594,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, []);
 
   const handleActionClick = useCallback((action: string) => {
-    // The menu and home navigation should always be reachable, even when
-    // it's not the player's turn (e.g. waiting on an opponent in async
-    // multiplayer) - unlike letter/word edits, these aren't turn actions.
+    // The menu, home navigation, and dictionary/help lookup should always be
+    // reachable, even when it's not the player's turn (e.g. waiting on an
+    // opponent in async multiplayer) - unlike letter/word edits, these
+    // aren't turn actions.
     if (action === '≡') {
       handleSettings();
       return;
@@ -607,15 +608,17 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       return;
     }
 
+    if (action === '?') { // Help / dictionary lookup
+      handleHelp();
+      return;
+    }
+
     if (!isPlayerTurn || isProcessingMove) return;
     
     switch (action) {
       case '↻': // Reset word (reset to current word)
         setPendingWord(wordState.currentWord);
         setPendingMoveAttempt(null);
-        break;
-      case '?': // Help
-        handleHelp();
         break;
     }
   }, [isPlayerTurn, isProcessingMove, wordState.currentWord, handleHelp, handleSettings, onNavigateHome]);
@@ -917,7 +920,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         players={gameState.players}
         botId={config?.botId}
         isMultiplayer={currentGameMode === 'multiplayer'}
-        currentRound={gameState.currentTurn}
+        currentRound={Math.ceil(gameState.currentTurn / gameState.players.length)}
         localPlayerId={localPlayerId}
         onOwnNameTap={handleOwnNameTap}
       />

@@ -6,7 +6,7 @@
  * Safari, iOS Safari which does not implement the Vibration API).
  */
 
-export type HapticPattern = 'add' | 'remove' | 'move' | 'submit' | 'overlay' | 'unlock';
+export type HapticPattern = 'add' | 'remove' | 'move' | 'submit' | 'overlay' | 'unlock' | 'yourTurn' | 'win' | 'lose' | 'pass';
 
 const OVERLAY_DURATION_MS = 12;
 
@@ -19,6 +19,14 @@ const HAPTIC_PATTERNS: Record<HapticPattern, number | number[]> = {
   overlay: OVERLAY_DURATION_MS,
   // New-unlock celebrations get a longer buzz - double the standard overlay duration.
   unlock: OVERLAY_DURATION_MS * 2,
+  // Short double-tap to signal it's the player's turn again.
+  yourTurn: [10, 40, 10],
+  // Celebratory triple-pulse for a win.
+  win: [15, 40, 15, 40, 25],
+  // A single longer, heavier buzz for a loss.
+  lose: 40,
+  // Brief, single tap for passing a turn.
+  pass: 12,
 };
 
 export function triggerHapticFeedback(pattern: HapticPattern = 'move'): void {

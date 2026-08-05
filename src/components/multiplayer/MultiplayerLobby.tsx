@@ -47,9 +47,19 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
   // Live list of joined players for a vsmany "Create" game, shown while it's
   // still 'waiting' for the host to manually start it.
   const [joinedPlayers, setJoinedPlayers] = useState<GameJoinInfo['players']>([]);
+  // Cleans up the realtime channel + polling fallback from the most recent
+  // handleCreateInvite call, so a stale one doesn't linger if the host backs
+  // out or creates another game before the first settles.
+  const createCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     listMyActiveGames().then(setActiveGames).catch(() => setActiveGames([]));
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      createCleanupRef.current?.();
+    };
   }, []);
 
   const handleNameSubmit = useCallback(async (name: string) => {

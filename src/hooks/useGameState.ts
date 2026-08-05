@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { createGameStateManagerWithDependencies } from '../../packages/engine/gamestate';
 import { createBrowserAdapter } from '../adapters/browserAdapter';
 import { loadActiveGame, saveActiveGame, clearActiveGame } from '../adapters/browserGameSaveAdapter';
+import { triggerHapticFeedback } from '../utils/haptics';
+import { triggerSoundFeedback } from '../utils/sound';
 import type { GameState, MoveAttempt, GameConfig, BotMove, IGameStateManager } from '../../packages/engine/interfaces';
 
 /**
@@ -366,7 +368,12 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
             if (!gameManager || !isInitialized) return false;
       
       try {
-        return gameManager.passTurn();
+        const passed = gameManager.passTurn();
+        if (passed) {
+          triggerHapticFeedback('pass');
+          triggerSoundFeedback('pass');
+        }
+        return passed;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Failed to pass turn';
                 setLastError(errorMsg);
@@ -444,7 +451,25 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
   const isBotTurn = currentPlayer === 'bot';
   const isGameActive = gameState.gameStatus === 'playing';
   const isGameFinished = gameState.gameStatus === 'finished';
-  
+
+  // Fire "your turn" feedback whenever the turn hands back to the local
+  // player mid-game (e.g. after the bot/opponent moves) - but not for the
+  // very first turn of a fresh game, which shouldn't buzz on load.
+  const wasPlayerTurnRef = useRef(isPlayerTurn);
+  const hasSeenActiveGameRef = useRef(false);
+  useEffect(() => {
+    if (isGameActive) {
+      if (hasSeenActiveGameRef.current && isPlayerTurn && !wasPlayerTurnRef.current) {
+        triggerHapticFeedback('yourTurn');
+        triggerSoundFeedback('yourTurn');
+      }
+      hasSeenActiveGameRef.current = true;
+    } else {
+      hasSeenActiveGameRef.current = false;
+    }
+    wasPlayerTurnRef.current = isPlayerTurn;
+  }, [isPlayerTurn, isGameActive]);
+
   const clearError = useCallback(() => {
         setLastError(null);
   }, []);
@@ -466,10 +491,15 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
 
 // Helper hooks for specific game aspects
 export function useGameStats(gameState: PublicGameState) {
+  // The game is round-based (maxTurns is the number of rounds - every
+  // player gets one turn per round), while currentTurn counts individual
+  // turns - so rounds remaining needs to account for the player count
+  // rather than comparing the two directly.
+  const currentRound = Math.ceil(gameState.currentTurn / gameState.players.length);
   return {
     humanScore: gameState.players.find(p => p.id === 'human')?.score || 0,
     botScore: gameState.players.find(p => p.id === 'bot')?.score || 0,
-    turnsRemaining: gameState.maxTurns - gameState.currentTurn + 1,
+    turnsRemaining: gameState.maxTurns - currentRound + 1,
     moveCount: gameState.totalMoves,
     currentTurn: gameState.currentTurn,
     maxTurns: gameState.maxTurns

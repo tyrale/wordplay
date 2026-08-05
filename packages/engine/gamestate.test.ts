@@ -60,6 +60,52 @@ describe('LocalGameStateManager', () => {
     });
   });
 
+  describe('Rounds vs. individual turns', () => {
+    // The game is round-based: maxTurns is the number of rounds (every
+    // player gets one turn per round), not a raw count of individual
+    // turns. These use loadState() to seed an N-player state directly
+    // (the same mechanism RemoteGameStateManager uses to hydrate a
+    // multiplayer game), since the default 2-player init path can't
+    // create more players.
+    function buildState(currentPlayerIndex: number, currentTurn: number) {
+      const base = gameManager.getState();
+      const players = ['p1', 'p2', 'p3', 'p4'].map((id, index) => ({
+        id,
+        name: id.toUpperCase(),
+        isBot: false,
+        score: 0,
+        isCurrentPlayer: index === currentPlayerIndex
+      }));
+      return {
+        ...base,
+        players,
+        currentPlayerIndex,
+        maxTurns: 1, // 1 round
+        currentTurn,
+        gameStatus: 'playing' as const
+      };
+    }
+
+    it('does not end a 4-player game after only 1 of 4 players has had a turn', () => {
+      gameManager.loadState(buildState(0, 1));
+      gameManager.applyMove('CATS');
+      // Only 1 of 4 players has moved in this 1-round game - it must still
+      // be playing, not ended as if 1 raw turn were the whole round.
+      expect(gameManager.getState().gameStatus).toBe('playing');
+      expect(gameManager.getState().currentTurn).toBe(2);
+    });
+
+    it('ends a 4-player, 1-round game only once all 4 players have had a turn', () => {
+      // Seed state as if players 1-3 have already moved (currentTurn=4,
+      // i.e. it's player 4's turn) in a 1-round (maxTurns=1) game.
+      gameManager.loadState(buildState(3, 4));
+      gameManager.applyMove('CATS');
+      // The 4th and final player of the round has now moved - the game
+      // should finish, since 1 round = 4 individual turns for 4 players.
+      expect(gameManager.getState().gameStatus).toBe('finished');
+    });
+  });
+
   describe('Reset', () => {
     it('resetGame() with no arguments should pick a fresh random word, not silently reuse the previous one forever', () => {
       // Regression test: initializeGameState() writes whatever word it picks

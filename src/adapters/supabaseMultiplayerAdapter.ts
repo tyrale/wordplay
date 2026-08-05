@@ -410,8 +410,13 @@ export async function getOpponentName(gameId: string): Promise<string | null> {
 
 export interface ActiveGameSummary {
   gameId: string;
-  /** The other player's vanity name, or a placeholder if they haven't joined yet. */
+  /** The other player's vanity name, or a placeholder if they haven't joined yet.
+   * For vsmany games with more than one other player, this is all of their
+   * names joined together (see `opponentNames`). */
   opponentName: string;
+  /** Vanity names of every other player in the game (empty if none have
+   * joined yet), so vsmany lobby rows can list everyone rather than just one. */
+  opponentNames: string[];
   /** Whether it's the local player's turn to move. */
   isMyTurn: boolean;
   status: 'waiting' | 'active';
@@ -456,12 +461,16 @@ export async function listMyActiveGames(): Promise<ActiveGameSummary[]> {
   return games.map(game => {
     const gamePlayers = players.filter(p => p.game_id === game.id);
     const me = gamePlayers.find(p => p.user_id === userId);
-    const opponent = gamePlayers.find(p => p.user_id !== userId);
-    const opponentInfo = opponent ? (Array.isArray(opponent.users) ? opponent.users[0] : opponent.users) : null;
+    const opponents = gamePlayers.filter(p => p.user_id !== userId);
+    const opponentNames = opponents.map(opponent => {
+      const opponentInfo = Array.isArray(opponent.users) ? opponent.users[0] : opponent.users;
+      return opponentInfo?.display_name || opponentInfo?.username || 'Player';
+    });
 
     return {
       gameId: game.id,
-      opponentName: opponentInfo?.display_name || opponentInfo?.username || 'Waiting',
+      opponentName: opponentNames.length > 0 ? opponentNames.join(', ') : 'Waiting',
+      opponentNames,
       isMyTurn: !!me && me.player_index === game.current_player_index,
       status: game.status as 'waiting' | 'active'
     };

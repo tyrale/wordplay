@@ -32,7 +32,8 @@ describe('Player Stats + GameStateManager Integration', () => {
     const config: GameConfig = {
       initialWord: 'CAT',
       allowBotPlayer: true,
-      maxTurns: 2,
+      // 1 round = each of the 2 players (human + bot) gets exactly one turn.
+      maxTurns: 1,
       botId: 'test-bot'
     };
     const dependencies = testAdapter.getGameDependencies();
@@ -43,7 +44,7 @@ describe('Player Stats + GameStateManager Integration', () => {
     const applied = gameManager.applyMove('CATS');
     expect(applied).toBe(true);
 
-    // Bot move (should push currentTurn past maxTurns and finish the game)
+    // Bot move (completes the 1-round game: both players have now had a turn)
     await gameManager.makeBotMove();
 
     const state = gameManager.getState();

@@ -51,6 +51,7 @@ export {
   skyTheme,
   winterTheme,
   molesTheme,
+  nasaTheme,
   autumnTheme,
   lavenderTheme,
   campingTheme,

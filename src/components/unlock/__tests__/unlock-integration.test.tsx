@@ -195,4 +195,38 @@ describe('Non-local move unlock behavior', () => {
 
     expect(api!.isUnlocked('theme', 'red')).toBe(false);
   });
+
+  it('only allows the "RESET" cheat to wipe unlocks once per player', async () => {
+    let api: UnlockContextType | null = null;
+    render(
+      <TestWrapper>
+        <UnlockApiProbe onReady={(a) => { api = a; }} />
+      </TestWrapper>
+    );
+
+    await waitFor(() => expect(api).not.toBeNull(), { timeout: 3000 });
+
+    // First use of RESET wipes unlocks and marks it used
+    await act(async () => {
+      await api!.handleWordSubmission('red', false);
+    });
+    expect(api!.isUnlocked('theme', 'red')).toBe(true);
+
+    await act(async () => {
+      await api!.handleWordSubmission('RESET', false);
+    });
+    expect(api!.isUnlocked('theme', 'red')).toBe(false);
+    expect(api!.hasUsedReset()).toBe(true);
+
+    // Unlock red again, then try RESET a second time - it must NOT wipe unlocks anymore
+    await act(async () => {
+      await api!.handleWordSubmission('red', false);
+    });
+    expect(api!.isUnlocked('theme', 'red')).toBe(true);
+
+    await act(async () => {
+      await api!.handleWordSubmission('RESET', false);
+    });
+    expect(api!.isUnlocked('theme', 'red')).toBe(true);
+  });
 }); 

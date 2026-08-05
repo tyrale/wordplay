@@ -15,6 +15,7 @@ import type {
 import {
   UNLOCK_DEFINITIONS,
   INITIAL_UNLOCK_STATE,
+  getInitialUnlockState,
   findUnlockByTrigger,
   findUnlockBySequenceTrigger
 } from './unlock-definitions';
@@ -304,7 +305,8 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
         mechanics: [...INITIAL_UNLOCK_STATE.mechanics],
         bots: [...INITIAL_UNLOCK_STATE.bots],
         achievements: [...INITIAL_UNLOCK_STATE.achievements],
-        reveals: [...INITIAL_UNLOCK_STATE.reveals]
+        reveals: [...INITIAL_UNLOCK_STATE.reveals],
+        hasUsedReset: INITIAL_UNLOCK_STATE.hasUsedReset
       };
     }
     return {
@@ -312,7 +314,8 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
       mechanics: [...currentState.mechanics],
       bots: [...currentState.bots],
       achievements: [...currentState.achievements],
-      reveals: [...currentState.reveals]
+      reveals: [...currentState.reveals],
+      hasUsedReset: currentState.hasUsedReset
     };
   }
 
@@ -335,15 +338,17 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
   }
 
   /**
-   * Reset unlock state to initial state (for testing/debugging)
+   * Reset unlock state to initial state.
+   *
+   * Used both by the one-time "RESET" word cheat (pass
+   * `{ markResetUsed: true }` so it can never be used again) and by
+   * debug/test full resets (call with no options, which also clears the
+   * one-time-use flag so devs/tests can reset repeatedly).
    */
-  async function resetState(): Promise<void> {
+  async function resetState(options?: { markResetUsed?: boolean }): Promise<void> {
     currentState = {
-      themes: [...INITIAL_UNLOCK_STATE.themes],
-      mechanics: [...INITIAL_UNLOCK_STATE.mechanics],
-      bots: [...INITIAL_UNLOCK_STATE.bots],
-      achievements: [...INITIAL_UNLOCK_STATE.achievements],
-      reveals: [...INITIAL_UNLOCK_STATE.reveals]
+      ...getInitialUnlockState(),
+      hasUsedReset: options?.markResetUsed ?? false
     };
     await saveState();
   }
