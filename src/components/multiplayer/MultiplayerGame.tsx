@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { InteractiveGame } from '../game/InteractiveGame';
 import { SubmitButton } from '../game/SubmitButton';
 import { useMultiplayerManager } from '../../hooks/useMultiplayerManager';
 import { getGameJoinInfo, startWaitingGame } from '../../adapters/supabaseMultiplayerAdapter';
+import { useAlert } from '../ui/AlertProvider';
+import { useUnlockSystem } from '../unlock/UnlockProvider';
 import './MultiplayerGame.css';
 
 export interface MultiplayerGameResult {
@@ -47,14 +49,40 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
   const [maxPlayers, setMaxPlayers] = useState<number | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   // Bumped on every manager update so the waiting-room view (below) re-renders
-  // as more players join or the host starts the game.
-  const [, forceRerender] = useState(0);
+  // as more players join or the host starts the game - also used below to
+  // re-run the time-pressure alert check whenever the manager's state
+  // actually changes (e.g. the waiting room transitions to 'playing').
+  const [renderTick, forceRerender] = useState(0);
+  const { showAlert } = useAlert();
+  const { getUnlockedItems } = useUnlockSystem();
+  // Only show the "host toggled time" heads-up once per game session, not
+  // on every re-render while the game stays active.
+  const hasShownTimePressureAlertRef = useRef(false);
 
   useEffect(() => {
     if (!manager) return;
     const unsubscribe = manager.subscribe(() => forceRerender(n => n + 1));
     return unsubscribe;
   }, [manager]);
+
+  // If the host enabled time-pressure for this game, it applies to every
+  // player once the game is actually underway - but a player who hasn't
+  // unlocked it themselves gets a heads-up first (once), since they'd
+  // otherwise be surprised by a 7s turn timer they never opted into. This
+  // doesn't unlock the mechanic for them; they still need to trigger it
+  // themselves to get the permanent toggle.
+  useEffect(() => {
+    if (!manager) return;
+    const state = manager.getState();
+    if (state.gameStatus !== 'playing' || !state.config.timePressureEnabled) return;
+    if (hasShownTimePressureAlertRef.current) return;
+    if (getUnlockedItems('mechanic').includes('time-pressure')) return;
+    hasShownTimePressureAlertRef.current = true;
+    showAlert('multiplayer', 'hostToggledTime');
+    // renderTick (bumped by the subscribe effect above on every manager
+    // update) ensures this re-checks once the waiting room transitions to
+    // 'playing', not just on mount.
+  }, [manager, renderTick, getUnlockedItems, showAlert]);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,6 +168,20 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
   }
 
   const state = manager.getState();
+
+  // If the host enabled time-pressure for this game, it applies to every
+  // player once the game is actually underway - but a player who hasn't
+  // unlocked it themselves gets a heads-up first (once), since they'd
+  // otherwise be surprised by a 7s turn timer they never opted into. This
+  // doesn't unlock the mechanic for them; they still need to trigger it
+  // themselves to get the permanent toggle.
+  useEffect(() => {
+    if (state.gameStatus !== 'playing' || !state.config.timePressureEnabled) return;
+    if (hasShownTimePressureAlertRef.current) return;
+    if (getUnlockedItems('mechanic').includes('time-pressure')) return;
+    hasShownTimePressureAlertRef.current = true;
+    showAlert('multiplayer', 'hostToggledTime');
+  }, [state.gameStatus, state.config.timePressureEnabled, getUnlockedItems, showAlert]);
 
   // vsmany "Create" games stay 'waiting' until either the host manually
   // starts (once >= 2 players have joined) or the game fills up to

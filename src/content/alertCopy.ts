@@ -37,6 +37,9 @@ export interface AlertVariantSet {
 }
 
 export const alertCopy = {
+  /** Opening title screen shown before the player first enters the main menu. */
+  start: { lines: ['reword'], meta: 'tap to start playing' },
+
   /** Bot-game win/lose/quit screens — one phrase picked at random per screen view */
   win: {
     variants: [
@@ -151,7 +154,19 @@ export const alertCopy = {
   },
 
   /** Shown to *both* players in a vs-human match when either one resigns mid-game. */
-  multiplayerResigned: { lines: ['GAME', 'OVER'], meta: 'A player left the match' }
+  multiplayerResigned: { lines: ['GAME', 'OVER'], meta: 'A player left the match' },
+
+  /** Multiplayer-only alerts about host-configured settings that apply to
+   * every player in the game regardless of their own unlock/toggle state. */
+  multiplayer: {
+    /** Shown once, before the board appears, to any player who hasn't
+     * unlocked time-pressure themselves but is joining a game where the
+     * host turned it on. Does not unlock it for them. */
+    hostToggledTime: {
+      lines: ['HOST', 'TOGGLED', 'TIME'],
+      meta: 'You have not unlocked this yet, but the host has toggled on a 7 sec timer per turn. Good luck.'
+    }
+  }
 } as const;
 
 export type AlertCategory = keyof typeof alertCopy;

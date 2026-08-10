@@ -185,7 +185,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // Time-pressure mechanic: unlocked via the "time" word and toggled on in the mechanics menu.
   // Suppressed during a boss battle - the boss has its own whole-game countdown
   // and the per-turn 7s auto-pass would otherwise conflict with it.
-  const isTimePressureOn = !isBossBattle && unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
+  // In multiplayer, this is a per-game setting the host chose at creation
+  // time (GameState.config.timePressureEnabled, hydrated from the shared
+  // remote game) rather than each player's own toggle - see the override
+  // below, once `gameState` is available.
+  const isTimePressureOnLocal = !isBossBattle && unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
 
   // Gravity mechanic: unlocked via the "gravity" word and toggled on in the mechanics menu.
   // Makes the alphabet grid letters fall and roll freely around the viewport.
@@ -330,6 +334,13 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       }
     }
   });
+
+  // Multiplayer: the host's time-pressure choice for this game (hydrated
+  // from the shared remote state) applies to every player, overriding each
+  // player's own local mechanic toggle above.
+  const isTimePressureOn = currentGameMode === 'multiplayer'
+    ? !!gameState.config.timePressureEnabled
+    : isTimePressureOnLocal;
 
   // Derived state
   const gameStats = useGameStats(gameState);

@@ -48,6 +48,12 @@
   color: var(--theme-text);
 }
 
+/* Start (title) screen - "reword" renders lowercase, colored per-substring
+   via `renderLine` rather than the default uppercase accent color. */
+.alert-overlay--start .alert-overlay__line {
+  text-transform: none;
+}
+
 /* Optional supplementary content (e.g. scores) below the lines */
 .alert-overlay__meta {
   margin-top: var(--spacing-sm);

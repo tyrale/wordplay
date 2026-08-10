@@ -11,6 +11,7 @@ import { availableThemes as ALL_THEMES } from '../../types/theme';
 import type { GameTheme } from '../../types/theme';
 import { DictionariesOverlay } from './DictionariesOverlay';
 import { ThoughtsOverlay } from './ThoughtsOverlay';
+import { TheGameOverlay } from './TheGameOverlay';
 import { StatsOverlay } from './StatsOverlay';
 import { WordPathExplorer } from './WordPathExplorer';
 import { LeaderboardOverlay } from './LeaderboardOverlay';
@@ -266,6 +267,7 @@ const getMenuItems = (
     title: 'about',
     children: [
       { id: 'the-basics', title: 'the basics' },
+      { id: 'the-game', title: 'the game' },
       { id: 'dictionaries', title: 'dictionaries' },
       { id: 'thoughts', title: 'thoughts' },
       { id: 'reset-unlocks', title: 'reset unlocks (debug)' },
@@ -307,6 +309,7 @@ export const Menu: React.FC<MenuProps> = ({
   const [isClosing, setIsClosing] = useState(false);
   const [isDictionariesOpen, setIsDictionariesOpen] = useState(false);
   const [isThoughtsOpen, setIsThoughtsOpen] = useState(false);
+  const [isTheGameOpen, setIsTheGameOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isWordPathsOpen, setIsWordPathsOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
@@ -449,6 +452,10 @@ export const Menu: React.FC<MenuProps> = ({
       // Force-replay the tutorial layer on a fresh bot game (handled in App.tsx)
       onStartGame?.('tutorial');
       handleClose(); // Close menu after starting tutorial
+    } else if (tier1Id === 'about' && tier2Id === 'the-game') {
+      // Show the "the game" overlay on top of the menu (it fully covers the
+      // menu visually), so closing it returns to the menu instead of home.
+      setIsTheGameOpen(true);
     } else if (tier1Id === 'about' && tier2Id === 'dictionaries') {
       // Show the dictionaries overlay on top of the menu (it fully covers the
       // menu visually), so closing it returns to the menu instead of home.
@@ -707,6 +714,10 @@ export const Menu: React.FC<MenuProps> = ({
       <ThoughtsOverlay
         isVisible={isThoughtsOpen}
         onClose={() => setIsThoughtsOpen(false)}
+      />
+      <TheGameOverlay
+        isVisible={isTheGameOpen}
+        onClose={() => setIsTheGameOpen(false)}
       />
       <StatsOverlay
         isVisible={isStatsOpen}

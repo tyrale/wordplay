@@ -22,7 +22,7 @@ export interface AlertOverlayAction {
   onClick: () => void;
 }
 
-export type AlertOverlayVariant = 'default' | 'win' | 'lose' | 'unlock' | 'error';
+export type AlertOverlayVariant = 'default' | 'win' | 'lose' | 'unlock' | 'error' | 'start';
 
 export interface AlertOverlayProps {
   isVisible: boolean;
@@ -31,6 +31,9 @@ export interface AlertOverlayProps {
   variant?: AlertOverlayVariant;
   meta?: React.ReactNode;
   actions?: AlertOverlayAction[];
+  /** Optional per-line custom render (e.g. multi-color title text). The raw
+   * string in `lines` is still used for font-size measurement/fitting. */
+  renderLine?: (line: string, index: number) => React.ReactNode;
 }
 
 /** Fraction of viewport width each line's rendered text should span. */
@@ -110,7 +113,8 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({
   onClose,
   variant = 'default',
   meta,
-  actions
+  actions,
+  renderLine
 }) => {
   const linesContainerRef = useRef<HTMLDivElement>(null);
   const fontSizes = useFitLineFontSizes(lines, linesContainerRef, isVisible);
@@ -140,7 +144,7 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({
             className="alert-overlay__line"
             style={fontSizes[index] ? { fontSize: `${fontSizes[index]}px` } : undefined}
           >
-            {line}
+            {renderLine ? renderLine(line, index) : line}
           </div>
         ))}
       </div>

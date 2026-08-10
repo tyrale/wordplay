@@ -41,13 +41,14 @@ export interface ChallengeLeaderboardState {
   refresh: () => void;
 }
 
-/** Returns today's date as a YYYY-MM-DD string (local time), matching the
- *  challenge engine's date format. */
+/** Returns today's date as a YYYY-MM-DD string (UTC), matching the challenge
+ *  engine's date format (`getCurrentDateString()` in `challenge.ts`) and
+ *  `useChallenge.ts`. UTC (not local time) must be used here - the daily
+ *  challenge is the same for every player worldwide and rolls over at
+ *  00:00 UTC, so using local time would read/query the wrong day's
+ *  challenge state and leaderboard for players outside UTC. */
 export function getTodayChallengeDate(): string {
-  const now = new Date();
-  return now.getFullYear() + '-' +
-    String(now.getMonth() + 1).padStart(2, '0') + '-' +
-    String(now.getDate()).padStart(2, '0');
+  return new Date().toISOString().split('T')[0];
 }
 
 /** Reads today's persisted challenge state from localStorage. Returns null

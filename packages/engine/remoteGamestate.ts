@@ -83,7 +83,8 @@ function snapshotToGameState(snapshot: RemoteGameSnapshot): GameState {
     maxTurns: snapshot.maxTurns,
     allowBotPlayer: false,
     enableKeyLetters: true,
-    enableLockedLetters: true
+    enableLockedLetters: true,
+    timePressureEnabled: snapshot.timePressureEnabled
   };
 
   return {

@@ -26,7 +26,7 @@ import type { BossStage } from './data/bossBattle';
 import { useBossMusic } from './hooks/useBossMusic';
 import './App.css';
 
-type AppState = 'main' | 'game' | 'challenge' | 'zen' | 'quitter' | 'winner' | 'loser' | 'multiplayer-lobby' | 'multiplayer-game' | 'multiplayer-resigned' | 'boss';
+type AppState = 'start' | 'main' | 'game' | 'challenge' | 'zen' | 'quitter' | 'winner' | 'loser' | 'multiplayer-lobby' | 'multiplayer-game' | 'multiplayer-resigned' | 'boss';
 
 /**
  * Sub-state of the "GUS" boss battle encounter (only meaningful while
@@ -55,7 +55,7 @@ function AppContent() {
   const { currentTheme, setTheme } = useTheme();
   const { isUnlocked, isLoading: unlocksLoading } = useUnlockSystem();
   const initialMultiplayerGameId = getMultiplayerGameIdFromUrl();
-  const [appState, setAppState] = useState<AppState>(initialMultiplayerGameId ? 'multiplayer-game' : 'main');
+  const [appState, setAppState] = useState<AppState>(initialMultiplayerGameId ? 'multiplayer-game' : 'start');
   const [selectedBotId, setSelectedBotId] = useState<string>('basicBot');
   const [multiplayerGameId, setMultiplayerGameId] = useState<string | null>(initialMultiplayerGameId);
   const [gameResults, setGameResults] = useState<{
@@ -613,6 +613,25 @@ function AppContent() {
                 />
               )}
               
+              {/* Start (title) Overlay - shown before the player first enters the main menu */}
+              <AlertOverlay
+                isVisible={appState === 'start'}
+                lines={[...alertCopy.start.lines]}
+                variant="start"
+                meta={alertCopy.start.meta}
+                onClose={() => setAppState('main')}
+                renderLine={(line) =>
+                  line === 'reword' ? (
+                    <>
+                      <span style={{ color: 'var(--theme-accent)' }}>re</span>
+                      <span style={{ color: 'var(--theme-text)' }}>word</span>
+                    </>
+                  ) : (
+                    line
+                  )
+                }
+              />
+
               {/* Confirmation Alert */}
               <AlertOverlay
                 isVisible={confirmationState.isVisible}

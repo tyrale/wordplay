@@ -16,7 +16,14 @@ import {
 import { supabase } from '../../lib/supabase';
 import { getDisplayName, setDisplayName, hasConfirmedDisplayName, markDisplayNameConfirmed } from '../../adapters/supabaseAuthAdapter';
 import { NamePromptOverlay } from './NamePromptOverlay';
+import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
+import { useRoundLength } from '../../contexts/RoundLengthContext';
+import { useUnlockSystem } from '../unlock/UnlockProvider';
 import './MultiplayerLobby.css';
+
+// Starting-word-length mechanics a host might have unlocked/toggled on -
+// mirrors the same pick logic InteractiveGame.tsx uses for vs-bot games.
+const START_WORD_LENGTHS = [3, 5, 6, 7, 8, 9, 10];
 
 export interface MultiplayerLobbyProps {
   onGameReady: (gameId: string) => void;
@@ -52,6 +59,21 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
   // out or creates another game before the first settles.
   const createCleanupRef = useRef<(() => void) | null>(null);
 
+  // The settings that apply to *every* player in a multiplayer game, not
+  // just the host - sourced from the host's own personal settings at
+  // creation/match time (see createInviteGame/findMatch options below).
+  const { isMechanicOn } = useMechanicsSettings();
+  const { roundLength } = useRoundLength();
+  const { getUnlockedItems } = useUnlockSystem();
+  const unlockedMechanics = getUnlockedItems('mechanic');
+  const isTimePressureOn = unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
+  const availableStartLengths = START_WORD_LENGTHS.filter(len =>
+    unlockedMechanics.includes(`${len}-letter-start`) && isMechanicOn(`${len}-letter-start`)
+  );
+  const startingWordLength = availableStartLengths.length > 0
+    ? availableStartLengths[Math.floor(Math.random() * availableStartLengths.length)]
+    : undefined;
+
   useEffect(() => {
     listMyActiveGames().then(setActiveGames).catch(() => setActiveGames([]));
   }, []);
@@ -78,7 +100,14 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     setCreateGameId(null);
     setJoinedPlayers([]);
     try {
-      const { gameId, inviteCode: code } = await createInviteGame({ maxPlayers: mode === 'vsmany' ? 8 : 2 });
+      const { gameId, inviteCode: code } = await createInviteGame({
+        maxPlayers: mode === 'vsmany' ? 8 : 2,
+        // These three settings apply to every player in the game, not just
+        // the host - see createInviteGame()'s doc comments.
+        maxTurns: roundLength,
+        initialWordLength: startingWordLength,
+        timePressureEnabled: isTimePressureOn
+      });
       setInviteCode(code);
       setCreateGameId(gameId);
       getGameJoinInfo(gameId).then((info) => {
@@ -125,7 +154,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     } finally {
       setIsBusy(false);
     }
-  }, [onGameReady]);
+  }, [onGameReady, roundLength, startingWordLength, isTimePressureOn]);
 
   const handleStartGame = useCallback(() => {
     if (readyGameId) onGameReady(readyGameId);
@@ -182,14 +211,14 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     try {
       const handle = await findMatch((gameId) => {
         onGameReady(gameId);
-      }, mode);
+      }, mode, { timePressureEnabled: isTimePressureOn });
       matchmakingHandleRef.current = handle;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to search for a match');
     } finally {
       setIsBusy(false);
     }
-  }, [onGameReady]);
+  }, [onGameReady, isTimePressureOn]);
 
   // Tapping vsone/vsmany on the first menu step: slide it out to the left,
   // then reveal the Create/Join/Random step sliding in from the right.

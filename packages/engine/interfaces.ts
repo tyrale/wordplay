@@ -643,6 +643,15 @@ export interface GameConfig {
    * time-pressure timer) and fires onGameTimeout when it reaches zero.
    */
   gameTimeLimitSeconds?: number;
+  /**
+   * Multiplayer only: whether the host enabled the "time-pressure" mechanic
+   * (7s per-turn timer) for this game. Unlike a bot game, this is a
+   * per-game setting shared by all players rather than each player's own
+   * `isMechanicOn('time-pressure')` toggle - a player who hasn't unlocked
+   * time-pressure themselves still plays under it if the host turned it on,
+   * but doing so doesn't unlock it for them.
+   */
+  timePressureEnabled?: boolean;
 }
 
 export interface TurnHistory {
@@ -708,6 +717,9 @@ export interface RemoteGameSnapshot {
   currentTurn: number;
   currentPlayerIndex: number;
   maxTurns: number;
+  /** Whether the host enabled the "time-pressure" mechanic for this game -
+   * applies to every player regardless of their own unlock/toggle state. */
+  timePressureEnabled: boolean;
   players: RemoteGamePlayerInfo[];
   turnHistory: RemoteGameTurnRecord[];
   winnerId: string | null;

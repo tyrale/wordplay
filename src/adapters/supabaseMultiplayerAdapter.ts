@@ -70,6 +70,7 @@ type GameRow = {
   current_turn: number;
   current_player_index: number;
   max_turns: number;
+  time_pressure_enabled: boolean;
   winner_id: string | null;
 };
 
@@ -77,7 +78,7 @@ async function fetchGameRow(gameId: string): Promise<GameRow> {
   const { data, error } = await supabase
     .from('games')
     .select(
-      'id, status, current_word, word_history, key_letters, locked_letters, locked_key_letters, current_turn, current_player_index, max_turns, winner_id'
+      'id, status, current_word, word_history, key_letters, locked_letters, locked_key_letters, current_turn, current_player_index, max_turns, time_pressure_enabled, winner_id'
     )
     .eq('id', gameId)
     .single();
@@ -157,6 +158,7 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
         currentTurn: row.current_turn,
         currentPlayerIndex: row.current_player_index,
         maxTurns: row.max_turns,
+        timePressureEnabled: row.time_pressure_enabled ?? false,
         players,
         turnHistory,
         winnerId: row.winner_id
@@ -277,6 +279,10 @@ export interface CreateInviteGameOptions {
   initialWordLength?: number;
   /** 2 for vsone (default), up to 8 for vsmany. */
   maxPlayers?: number;
+  /** Whether the host has the "time-pressure" mechanic toggled on - applies
+   * to every player in the game once started, regardless of whether they've
+   * individually unlocked it themselves. Defaults to off. */
+  timePressureEnabled?: boolean;
 }
 
 /**
@@ -305,6 +311,7 @@ export async function createInviteGame(
       max_turns: options.maxTurns ?? 20,
       turn_timeout_hours: options.turnTimeoutHours ?? 48,
       initial_word_length: wordLength,
+      time_pressure_enabled: options.timePressureEnabled ?? false,
       current_word: startingWord,
       key_letters: [pickRandomKeyLetter(startingWord)]
     })
@@ -504,6 +511,15 @@ export type MatchmakingMode = 'vsone' | 'vsmany';
  * (minimum 2) into a single game, rather than holding out for a full 8. */
 const VSMANY_GROUP_DELAY_MS = 8000;
 
+export interface FindMatchOptions {
+  /** Whether the caller has the "time-pressure" mechanic toggled on. If this
+   * caller is the one who ends up creating the game (either matched player
+   * for vsone, or whoever's finalize call wins the race for vsmany), it
+   * applies to every player in the resulting game - see `createInviteGame`'s
+   * option of the same name for the full rationale. */
+  timePressureEnabled?: boolean;
+}
+
 /**
  * Enter the random matchmaking queue and try to pair immediately. If no
  * opponent is available yet, subscribes for a match and calls `onMatched`
@@ -516,8 +532,10 @@ const VSMANY_GROUP_DELAY_MS = 8000;
  */
 export async function findMatch(
   onMatched: (gameId: string) => void,
-  mode: MatchmakingMode = 'vsone'
+  mode: MatchmakingMode = 'vsone',
+  options: FindMatchOptions = {}
 ): Promise<MatchmakingHandle> {
+  const timePressureEnabled = options.timePressureEnabled ?? false;
   const userId = await ensureAnonymousSession();
   if (!userId) throw new Error('Unable to authenticate for multiplayer');
 
@@ -536,7 +554,9 @@ export async function findMatch(
   if (mode === 'vsone') {
     const attemptMatch = async () => {
       if (settled) return;
-      const { data, error } = await supabase.rpc('try_match');
+      const { data, error } = await supabase.rpc('try_match', {
+        p_time_pressure_enabled: timePressureEnabled
+      });
       if (error) {
         console.warn('try_match() failed:', error);
         return;
@@ -604,7 +624,9 @@ export async function findMatch(
 
   const finalizeGroup = async () => {
     if (settled) return;
-    const { data, error } = await supabase.rpc('finalize_vsmany_match');
+    const { data, error } = await supabase.rpc('finalize_vsmany_match', {
+      p_time_pressure_enabled: timePressureEnabled
+    });
     if (error) {
       console.warn('finalize_vsmany_match() failed:', error);
       return;

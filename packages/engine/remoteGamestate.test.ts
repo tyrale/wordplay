@@ -114,6 +114,7 @@ describe('RemoteGameStateManager', () => {
       currentTurn: 1,
       currentPlayerIndex: 0,
       maxTurns: 20,
+      timePressureEnabled: false,
       players: [
         { id: PLAYER_A, name: 'Alice', playerIndex: 0, score: 0 },
         { id: PLAYER_B, name: 'Bob', playerIndex: 1, score: 0 }
@@ -133,6 +134,19 @@ describe('RemoteGameStateManager', () => {
     expect(state.gameStatus).toBe('playing');
     expect(state.players.map(p => p.id)).toEqual([PLAYER_A, PLAYER_B]);
     expect(state.players[0].isCurrentPlayer).toBe(true);
+
+    manager.dispose();
+  });
+
+  it('carries the host-configured time-pressure setting through into GameState.config', async () => {
+    store.snapshot.timePressureEnabled = true;
+    const deps = createFakeDependencies(store, PLAYER_A);
+    const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+    await manager.initialize();
+
+    // Every player - not just whoever created the game - should see it as
+    // on, since it's a single shared per-game setting.
+    expect(manager.getState().config.timePressureEnabled).toBe(true);
 
     manager.dispose();
   });
@@ -209,6 +223,7 @@ describe('RemoteGameStateManager', () => {
       currentTurn: 1,
       currentPlayerIndex: 0,
       maxTurns: 20,
+      timePressureEnabled: false,
       players: [{ id: PLAYER_A, name: 'Alice', playerIndex: 0, score: 0 }],
       turnHistory: [],
       winnerId: null

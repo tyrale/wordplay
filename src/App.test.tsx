@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 import { describe, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import App from './App';
 import { createTestAdapter } from './adapters/testAdapter';
 
@@ -28,6 +28,14 @@ function TestApp() {
   return <App />;
 }
 
+// The app now opens on a "start" title screen (tap to dismiss) before the
+// main menu appears - render, then dismiss it via its close button so tests
+// asserting on the main screen see it.
+function renderAppPastStartScreen() {
+  render(<TestApp />);
+  fireEvent.click(screen.getByLabelText('Close'));
+}
+
 describe('App Component', () => {
   beforeEach(() => {
     // Initialize test adapter for each test
@@ -35,7 +43,7 @@ describe('App Component', () => {
   });
 
   test('renders the initial main screen', async () => {
-    render(<TestApp />);
+    renderAppPastStartScreen();
     
     // Check that the main screen is rendered with game options
     expect(screen.getByText((_content, element) => {
@@ -53,7 +61,7 @@ describe('App Component', () => {
   });
 
   test('renders the game selection buttons', async () => {
-    render(<TestApp />);
+    renderAppPastStartScreen();
     
     // Check for game selection buttons
     const botButton = screen.getByText((_content, element) => {
@@ -76,7 +84,7 @@ describe('App Component', () => {
   });
 
   test('shows the main screen structure', async () => {
-    render(<TestApp />);
+    renderAppPastStartScreen();
     
     // Check for main screen elements
     expect(screen.getByText((_content, element) => {
@@ -95,7 +103,7 @@ describe('App Component', () => {
   });
 
   test('has proper CSS classes applied', async () => {
-    render(<TestApp />);
+    renderAppPastStartScreen();
     
     // Check for main screen container
     const mainContainer = document.querySelector('.main-screen');
@@ -111,7 +119,7 @@ describe('App Component', () => {
   });
 
   test('renders menu button', async () => {
-    render(<TestApp />);
+    renderAppPastStartScreen();
     
     // Check for menu button with correct icon (matches alphabet grid)
     const menuButton = screen.getByLabelText('Open menu');

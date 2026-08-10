@@ -52,7 +52,7 @@
   font-weight: var(--theme-font-weight);
   font-size: var(--theme-font-size-lg);
   color: var(--theme-text);
-  text-transform: lowercase;
+  text-transform: uppercase;
   flex-wrap: wrap;
 }
 
