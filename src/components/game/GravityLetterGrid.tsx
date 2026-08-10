@@ -14,6 +14,8 @@ export interface GravityLetterGridProps {
   onLetterClick?: (letter: string) => void;
   onActionClick?: (action: string) => void;
   disabled?: boolean;
+  /** When true, hides every letter tile's visual content (opacity 0) while keeping the grid fully functional - the Ninjabot gimmick. */
+  lettersHidden?: boolean;
 }
 
 // Same layout as the normal AlphabetGrid - used only as the starting arrangement
@@ -76,7 +78,8 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
   letterStates = [],
   onLetterClick,
   onActionClick,
-  disabled = false
+  disabled = false,
+  lettersHidden = false
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const tileRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -346,7 +349,7 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
             data-letter={isAction ? undefined : content}
             data-type={isAction ? 'action' : 'letter'}
           >
-            <span className="grid-cell__content">{content}</span>
+            <span className={`grid-cell__content${lettersHidden && !isAction ? ' grid-cell__content--hidden' : ''}`}>{content}</span>
             {(state === 'locked' || state === 'lockedKey') && (
               <span className="grid-cell__lock" aria-hidden="true">
                 <LockIcon size={12} />

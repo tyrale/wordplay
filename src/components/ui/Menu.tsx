@@ -78,14 +78,14 @@ interface MenuTier1Item {
 
 // Map mechanic IDs to display names
 const mechanicDisplayNames: Record<string, string> = {
-  '3-letter-start': '3 letter starting word',
-  '5-letter-start': '5 letter starting word',
-  '6-letter-start': '6 letter starting word',
-  '7-letter-start': '7 letter starting word',
-  '8-letter-start': '8 letter starting word',
-  '9-letter-start': '9 letter starting word',
-  '10-letter-start': '10 letter starting word',
-  'time-pressure': 'time pressure mode',
+  '3-letter-start': '3 letters start',
+  '5-letter-start': '5 letters start',
+  '6-letter-start': '6 letters start',
+  '7-letter-start': '7 letters start',
+  '8-letter-start': '8 letters start',
+  '9-letter-start': '9 letters start',
+  '10-letter-start': '10 letters start',
+  'time-pressure': 'timer',
   'gravity': 'gravity',
   'drunk': 'drunk mode',
   'challenge-dictionary': 'challenge dictionary',

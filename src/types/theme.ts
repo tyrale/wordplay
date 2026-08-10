@@ -153,8 +153,9 @@ export const warmerTheme = createTheme("warmer", ["#E9B872", "#151515", "#A63D40
 export const winterTheme = createTheme("winter", ["#EAEBED", "#006989", "#A3BAC3"]);
 export const yellowTheme = createTheme("yellow", ["#ffffff", "#D97706", "#FCD34D"]);
 
-// Dr. Seuss "Grinch" theme - Grinch green with red Santa accents
-export const grinchTheme = createTheme("grinch", ["#C72B29", "#1E6B3A", "#F7F7E8"]);
+// Dr. Seuss "Grinch" theme - Grinch green (Pantone 2277C, the shade used for
+// his fur) as the main text color, with a cardinal "Santa suit" red accent.
+export const grinchTheme = createTheme("grinch", ["#ffffff", "#55951B", "#C41E3A"]);
 
 // "Boss battle" themes - unlocked by playing GUS and beating the boss chain.
 // boss: a normal 3-color gray/black/red theme. megaboss and gigaboss share the

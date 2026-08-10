@@ -74,6 +74,11 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
   const isDrunkOn = unlockedMechanics.includes('drunk') && isMechanicOn('drunk');
   const allowSeussCanonical = unlockedMechanics.includes('seuss-canonical-words');
 
+  // Ninja word trail: unlocked permanently by beating the Ninjabot. No
+  // toggle — once unlocked, every move (zen mode is opponent-free, so every
+  // move is the local player's own) is shown as dashes in the word trail.
+  const ninjaWordTrailUnlocked = unlockedMechanics.includes('ninja-word-trail');
+
   // Word data (profanity set, legality/definition helpers for the help
   // overlay). Word validity itself is handled by the shared game engine
   // below, so this is only needed for the extras.
@@ -258,9 +263,10 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
       word: turn.newWord,
       score: 0,
       turnNumber: turn.turnNumber,
-      keyLetters: turn.scoringBreakdown.keyLettersUsed || []
+      keyLetters: turn.scoringBreakdown.keyLettersUsed || [],
+      maskWord: ninjaWordTrailUnlocked
     }));
-  }, [gameState]);
+  }, [gameState, ninjaWordTrailUnlocked]);
 
   // Event handlers
   const handleHelp = useCallback(async () => {

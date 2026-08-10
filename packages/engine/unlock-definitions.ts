@@ -816,6 +816,25 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     trigger: { type: 'word', value: 'bruh', timing: 'word_submission' },
     target: 'bruh-bot'
   },
+  {
+    id: 'unlock_ninja_bot',
+    category: 'bot',
+    trigger: { type: 'word', value: 'ninja', timing: 'word_submission' },
+    target: 'ninja-bot'
+  },
+
+  // Beat the Ninjabot -> permanently unlock the "ninja word trail" mechanic:
+  // your own word trail plays are shown as dashes (like the vanity filter)
+  // in every game mode except the daily challenge.
+  {
+    id: 'unlock_ninja_word_trail',
+    category: 'mechanic',
+    itemId: 'ninja-word-trail',
+    name: 'Ninja Word Trail',
+    description: 'Unlock the ninja word trail by beating the Ninjabot',
+    trigger: { type: 'achievement', value: 'beat_ninja_bot', timing: 'game_completion' },
+    target: 'ninja-word-trail'
+  },
 
   // Easter egg - playing the founder's name unlocks dark mode
   {

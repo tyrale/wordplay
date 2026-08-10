@@ -95,6 +95,13 @@ export const BOT_REGISTRY: Bot[] = [
     category: 'behavior',
     description: 'bruh'
   },
+  {
+    id: 'ninja-bot',
+    displayName: 'ninjabot',
+    difficulty: 'hard',
+    category: 'behavior',
+    description: 'Unlocked by playing "ninja". Fights like hard-bot, but its word trail plays are shown as dashes and your alphabet grid letters are invisible. Beat it to permanently unlock the ninja word trail mechanic.'
+  },
 
   // Boss battle bots - encountered by playing "GUS". boss-bot uses medium
   // logic, mega-boss-bot uses hard logic, giga-boss-bot uses expert logic with

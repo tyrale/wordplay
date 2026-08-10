@@ -107,7 +107,8 @@ export const alertCopy = {
         'expert-bot': 'The ultimate challenge',
         'pirate-bot': 'Arrr, ready to play',
         'noob-bot': 'Only ever adds an S',
-        'grinch-bot': 'Plays Dr. Seuss words. You stink, stank, stunk!'
+        'grinch-bot': 'Plays Dr. Seuss words. You stink, stank, stunk!',
+        'ninja-bot': 'Its word trail is dashes and your grid is invisible. Fights like hard-bot.'
       }
     },
     mechanic: {
@@ -127,7 +128,8 @@ export const alertCopy = {
         'drunk': 'Toggle is on in the menu. Everything gets a little hazy...',
         'unlock-counter': 'Check under home to track your progress',
         'community-stats': 'Check under home to see what the whole community has found',
-        'seuss-canonical-words': 'Dr. Seuss words are now playable. Check the dictionaries list!'
+        'seuss-canonical-words': 'Dr. Seuss words are now playable. Check the dictionaries list!',
+        'ninja-word-trail': 'Your word trail plays are now dashes in every mode except the daily challenge'
       }
     },
     vanityFilter: { lines: ['FILTER', 'TOGGLE', 'UNLOCKED'], meta: 'Toggle it in the menu' },

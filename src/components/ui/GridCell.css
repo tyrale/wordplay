@@ -82,6 +82,12 @@
   pointer-events: none;
 }
 
+/* Ninjabot gimmick: the letter is invisible but the tile stays fully
+   functional (clickable/draggable) - only its visual content is hidden. */
+.grid-cell__content--hidden {
+  opacity: 0;
+}
+
 /* Lock icon positioning - top right corner */
 .grid-cell__lock {
   position: absolute;

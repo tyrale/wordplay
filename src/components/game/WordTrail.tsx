@@ -16,7 +16,18 @@ export interface WordMove {
     movePoints: number;
     keyLetterUsagePoints: number;
   };
+  /**
+   * When true, the word is rendered as dashes instead of its real letters -
+   * the "ninja" gimmick. Set by the caller for either the Ninjabot's own
+   * moves (during a Ninjabot game) or the local player's moves (once the
+   * "ninja-word-trail" mechanic has been permanently unlocked by beating
+   * the Ninjabot, in every mode except the daily challenge).
+   */
+  maskWord?: boolean;
 }
+
+// Masks a word as a run of dashes, one per letter - used for the ninja gimmick.
+const maskWordAsDashes = (word: string): string => '-'.repeat(word.length);
 
 export interface WordTrailProps {
   words?: string[];
@@ -65,7 +76,8 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         turnNumber: move.turnNumber || index + 1,
         actions: move.actions || [],
         keyLetters: move.keyLetters || [],
-        scoreBreakdown: move.scoreBreakdown
+        scoreBreakdown: move.scoreBreakdown,
+        maskWord: move.maskWord || false
       }))
     : words.map((word, index) => ({
         word,
@@ -75,7 +87,8 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         turnNumber: index + 1,
         actions: [],
         keyLetters: [],
-        scoreBreakdown: undefined
+        scoreBreakdown: undefined,
+        maskWord: false
       }));
 
   // Challenge mode data processing
@@ -112,9 +125,10 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   };
 
   // Render a word with key letter highlighting
-  const renderWordWithHighlights = (word: string, keyLetters: string[]) => {
-    // Apply vanity filtering - completed words in trail are not being edited
-    const displayWord = getDisplayWord(word, { isEditing: false });
+  const renderWordWithHighlights = (word: string, keyLetters: string[], masked: boolean = false) => {
+    // Apply the ninja mask (dashes) if requested, otherwise the normal
+    // vanity filtering - completed words in trail are not being edited
+    const displayWord = masked ? maskWordAsDashes(word) : getDisplayWord(word, { isEditing: false });
     const letters = displayWord.toUpperCase().split('');
     
     return (
@@ -277,7 +291,7 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                             ? renderWordWithStartWord(item.word, item.keyLetters, startWord)
                             : isLastWord
                             ? renderWordWithTargetWord(item.word, item.keyLetters, targetWord)
-                            : renderWordWithHighlights(item.word, item.keyLetters)
+                            : renderWordWithHighlights(item.word, item.keyLetters, item.maskWord)
                           }
                         </span>
                         
@@ -352,7 +366,7 @@ export const WordTrail: React.FC<WordTrailProps> = ({
               tabIndex={onWordClick ? 0 : undefined}
               aria-label={`Word: ${item.word}${showScores ? `, ${item.score} points` : ''}`}
             >
-              {renderWordWithHighlights(item.word, item.keyLetters)}
+              {renderWordWithHighlights(item.word, item.keyLetters, item.maskWord)}
             </span>
             
             {showScores && (

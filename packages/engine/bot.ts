@@ -506,8 +506,8 @@ export function generateBotMoveWithDependencies(
   } else if (botId === 'medium-bot' || botId === 'boss-bot') {
     // Boss bot fights like the medium bot.
     filteredCandidates = filterMediumBotCandidates(validCandidates, dependencies, currentWord);
-  } else if (botId === 'hard-bot' || botId === 'mega-boss-bot') {
-    // Mega boss fights like the hard bot.
+  } else if (botId === 'hard-bot' || botId === 'mega-boss-bot' || botId === 'ninja-bot') {
+    // Mega boss and Ninjabot both fight like the hard bot.
     filteredCandidates = filterHardBotCandidates(validCandidates, dependencies, currentWord);
   } else if (botId === 'pirate-bot') {
     filteredCandidates = filterPirateBotCandidates(validCandidates, dependencies, currentWord);

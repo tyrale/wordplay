@@ -204,6 +204,19 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // as valid words in any game mode. No toggle — once unlocked, always on.
   const allowSeussCanonical = unlockedMechanics.includes('seuss-canonical-words');
 
+  // Ninjabot gimmick: while playing against it, its own word trail plays are
+  // shown as dashes and every alphabet grid letter is invisible (opacity 0,
+  // still fully functional). Not gated by any unlock - it's inherent to
+  // playing this bot.
+  const isNinjaBotOpponent = config?.botId === 'ninja-bot';
+
+  // Ninja word trail: unlocked permanently by beating the Ninjabot (see
+  // unlock-definitions.ts, beat_ninja_bot). No toggle — once unlocked, the
+  // local player's own word trail plays are always shown as dashes here
+  // (InteractiveGame covers bot games, boss battles, and multiplayer;
+  // ChallengeGame is a separate component and is intentionally exempt).
+  const ninjaWordTrailUnlocked = unlockedMechanics.includes('ninja-word-trail');
+
   // Game state management
   const {
     gameState,
@@ -535,8 +548,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   // Word trail with move details
   const wordTrailMoves: WordMove[] = React.useMemo(() => {
+    const localId = localPlayerId ?? 'human';
     const moves = gameState.turnHistory.map((turn) => {
       const scoringBreakdown = turn.scoringBreakdown;
+      const isOwnMove = turn.playerId === localId;
 
       return {
         word: turn.newWord,
@@ -545,12 +560,16 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         opponentName: turn.playerId === 'bot' && config?.botId ? getBotDisplayName(config.botId) : undefined,
         turnNumber: turn.turnNumber,
         keyLetters: scoringBreakdown.keyLettersUsed || [],
-        scoreBreakdown: scoringBreakdown.breakdown
+        scoreBreakdown: scoringBreakdown.breakdown,
+        // Ninjabot's own moves are masked during the fight; the local
+        // player's own moves are masked permanently once ninja-word-trail
+        // is unlocked.
+        maskWord: (isNinjaBotOpponent && !isOwnMove) || (ninjaWordTrailUnlocked && isOwnMove)
       };
     });
     
         return moves;
-  }, [gameState, config?.botId]); // Use full gameState instead of just turnHistory
+  }, [gameState, config?.botId, localPlayerId, isNinjaBotOpponent, ninjaWordTrailUnlocked]); // Use full gameState instead of just turnHistory
 
   // Event handlers
   const handleHelp = useCallback(async () => {
@@ -1052,6 +1071,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 disabled={!isPlayerTurn || isProcessingMove}
                 enableDrag={true} // Enable drag for mobile and desktop
                 gravityEnabled={isGravityOn}
+                lettersHidden={isNinjaBotOpponent}
               />
             </div>
           </div>

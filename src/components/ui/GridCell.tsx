@@ -17,6 +17,8 @@ export interface GridCellProps {
   draggable?: boolean;
   disabled?: boolean;
   'aria-label'?: string;
+  /** When true, hides the letter's visual content (opacity 0) while keeping the tile fully functional - the Ninjabot gimmick. */
+  contentHidden?: boolean;
 }
 
 export const GridCell: React.FC<GridCellProps> = ({
@@ -31,6 +33,7 @@ export const GridCell: React.FC<GridCellProps> = ({
   draggable = false,
   disabled = false,
   'aria-label': ariaLabel,
+  contentHidden = false,
 }) => {
   const handleClick = () => {
     if (!disabled && onClick) {
@@ -86,7 +89,7 @@ export const GridCell: React.FC<GridCellProps> = ({
       data-letter={type === 'letter' ? content : undefined}
       data-type={type}
     >
-      <span className="grid-cell__content">
+      <span className={`grid-cell__content${contentHidden && type === 'letter' ? ' grid-cell__content--hidden' : ''}`}>
         {content}
       </span>
       {(state === 'locked' || state === 'lockedKey') && (

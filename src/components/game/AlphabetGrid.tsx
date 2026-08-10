@@ -19,6 +19,8 @@ export interface AlphabetGridProps {
   enableDrag?: boolean;
   /** When true, letters fall under simulated gravity and roll freely instead of sitting in the fixed grid */
   gravityEnabled?: boolean;
+  /** When true, hides every letter tile's visual content (opacity 0) while keeping the grid fully functional - the Ninjabot gimmick. */
+  lettersHidden?: boolean;
 }
 
 // Detects the user's reduced-motion preference so the gravity effect can be skipped for them.
@@ -58,7 +60,8 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   onLetterDragEnd,
   disabled = false,
   enableDrag = true,
-  gravityEnabled = false
+  gravityEnabled = false,
+  lettersHidden = false
 }) => {
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -193,6 +196,7 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
         onLetterClick={onLetterClick}
         onActionClick={onActionClick}
         disabled={disabled}
+        lettersHidden={lettersHidden}
       />
     );
   }
@@ -243,6 +247,7 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
                 draggable={canDrag}
                 disabled={disabled}
                 aria-label={getDragAriaLabel(content, state)}
+                contentHidden={lettersHidden}
               />
             );
           })}
