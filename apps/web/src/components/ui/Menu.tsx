@@ -7,8 +7,8 @@ import { useRoundLength, DEFAULT_ROUND_LENGTH } from '../../contexts/RoundLength
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
 import { useCommunityUnlockStats } from '../../hooks/useCommunityUnlockStats';
 import { getVisibleBots, getBotDisplayNamesMapping } from '../../data/botRegistry';
-import { availableThemes as ALL_THEMES } from '../../types/theme';
-import type { GameTheme } from '../../types/theme';
+import { availableThemes as ALL_THEMES } from '@wordplay/theme/theme';
+import type { GameTheme } from '@wordplay/theme/theme';
 import { DictionariesOverlay } from './DictionariesOverlay';
 import { ThoughtsOverlay } from './ThoughtsOverlay';
 import { TheGameOverlay } from './TheGameOverlay';

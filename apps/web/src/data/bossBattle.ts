@@ -12,8 +12,8 @@
  * happens after beating gigaboss (see unlock-definitions.ts, beat_giga_boss_bot).
  */
 
-import { availableThemes } from '../types/theme';
-import type { GameTheme } from '../types/theme';
+import { availableThemes } from '@wordplay/theme/theme';
+import type { GameTheme } from '@wordplay/theme/theme';
 
 export type BossStage = 'boss' | 'mega' | 'giga';
 

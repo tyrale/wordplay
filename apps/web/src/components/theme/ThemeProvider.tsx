@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { defaultTheme, availableThemes } from '../../types/theme';
-import type { GameTheme, ThemeContextType } from '../../types/theme';
+import { defaultTheme, availableThemes } from '@wordplay/theme/theme';
+import type { GameTheme, ThemeContextType } from '@wordplay/theme/theme';
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 

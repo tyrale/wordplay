@@ -5,7 +5,7 @@ export {
   availableThemes,
   type GameTheme,
   type ThemeContextType
-} from '../types/theme';
+} from '@wordplay/theme/theme';
 export { 
   redTheme,
   pinkTheme,
@@ -81,7 +81,7 @@ export {
   vintageTheme,
   tweedTheme,
   midnightTheme
-} from '../types/theme';
+} from '@wordplay/theme/theme';
 
 // Unlock System
 export { UnlockProvider, useUnlockSystem } from './unlock/UnlockProvider';

@@ -6,7 +6,7 @@
  */
 
 import { useMemo } from 'react';
-import { availableThemes } from '../types/theme';
+import { availableThemes } from '@wordplay/theme/theme';
 
 interface UseUnlockedThemesProps {
   unlockedThemes: string[];

@@ -1,0 +1,10 @@
+{
+  "name": "@wordplay/theme",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared WordPlay theme data (colors/typography for all 75+ themes) - pure data, no platform dependencies. Consumed by both apps/web and apps/native so the theme catalog isn't duplicated/drifted between platforms.",
+  "exports": {
+    "./*": "./*.ts"
+  }
+}

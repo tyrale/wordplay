@@ -20,7 +20,7 @@ import { AlertProvider } from './components/ui/AlertProvider';
 import { clearActiveGame } from './adapters/browserGameSaveAdapter';
 import { ensureAnonymousSession } from './adapters/supabaseAuthAdapter';
 import type { GameState } from '@wordplay/engine/interfaces';
-import { defaultTheme } from './types/theme';
+import { defaultTheme } from '@wordplay/theme/theme';
 import { BOSS_BATTLE_MAX_TURNS, BOSS_STAGES, BOSS_THEME_NAMES, getBossTheme, getThemeByName } from './data/bossBattle';
 import type { BossStage } from './data/bossBattle';
 import { useBossMusic } from './hooks/useBossMusic';

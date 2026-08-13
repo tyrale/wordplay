@@ -481,11 +481,11 @@
    boss: a normal 3-color gray/black/red theme.
    megaboss: same as boss - a normal 3-color theme, no extra effect.
    gigaboss: red letters on black (from the GameTheme itself - see
-             src/types/theme.ts gigaBossTheme) with a darker red accent color,
+             packages/theme/theme.ts gigaBossTheme) with a darker red accent color,
              PLUS an animated CSS/SVG monster-shadow background + escalating
              procedural music (music handled in JS). No border/outline effect
              on the letters - just plain color, same as any other theme.
-   The base palette comes from the GameTheme objects in src/types/theme.ts;
+   The base palette comes from the GameTheme objects in packages/theme/theme.ts;
    these rules layer the extra visual effects (monster shadow) on top, keyed
    off classes the InteractiveGame root gets based on the active theme name.
    ========================================================================= */

@@ -7,7 +7,7 @@
 import { describe, it, expect } from 'vitest';
 import { useUnlockedThemes } from '../../../hooks/useUnlockedThemes';
 import { renderHook } from '@testing-library/react';
-import type { GameTheme } from '../../../types/theme';
+import type { GameTheme } from '@wordplay/theme/theme';
 
 describe('Theme Filtering', () => {
   it('should include classic blue as default theme', () => {

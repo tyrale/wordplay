@@ -12,7 +12,7 @@ import { useAlert } from '../ui/AlertProvider';
 import { alertCopy, resolveAlertMeta } from '../../content/alertCopy';
 import type { AlertCopyEntry } from '../../content/alertCopy';
 import { computeUnlockPercentage } from '../../adapters/supabaseCommunityUnlocksAdapter';
-import { availableThemes } from '../../types/theme';
+import { availableThemes } from '@wordplay/theme/theme';
 import type { UseUnlocksReturn } from '../../hooks/useUnlocks';
 import type { UnlockResult } from '@wordplay/engine/interfaces';
 

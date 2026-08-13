@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import React from 'react';
-import { availableThemes } from '../types/theme';
+import { availableThemes } from '@wordplay/theme/theme';
 import { GridCell } from '../components/ui/GridCell';
 import './ThemeShowcase.css';
 
