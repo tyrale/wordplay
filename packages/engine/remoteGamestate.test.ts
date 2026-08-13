@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { RemoteGameStateManager } from './remoteGamestate';
-import { createTestAdapter, TestAdapter } from '../../src/adapters/testAdapter';
+import { createTestAdapter, TestAdapter } from './adapters/testAdapter';
 import type {
   RemoteGameDependencies,
   RemoteGameSnapshot,

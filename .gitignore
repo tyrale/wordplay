@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.vite
 *.local
 
 # Editor directories and files
@@ -25,3 +26,11 @@ dist-ssr
 
 *storybook.log
 storybook-static
+
+# Debug artifacts written by packages/engine/keyLetterLogger.ts at runtime
+# (cwd-relative) - pre-existing root-level copies are tracked clutter, see
+# docs/project/PROJECT_STATUS_AUDIT.md finding D; this just stops new ones
+# from being committed by accident.
+key-letter-counts.txt
+key-letter-export-*.json
+key-letter-stats.log

@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TerminalGame, startTerminalGame, quickGame } from './terminal-game';
 import { LocalGameStateManagerWithDependencies } from './gamestate';
-import { TestAdapter } from '../../src/adapters/testAdapter';
+import { TestAdapter } from './adapters/testAdapter';
 
 // Mock readline to avoid actual terminal interaction during tests
 vi.mock('readline', () => ({

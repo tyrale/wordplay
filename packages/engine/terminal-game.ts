@@ -15,7 +15,7 @@
 
 import { createGameStateManagerWithDependencies, type LocalGameStateManagerWithDependencies, type GameConfig } from './gamestate';
 import type { ScoringBreakdown, GameStateDependencies } from './interfaces';
-import { createNodeAdapter } from '../../src/adapters/nodeAdapter';
+import { createNodeAdapter } from './adapters/nodeAdapter';
 import * as readline from 'readline';
 
 // Terminal colors for better UX with turn-based theming

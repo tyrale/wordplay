@@ -1,0 +1,22 @@
+{
+  "name": "@wordplay/engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Platform-agnostic WordPlay game engine (dictionary, scoring, bot AI, game state, challenge, unlocks). Consumed via dependency-injected adapters from apps/web and apps/native - see docs/architecture/ARCHITECTURE.md.",
+  "exports": {
+    "./*": "./*.ts"
+  },
+  "scripts": {
+    "play": "tsx terminal-game.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "tsx": "^4.19.4",
+    "typescript": "~5.8.3",
+    "vitest": "^3.2.1"
+  }
+}

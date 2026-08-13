@@ -17,7 +17,7 @@ import {
   type ValidationOptions
 } from './dictionary';
 import type { WordDataDependencies } from './interfaces';
-import { createTestAdapter, type TestAdapter } from '../../src/adapters/testAdapter';
+import { createTestAdapter, type TestAdapter } from './adapters/testAdapter';
 
 describe('Word Validation Service', () => {
   let testAdapter: TestAdapter;

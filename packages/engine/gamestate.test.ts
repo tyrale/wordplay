@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { LocalGameStateManagerWithDependencies as LocalGameStateManager } from './gamestate';
-import { createTestAdapter, TestAdapter } from '../../src/adapters/testAdapter';
+import { createTestAdapter, TestAdapter } from './adapters/testAdapter';
 import type { GameConfig } from './interfaces';
 
 describe('LocalGameStateManager', () => {

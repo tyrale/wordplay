@@ -9,7 +9,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { LocalGameStateManagerWithDependencies as LocalGameStateManager } from '../gamestate';
-import { createTestAdapter } from '../../../src/adapters/testAdapter';
+import { createTestAdapter } from '../adapters/testAdapter';
 import { createPlayerStatsEngine } from '../player-stats';
 import { getInitialPlayerStats } from '../player-stats-definitions';
 import type { PlayerStatsDependencies, PlayerStats, GameConfig } from '../interfaces';

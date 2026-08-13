@@ -17,7 +17,7 @@ import {
   type MoveCandidate,
   type BotDependencies
 } from './bot';
-import { createTestAdapter, type TestAdapter } from '../../src/adapters/testAdapter';
+import { createTestAdapter, type TestAdapter } from './adapters/testAdapter';
 
 describe('Bot AI Module', () => {
   let testAdapter: TestAdapter;

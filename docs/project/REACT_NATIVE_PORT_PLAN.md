@@ -1,0 +1,133 @@
+# WordPlay → React Native (iOS/Android) Port Plan
+
+> **Purpose**: A build plan for porting WordPlay to native iOS/Android apps via React Native, based on a direct read of the current source (not the docs — see "Documentation caveat" below). Written 2026-08-12.
+
+## Documentation caveat (read this first)
+
+The existing `docs/` tree is **not reliable** and disagrees with the real repo state in both directions:
+
+- `README.md`, `TASK_PROGRESS.md`, and `PROJECT_STATUS_AUDIT.md` all currently claim `npm run build` is **broken** (blocked on a `ScoringResult.breakdown` shape bug) and that dozens of tests fail.
+- Verified directly in this session: `npm run build` **succeeds** (`tsc -b && vite build` completes, emits `dist/`), and `npm test` **passes 441/441 tests across 29 files**. The docs are stale — the underlying bug was apparently already fixed but the status docs were never updated.
+- `ARCHITECTURE.md` already contains a speculative "Example: Adding React Native Support" section with a fictional `createReactNativeAdapter()`. Treat it as inspiration only, not a spec — it hasn't been implemented and the real interfaces have shifted since it was written (e.g. `WordDataDependencies` now has 6 word-set fields, not 4 as shown there).
+
+**Action item**: before or alongside this port, fix the stale status docs so engineering time isn't wasted re-diagnosing a phantom bug. Don't trust any doc's claims about "current test count" or "current build status" — re-verify with `npm run build` and `npm test` yourself at the start of each phase.
+
+## What's actually reusable vs. what must be rebuilt
+
+This is the single most important piece of context for scoping the work.
+
+### Reusable almost as-is (pure TypeScript, no DOM/browser APIs)
+- `packages/engine/*` — `scoring.ts`, `bot.ts`, `dictionary.ts`, `gamestate.ts`, `challenge.ts`, `profanity.ts`, `unlocks.ts`/`unlock-definitions.ts`, `player-stats.ts`, `word-path-graph.ts`, `interfaces.ts`. All dependency-injected, zero platform imports (confirmed by reading each file). This is the game's actual brain and should not be touched except for bug fixes shared with web.
+- `keyLetterLogger.ts` is the one exception in `packages/engine/` — it directly imports Node's `fs`/`path` for local logging. Confirm it's dev-only tooling (not used by the game loop) before deciding whether it needs a RN-safe branch or can just be excluded from the RN build.
+
+### Needs a new platform adapter (same interface, new implementation)
+- `src/adapters/browserAdapter.ts` → new `src/adapters/nativeAdapter.ts`. Dictionary loading currently does 6 sequential `fetch()` calls against static files under `public/` (`enable1.txt` — 172,819 words — plus 5 JSON word lists). In RN these must ship as bundled assets (or an embedded SQLite/JSON blob) and be read via `react-native-fs`/`expo-asset` or, better, required directly as JS since Metro can bundle JSON. `enable1.txt` should probably be preprocessed into a compact JSON/binary format at build time rather than parsed as text at runtime on a phone.
+- `src/adapters/browserGameSaveAdapter.ts`, `browserPlayerStatsAdapter.ts`, `browserUnlockAdapter.ts`, `browserWordPathAdapter.ts` — all backed by `localStorage`. Rebuild on `@react-native-async-storage/async-storage` (async API — note `ThemeProvider.tsx`'s `localStorage.getItem` calls are currently *synchronous* reads inside `useState` initializers; this pattern does not translate directly to RN's async storage and needs a loading-state redesign, not a 1:1 swap).
+- `src/lib/supabase.ts` + `supabaseAuthAdapter.ts`, `supabaseMultiplayerAdapter.ts`, `supabaseChallengeLeaderboardAdapter.ts`, `supabaseCommunityUnlocksAdapter.ts`, `supabaseWordPathAdapter.ts` — `@supabase/supabase-js` supports RN, but requires: (a) an AsyncStorage-backed auth storage adapter passed to `createClient` (currently relies on browser `localStorage` implicitly), (b) a `URL`/`fetch`/WebSocket polyfill setup (`react-native-url-polyfill`, `react-native-get-random-values` for the Realtime client's UUID generation). Realtime channel usage (`supabase.channel(...).on('postgres_changes', ...)`) works in RN once these polyfills are in place — no protocol-level rewrite needed.
+
+### Must be rebuilt from scratch (fundamentally DOM/CSS/Web-API-based)
+- **Entire UI layer** (`src/components/**/*.tsx` + all 31 `*.css` files, ~89 non-test `.ts(x)` files). There is no CSS-in-RN; every component's styling must be re-authored (`StyleSheet.create` or a chosen styling lib). This is not a "port," it's a rewrite of the presentation layer against the same component boundaries and props where reasonable.
+- **Theming**: `ThemeProvider.tsx` mutates `document.documentElement.style.setProperty(...)` (CSS custom properties) and reads/writes `localStorage` synchronously. RN has no CSS variables — needs a React Context that provides a plain JS theme object consumed via `useTheme()` in each component's `StyleSheet`, with the wave of theme names/values in `src/types/theme.ts` preserved as data.
+- **Drag-and-drop letter grid**: `AlphabetGrid.tsx` uses native HTML5 `dragstart`/`dragend`/`dataTransfer` plus manual `mousedown`/`touchstart` DOM listeners and direct `element.style.opacity` mutation. None of this exists in RN. Needs `react-native-gesture-handler` (`PanGestureHandler`/`Pressable` + long-press) and `react-native-reanimated` for opacity/position, and a redesigned drag model (RN has no native drag-and-drop primitive; the closest is manual gesture tracking with position-based drop-zone hit testing, e.g. via `react-native-draglist` or a bespoke Reanimated implementation).
+- **`GravityLetterGrid.tsx`**: a hand-rolled 2D physics simulation driven by `requestAnimationFrame`, direct DOM `style.transform` writes on refs, a React `createPortal` into `#root`/`document.body`, and viewport measurement via `getBoundingClientRect()`/`visualViewport`. This entire component needs a native rewrite using `react-native-reanimated`'s `useSharedValue`/`useFrameCallback` (or `useAnimatedReaction`) for the physics loop, `Modal`/absolute-positioned overlay instead of a DOM portal, and `Dimensions`/`useWindowDimensions` instead of viewport APIs. This is one of the highest-risk/highest-effort single components in the whole app — budget accordingly, and get explicit sign-off on whether the "gravity mode" gimmick is even in scope for v1 (see Phase 2's scope-cut question).
+- **Sound**: `src/utils/sound.ts` uses raw `Web Audio API` oscillators/gain nodes to synthesize tones with no audio files. RN has no Web Audio API. Options: (a) port the synthesis logic to `react-native-audio-api` (community package with Web-Audio-like nodes) if still actively maintained/reliable on both platforms, or (b) pre-render each `SoundPattern` to a short audio file at build time and play with `expo-av`/`react-native-sound`. Recommend (b) for reliability — verify cross-platform behavior of any Web-Audio-style RN library before committing to (a).
+- **Haptics**: `src/utils/haptics.ts` uses `navigator.vibrate` with simple duration/pattern arrays. Replace with `expo-haptics` (iOS has no raw vibration-pattern API — `expo-haptics`'s discrete impact/notification types are the idiomatic mapping; patterns won't translate 1:1 and each `HapticPattern` needs a deliberate remap, not a mechanical port) or `react-native-haptic-feedback` for Android-style raw vibration + iOS taptic types.
+- **Viewport/orientation handling**: `viewportHeight.ts`'s `--vh` custom-property trick and `orientationchange`/`visualViewport` listeners are pure web workarounds for mobile browser chrome — **not needed at all in RN** (use `useWindowDimensions`/`SafeAreaView` natively). Don't port this file; delete its need.
+- **Storage persistence request**: `persistentStorage.ts`'s Storage API `navigator.storage.persist()` has no RN equivalent and isn't needed — native app storage isn't subject to the same silent-eviction browser heuristics (though iOS can still purge app data under extreme disk pressure for backgrounded/offloaded apps — verify AsyncStorage/SQLite persistence guarantees per platform rather than porting this file).
+- **URL-based state**: `App.tsx` reads/writes `window.location.search`/`window.history.replaceState` to persist `?mgame=<id>` across refreshes (deep-linking back into an active multiplayer game). RN has no URL bar; this needs to become either (a) persisted app state (AsyncStorage) restored on launch, and/or (b) a real RN deep-link (`expo-router`/`react-navigation` linking config + universal links/App Links) if resuming via a shared invite link is a requirement.
+- **Routing/navigation**: There is currently no router — `App.tsx` is a single component driving a big `AppState` string union (`'start' | 'main' | 'game' | 'challenge' | ...`) and manually swapping which component renders. This *can* be ported almost mechanically (the state machine logic itself is framework-agnostic), but idiomatic RN apps use `react-navigation` (stack/modal navigators) for back-gesture support, transitions, and deep-linking — recommend wrapping the existing state machine's transitions behind a navigator rather than a bare conditional render tree, so hardware back-button/swipe-back behavior works for free.
+
+## Critical items to keep in context throughout the build
+
+1. **Never re-implement game logic in the RN app.** Any bug fix or rule change belongs in `packages/engine/`, consumed via a `nativeAdapter.ts` that satisfies the exact same `GameStateDependencies`/`BotDependencies`/`WordDataDependencies` interfaces as `browserAdapter.ts`. If a native screen seems to need "just a small tweak" to scoring/validation, that tweak belongs in the engine and should also apply to web.
+2. **`WordDataDependencies` requires 6 word Sets** (`enableWords`, `slangWords`, `profanityWords`, `properNounWords`, `seussCanonicalWords`, `seussInventedWords`) plus `wordCount`, and every concrete adapter (per `ARCHITECTURE.md`'s own accuracy note) must also implement `hasWord()`, `isLoaded()`, `waitForLoad()`, `getRandomWordByLength()` even though the TS interface doesn't force it. Copy `browserAdapter.ts`'s `BrowserWordData` class structure exactly, swapping only the load mechanism.
+3. **172,819-word dictionary + 5 JSON word lists must ship inside the app bundle**, not fetched from a web server at runtime (no guarantee of connectivity, and no `public/` static server on-device). Decide early: bundle as raw assets read at first launch vs. precompiled into a JS/JSON module vs. embedded SQLite. This affects app binary size and cold-start time — measure before committing.
+4. **Supabase Realtime (multiplayer) requires RN-specific polyfills** (`react-native-url-polyfill`, `react-native-get-random-values`, and an AsyncStorage-backed `auth.storage` option passed to `createClient`) — set these up in `nativeAdapter`'s Supabase client bootstrap before any multiplayer testing, or channel subscriptions/anonymous auth will silently misbehave.
+5. **75 themes must survive the port as data, not CSS.** `src/types/theme.ts` defines the full color/typography model already as plain TS objects — this is good news, it means the *theme data* needs zero changes, only the *consumption* (CSS variables → RN `StyleSheet`/context) changes.
+6. **The physics-based `GravityLetterGrid` and raw-oscillator `sound.ts` are the two highest-risk, most novel-code components to port.** Neither has an off-the-shelf RN equivalent; both require deliberate design decisions (see above) before implementation starts. Flag scope early: is "gravity mode" (a bot gimmick) required for v1, or can it be deferred/cut to de-risk the schedule?
+7. **Vibration/haptic and sound "patterns" are keyed by shared semantic names** (`add`, `remove`, `move`, `submit`, `overlay`, `unlock`, `yourTurn`, `win`, `lose`, `pass`) used together across many components. Preserve these exact pattern names as the native abstraction's public API so call sites (`triggerHapticFeedback('submit')`, etc.) don't need to change, only the implementation underneath.
+8. **`localStorage` reads in `ThemeProvider`, `useVanityFilter`, `tutorialStorage`, `supabaseAuthAdapter`'s display-name helpers, etc. are all synchronous today.** AsyncStorage is asynchronous. Every one of these call sites needs an explicit loading/hydration state on native (splash screen or loading flash) — audit all direct `localStorage.getItem/setItem` calls (`grep -rn "localStorage\." src/`) as a checklist, don't assume "swap the storage backend" is sufficient.
+9. **`document`/`window` usage is pervasive outside components too** — e.g. `App.tsx`'s `getMultiplayerGameIdFromUrl()`, `GravityLetterGrid`'s portal target lookup, `matchMedia` for reduced-motion detection. Grep for `document\.`/`window\.`/`navigator\.` across `src/` at the start of Phase 2 and produce a full inventory before writing any native component, so nothing is discovered mid-port.
+10. **Keep `packages/engine` test suite green as the regression backstop.** Since the engine is shared, any adapter or engine change made for RN must not break the existing 441 web tests (`npm test`). Run the full web test suite after every engine-adjacent change during the native port, not just at the end.
+11. **Tooling decision: Expo (managed, with the dev client), inside this repo as a workspace.** This repo has zero RN/Expo config today (verified: no `app.json`, `metro.config.js`, `ios/`, `android/`, or RN deps in `package.json`). Recommendation, confirmed with the user:
+    - **Expo over bare React Native CLI.** Every native capability this port needs already has a first-class Expo module (`expo-haptics`, `expo-av`/`expo-audio`, `expo-asset`/`expo-file-system`, AsyncStorage/`expo-secure-store`), and the two hardest UI pieces (drag-and-drop grid, gravity-physics grid) depend on `react-native-gesture-handler`/`react-native-reanimated`, both officially supported under Expo's dev client with no custom native code required. EAS Build/Submit also directly covers Phase 5's CI/CD and store-submission steps. `expo prebuild` remains an escape hatch to bare `ios/`/`android/` folders if an unforeseen native requirement shows up later — this is not a one-way door.
+    - **Same repo, not a separate one.** Convert `packages/engine` into a real workspace package (its own `package.json`, referenced via npm/yarn/pnpm workspaces) and add the native app as a sibling package (e.g. `apps/native/`), with the existing Vite app moved to or left alongside it (e.g. `apps/web/`). This keeps `packages/engine` as a single source of truth with zero version-drift risk, and lets the full existing web test suite run against the shared engine in the same CI pipeline after every native-adjacent change (see critical item 10) — a separate repo would require publishing/versioning the engine or git-submoduling it for no real benefit at this codebase's size.
+
+## Phased plan
+
+### Phase 0 — Decisions, environment, and workspace setup
+**Goal**: Make the foundational decisions and stand up a runnable (empty) RN app before touching game code.
+
+Steps:
+- Tooling stack: **Expo (managed, with the dev client)**, targeting the current Expo SDK/RN version at implementation time; confirm minimum iOS/Android OS versions with the user. This app becomes a new workspace package in **this repo** (e.g. `apps/native/`) alongside the existing web app (see below) — not a separate repo.
+- Convert `packages/engine` into a real workspace package (add `package.json`, use npm/yarn/pnpm workspaces) so both the web app and the RN app import it identically, rather than continuing the "fake monorepo" relative-import pattern flagged in `PROJECT_STATUS_AUDIT.md` finding 1.3.B. Restructure as `apps/web/` (current Vite app) + `apps/native/` (new Expo app) + `packages/engine/` (shared workspace package) so both apps import the engine identically from day one.
+- Decide the styling approach for RN (`StyleSheet.create` + plain theme objects vs. a library like `nativewind`/`tamagui`/`styled-components`). Pick one before Phase 3 so 75 themes aren't ported twice.
+- Decide the navigation library (`react-navigation` recommended) and whether deep-linking (multiplayer invite links, resuming an in-progress game) is in scope for v1.
+- Decide dictionary/word-list packaging strategy (see critical item 3).
+- Stand up the empty app: installable on an iOS simulator and an Android emulator, with `packages/engine`'s existing unit tests importable and passing inside the RN test runner (Jest) as a smoke test that the shared engine truly has zero DOM dependencies when consumed from RN.
+
+**Check before leaving this phase**: a blank RN screen renders on both simulators; `packages/engine`'s test suite (or a representative subset) runs green under RN's Jest config with no polyfills beyond what's decided in Phase 0.
+
+### Phase 1 — Platform adapter layer
+**Goal**: Reimplement every `src/adapters/*` file for native, satisfying the exact same interfaces engine code already expects — no engine changes.
+
+Steps:
+- `nativeAdapter.ts` (dictionary/scoring/bot dependencies): bundle/preprocess `enable1.txt` + the 5 JSON word lists (`public/data/*.json`), load them via the Phase 0 packaging decision, implement `BrowserWordData`'s native equivalent (all 6 Sets + `hasWord`/`isLoaded`/`waitForLoad`/`getRandomWordByLength`).
+- `nativeGameSaveAdapter.ts`, `nativePlayerStatsAdapter.ts`, `nativeUnlockAdapter.ts`, `nativeWordPathAdapter.ts`: AsyncStorage-backed equivalents of the four `browser*Adapter.ts` files. Preserve exact key names/schemas so a future account-linking/migration feature isn't blocked by mismatched storage formats between web and native.
+- Supabase client bootstrap for native: polyfills (`react-native-url-polyfill`, `react-native-get-random-values`), AsyncStorage-backed `auth.storage`, and reuse of `supabaseAuthAdapter.ts`/`supabaseMultiplayerAdapter.ts`/etc. almost as-is (they depend on `supabase` client + fetch/websocket, not on browser DOM — expect light edits, not rewrites).
+- Haptics: `nativeHaptics.ts` wrapping `expo-haptics` (or chosen lib), exposing the same `triggerHapticFeedback(pattern)` call signature and pattern name set as `src/utils/haptics.ts`.
+- Sound: `nativeSound.ts` implementing `triggerSoundFeedback(pattern)`/`setSoundEnabled`/`isSoundEnabled` against pre-rendered short audio clips (recommended) or a Web-Audio-like RN library.
+
+**Check before leaving this phase**: a small non-UI test harness (or the Jest suite) can run a full bot-vs-bot game end-to-end using only native adapters, producing scores identical to the same run under `browserAdapter.ts`/`testAdapter.ts` — this is the proof that the engine port introduced zero logic drift.
+
+### Phase 2 — Core game screen (single-player vs. bot)
+**Goal**: Get the smallest possible complete gameplay loop working natively: start a bot game, submit words, see score, finish.
+
+Steps:
+- Theme system: port `src/types/theme.ts` data as-is; rebuild `ThemeProvider` as a plain RN Context (no CSS var writes) backed by the native storage adapter, with an explicit `isLoading` state consumed by a splash/loading screen rather than the synchronous-read pattern used on web.
+- Rebuild `GridCell`, `AlphabetGrid` (fixed-grid mode only — see scope-cut question in critical item 6), `CurrentWord`, `ScoreBar`/`ScoreDisplay`, `SubmitButton`, `ActionIndicators`, `WordTrail` as RN components using `react-native-gesture-handler`/`react-native-reanimated` for drag interactions and animations, consuming the theme via context/`StyleSheet` instead of CSS classes.
+- Wire these into a native `InteractiveGame` screen using the ported engine + adapters from Phase 1, reusing `useGameState.ts`'s logic (this hook itself has no DOM dependency — only its adapter import needs swapping).
+- **Explicit scope-cut decision needed here**: is `GravityLetterGrid` ("gravity mode" bot gimmick) in v1? Recommend deferring it to a later phase given its novel-physics-plus-portal complexity (critical item 6), and shipping fixed-grid mode everywhere first.
+- Sound/haptics wired in via Phase 1's native implementations at the same call sites as web (`triggerHapticFeedback`, `triggerSoundFeedback`).
+
+**Check before leaving this phase**: a full single-player game against a bot can be played start-to-finish on both an iOS and an Android device/simulator, with score calculation verified against the same scenario played on web (same starting word + same move sequence ⇒ identical score).
+
+### Phase 3 — Menus, navigation, and remaining single-player modes
+**Goal**: Reach feature parity for everything that doesn't require networking: main menu, theme selection, challenge mode, zen mode, tutorial, unlocks, boss battle.
+
+Steps:
+- Introduce the chosen navigation library; convert `App.tsx`'s `AppState` string-union state machine into native screens/navigators, preserving the same transition logic (this logic is UI-framework-agnostic and can largely be copied, only the render targets change).
+- Port `MainScreen`, `Menu`, `MenuButton`, `AlertOverlay`/`AlertProvider`, `StatsOverlay`, `LeaderboardOverlay`, `DictionariesOverlay`, `TutorialOverlay`, `UnlockProvider` and its consumers.
+- Port `ChallengeGame`, `ZenGame`, and the boss-battle ("GUS") flow in `App.tsx`, including `useBossMusic` (also Web-Audio-based — needs the same treatment as `sound.ts`).
+- Replace `viewportHeight.ts`/`persistentStorage.ts` usages with native equivalents (`useWindowDimensions`, `SafeAreaView`) or remove entirely where not applicable (per critical items 5 and 7 — these files are not to be ported, they're to be replaced by native idioms).
+
+**Check before leaving this phase**: every single-player mode reachable from the main menu on web has a working native equivalent; unlock persistence (themes, bots, mechanics) survives an app restart; hardware back button (Android) and swipe-back gesture (iOS) behave correctly at every screen via the navigator.
+
+### Phase 4 — Multiplayer (vs.-human)
+**Goal**: Bring up real-time multiplayer using the same Supabase backend/schema as web.
+
+Steps:
+- Finish and harden the native Supabase adapter bootstrap from Phase 1 (anonymous auth persistence across app restarts, realtime channel reconnect-on-foreground behavior — RN apps backgrounding/foregrounding is a real-world condition browsers don't have in the same way).
+- Port `MultiplayerLobby`, `MultiplayerGame`, `NamePromptOverlay` and their invite-code / matchmaking flows (`createInviteGame`, `joinGameByInviteCode`, `findMatch`, etc. — these are pure Supabase-client calls, not DOM-dependent, so expect light porting).
+- Replace `App.tsx`'s `?mgame=<id>` URL-param resume mechanism with AsyncStorage-persisted "last active multiplayer game id," restored on launch, and (optionally, if required) real deep-linking for shared invite links via the navigator's linking config.
+- Test resignation, turn-timeout, and reconnect-after-backgrounding scenarios explicitly — these are the multiplayer edge cases most likely to behave differently on native vs. web.
+
+**Check before leaving this phase**: two physical/simulated devices can complete a full invite-code game and a full matchmaking game against each other, including one player backgrounding the app mid-game and returning to a correctly-synced state.
+
+### Phase 5 — Platform polish, store readiness, and release
+**Goal**: Everything needed to actually ship to the App Store and Google Play.
+
+Steps:
+- App icons, splash screens, native permissions prompts (haptics/vibration generally don't need explicit permission, but double-check platform-specific requirements), status bar theming per-theme (75 themes changing status bar color/contrast is a detail web doesn't have to handle).
+- Performance pass: cold-start time (dictionary load strategy from Phase 1 matters most here), animation frame rates for the gravity grid (if shipped) and general transitions, bundle size.
+- Accessibility parity check: web claims WCAG AA compliance — verify equivalent native accessibility (VoiceOver/TalkBack labels) on ported components, since RN accessibility APIs differ from ARIA and nothing here auto-carries over.
+- Crash reporting/analytics setup (not present in the web app per the dependency list — decide if this is newly in scope for native).
+- App Store / Google Play listing assets, privacy policy review (anonymous auth + Supabase data flows should already inform this), and store review submission.
+- CI/CD for native builds (e.g. EAS Build if Expo, or Fastlane if bare RN) — the existing GitHub Actions pipeline referenced in docs only covers the web app.
+
+**Check before leaving this phase**: both apps installable via TestFlight and an internal Android testing track; a documented, repeatable release build process exists (not a manual one-off).
+
+## Suggested cross-phase practice
+
+- At the start of every phase, re-verify `npm run build` and `npm test` on the **web** app before touching native code, to catch any accidental regression to the shared engine early (per critical item 10).
+- Keep a running "web/native parity" checklist of features as they're ported, so nothing from the (large) existing feature set silently gets dropped — this app has substantial scope (75 themes, unlocks, boss battles, challenge mode, zen mode, tutorial, multiplayer vs. bot/human) that's easy to under-scope if only skimming docs instead of the component tree.

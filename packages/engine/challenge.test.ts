@@ -4,6 +4,7 @@
  * Tests for the daily word transformation puzzle system.
  */
 
+import { describe, it, test, expect, beforeEach } from 'vitest';
 import { createChallengeEngine, hashString, type ChallengeState } from './challenge';
 import type { DictionaryEngine, UtilityDependencies } from './interfaces';
 
