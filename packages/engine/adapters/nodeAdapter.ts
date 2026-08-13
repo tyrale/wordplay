@@ -42,12 +42,16 @@ import { generateBotMoveWithDependencies } from '../bot';
  * word sets don't drift from what the browser loads. Tries a few candidate
  * locations for robustness across invocation directories/legacy layouts.
  */
-function readDataFile(dirname: string, filename: string): { words?: string[] } {
+function readDataFile(dirname: string | null, filename: string): { words?: string[] } {
   const candidates = [
-    join(dirname, '../../../apps/web/public/data', filename),
-    join(dirname, '../data', filename),
-    join(dirname, '../../public/data', filename),
-    join(dirname, '../../../public/data', filename)
+    ...(dirname ? [
+      join(dirname, '../../../apps/web/public/data', filename),
+      join(dirname, '../data', filename),
+      join(dirname, '../../public/data', filename),
+      join(dirname, '../../../public/data', filename)
+    ] : []),
+    join(process.cwd(), 'apps/web/public/data', filename),
+    join(process.cwd(), 'public/data', filename)
   ];
   for (const candidatePath of candidates) {
     try {
@@ -83,18 +87,31 @@ class NodeWordData implements WordDataDependencies {
 
   private async loadDictionaryInternal(): Promise<void> {
     try {
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = dirname(__filename);
-      
+      // `import.meta.url` is syntactically supported but not reliably
+      // resolvable to a real URL under every consumer's module system (e.g.
+      // React Native's Jest/Babel transform), so this is best-effort with
+      // process.cwd()-based fallbacks below.
+      let __dirname: string | null = null;
+      try {
+        __dirname = dirname(fileURLToPath(import.meta.url));
+      } catch {
+        __dirname = null;
+      }
+
       // Try different possible paths for the dictionary file. This file now
       // lives at packages/engine/adapters/, so the canonical location
       // (apps/web/public/enable1.txt) is three levels up + into apps/web.
-      // Older/alternate layouts are kept as fallbacks for robustness.
+      // Older/alternate layouts and a process.cwd()-relative fallback are
+      // kept for robustness.
       const dictionaryPaths = [
-        join(__dirname, '../../../apps/web/public/enable1.txt'),
-        join(__dirname, '../enable1.txt'),
-        join(__dirname, '../../public/enable1.txt'),
-        join(__dirname, '../../../public/enable1.txt')
+        ...(__dirname ? [
+          join(__dirname, '../../../apps/web/public/enable1.txt'),
+          join(__dirname, '../enable1.txt'),
+          join(__dirname, '../../public/enable1.txt'),
+          join(__dirname, '../../../public/enable1.txt')
+        ] : []),
+        join(process.cwd(), 'apps/web/public/enable1.txt'),
+        join(process.cwd(), 'public/enable1.txt')
       ];
 
       let dictionaryText: string | null = null;

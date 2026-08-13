@@ -31,12 +31,24 @@ import { fileURLToPath } from 'url';
 // tried in order. `packages/engine` has no data files of its own - these are
 // authored once under the web app's `public/data/` and reused here so the
 // test adapter's word sets don't drift from what the browser adapter loads.
-// Resolved relative to this file (not `process.cwd()`) so it works
-// regardless of which workspace/directory a test runner is invoked from.
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Preferably resolved relative to this file (not `process.cwd()`) so it
+// works regardless of which workspace/directory a test runner is invoked
+// from - but `import.meta.url` isn't reliably usable under every consumer's
+// module system (e.g. it's syntactically supported but resolves to a
+// non-URL value under React Native's Jest/Babel transform), so that
+// resolution is best-effort with cwd-based fallbacks.
+function resolveDirname(): string | null {
+  try {
+    const url = import.meta.url;
+    if (!url) return null;
+    return path.dirname(fileURLToPath(url));
+  } catch {
+    return null;
+  }
+}
+const __dirname = resolveDirname();
 const DATA_DIR_CANDIDATES = [
-  path.join(__dirname, '../../../apps/web/public/data'), // packages/engine/adapters -> repo root -> apps/web/public/data
+  ...(__dirname ? [path.join(__dirname, '../../../apps/web/public/data')] : []), // packages/engine/adapters -> repo root -> apps/web/public/data
   path.join(process.cwd(), 'apps/web/public/data'),       // invoked from repo root
   path.join(process.cwd(), 'public/data'),                // legacy pre-workspace layout
 ];

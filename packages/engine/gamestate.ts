@@ -25,7 +25,7 @@
 // import { generateBotMove, type BotMove, type BotResult } from './bot';
 // import { getRandomWordByLength } from './dictionary';
 
-import { KeyLetterLogger } from './keyLetterLogger.js';
+import { KeyLetterLogger } from './keyLetterLogger';
 
 import type { ScoringResult } from './scoring';
 
