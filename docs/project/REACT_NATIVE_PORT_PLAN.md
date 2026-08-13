@@ -120,6 +120,12 @@ Steps:
 
 **Check before leaving this phase**: every single-player mode reachable from the main menu on web has a working native equivalent; unlock persistence (themes, bots, mechanics) survives an app restart; hardware back button (Android) and swipe-back gesture (iOS) behave correctly at every screen via the navigator.
 
+🔄 **In progress.** Done so far (two slices):
+- **Navigation + MainScreen + unlock system** (part 1): React Navigation (native-stack) shell with Main/Game screens; `MainScreen` ported (mode selection, bot list, vs-human locked fallback); `useUnlocks`/`UnlockProvider` ported and fully functional (real unlock-checking + immediate theme effects), with the notification/toast UI deferred (no-op placeholder) pending the Alert system. Found and fixed a real gap along the way: the selected bot's id was never passed into the game config, so every native bot game silently used default move logic regardless of which bot was picked.
+- **Settings Menu** (part 2, user-prioritized ahead of the Alert system): a significantly scoped-down `Menu.tsx` - themes/dark-mode, mechanics toggles + round length, bots list, reset-unlocks, home/resign. Explicitly deferred (not silently dropped, see the component's own header comment): the vanity filter toggle, "vs world"/leaderboard/challenge entries, all four "about" sub-overlays, locked-item "????" previews, and community stats - each needs a system not yet ported.
+- Still open for this phase: the Alert/notification system (`AlertProvider`/`AlertOverlay`) - now the most-needed missing piece, since both the Menu's deferred notification UI and Challenge/Zen/Tutorial entry points depend on it - Stats/Leaderboard/Dictionaries overlays, Tutorial, Challenge mode, Zen mode, and the boss battle flow.
+- Test/build numbers as of this slice: 505 tests total (94 web + 347 engine + 64 native), `tsc --noEmit` clean, `expo-doctor` 17/17, verified via a real Metro iOS bundle fetch each time (not just Jest/tsc).
+
 ### Phase 4 — Multiplayer (vs.-human)
 **Goal**: Bring up real-time multiplayer using the same Supabase backend/schema as web.
 
