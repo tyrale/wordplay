@@ -28,17 +28,20 @@ const MAX_WORD_LENGTH = 10;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 export interface InteractiveGameProps {
+  /** Bot registry id (see @wordplay/engine/botRegistry) determining the
+   * opponent's move-generation strategy - not just its display name. */
+  botId?: string;
   botDisplayName?: string;
   onGameEnd?: (winner: string | null, finalScores: { human: number; bot: number }) => void;
   onExit?: () => void;
 }
 
-export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botDisplayName, onGameEnd, onExit }) => {
+export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisplayName, onGameEnd, onExit }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
 
   const { gameState, actions, isPlayerTurn, isProcessingMove, isGameActive, isGameFinished, isBotTurn, isBotThinking } =
-    useGameState({ config: { maxTurns: 10, allowBotPlayer: true } });
+    useGameState({ config: { maxTurns: 10, allowBotPlayer: true, botId } });
   const wordState = useWordState(gameState);
   const gameStats = useGameStats(gameState);
 
