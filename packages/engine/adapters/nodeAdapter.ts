@@ -12,7 +12,7 @@
  * - Fallback handling for missing files
  */
 
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync, writeFileSync, unlinkSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -34,6 +34,21 @@ import type {
 import { validateWordWithDependencies } from '../dictionary';
 import { calculateScoreWithDependencies, getScoreForMoveWithDependencies } from '../scoring';
 import { generateBotMoveWithDependencies } from '../bot';
+import { KeyLetterLogger } from '../keyLetterLogger';
+
+// Give the engine's KeyLetterLogger real Node.js file access (see its
+// `configureNodeFileSystem` doc comment for why this is injected here
+// rather than imported directly inside keyLetterLogger.ts). This runs once
+// as a module side effect whenever this Node adapter is imported -
+// browser/native adapters never do this, so their code paths stay no-ops.
+KeyLetterLogger.configureNodeFileSystem({
+  existsSync,
+  readFileSync: (path: string, encoding: 'utf-8') => readFileSync(path, encoding),
+  writeFileSync: (path: string, content: string) => writeFileSync(path, content),
+  unlinkSync,
+  cwd: () => process.cwd(),
+  joinPath: (...parts: string[]) => join(...parts)
+});
 
 /**
  * Resolve a shared word-list JSON data file under `apps/web/public/data/`.
