@@ -3,6 +3,8 @@ import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { UnlockProvider, useUnlockSystem } from '../../providers/UnlockProvider';
+import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
+import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
 import { MainScreen } from '../MainScreen';
 
 function renderMainScreen(props: Partial<React.ComponentProps<typeof MainScreen>> = {}) {
@@ -12,7 +14,11 @@ function renderMainScreen(props: Partial<React.ComponentProps<typeof MainScreen>
     ...render(
       <ThemeProvider>
         <UnlockProvider>
-          <MainScreen onStartGame={onStartGame} onStartMultiplayer={props.onStartMultiplayer} />
+          <MechanicsSettingsProvider>
+            <RoundLengthProvider>
+              <MainScreen onStartGame={onStartGame} onStartMultiplayer={props.onStartMultiplayer} />
+            </RoundLengthProvider>
+          </MechanicsSettingsProvider>
         </UnlockProvider>
       </ThemeProvider>
     )
@@ -75,8 +81,12 @@ describe('native MainScreen', () => {
     render(
       <ThemeProvider>
         <UnlockProvider>
-          <ZenUnlocker />
-          <MainScreen onStartGame={jest.fn()} />
+          <MechanicsSettingsProvider>
+            <RoundLengthProvider>
+              <ZenUnlocker />
+              <MainScreen onStartGame={jest.fn()} />
+            </RoundLengthProvider>
+          </MechanicsSettingsProvider>
         </UnlockProvider>
       </ThemeProvider>
     );

@@ -5,6 +5,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ThemeProvider } from './src/theme/ThemeProvider';
 import { UnlockProvider } from './src/providers/UnlockProvider';
+import { MechanicsSettingsProvider } from './src/contexts/MechanicsSettingsContext';
+import { RoundLengthProvider } from './src/contexts/RoundLengthContext';
 import { MainScreen } from './src/screens/MainScreen';
 import type { MainScreenGameType } from './src/screens/MainScreen';
 import { InteractiveGame } from './src/screens/InteractiveGame';
@@ -62,13 +64,17 @@ export default function App() {
   return (
     <ThemeProvider>
       <UnlockProvider>
-        <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Main" component={MainScreenRoute} />
-            <Stack.Screen name="Game" component={GameScreenRoute} />
-          </Stack.Navigator>
-        </NavigationContainer>
-        <StatusBar style="auto" />
+        <MechanicsSettingsProvider>
+          <RoundLengthProvider>
+            <NavigationContainer>
+              <Stack.Navigator screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="Main" component={MainScreenRoute} />
+                <Stack.Screen name="Game" component={GameScreenRoute} />
+              </Stack.Navigator>
+            </NavigationContainer>
+            <StatusBar style="auto" />
+          </RoundLengthProvider>
+        </MechanicsSettingsProvider>
       </UnlockProvider>
     </ThemeProvider>
   );

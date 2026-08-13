@@ -12,6 +12,7 @@ import { View, Text, Pressable, StyleSheet, SafeAreaView } from 'react-native';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { useTheme } from '../theme/ThemeProvider';
 import { getAllBots } from '@wordplay/engine/botRegistry';
+import { Menu } from '../components/Menu';
 
 export type MainScreenGameType = 'bot' | 'challenge' | 'tutorial' | 'zen';
 
@@ -24,6 +25,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
   const { currentTheme } = useTheme();
   const [currentView, setCurrentView] = useState<'main' | 'bots'>('main');
   const [showVsHumanLocked, setShowVsHumanLocked] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const { getUnlockedItems, isUnlocked } = useUnlockSystem();
   const unlockedBotIds = getUnlockedItems('bot');
@@ -60,6 +62,10 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
         </Pressable>
       )}
 
+      <Pressable onPress={() => setIsMenuOpen(true)} accessibilityRole="button" accessibilityLabel="Open menu" style={styles.menuButton}>
+        <Text style={[styles.menuButtonText, { color: currentTheme.colors.accent }]}>≡</Text>
+      </Pressable>
+
       <View style={styles.content}>
         {currentView === 'main' && (
           <View style={styles.gameSelection}>
@@ -87,6 +93,13 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
           </View>
         )}
       </View>
+
+      <Menu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        onStartGame={(gameType, botId) => onStartGame(gameType, botId)}
+        onNavigateHome={() => setIsMenuOpen(false)}
+      />
 
       {showVsHumanLocked && (
         <Pressable style={styles.lockedOverlay} onPress={() => setShowVsHumanLocked(false)}>
@@ -126,6 +139,17 @@ const styles = StyleSheet.create({
     padding: 8
   },
   backButtonText: {
+    fontSize: 24,
+    fontWeight: '900'
+  },
+  menuButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 1,
+    padding: 8
+  },
+  menuButtonText: {
     fontSize: 24,
     fontWeight: '900'
   },

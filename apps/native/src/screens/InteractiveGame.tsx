@@ -22,6 +22,7 @@ import { CurrentWord } from '../components/CurrentWord';
 import type { LetterHighlight } from '../components/CurrentWord';
 import { SubmitButton } from '../components/SubmitButton';
 import { ScoreBar } from '../components/ScoreBar';
+import { Menu } from '../components/Menu';
 import { triggerHapticFeedback } from '../utils/haptics';
 
 const MAX_WORD_LENGTH = 10;
@@ -47,6 +48,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
 
   const [pendingWord, setPendingWord] = useState('');
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Keep the editable word in sync with the engine's current word whenever
   // it's not actively being edited (start of game, after a move, after
@@ -148,8 +150,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
         onExit?.();
         return;
       }
-      // '?' (help) and '≡' (menu) are deferred in this slice - no-op.
-      if (action === '?' || action === '≡') return;
+      if (action === '≡') {
+        setIsMenuOpen(true);
+        return;
+      }
+      // '?' (help/dictionary lookup) is deferred in this slice - no-op.
+      if (action === '?') return;
 
       if (!canEdit) return;
       if (action === '↻') {
@@ -214,6 +220,19 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
         onLetterPress={handleLetterPress}
         onActionPress={handleActionPress}
         disabled={!canEdit}
+      />
+
+      {/* onStartGame intentionally omitted: mid-game the Menu's "bots"
+          section is reachable (matching web) but tapping a bot is a no-op
+          here rather than switching bots - doing that for real needs
+          navigation-level access this screen doesn't have. Small,
+          documented gap for this slice. */}
+      <Menu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        isInGame
+        onResign={onExit}
+        onNavigateHome={onExit}
       />
     </SafeAreaView>
   );
