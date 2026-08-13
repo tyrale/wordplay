@@ -82,6 +82,13 @@ Steps:
 
 **Check before leaving this phase**: a small non-UI test harness (or the Jest suite) can run a full bot-vs-bot game end-to-end using only native adapters, producing scores identical to the same run under `browserAdapter.ts`/`testAdapter.ts` — this is the proof that the engine port introduced zero logic drift.
 
+✅ **Done** for this port, with two deliberate scope notes:
+- Dictionary packaging: chose "convert `enable1.txt` to a JSON array + `require()` it" (via the new `scripts/generate-native-word-data.cjs`, regenerable with `npm run generate:native-data`) over SQLite/binary formats — simplest correct option (~2MB bundled), revisit for cold-start/bundle-size optimization in Phase 5 rather than now.
+- Supabase: only ported enough to satisfy `nativeUnlockAdapter.ts`'s `recordCommunityUnlock` hook (client bootstrap, `nativeAuthAdapter.ts`, `nativeCommunityUnlocksAdapter.ts` — the latter a verbatim port, no browser-specific code existed to change). The full `supabaseMultiplayerAdapter.ts` port (invites, matchmaking, realtime game channels) is deliberately deferred to Phase 4 as originally planned, not done here.
+- All 4 storage adapters use the exact same AsyncStorage key names as their web counterparts' `localStorage` keys (e.g. `wordplay-player-stats`, `wordplay-unlock-state`) — intentional, for the future account-linking/migration note above.
+- Haptics: each of the 10 `HapticPattern` names is explicitly remapped to an `expo-haptics` primitive (impact style / notification type / selection) with reasoning per-pattern in code comments — there's no RN equivalent of the Vibration API's raw duration arrays, so this couldn't be mechanical.
+- 32 new tests added in `apps/native` (up from 4), covering every new adapter; full workspace suite is at 473 tests (103 web + 338 engine + 32 native), all passing, plus `npx tsc --noEmit` clean and `expo-doctor` 17/17.
+
 ### Phase 2 — Core game screen (single-player vs. bot)
 **Goal**: Get the smallest possible complete gameplay loop working natively: start a bot game, submit words, see score, finish.
 
