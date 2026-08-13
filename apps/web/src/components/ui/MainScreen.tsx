@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Menu } from './Menu';
 import { AlertOverlay } from './AlertOverlay';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
-import { getAllBots } from '../../data/botRegistry';
+import { getAllBots } from '@wordplay/engine/botRegistry';
 import { triggerSoundFeedback } from '../../utils/sound';
 import './MainScreen.css';
 

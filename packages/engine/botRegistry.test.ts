@@ -6,7 +6,7 @@ import {
   getAllBots, 
   getBotsByCategory, 
   getBotDisplayNamesMapping 
-} from '../botRegistry';
+} from './botRegistry';
 
 describe('Bot Registry', () => {
   it('should have the basic bot as the first entry', () => {

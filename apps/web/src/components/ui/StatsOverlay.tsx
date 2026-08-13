@@ -8,7 +8,7 @@
 
 import React from 'react';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
-import { getBotDisplayNamesMapping } from '../../data/botRegistry';
+import { getBotDisplayNamesMapping } from '@wordplay/engine/botRegistry';
 import './StatsOverlay.css';
 
 export interface StatsOverlayProps {

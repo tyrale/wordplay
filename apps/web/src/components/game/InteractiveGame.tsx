@@ -13,7 +13,7 @@ import { ScoreBar } from './ScoreBar';
 import { WordBuilder } from './WordBuilder';
 import { DebugDialog } from './DebugDialog';
 import { Menu } from '../ui/Menu';
-import { getBotDisplayName } from '../../data/botRegistry';
+import { getBotDisplayName } from '@wordplay/engine/botRegistry';
 import { getDisplayName as getVanityName, setDisplayName, markDisplayNameConfirmed } from '../../adapters/supabaseAuthAdapter';
 import { NamePromptOverlay } from '../multiplayer/NamePromptOverlay';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';

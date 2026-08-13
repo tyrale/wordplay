@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Player } from '@wordplay/engine/interfaces';
-import { getBotDisplayName } from '../../data/botRegistry';
+import { getBotDisplayName } from '@wordplay/engine/botRegistry';
 import { getDisplayName as getVanityName, hasConfirmedDisplayName } from '../../adapters/supabaseAuthAdapter';
 import './ScoreBar.css';
 

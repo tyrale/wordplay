@@ -6,7 +6,7 @@ import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
 import { useRoundLength, DEFAULT_ROUND_LENGTH } from '../../contexts/RoundLengthContext';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
 import { useCommunityUnlockStats } from '../../hooks/useCommunityUnlockStats';
-import { getVisibleBots, getBotDisplayNamesMapping } from '../../data/botRegistry';
+import { getVisibleBots, getBotDisplayNamesMapping } from '@wordplay/engine/botRegistry';
 import { availableThemes as ALL_THEMES } from '@wordplay/theme/theme';
 import type { GameTheme } from '@wordplay/theme/theme';
 import { DictionariesOverlay } from './DictionariesOverlay';

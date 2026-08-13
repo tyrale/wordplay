@@ -13,7 +13,7 @@ import { RoundLengthProvider, useRoundLength } from './contexts/RoundLengthConte
 import ResponsiveTest from './components/game/ResponsiveTest';
 import { AlertOverlay } from './components/ui/AlertOverlay';
 import { alertCopy, pickAlertVariant } from './content/alertCopy';
-import { getBotDisplayName } from './data/botRegistry';
+import { getBotDisplayName } from '@wordplay/engine/botRegistry';
 import { initViewportHeight } from './utils/viewportHeight';
 import { hasSeenTutorial, markTutorialSeen } from './utils/tutorialStorage';
 import { AlertProvider } from './components/ui/AlertProvider';
