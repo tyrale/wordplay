@@ -3,6 +3,7 @@ import { Text } from 'react-native';
 import { render, screen, waitFor, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider, useTheme } from '../../theme/ThemeProvider';
+import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider, useUnlockSystem } from '../UnlockProvider';
 
 function Probe({ onReady }: { onReady: (ctx: ReturnType<typeof useUnlockSystem>) => void }) {
@@ -22,9 +23,11 @@ describe('native UnlockProvider', () => {
 
     render(
       <ThemeProvider>
-        <UnlockProvider>
-          <Probe onReady={ctx => { latestCtx = ctx; }} />
-        </UnlockProvider>
+        <AlertProvider>
+          <UnlockProvider>
+            <Probe onReady={ctx => { latestCtx = ctx; }} />
+          </UnlockProvider>
+        </AlertProvider>
       </ThemeProvider>
     );
 
@@ -43,9 +46,11 @@ describe('native UnlockProvider', () => {
 
     render(
       <ThemeProvider>
-        <UnlockProvider>
-          <Probe onReady={ctx => { latestCtx = ctx; }} />
-        </UnlockProvider>
+        <AlertProvider>
+          <UnlockProvider>
+            <Probe onReady={ctx => { latestCtx = ctx; }} />
+          </UnlockProvider>
+        </AlertProvider>
       </ThemeProvider>
     );
     await waitFor(() => expect(latestCtx?.isLoading).toBe(false));
@@ -56,6 +61,57 @@ describe('native UnlockProvider', () => {
     });
 
     expect(results!.length).toBeGreaterThan(0);
+  });
+
+  it('shows a real AlertOverlay (not a toast) with the unlock copy when a theme is unlocked', async () => {
+    let latestCtx: ReturnType<typeof useUnlockSystem> | undefined;
+
+    render(
+      <ThemeProvider>
+        <AlertProvider>
+          <UnlockProvider>
+            <Probe onReady={ctx => { latestCtx = ctx; }} />
+          </UnlockProvider>
+        </AlertProvider>
+      </ThemeProvider>
+    );
+    await waitFor(() => expect(latestCtx?.isLoading).toBe(false));
+
+    await act(async () => {
+      await latestCtx!.handleWordSubmission('green');
+    });
+
+    // alertCopy.unlocks.theme: ['NEW', 'THEME', '{item}'] with item=GREEN
+    await waitFor(() => expect(screen.getByText('NEW')).toBeTruthy());
+    expect(screen.getByText('THEME')).toBeTruthy();
+    expect(screen.getByText('GREEN')).toBeTruthy();
+    expect(screen.getByText('Now available in the menu')).toBeTruthy();
+
+    // The alert is a full-screen overlay, dismissed via its own close button.
+    expect(screen.getByLabelText('Close')).toBeTruthy();
+  });
+
+  it('shows the special-cased dark mode alert copy for the dark-mode unlock', async () => {
+    let latestCtx: ReturnType<typeof useUnlockSystem> | undefined;
+
+    render(
+      <ThemeProvider>
+        <AlertProvider>
+          <UnlockProvider>
+            <Probe onReady={ctx => { latestCtx = ctx; }} />
+          </UnlockProvider>
+        </AlertProvider>
+      </ThemeProvider>
+    );
+    await waitFor(() => expect(latestCtx?.isLoading).toBe(false));
+
+    await act(async () => {
+      await latestCtx!.handleWordSubmission('tyrale');
+    });
+
+    await waitFor(() => expect(screen.getByText('HELL')).toBeTruthy());
+    expect(screen.getByText('YES')).toBeTruthy();
+    expect(screen.getByText('BITCH')).toBeTruthy();
   });
 
   it('throws if useUnlockSystem is used outside the provider', () => {

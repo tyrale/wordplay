@@ -1,0 +1,203 @@
+/**
+ * Alert Copy — Single Source of Truth (native)
+ *
+ * Ported from apps/web's `content/alertCopy.ts` - this is pure content +
+ * pure functions with zero DOM dependency, so this is a direct copy.
+ * Duplicated (not extracted into a shared package like @wordplay/theme)
+ * because it's presentation copy tightly coupled to each platform's own
+ * AlertOverlay rendering, not core game data - but keep the two files in
+ * sync when the copy itself changes, since the same win/lose/unlock text
+ * should read identically on both platforms. Worth reconsidering as a
+ * shared package if the two ever need to diverge in a way that causes
+ * drift pain.
+ *
+ * Rendered by `components/AlertOverlay.tsx`. Each entry's `lines` array is
+ * rendered as stacked, centered words — one line per array item. Lines
+ * may contain `{param}` placeholders substituted via `resolveAlertLines()`.
+ */
+
+export interface AlertCopyEntry {
+  lines: readonly string[];
+  /** Optional short explanatory phrase shown below the main lines. */
+  meta?: string;
+  /** Optional per-item override for `meta`, keyed by raw item id (e.g. bot id, mechanic id). */
+  metaByItem?: Record<string, string>;
+}
+
+export interface AlertVariantSet {
+  variants: readonly AlertCopyEntry[];
+}
+
+export const alertCopy = {
+  /** Opening title screen shown before the player first enters the main menu. */
+  start: { lines: ['reword'], meta: 'tap to start playing' },
+
+  /** Bot-game win/lose/quit screens — one phrase picked at random per screen view */
+  win: {
+    variants: [
+      { lines: ['WELL', 'DONE', 'NERD'] },
+      { lines: ['YOU', 'WON', 'NICE'] },
+      { lines: ['VICTORY', 'IS', 'YOURS'] },
+      { lines: ['CRUSHED', 'IT'] },
+      { lines: ['GG', 'YOU', 'WIN'] }
+    ]
+  },
+  lose: {
+    variants: [
+      { lines: ['NICE', 'TRY', 'LOSER'] },
+      { lines: ['SO', 'CLOSE', 'BUT', 'NO'] },
+      { lines: ['DO', 'BETTER'] },
+      { lines: ['THE', 'BOT', 'WINS'] },
+      { lines: ['OUTSMARTED'] }
+    ]
+  },
+  /** vs-human multiplayer lose screen - same pool as `lose` minus the bot-specific line. */
+  losePvp: {
+    variants: [
+      { lines: ['NICE', 'TRY', 'LOSER'] },
+      { lines: ['SO', 'CLOSE', 'BUT', 'NO'] },
+      { lines: ['DO', 'BETTER'] },
+      { lines: ['OUTSMARTED'] }
+    ]
+  },
+  quit: {
+    variants: [
+      { lines: ['ALWAYS', 'THE', 'QUITTER'] },
+      { lines: ['YOU', 'GAVE', 'UP'] },
+      { lines: ['RAGE', 'QUIT!'] },
+      { lines: ['COWARD'] },
+      { lines: ['RUNNING', 'AWAY?'] }
+    ]
+  },
+
+  /** Daily challenge outcome screens */
+  challenge: {
+    win: { lines: ['WELL', 'DONE'] },
+    lose: { lines: ['HAHA', 'QUITTER'] }
+  },
+
+  /** "GUS" boss battle chain - intro, stage advance, victory, defeat. */
+  boss: {
+    intro: { lines: ['BOSS', 'BATTLE'], meta: 'A special idea from my son. Beat the clock. Beat the boss.' },
+    advance: { lines: ['MEGA', 'BOSS'], meta: 'The next boss is coming...' },
+    victory: { lines: ['YOU', 'BEAT', 'THE', 'BOSS'], meta: 'bossbot unlocked. themes unlocked.' },
+    defeat: { lines: ['BOSS', 'WINS'], meta: 'Maybe next time. Play GUS to try again.' },
+    timeout: { lines: ['OUT', 'OF', 'TIME'] }
+  },
+
+  /** Unlock notifications (theme/bot/mechanic/vanity filter/etc.) */
+  unlocks: {
+    /** Theme copy stays generic — no per-theme variation needed. */
+    theme: { lines: ['NEW', 'THEME', '{item}'], meta: 'Now available in the menu' },
+    bot: {
+      lines: ['UNLOCKED', '{item}', 'NICE!'],
+      meta: 'Challenge them anytime',
+      metaByItem: {
+        'easy-bot': 'A worthy first rival',
+        'medium-bot': 'Getting tougher',
+        'hard-bot': 'Bring your best moves',
+        'expert-bot': 'The ultimate challenge',
+        'pirate-bot': 'Arrr, ready to play',
+        'noob-bot': 'Only ever adds an S',
+        'grinch-bot': 'Plays Dr. Seuss words. You stink, stank, stunk!',
+        'ninja-bot': 'Its word trail is dashes and your grid is invisible. Fights like hard-bot.'
+      }
+    },
+    mechanic: {
+      lines: ['NEW', 'FEATURE', '{item}'],
+      meta: 'Now available in the game',
+      metaByItem: {
+        '3-letter-start': 'Toggle is on in the menu.',
+        '5-letter-start': 'Toggle is on in the menu.',
+        '6-letter-start': 'Toggle is on in the menu.',
+        '7-letter-start': 'Toggle is on in the menu.',
+        '8-letter-start': 'Toggle is on in the menu.',
+        '9-letter-start': 'Toggle is on in the menu.',
+        '10-letter-start': 'Toggle is on in the menu.',
+        'vanity-filter': 'Let the explitives fly!',
+        'time-pressure': '7 second turn timer. The pressure is on!',
+        gravity: 'Letters fall and roll freely now',
+        drunk: 'Toggle is on in the menu. Everything gets a little hazy...',
+        'unlock-counter': 'Check under home to track your progress',
+        'community-stats': 'Check under home to see what the whole community has found',
+        'seuss-canonical-words': 'Dr. Seuss words are now playable. Check the dictionaries list!',
+        'ninja-word-trail': 'Your word trail plays are now dashes in every mode except the daily challenge'
+      }
+    },
+    vanityFilter: { lines: ['FILTER', 'TOGGLE', 'UNLOCKED'], meta: 'Toggle it in the menu' },
+    /** bruh-bot's unlock alert is deliberately just the one word - no meta, no extra lines. */
+    bruh: { lines: ['BRUH'] },
+    reveal: { lines: ['{item}', 'PREVIEW', 'UNLOCKED'], meta: 'Check the menu to see what\'s still locked' },
+    darkMode: { lines: ['HELL', 'YES', 'BITCH'], meta: 'the founder and creator grants you dark mode' },
+    generic: { lines: ['NEW', 'UNLOCK', '{item}'], meta: 'Check the menu to see what\'s new' }
+  },
+
+  /** Miscellaneous one-off alerts (share results, errors, etc.) */
+  generic: {
+    shareSuccess: { lines: ['SHARED'] },
+    shareError: { lines: ['SHARE', 'FAILED'] },
+    resetTrigger: { lines: ['DUH', "yeah it happened. i wouldn't use that word"] }
+  },
+
+  /** First-time feature hints - each shown only once (gated by tutorialStorage). */
+  hints: {
+    clearWord: {
+      lines: ['CLEARED'],
+      meta: 'This is a feature. If you tap the X before doing anything else it will clear the letters in play. Then you can "type" out the word you want. Sometimes this is faster.'
+    }
+  },
+
+  /** Shown to *both* players in a vs-human match when either one resigns mid-game. */
+  multiplayerResigned: { lines: ['GAME', 'OVER'], meta: 'A player left the match' },
+
+  /** Multiplayer-only alerts about host-configured settings that apply to
+   * every player in the game regardless of their own unlock/toggle state. */
+  multiplayer: {
+    /** Shown once, before the board appears, to any player who hasn't
+     * unlocked time-pressure themselves but is joining a game where the
+     * host turned it on. Does not unlock it for them. */
+    hostToggledTime: {
+      lines: ['HOST', 'TOGGLED', 'TIME'],
+      meta: 'You have not unlocked this yet, but the host has toggled on a 7 sec timer per turn. Good luck.'
+    }
+  }
+} as const;
+
+export type AlertCategory = keyof typeof alertCopy;
+export type AlertKey<C extends AlertCategory> = keyof (typeof alertCopy)[C];
+
+/**
+ * Picks a random entry from an `AlertVariantSet`'s `variants` pool.
+ * Used for `alertCopy.win`/`lose`/`quit` so the player sees a different
+ * phrase each time that screen is shown.
+ */
+export function pickAlertVariant(set: AlertVariantSet): AlertCopyEntry {
+  const { variants } = set;
+  return variants[Math.floor(Math.random() * variants.length)];
+}
+
+/**
+ * Substitutes `{param}` placeholders in an entry's lines with values from `params`.
+ * Lines without matching placeholders are returned unchanged.
+ */
+export function resolveAlertLines(entry: AlertCopyEntry, params?: Record<string, string>): string[] {
+  if (!params) return [...entry.lines];
+  return entry.lines.map(line => substituteParams(line, params));
+}
+
+/**
+ * Resolves an entry's `meta` phrase: looks up `metaByItem[itemId]` first
+ * (for per-bot/per-mechanic variation), falls back to the entry's generic
+ * `meta`, then substitutes any `{param}` placeholders. Returns `undefined`
+ * if the entry has neither.
+ */
+export function resolveAlertMeta(entry: AlertCopyEntry, params?: Record<string, string>, itemId?: string): string | undefined {
+  const template = (itemId && entry.metaByItem?.[itemId]) ?? entry.meta;
+  if (!template) return undefined;
+  return substituteParams(template, params);
+}
+
+function substituteParams(text: string, params?: Record<string, string>): string {
+  if (!params) return text;
+  return text.replace(/\{(\w+)\}/g, (_match, key: string) => params[key] ?? '');
+}

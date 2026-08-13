@@ -1,22 +1,22 @@
 /**
  * Native Unlock Provider.
  *
- * A leaner port of apps/web's `components/unlock/UnlockProvider.tsx`,
- * scoped to what Phase 3's first slice actually needs (MainScreen's bot
- * list + zen-mode gating). The web version's rich unlock *notification*
- * UI (`showUnlockNotification`, formatted alert copy, community "X%
- * found" rarity text) depends on `AlertProvider`/`AlertOverlay` and
- * `content/alertCopy.ts`, neither of which are ported yet - deliberately
- * deferred, not silently dropped. This version still performs the real
- * unlock-checking logic and applies immediate effects (e.g. auto-applying
- * a newly unlocked theme), it just doesn't show a toast/alert about it
- * yet. `showUnlockNotification` exists as a no-op placeholder so call
- * sites don't need to change once the alert system is ported.
+ * Now a full port of apps/web's `components/unlock/UnlockProvider.tsx`,
+ * including the real unlock-notification UI via the native
+ * `AlertProvider`/`AlertOverlay` (per the user's explicit direction to
+ * reuse the same full-screen alert overlay pattern on native, not a
+ * toast/snackbar). Logic mirrors web's `showUnlockNotification` exactly:
+ * special-cased dark-mode/bruh-bot copy, formatted item names per
+ * category, and community "X% found" rarity text when available.
  */
 import React, { createContext, useContext, useCallback } from 'react';
 import { useUnlocks } from '../hooks/useUnlocks';
 import type { UseUnlocksReturn } from '../hooks/useUnlocks';
 import { useTheme } from '../theme/ThemeProvider';
+import { useAlert } from './AlertProvider';
+import { alertCopy, resolveAlertMeta } from '../content/alertCopy';
+import type { AlertCopyEntry } from '../content/alertCopy';
+import { computeUnlockPercentage } from '../adapters/nativeCommunityUnlocksAdapter';
 import { availableThemes } from '@wordplay/theme/theme';
 import type { UnlockResult } from '@wordplay/engine/interfaces';
 
@@ -28,7 +28,6 @@ export interface UnlockContextType extends UseUnlocksReturn {
   handleWordSubmission: (word: string, isProfane?: boolean, options?: HandleWordSubmissionOptions) => Promise<UnlockResult[]>;
   handleGameCompletion: (winner: string | null, botId?: string) => Promise<UnlockResult[]>;
   handleWordPathChange: (wordPath: string[]) => Promise<UnlockResult[]>;
-  /** No-op placeholder until the alert/notification UI is ported (see module doc comment). */
   showUnlockNotification: (results: UnlockResult[]) => void;
   resetUnlocksToFresh: () => Promise<void>;
 }
@@ -50,10 +49,67 @@ interface UnlockProviderProps {
 export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
   const unlocks = useUnlocks();
   const { setTheme } = useTheme();
+  const { showAlert } = useAlert();
 
-  const showUnlockNotification = useCallback((_results: UnlockResult[]) => {
-    // TODO(Phase 3 follow-up): show a toast/alert once AlertProvider is ported.
-  }, []);
+  // Show unlock notification using the universal alert overlay - mirrors
+  // apps/web's UnlockProvider.tsx showUnlockNotification exactly.
+  const showUnlockNotification = useCallback((results: UnlockResult[]) => {
+    for (const result of results) {
+      // Rarity: what fraction of the community has ever found this unlock,
+      // if the community-wide count was successfully recorded server-side.
+      const percent = (result.communityUnlockCount != null && result.communityTotalPlayers != null)
+        ? computeUnlockPercentage(result.communityUnlockCount, result.communityTotalPlayers)
+        : null;
+
+      const withRarity = (baseMeta?: string): React.ReactNode => {
+        if (percent == null) return baseMeta;
+        return (
+          <>
+            {baseMeta && <React.Fragment>{baseMeta}{'\n'}</React.Fragment>}
+            {percent}% found
+          </>
+        );
+      };
+
+      // Easter egg: playing "tyrale" unlocks dark mode with fully custom copy
+      if (result.itemId === 'dark-mode') {
+        showAlert('unlocks', 'darkMode', { variant: 'unlock', meta: withRarity(resolveAlertMeta(alertCopy.unlocks.darkMode)) });
+        continue;
+      }
+
+      // bruh-bot gets its own minimal alert - just the word, no meta/extra lines (aside from rarity)
+      if (result.itemId === 'bruh-bot') {
+        showAlert('unlocks', 'bruh', { variant: 'unlock', meta: withRarity() });
+        continue;
+      }
+
+      let itemName = result.target || result.itemId || result.name || 'Unknown Item';
+
+      if (result.category === 'theme' && result.target) {
+        itemName = result.target.split(' ').map((word: string) =>
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+      }
+
+      if (result.category === 'bot' && result.target) {
+        itemName = result.target.replace('-bot', '').split('-').map((word: string) =>
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ') + ' Bot';
+      }
+
+      if (result.category === 'mechanic' && result.target) {
+        itemName = result.target.replace('-', ' ').split(' ').map((word: string) =>
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+      }
+
+      const category = (result.category in alertCopy.unlocks) ? result.category as keyof typeof alertCopy.unlocks : 'generic';
+      const params = { item: itemName.toUpperCase() };
+      const entry = (alertCopy.unlocks as Record<string, AlertCopyEntry>)[category];
+      const baseMeta = resolveAlertMeta(entry, params, result.itemId);
+      showAlert('unlocks', category, { params, itemId: result.itemId, variant: 'unlock', meta: withRarity(baseMeta) });
+    }
+  }, [showAlert]);
 
   const handleImmediateEffects = useCallback((results: UnlockResult[]) => {
     for (const result of results) {

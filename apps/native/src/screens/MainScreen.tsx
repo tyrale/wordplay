@@ -2,10 +2,10 @@
  * Ports apps/web's `components/ui/MainScreen.tsx`. The web version's own
  * "sub-view" state machine (main menu <-> bot list) is preserved as-is
  * (it's plain React state, not navigation - matching web, this screen
- * doesn't push a new route for the bot list). The settings `Menu`
- * overlay, `AlertOverlay`, and vs-human multiplayer are deferred to
- * later Phase 3/4 slices (see this repo's port plan) - the "vs human"
- * button always falls back to the locked-requirement message for now.
+ * doesn't push a new route for the bot list). Vs-human multiplayer is
+ * deferred to a later Phase 4 slice - the "human" button always falls
+ * back to the locked-requirement message (via the real `AlertOverlay`,
+ * matching web's declarative usage exactly) for now.
  */
 import React, { useCallback, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, SafeAreaView } from 'react-native';
@@ -13,6 +13,7 @@ import { useUnlockSystem } from '../providers/UnlockProvider';
 import { useTheme } from '../theme/ThemeProvider';
 import { getAllBots } from '@wordplay/engine/botRegistry';
 import { Menu } from '../components/Menu';
+import { AlertOverlay } from '../components/AlertOverlay';
 
 export type MainScreenGameType = 'bot' | 'challenge' | 'tutorial' | 'zen';
 
@@ -101,13 +102,11 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
         onNavigateHome={() => setIsMenuOpen(false)}
       />
 
-      {showVsHumanLocked && (
-        <Pressable style={styles.lockedOverlay} onPress={() => setShowVsHumanLocked(false)}>
-          <View style={[styles.lockedCard, { backgroundColor: currentTheme.colors.surface }]}>
-            <Text style={[styles.lockedText, { color: currentTheme.colors.text }]}>BEAT{'\n'}EASYBOT{'\n'}FIRST</Text>
-          </View>
-        </Pressable>
-      )}
+      <AlertOverlay
+        isVisible={showVsHumanLocked}
+        lines={['BEAT', 'EASYBOT', 'FIRST']}
+        onClose={() => setShowVsHumanLocked(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -179,24 +178,5 @@ const styles = StyleSheet.create({
   botOptionText: {
     fontSize: 24,
     fontWeight: '900'
-  },
-  lockedOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)'
-  },
-  lockedCard: {
-    padding: 24,
-    borderRadius: 12
-  },
-  lockedText: {
-    fontSize: 20,
-    fontWeight: '900',
-    textAlign: 'center'
   }
 });

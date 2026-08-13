@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
+import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider } from '../../providers/UnlockProvider';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
@@ -10,13 +11,15 @@ import { InteractiveGame } from '../InteractiveGame';
 function renderGame(props: React.ComponentProps<typeof InteractiveGame> = {}) {
   return render(
     <ThemeProvider>
-      <UnlockProvider>
-        <MechanicsSettingsProvider>
-          <RoundLengthProvider>
-            <InteractiveGame {...props} />
-          </RoundLengthProvider>
-        </MechanicsSettingsProvider>
-      </UnlockProvider>
+      <AlertProvider>
+        <UnlockProvider>
+          <MechanicsSettingsProvider>
+            <RoundLengthProvider>
+              <InteractiveGame {...props} />
+            </RoundLengthProvider>
+          </MechanicsSettingsProvider>
+        </UnlockProvider>
+      </AlertProvider>
     </ThemeProvider>
   );
 }

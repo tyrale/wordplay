@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
+import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider, useUnlockSystem } from '../../providers/UnlockProvider';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
@@ -26,14 +27,16 @@ function renderMenu(props: Partial<MenuProps> = {}, unlockWords: string[] = []) 
     onClose,
     ...render(
       <ThemeProvider>
-        <UnlockProvider>
-          <MechanicsSettingsProvider>
-            <RoundLengthProvider>
-              <Unlocker words={unlockWords} />
-              <Menu isOpen onClose={onClose} {...props} />
-            </RoundLengthProvider>
-          </MechanicsSettingsProvider>
-        </UnlockProvider>
+        <AlertProvider>
+          <UnlockProvider>
+            <MechanicsSettingsProvider>
+              <RoundLengthProvider>
+                <Unlocker words={unlockWords} />
+                <Menu isOpen onClose={onClose} {...props} />
+              </RoundLengthProvider>
+            </MechanicsSettingsProvider>
+          </UnlockProvider>
+        </AlertProvider>
       </ThemeProvider>
     )
   };

@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ThemeProvider } from './src/theme/ThemeProvider';
+import { AlertProvider } from './src/providers/AlertProvider';
 import { UnlockProvider } from './src/providers/UnlockProvider';
 import { MechanicsSettingsProvider } from './src/contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from './src/contexts/RoundLengthContext';
@@ -63,19 +64,21 @@ function GameScreenRoute({ route, navigation }: NativeStackScreenProps<RootStack
 export default function App() {
   return (
     <ThemeProvider>
-      <UnlockProvider>
-        <MechanicsSettingsProvider>
-          <RoundLengthProvider>
-            <NavigationContainer>
-              <Stack.Navigator screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="Main" component={MainScreenRoute} />
-                <Stack.Screen name="Game" component={GameScreenRoute} />
-              </Stack.Navigator>
-            </NavigationContainer>
-            <StatusBar style="auto" />
-          </RoundLengthProvider>
-        </MechanicsSettingsProvider>
-      </UnlockProvider>
+      <AlertProvider>
+        <UnlockProvider>
+          <MechanicsSettingsProvider>
+            <RoundLengthProvider>
+              <NavigationContainer>
+                <Stack.Navigator screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="Main" component={MainScreenRoute} />
+                  <Stack.Screen name="Game" component={GameScreenRoute} />
+                </Stack.Navigator>
+              </NavigationContainer>
+              <StatusBar style="auto" />
+            </RoundLengthProvider>
+          </MechanicsSettingsProvider>
+        </UnlockProvider>
+      </AlertProvider>
     </ThemeProvider>
   );
 }

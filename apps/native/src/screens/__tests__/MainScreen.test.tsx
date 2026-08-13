@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
+import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider, useUnlockSystem } from '../../providers/UnlockProvider';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
@@ -13,13 +14,15 @@ function renderMainScreen(props: Partial<React.ComponentProps<typeof MainScreen>
     onStartGame,
     ...render(
       <ThemeProvider>
-        <UnlockProvider>
-          <MechanicsSettingsProvider>
-            <RoundLengthProvider>
-              <MainScreen onStartGame={onStartGame} onStartMultiplayer={props.onStartMultiplayer} />
-            </RoundLengthProvider>
-          </MechanicsSettingsProvider>
-        </UnlockProvider>
+        <AlertProvider>
+          <UnlockProvider>
+            <MechanicsSettingsProvider>
+              <RoundLengthProvider>
+                <MainScreen onStartGame={onStartGame} onStartMultiplayer={props.onStartMultiplayer} />
+              </RoundLengthProvider>
+            </MechanicsSettingsProvider>
+          </UnlockProvider>
+        </AlertProvider>
       </ThemeProvider>
     )
   };
@@ -64,7 +67,9 @@ describe('native MainScreen', () => {
     await waitFor(() => expect(screen.getByText('human')).toBeTruthy());
 
     fireEvent.press(screen.getByText('human'));
-    expect(screen.getByText('BEAT\nEASYBOT\nFIRST')).toBeTruthy();
+    expect(screen.getByText('BEAT')).toBeTruthy();
+    expect(screen.getByText('EASYBOT')).toBeTruthy();
+    expect(screen.getByText('FIRST')).toBeTruthy();
   });
 
   it('reveals "nobody" (zen mode) once unlocked', async () => {
@@ -80,14 +85,16 @@ describe('native MainScreen', () => {
 
     render(
       <ThemeProvider>
-        <UnlockProvider>
-          <MechanicsSettingsProvider>
-            <RoundLengthProvider>
-              <ZenUnlocker />
-              <MainScreen onStartGame={jest.fn()} />
-            </RoundLengthProvider>
-          </MechanicsSettingsProvider>
-        </UnlockProvider>
+        <AlertProvider>
+          <UnlockProvider>
+            <MechanicsSettingsProvider>
+              <RoundLengthProvider>
+                <ZenUnlocker />
+                <MainScreen onStartGame={jest.fn()} />
+              </RoundLengthProvider>
+            </MechanicsSettingsProvider>
+          </UnlockProvider>
+        </AlertProvider>
       </ThemeProvider>
     );
 
