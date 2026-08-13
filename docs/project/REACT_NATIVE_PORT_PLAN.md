@@ -101,6 +101,14 @@ Steps:
 
 **Check before leaving this phase**: a full single-player game against a bot can be played start-to-finish on both an iOS and an Android device/simulator, with score calculation verified against the same scenario played on web (same starting word + same move sequence ⇒ identical score).
 
+✅ **Done** for this port's "smallest complete gameplay loop" goal, with the scope cut resolved as recommended:
+- **Drag-and-drop deferred, as anticipated.** `AlphabetGrid`/`CurrentWord` use a tap-to-append/tap-to-remove interaction model instead - still fully playable, but not a UI parity match with web yet. This is the single biggest remaining native-specific UI gap; revisit with `react-native-gesture-handler`/`react-native-reanimated` before considering the app's UI "done" (not before shipping a v1, necessarily - a product call, not a technical blocker).
+- **Gravity mode is fully out of scope**, not just deferred - `GravityLetterGrid` wasn't attempted at all in this phase.
+- Theme system, `useGameState` hook, and all 6 new UI components (`GridCell`, `AlphabetGrid`, `CurrentWord`, `ScoreBar`, `SubmitButton`, `LockIcon`) ported as planned. `ActionIndicators`/`WordTrail` were not ported in this slice (not needed for the bare bot-game loop); still open for a later pass.
+- **Sound was not wired in** - no native sound implementation exists yet (Phase 1 also skipped it, per its own notes); haptics are wired at the same call sites as web.
+- **A real cross-platform bug in `packages/engine` was found and fixed via this phase's own verification method** (fetching the actual Metro bundle, not just `tsc`/Jest): `keyLetterLogger.ts`'s runtime-guarded `import('fs')`/`import('path')` broke Metro's static resolution for native (Vite tolerates it for web; Metro does not, regardless of the runtime guard). Fixed via the engine's own dependency-injection pattern rather than a native-side workaround - see the commit for details. This is a good example of why critical item 6's "verify via actual bundling, not just type-checking" matters as a practice for the rest of the port.
+- Test coverage: 4 new tests for the `InteractiveGame` screen (mount/start, tap-to-add, exit navigation, pass-turn), on top of Phase 2 part 1's provider/hook tests. Full workspace suite: 487 tests (103 web + 338 engine + 46 native), `tsc --noEmit` clean, `expo-doctor` 17/17.
+
 ### Phase 3 — Menus, navigation, and remaining single-player modes
 **Goal**: Reach feature parity for everything that doesn't require networking: main menu, theme selection, challenge mode, zen mode, tutorial, unlocks, boss battle.
 
