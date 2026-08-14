@@ -68,4 +68,33 @@ describe('App navigation', () => {
     await waitFor(() => expect(screen.getByText('bot')).toBeTruthy());
     expect(screen.getByText('world')).toBeTruthy();
   });
+
+  it('reaches and plays zen mode ("nobody") once unlocked, with no bot/score/resign ceremony', async () => {
+    // Pre-seed the unlock state (mirrors what checkWordTriggers persists
+    // after playing "zen") so zen mode is reachable from the main menu.
+    await AsyncStorage.setItem(
+      'wordplay-unlock-state',
+      JSON.stringify({
+        themes: ['classic blue'],
+        mechanics: ['zen-mode'],
+        bots: ['basicBot'],
+        achievements: [],
+        reveals: [],
+        hasUsedReset: false
+      })
+    );
+
+    render(<App />);
+
+    await waitFor(() => expect(screen.getByText('nobody')).toBeTruthy());
+    fireEvent.press(screen.getByText('nobody'));
+
+    // Now on the Zen screen - reachable, playable, and back navigation works.
+    await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
+    fireEvent.press(screen.getByLabelText('Return to home screen'));
+
+    // Zen mode has no resign ceremony - returns straight to the main menu.
+    await waitFor(() => expect(screen.getByText('bot')).toBeTruthy());
+    expect(screen.getByText('nobody')).toBeTruthy();
+  });
 });

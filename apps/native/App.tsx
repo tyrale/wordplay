@@ -16,17 +16,19 @@ import { RoundLengthProvider } from './src/contexts/RoundLengthContext';
 import { MainScreen } from './src/screens/MainScreen';
 import type { MainScreenGameType } from './src/screens/MainScreen';
 import { InteractiveGame } from './src/screens/InteractiveGame';
+import { ZenGame } from './src/screens/ZenGame';
 import { getBotDisplayName } from '@wordplay/engine/botRegistry';
 import { clearActiveGame } from './src/adapters/nativeGameSaveAdapter';
 
 // Phase 3 (see docs/project/REACT_NATIVE_PORT_PLAN.md): a navigation shell
-// replacing Phase 2's single always-mounted game screen. Only the "vs bot"
-// flow is wired to a real screen - challenge/tutorial/zen and vs-human
+// replacing Phase 2's single always-mounted game screen. "vs bot" and zen
+// mode are wired to real screens - challenge/tutorial and vs-human
 // multiplayer are separate follow-up slices (see MainScreen.tsx and this
 // file's placeholder alert below).
 export type RootStackParamList = {
   Main: undefined;
   Game: { botId: string };
+  Zen: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -35,6 +37,10 @@ function MainScreenRoute({ navigation }: NativeStackScreenProps<RootStackParamLi
   const handleStartGame = (gameType: MainScreenGameType, botId?: string) => {
     if (gameType === 'bot' && botId) {
       navigation.navigate('Game', { botId });
+      return;
+    }
+    if (gameType === 'zen') {
+      navigation.navigate('Zen');
       return;
     }
     Alert.alert('Coming soon', `"${gameType}" mode isn't available in the native app yet.`);
@@ -141,6 +147,10 @@ function GameScreenRoute({ route, navigation }: NativeStackScreenProps<RootStack
   );
 }
 
+function ZenGameRoute({ navigation }: NativeStackScreenProps<RootStackParamList, 'Zen'>) {
+  return <ZenGame onNavigateHome={() => navigation.goBack()} />;
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
@@ -153,6 +163,7 @@ export default function App() {
                   <Stack.Navigator screenOptions={{ headerShown: false }}>
                     <Stack.Screen name="Main" component={MainScreenRoute} />
                     <Stack.Screen name="Game" component={GameScreenRoute} />
+                    <Stack.Screen name="Zen" component={ZenGameRoute} />
                   </Stack.Navigator>
                 </NavigationContainer>
                 <StatusBar style="auto" />
