@@ -15,7 +15,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { GameConfig, MoveAttempt } from '@wordplay/engine/interfaces';
-import { useGameState, useWordState, useGameStats } from '../hooks/useGameState';
+import { useGameState, useWordState } from '../hooks/useGameState';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { AlphabetGrid } from '../components/AlphabetGrid';
 import type { LetterState } from '../components/AlphabetGrid';
@@ -60,7 +60,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
   const { gameState, actions, isPlayerTurn, isProcessingMove, isGameActive, isGameFinished, isBotTurn, isBotThinking } =
     useGameState({ config: { maxTurns: 10, allowBotPlayer: true, botId, ...config } });
   const wordState = useWordState(gameState);
-  const gameStats = useGameStats(gameState);
   const { handleWordSubmission, handleGameCompletion } = useUnlockSystem();
 
   const [pendingWord, setPendingWord] = useState('');
@@ -196,6 +195,22 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
   const isValidSubmit = pendingMoveAttempt?.canApply || false;
   const wordUnchanged = pendingWord === wordState.currentWord;
 
+  // The engine increments `currentTurn` (switching to the "next" player)
+  // *before* it checks whether the game should actually end, so
+  // gameState.currentTurn briefly overshoots by one full round's worth of
+  // turns right when the game finishes (e.g. reads as round 11 of a
+  // 10-round game) - a real behavior of packages/engine/gamestate.ts
+  // (switchToNextPlayer() runs, then the finish check runs), not
+  // something to "fix" in the engine itself, since nothing outside this
+  // display calculation ever sees or depends on that transient value.
+  // web never renders this because it unmounts its entire game board the
+  // instant `isGameActive` goes false; this screen keeps the board
+  // mounted underneath the win/lose AlertOverlay, so it needs its own
+  // clamp instead.
+  const currentRound = gameState.players.length > 0
+    ? Math.min(Math.ceil(gameState.currentTurn / gameState.players.length), gameState.maxTurns)
+    : undefined;
+
   const handleSubmit = useCallback(() => {
     if (!canEdit) return;
 
@@ -224,15 +239,17 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Left-aligned overlay near the top of the screen, matching web's
+          ScoreBar.css exactly (position: absolute; left: 0; right: 0;
+          align-items: flex-start) - not centered, and not a separate
+          "rounds left" indicator (web doesn't have one; the "round N"
+          row inside ScoreBar itself is the only round indicator). */}
       <View style={styles.header}>
         <ScoreBar
           players={gameState.players}
           botDisplayName={botDisplayName}
-          currentRound={gameState.players.length > 0 ? Math.ceil(gameState.currentTurn / gameState.players.length) : undefined}
+          currentRound={currentRound}
         />
-        <Text style={[styles.turnsRemaining, { color: colors.textSecondary }]}>
-          {gameStats.turnsRemaining} rounds left
-        </Text>
       </View>
 
       <View style={styles.wordArea}>
@@ -282,12 +299,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between'
   },
   header: {
-    alignItems: 'center',
-    paddingTop: 12
-  },
-  turnsRemaining: {
-    fontSize: 12,
-    marginTop: 4
+    alignItems: 'flex-start',
+    paddingTop: 12,
+    paddingLeft: 12
   },
   wordArea: {
     alignItems: 'center',

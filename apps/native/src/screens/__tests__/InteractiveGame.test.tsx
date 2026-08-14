@@ -114,4 +114,32 @@ describe('native InteractiveGame screen', () => {
     await waitFor(() => expect(screen.getByText('NEW')).toBeTruthy());
     expect(screen.getByText('FEATURE')).toBeTruthy();
   });
+
+  it('regression: the displayed round count never exceeds maxTurns, even right as the game finishes', async () => {
+    // packages/engine/gamestate.ts's switchToNextPlayer() increments
+    // currentTurn *before* the finish check runs, so gameState.currentTurn
+    // briefly overshoots by a full round once the game ends (a real,
+    // reported bug: a 10-round game displayed "round 11" right as it
+    // finished). Uses a 1-round game so the overshoot (which would compute
+    // as "round 2") is trivial to reach and assert against.
+    const onGameEnd = jest.fn();
+    renderGame({ config: { maxTurns: 1, initialWord: 'CAT' }, onGameEnd });
+    await waitFor(() => expect(screen.getByLabelText('Current word: CAT')).toBeTruthy());
+    expect(screen.getByText('round 1')).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('Letter S'));
+    const submit = await screen.findByLabelText('Submit word');
+    await act(async () => {
+      fireEvent.press(submit);
+    });
+
+    // The bot now moves automatically, finishing the 1-round game - wait
+    // for that to actually happen (a positive signal the game truly
+    // finished) rather than just asserting "round 2" never appeared,
+    // which would trivially pass even if the game hadn't progressed yet.
+    await waitFor(() => expect(onGameEnd).toHaveBeenCalled(), { timeout: 3000 });
+
+    expect(screen.getByText('round 1')).toBeTruthy();
+    expect(screen.queryByText('round 2')).toBeNull();
+  });
 });

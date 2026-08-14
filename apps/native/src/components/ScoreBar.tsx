@@ -27,24 +27,22 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({ players, botDisplayName, cur
       {players.map(player => {
         const displayName = player.isBot ? (botDisplayName || player.name) : `P${humanIndex + 1}`;
         if (!player.isBot) humanIndex += 1;
+        const rowColor = player.isCurrentPlayer ? currentTheme.colors.accent : currentTheme.colors.text;
 
         return (
-          <View
-            key={player.id}
-            style={[
-              styles.row,
-              player.isCurrentPlayer && { backgroundColor: currentTheme.colors.surface }
-            ]}
-          >
-            <Text style={[styles.name, { color: currentTheme.colors.text }]}>{displayName}</Text>
-            <Text style={[styles.score, { color: currentTheme.colors.text }]}>
+          // Left-aligned as a compact inline pill (name + score together),
+          // matching web's ScoreBar.css exactly - not a name/score pair
+          // spread across a fixed-width row.
+          <View key={player.id} style={styles.row}>
+            <Text style={[styles.name, { color: rowColor }]}>{displayName}</Text>
+            <Text style={[styles.score, { color: rowColor }]}>
               {player.score === 0 ? '-' : player.score}
             </Text>
           </View>
         );
       })}
       {typeof currentRound === 'number' && (
-        <Text style={[styles.round, { color: currentTheme.colors.textSecondary }]}>round {currentRound}</Text>
+        <Text style={[styles.round, { color: currentTheme.colors.text }]}>round {currentRound}</Text>
       )}
     </View>
   );
@@ -52,27 +50,30 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({ players, botDisplayName, cur
 
 const styles = StyleSheet.create({
   stack: {
+    alignItems: 'flex-start',
     gap: 4
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    minWidth: 100
+    alignItems: 'baseline',
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 2
   },
   name: {
-    fontSize: 14,
-    fontWeight: '700'
+    fontSize: 16,
+    fontWeight: '700',
+    textTransform: 'uppercase'
   },
   score: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700'
   },
   round: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 2
+    fontSize: 16,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    paddingHorizontal: 10,
+    paddingVertical: 2
   }
 });
