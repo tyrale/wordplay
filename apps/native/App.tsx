@@ -1,8 +1,10 @@
+import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from './src/theme/ThemeProvider';
 import { AlertProvider } from './src/providers/AlertProvider';
 import { UnlockProvider } from './src/providers/UnlockProvider';
@@ -34,8 +36,22 @@ function MainScreenRoute({ navigation }: NativeStackScreenProps<RootStackParamLi
     Alert.alert('Coming soon', `"${gameType}" mode isn't available in the native app yet.`);
   };
 
+  // MainScreen stays mounted across a Game screen push/pop (React
+  // Navigation doesn't remount the previous screen), so its own
+  // main-menu/bot-list sub-view state would otherwise still show "bots"
+  // when returning here via resign/home. Remounting it on every focus
+  // (via a changing key) resets that state without MainScreen itself
+  // needing any navigation-context dependency - see its own doc comment.
+  const [resetKey, setResetKey] = useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      setResetKey(key => key + 1);
+    }, [])
+  );
+
   return (
     <MainScreen
+      key={resetKey}
       onStartGame={handleStartGame}
       onStartMultiplayer={() => Alert.alert('Coming soon', 'Multiplayer isn\'t available in the native app yet.')}
     />
@@ -63,22 +79,24 @@ function GameScreenRoute({ route, navigation }: NativeStackScreenProps<RootStack
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AlertProvider>
-        <UnlockProvider>
-          <MechanicsSettingsProvider>
-            <RoundLengthProvider>
-              <NavigationContainer>
-                <Stack.Navigator screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="Main" component={MainScreenRoute} />
-                  <Stack.Screen name="Game" component={GameScreenRoute} />
-                </Stack.Navigator>
-              </NavigationContainer>
-              <StatusBar style="auto" />
-            </RoundLengthProvider>
-          </MechanicsSettingsProvider>
-        </UnlockProvider>
-      </AlertProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AlertProvider>
+          <UnlockProvider>
+            <MechanicsSettingsProvider>
+              <RoundLengthProvider>
+                <NavigationContainer>
+                  <Stack.Navigator screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="Main" component={MainScreenRoute} />
+                    <Stack.Screen name="Game" component={GameScreenRoute} />
+                  </Stack.Navigator>
+                </NavigationContainer>
+                <StatusBar style="auto" />
+              </RoundLengthProvider>
+            </MechanicsSettingsProvider>
+          </UnlockProvider>
+        </AlertProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

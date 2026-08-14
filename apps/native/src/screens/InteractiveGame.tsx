@@ -12,8 +12,9 @@
  * a letter in the current word to remove it.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
-import type { MoveAttempt } from '@wordplay/engine/interfaces';
+import { View, Text, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import type { GameConfig, MoveAttempt } from '@wordplay/engine/interfaces';
 import { useGameState, useWordState, useGameStats } from '../hooks/useGameState';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { AlphabetGrid } from '../components/AlphabetGrid';
@@ -23,6 +24,7 @@ import type { LetterHighlight } from '../components/CurrentWord';
 import { SubmitButton } from '../components/SubmitButton';
 import { ScoreBar } from '../components/ScoreBar';
 import { Menu } from '../components/Menu';
+import { useUnlockSystem } from '../providers/UnlockProvider';
 import { triggerHapticFeedback } from '../utils/haptics';
 
 const MAX_WORD_LENGTH = 10;
@@ -33,18 +35,23 @@ export interface InteractiveGameProps {
    * opponent's move-generation strategy - not just its display name. */
   botId?: string;
   botDisplayName?: string;
+  /** Additional game config overrides (e.g. a forced `initialWord` for a
+   * future tutorial flow) merged over this screen's defaults. Mirrors
+   * web's InteractiveGameProps.config, which accepts a full GameConfig. */
+  config?: Partial<GameConfig>;
   onGameEnd?: (winner: string | null, finalScores: { human: number; bot: number }) => void;
   onExit?: () => void;
 }
 
-export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisplayName, onGameEnd, onExit }) => {
+export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisplayName, config, onGameEnd, onExit }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
 
   const { gameState, actions, isPlayerTurn, isProcessingMove, isGameActive, isGameFinished, isBotTurn, isBotThinking } =
-    useGameState({ config: { maxTurns: 10, allowBotPlayer: true, botId } });
+    useGameState({ config: { maxTurns: 10, allowBotPlayer: true, botId, ...config } });
   const wordState = useWordState(gameState);
   const gameStats = useGameStats(gameState);
+  const { handleWordSubmission, handleGameCompletion } = useUnlockSystem();
 
   const [pendingWord, setPendingWord] = useState('');
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
@@ -78,14 +85,25 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
     }
   }, [isBotTurn, isGameActive, isBotThinking, actions]);
 
-  // Report game end to the caller.
+  // Report game end to the caller, and check for beat-this-bot unlock
+  // achievements (e.g. beating basicBot unlocks easy-bot). Matches web's
+  // InteractiveGame.tsx, which checks this at the same gameStatus
+  // transition via handleGameCompletion(winner, config?.botId).
+  const hasHandledGameEndRef = React.useRef(false);
   useEffect(() => {
-    if (!isGameFinished) return;
+    if (!isGameFinished) {
+      hasHandledGameEndRef.current = false;
+      return;
+    }
+    if (hasHandledGameEndRef.current) return;
+    hasHandledGameEndRef.current = true;
+
     const human = gameState.players.find(p => p.id === 'human')?.score || 0;
     const bot = gameState.players.find(p => p.id === 'bot')?.score || 0;
     const winner = human > bot ? 'human' : bot > human ? 'bot' : null;
     onGameEnd?.(winner, { human, bot });
-  }, [isGameFinished, gameState.players, onGameEnd]);
+    handleGameCompletion(winner, botId).catch(err => console.warn('Failed to check game completion unlock triggers:', err));
+  }, [isGameFinished, gameState.players, onGameEnd, handleGameCompletion, botId]);
 
   const letterStates: LetterState[] = useMemo(() => {
     return ALPHABET.map(letter => {
@@ -173,7 +191,17 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
 
     if (isValidSubmit && pendingMoveAttempt) {
       triggerHapticFeedback('submit');
-      actions.applyMove(pendingMoveAttempt);
+      const applied = actions.applyMove(pendingMoveAttempt);
+      if (applied) {
+        // Check for unlock triggers on the local player's own submitted
+        // word (e.g. playing "ten" unlocks 10-letter-start/10 rounds).
+        // Profanity detection is skipped here since the vanity filter
+        // system itself is deferred in this port (always passes `false`).
+        // Matches web's InteractiveGame.tsx handleSubmit.
+        handleWordSubmission(pendingMoveAttempt.newWord, false).catch(err =>
+          console.warn('Failed to check word submission unlock triggers:', err)
+        );
+      }
       return;
     }
 
@@ -182,7 +210,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
     if (wordUnchanged || !isValidSubmit) {
       actions.passTurn();
     }
-  }, [canEdit, isValidSubmit, pendingMoveAttempt, wordUnchanged, actions]);
+  }, [canEdit, isValidSubmit, pendingMoveAttempt, wordUnchanged, actions, handleWordSubmission]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>

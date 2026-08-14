@@ -6,9 +6,19 @@
  * deferred to a later Phase 4 slice - the "human" button always falls
  * back to the locked-requirement message (via the real `AlertOverlay`,
  * matching web's declarative usage exactly) for now.
+ *
+ * Note (see App.tsx's MainScreenRoute): React Navigation keeps this
+ * screen mounted in the stack rather than remounting it fresh, so
+ * `currentView`'s "bots" sub-view would otherwise still be showing when
+ * the player navigates back here (e.g. via resign/home from a game).
+ * App.tsx remounts this component (via a changing `key`) on every focus
+ * to reset it, rather than doing that reset in here - this keeps
+ * MainScreen renderable/testable standalone, with no navigation context
+ * dependency of its own.
  */
 import React, { useCallback, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { useTheme } from '../theme/ThemeProvider';
 import { getAllBots } from '@wordplay/engine/botRegistry';

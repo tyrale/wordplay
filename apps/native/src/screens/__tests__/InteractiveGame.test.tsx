@@ -69,4 +69,33 @@ describe('native InteractiveGame screen', () => {
       fireEvent.press(submit);
     });
   });
+
+  it('regression: submitting a real unlock-trigger word (e.g. "ten") actually shows the unlock alert', async () => {
+    // Forces a deterministic starting word so a specific valid move
+    // ("TEN" -> "TENS", a real single-letter-add move) is reachable via
+    // taps, rather than depending on the random starting word. This is
+    // the exact bug report this test guards against: handleWordSubmission
+    // was fully implemented and unit-tested in isolation (see
+    // providers/__tests__/UnlockProvider.test.tsx) but was never actually
+    // called from this screen's submit handler, so playing a real unlock
+    // trigger word during a live game silently did nothing.
+    // Starts on "TENS" and removes the "S" (a valid remove-one-letter
+    // move) so the *submitted* word is literally "TEN" - the unlock
+    // trigger fires on the played word, not on the game's starting word.
+    renderGame({ config: { initialWord: 'TENS' } });
+    await waitFor(() => expect(screen.getByLabelText('Current word: TENS')).toBeTruthy());
+
+    fireEvent.press(screen.getByLabelText('Remove letter S'));
+
+    const submit = await screen.findByLabelText('Submit word');
+    await act(async () => {
+      fireEvent.press(submit);
+    });
+
+    // alertCopy.unlocks.mechanic: ['NEW', 'FEATURE', '{item}'] - two
+    // separate unlocks fire for "ten" (10-letter-start and round-length-10),
+    // queued one at a time; the first should already be visible.
+    await waitFor(() => expect(screen.getByText('NEW')).toBeTruthy());
+    expect(screen.getByText('FEATURE')).toBeTruthy();
+  });
 });
