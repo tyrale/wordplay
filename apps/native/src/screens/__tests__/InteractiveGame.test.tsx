@@ -51,13 +51,29 @@ describe('native InteractiveGame screen', () => {
     fireEvent.press(screen.getByLabelText('Reset word'));
   });
 
-  it('calls onExit when the back action is pressed', async () => {
-    const onExit = jest.fn();
-    renderGame({ onExit });
+  it('calls onNavigateHome (not onResign) when the back action is pressed - no ceremony', async () => {
+    const onNavigateHome = jest.fn();
+    const onResign = jest.fn();
+    renderGame({ onNavigateHome, onResign });
     await waitFor(() => expect(screen.getByLabelText('Return to home screen')).toBeTruthy());
 
     fireEvent.press(screen.getByLabelText('Return to home screen'));
-    expect(onExit).toHaveBeenCalledTimes(1);
+    expect(onNavigateHome).toHaveBeenCalledTimes(1);
+    expect(onResign).not.toHaveBeenCalled();
+  });
+
+  it('calls onResign (not onNavigateHome) from the Menu\'s resign action', async () => {
+    const onNavigateHome = jest.fn();
+    const onResign = jest.fn();
+    renderGame({ onNavigateHome, onResign });
+    await waitFor(() => expect(screen.getByLabelText('Settings menu')).toBeTruthy());
+
+    fireEvent.press(screen.getByLabelText('Settings menu'));
+    await waitFor(() => expect(screen.getByText('resign')).toBeTruthy());
+    fireEvent.press(screen.getByText('resign'));
+
+    expect(onResign).toHaveBeenCalledTimes(1);
+    expect(onNavigateHome).not.toHaveBeenCalled();
   });
 
   it('calling passTurn via the submit button (unchanged word) advances the turn without crashing', async () => {

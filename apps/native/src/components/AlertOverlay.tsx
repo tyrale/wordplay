@@ -44,23 +44,41 @@ export interface AlertOverlayProps {
   actions?: AlertOverlayAction[];
 }
 
-/** Target line width as a fraction of the overlay's width. */
+/** Target line width as a fraction of the overlay's width - lines are
+ * deliberately ~5% too wide so their outermost letter edges bleed past
+ * the screen (matches web's design intent exactly). */
 const TARGET_WIDTH_FRACTION = 1.05;
+/** Each line's measurement/layout box is wider than TARGET_WIDTH_FRACTION
+ * itself, purely so React Native's text layout has enough room to never
+ * need to wrap the line (RN Text wraps by default whenever it doesn't
+ * fit its available width - unlike the web version, which only needed
+ * `white-space: nowrap` to prevent that). Centering this deliberately
+ * oversized, unclipped box is what makes the line bleed symmetrically
+ * past both screen edges. */
+const LINE_BOX_WIDTH_FRACTION = 1.4;
 const MIN_FONT_SIZE = 24;
-/** Cap line height as a fraction of overlay height, so a single very
- * short line (e.g. "BRUH") doesn't blow past a sensible max size. */
-const MAX_FONT_SIZE_HEIGHT_FRACTION = 0.16;
+/** Cap a single line's height as a fraction of the *total headline
+ * block* budget (not the full overlay height) - divided across however
+ * many lines there are, so a 4-line phrase doesn't collectively push the
+ * meta text/close button off-screen the way a single short line's cap
+ * would if applied per-line regardless of line count. */
+const HEADLINE_BLOCK_HEIGHT_FRACTION = 0.55;
 /** Empirical average glyph-width-to-font-size ratio for the system's
  * default bold sans-serif - the one constant worth tuning on a real
  * device (see module doc comment). */
 const AVG_CHAR_WIDTH_RATIO = 0.62;
 
 /** Pure, dependency-free so it's directly unit-testable without rendering. */
-export function estimateFontSize(line: string, containerWidth: number, containerHeight: number): number {
+export function estimateFontSize(
+  line: string,
+  containerWidth: number,
+  containerHeight: number,
+  totalLineCount: number = 1
+): number {
   const length = Math.max(line.trim().length, 1);
   const targetWidth = containerWidth * TARGET_WIDTH_FRACTION;
   const estimated = targetWidth / (length * AVG_CHAR_WIDTH_RATIO);
-  const maxSize = containerHeight * MAX_FONT_SIZE_HEIGHT_FRACTION;
+  const maxSize = (containerHeight * HEADLINE_BLOCK_HEIGHT_FRACTION) / Math.max(totalLineCount, 1);
   return Math.max(MIN_FONT_SIZE, Math.min(estimated, maxSize));
 }
 
@@ -94,12 +112,14 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({ isVisible, lines, on
     <View style={[styles.overlay, { backgroundColor: colors.background }]} accessibilityRole="alert" accessibilityViewIsModal>
       <View style={styles.linesContainer}>
         {lines.map((line, index) => (
-          <Text
-            key={index}
-            style={[styles.line, { fontSize: estimateFontSize(line, width, height), color: lineColor }]}
-          >
-            {variant === 'start' ? line : line.toUpperCase()}
-          </Text>
+          <View key={index} style={{ width: width * LINE_BOX_WIDTH_FRACTION, alignItems: 'center' }}>
+            <Text
+              numberOfLines={1}
+              style={[styles.line, { fontSize: estimateFontSize(line, width, height, lines.length), color: lineColor }]}
+            >
+              {variant === 'start' ? line : line.toUpperCase()}
+            </Text>
+          </View>
         ))}
       </View>
 

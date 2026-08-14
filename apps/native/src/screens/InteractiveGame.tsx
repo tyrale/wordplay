@@ -40,10 +40,20 @@ export interface InteractiveGameProps {
    * web's InteractiveGameProps.config, which accepts a full GameConfig. */
   config?: Partial<GameConfig>;
   onGameEnd?: (winner: string | null, finalScores: { human: number; bot: number }) => void;
-  onExit?: () => void;
+  /** The '←' action button - leaves immediately, no ceremony. Mirrors
+   * web's `onNavigateHome` (distinct from `onResign` below - this is a
+   * real distinction in web's InteractiveGame.tsx that a single `onExit`
+   * callback had incorrectly collapsed into one in an earlier version of
+   * this port, which is why resigning skipped the quitter AlertOverlay
+   * entirely). */
+  onNavigateHome?: () => void;
+  /** The Menu's dedicated "resign" action - shows a quitter AlertOverlay
+   * (handled by the caller, see App.tsx's GameScreenRoute) before
+   * actually leaving. Mirrors web's `onResign`. */
+  onResign?: () => void;
 }
 
-export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisplayName, config, onGameEnd, onExit }) => {
+export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisplayName, config, onGameEnd, onNavigateHome, onResign }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
 
@@ -165,7 +175,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
   const handleActionPress = useCallback(
     (action: string) => {
       if (action === '←') {
-        onExit?.();
+        onNavigateHome?.();
         return;
       }
       if (action === '≡') {
@@ -180,7 +190,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
         handleWordChange(wordState.currentWord);
       }
     },
-    [canEdit, handleWordChange, wordState.currentWord, onExit]
+    [canEdit, handleWordChange, wordState.currentWord, onNavigateHome]
   );
 
   const isValidSubmit = pendingMoveAttempt?.canApply || false;
@@ -259,8 +269,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         isInGame
-        onResign={onExit}
-        onNavigateHome={onExit}
+        onResign={onResign}
+        onNavigateHome={onNavigateHome}
       />
     </SafeAreaView>
   );

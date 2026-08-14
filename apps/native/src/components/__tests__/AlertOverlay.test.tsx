@@ -32,11 +32,18 @@ describe('estimateFontSize', () => {
     expect(size).toBeGreaterThanOrEqual(24);
   });
 
-  it('caps the size for very short lines relative to overlay height', () => {
+  it('caps the size for very short lines relative to the headline block height', () => {
     // A wide-but-short overlay: width alone would suggest a huge font, but
-    // the height-based cap (16% of 500 = 80) should bind instead.
+    // the height-based cap (55% of 500, for a single line) should bind instead.
     const size = estimateFontSize('A', 2000, 500);
-    expect(size).toBeLessThanOrEqual(500 * 0.16);
+    expect(size).toBeLessThanOrEqual(500 * 0.55);
+  });
+
+  it('divides the height cap across multiple lines, so a 4-line phrase gets a smaller per-line cap than a 1-line phrase', () => {
+    const oneLineSize = estimateFontSize('A', 2000, 500, 1);
+    const fourLineSize = estimateFontSize('A', 2000, 500, 4);
+    expect(fourLineSize).toBeLessThan(oneLineSize);
+    expect(fourLineSize).toBeLessThanOrEqual((500 * 0.55) / 4);
   });
 });
 
