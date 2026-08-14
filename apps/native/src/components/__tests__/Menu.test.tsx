@@ -117,4 +117,24 @@ describe('native Menu', () => {
     fireEvent.press(screen.getByText('mechanics'));
     await waitFor(() => expect(screen.getByText('gravity')).toBeTruthy());
   });
+
+  it('opens the dictionaries overlay from the about section, and closing it returns to the menu', async () => {
+    const onClose = jest.fn();
+    renderMenu({ onClose });
+    await waitFor(() => expect(screen.getByText('about')).toBeTruthy());
+
+    fireEvent.press(screen.getByText('about'));
+    await waitFor(() => expect(screen.getByText('dictionaries')).toBeTruthy());
+    fireEvent.press(screen.getByText('dictionaries'));
+
+    await waitFor(() => expect(screen.getByText('ENABLE Word List')).toBeTruthy());
+    // The Menu itself must not have closed - it's still behind the overlay.
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByLabelText('Close'));
+    await waitFor(() => expect(screen.queryByText('ENABLE Word List')).toBeNull());
+    // Back at the menu (not closed to the caller) - "about" is still reachable.
+    expect(screen.getByText('reset unlocks (debug)')).toBeTruthy();
+    expect(onClose).not.toHaveBeenCalled();
+  });
 });

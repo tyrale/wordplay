@@ -7,14 +7,15 @@
  * "????" locked-item previews, and a community "X/X found worldwide"
  * progress line.
  *
- * This slice only ports: themes (+ dark mode toggle), mechanics toggles +
+ * This slice ports: themes (+ dark mode toggle), mechanics toggles +
  * round length selection, unlocked bots (tap to start a game with that
- * bot), reset-unlocks (debug), and home/resign. Deliberately deferred,
- * not silently dropped: the vanity filter system, "vs world"/leaderboard/
- * challenge entries, all four "about" sub-overlays, locked-item previews,
- * and community stats - each depends on a system not yet ported
- * (challenge mode, the vanity filter hook/context, stats/leaderboard
- * overlays) or was cut for scope in this pass.
+ * bot), the "dictionaries" about entry, reset-unlocks (debug), and
+ * home/resign. Deliberately deferred, not silently dropped: the vanity
+ * filter system, "vs world"/leaderboard/challenge entries, the other
+ * three "about" sub-overlays (thoughts/the-game/stats), locked-item
+ * previews, and community stats - each depends on a system not yet
+ * ported (challenge mode, the vanity filter hook/context, stats/
+ * leaderboard overlays) or was cut for scope in this pass.
  */
 import React, { useCallback, useState } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Switch } from 'react-native';
@@ -25,6 +26,7 @@ import { useRoundLength, DEFAULT_ROUND_LENGTH } from '../contexts/RoundLengthCon
 import { useUnlockedThemes } from '../hooks/useUnlockedThemes';
 import { getBotDisplayNamesMapping } from '@wordplay/engine/botRegistry';
 import type { GameTheme } from '@wordplay/theme/theme';
+import { DictionariesOverlay } from './DictionariesOverlay';
 
 const ALL_MECHANIC_IDS = ['3-letter-start', '5-letter-start', '6-letter-start', '7-letter-start', '8-letter-start', '9-letter-start', '10-letter-start', 'time-pressure', 'gravity', 'drunk', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
 const ROUND_LENGTH_MECHANIC_IDS = new Set(['round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100']);
@@ -73,6 +75,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
   const { roundLength, setRoundLength } = useRoundLength();
 
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [isDictionariesOpen, setIsDictionariesOpen] = useState(false);
 
   const unlockedThemeIds = getUnlockedItems('theme');
   const unlockedMechanics = getUnlockedItems('mechanic');
@@ -199,6 +202,9 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
             <SectionHeader label="about" color={currentTheme.colors.text} onPress={() => toggleSection('about')} />
             {expandedSection === 'about' && (
               <View style={styles.sectionBody}>
+                <Pressable onPress={() => setIsDictionariesOpen(true)} style={styles.row} accessibilityRole="button">
+                  <Text style={{ color: currentTheme.colors.text }}>dictionaries</Text>
+                </Pressable>
                 <Pressable onPress={resetUnlocksToFresh} style={styles.row} accessibilityRole="button">
                   <Text style={{ color: currentTheme.colors.textSecondary }}>reset unlocks (debug)</Text>
                 </Pressable>
@@ -209,6 +215,11 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
           </ScrollView>
         </Pressable>
       </Pressable>
+
+      {/* Shown on top of the Menu (it fully covers the menu visually), so
+          closing it returns to the menu instead of home - matches web's
+          usage exactly. */}
+      <DictionariesOverlay isVisible={isDictionariesOpen} onClose={() => setIsDictionariesOpen(false)} />
     </Modal>
   );
 };
