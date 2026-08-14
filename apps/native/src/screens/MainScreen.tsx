@@ -24,6 +24,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { getAllBots } from '@wordplay/engine/botRegistry';
 import { Menu } from '../components/Menu';
 import { AlertOverlay } from '../components/AlertOverlay';
+import { BackIcon, MenuIcon } from '../components/icons';
 
 export type MainScreenGameType = 'bot' | 'challenge' | 'tutorial' | 'zen';
 
@@ -69,12 +70,12 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
     <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.colors.background }]}>
       {currentView !== 'main' && (
         <Pressable onPress={handleBack} accessibilityRole="button" accessibilityLabel="Back" style={styles.backButton}>
-          <Text style={[styles.backButtonText, { color: currentTheme.colors.text }]}>←</Text>
+          <BackIcon size={28} color={currentTheme.colors.text} />
         </Pressable>
       )}
 
       <Pressable onPress={() => setIsMenuOpen(true)} accessibilityRole="button" accessibilityLabel="Open menu" style={styles.menuButton}>
-        <Text style={[styles.menuButtonText, { color: currentTheme.colors.accent }]}>≡</Text>
+        <MenuIcon size={28} color={currentTheme.colors.accent} />
       </Pressable>
 
       <View style={styles.content}>
@@ -131,7 +132,7 @@ const GameOption: React.FC<{ label: string; prefix: string; onPress: () => void;
   <Pressable onPress={onPress} style={({ pressed }) => [styles.gameOption, { opacity: pressed ? 0.6 : 1 }]} accessibilityRole="button">
     <Text style={styles.gameOptionText}>
       <Text style={{ color: accentColor, fontWeight: '900' }}>{prefix}</Text>
-      <Text style={{ color }}> {label}</Text>
+      <Text style={{ color }}>{label}</Text>
     </Text>
   </Pressable>
 );
@@ -142,25 +143,17 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 16,
-    left: 16,
+    bottom: 20,
+    left: 20,
     zIndex: 1,
     padding: 8
-  },
-  backButtonText: {
-    fontSize: 24,
-    fontWeight: '900'
   },
   menuButton: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    bottom: 20,
+    right: 20,
     zIndex: 1,
     padding: 8
-  },
-  menuButtonText: {
-    fontSize: 24,
-    fontWeight: '900'
   },
   content: {
     flex: 1,

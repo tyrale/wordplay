@@ -22,6 +22,7 @@ import React from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { GridCell } from './GridCell';
 import type { GridCellState } from './GridCell';
+import { BackIcon, ResetIcon, MenuIcon } from './icons';
 
 export interface LetterState {
   letter: string;
@@ -47,6 +48,15 @@ const ACTION_BUTTONS = ['←', '↻', '?', '≡'];
 const GRID_COLUMNS = 6;
 const GRID_GAP = 6;
 const GRID_HORIZONTAL_PADDING = 16;
+
+// See components/icons.tsx's doc comment for why these three action
+// glyphs get explicit vector icons instead of rendering as plain text
+// ('?' is ordinary ASCII and unaffected, so it stays plain text).
+const ACTION_ICONS: Record<string, React.ComponentType<{ size: number; color: string }>> = {
+  '←': BackIcon,
+  '↻': ResetIcon,
+  '≡': MenuIcon
+};
 
 function getAriaLabel(content: string): string {
   if (ACTION_BUTTONS.includes(content)) {
@@ -117,6 +127,7 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
                 disabled={isAlwaysEnabled(content) ? false : disabled || state === 'disabled'}
                 accessibilityLabel={getAriaLabel(content)}
                 size={cellSize}
+                icon={ACTION_ICONS[content]}
               />
             );
           })}

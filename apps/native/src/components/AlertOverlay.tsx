@@ -27,6 +27,7 @@ import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-na
 import { triggerHapticFeedback } from '../utils/haptics';
 import type { HapticPattern } from '../utils/haptics';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
+import { CloseIcon } from './icons';
 
 export interface AlertOverlayAction {
   label: string;
@@ -145,7 +146,7 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({ isVisible, lines, on
       )}
 
       <Pressable onPress={onClose} style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close">
-        <Text style={[styles.closeButtonText, { color: colors.text }]}>×</Text>
+        <CloseIcon size={28} color={colors.text} />
       </Pressable>
     </View>
   );
@@ -196,9 +197,5 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 40,
     padding: 16
-  },
-  closeButtonText: {
-    fontSize: 32,
-    fontWeight: '300'
   }
 });

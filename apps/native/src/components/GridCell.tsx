@@ -31,6 +31,11 @@ export interface GridCellProps {
   /** Cell size in px - the web version has fixed breakpoint sizes (112/96/60px);
    * the native grid computes this from window width instead (see AlphabetGrid.tsx). */
   size?: number;
+  /** Renders this instead of `content` as text - used for action buttons
+   * whose Unicode glyph (←, ↻, ≡) renders inconsistently across
+   * platforms (see components/icons.tsx's doc comment). `content` is
+   * still used for the accessibility label fallback. */
+  icon?: React.ComponentType<{ size: number; color: string }>;
 }
 
 export const GridCell: React.FC<GridCellProps> = ({
@@ -41,7 +46,8 @@ export const GridCell: React.FC<GridCellProps> = ({
   disabled = false,
   accessibilityLabel,
   contentHidden = false,
-  size = 60
+  size = 60,
+  icon: Icon
 }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
@@ -69,14 +75,18 @@ export const GridCell: React.FC<GridCellProps> = ({
       ]}
     >
       <View style={styles.content}>
-        <Text
-          style={[
-            { color: textColor, fontSize, fontWeight: '900' },
-            contentHidden && type === 'letter' ? styles.hiddenContent : null
-          ]}
-        >
-          {content}
-        </Text>
+        {Icon ? (
+          <Icon size={fontSize} color={textColor} />
+        ) : (
+          <Text
+            style={[
+              { color: textColor, fontSize, fontWeight: '900' },
+              contentHidden && type === 'letter' ? styles.hiddenContent : null
+            ]}
+          >
+            {content}
+          </Text>
+        )}
       </View>
       {(state === 'locked' || state === 'lockedKey') && (
         <View style={styles.lock} pointerEvents="none">

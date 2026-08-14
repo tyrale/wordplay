@@ -4,8 +4,9 @@
  * DOM-specific behavior.
  */
 import React from 'react';
-import { Pressable, Text, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
+import { CheckIcon, CloseIcon } from './icons';
 
 export interface SubmitButtonProps {
   isValid: boolean;
@@ -30,7 +31,10 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
     return isValid ? 'Submit word' : 'Word is invalid - tap to pass turn';
   };
 
-  const icon = isInvalid ? '×' : '✓';
+  // Rendered as an explicit vector icon rather than the '×'/'✓' Unicode
+  // characters - see components/icons.tsx's doc comment for why (a
+  // platform font-fallback inconsistency the user found on Android).
+  const Icon = isInvalid ? CloseIcon : CheckIcon;
   const color = isInvalid ? '#DC2626' : currentTheme.colors.accent;
 
   return (
@@ -44,7 +48,7 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
         { borderColor: color, opacity: !canPress ? 0.4 : pressed ? 0.7 : 1 }
       ]}
     >
-      <Text style={[styles.icon, { color }]}>{icon}</Text>
+      <Icon size={26} color={color} />
     </Pressable>
   );
 };
@@ -57,9 +61,5 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center'
-  },
-  icon: {
-    fontSize: 28,
-    fontWeight: '900'
   }
 });
