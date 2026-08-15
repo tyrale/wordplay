@@ -188,4 +188,25 @@ describe('native InteractiveGame screen', () => {
     expect(screen.getByText('basicbot')).toBeTruthy();
     expect(screen.getByText(/W - \d+L \(1 played\)/)).toBeTruthy();
   });
+
+  it('shows the tutorial banner when isTutorial is true, and skipping it calls onTutorialComplete', async () => {
+    const onTutorialComplete = jest.fn();
+    renderGame({
+      config: { initialWord: 'WORD' },
+      isTutorial: true,
+      onTutorialComplete
+    });
+
+    await waitFor(() => expect(screen.getByText('Tap the S')).toBeTruthy());
+    expect(screen.getByText('to spell words')).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('Skip tutorial'));
+    expect(onTutorialComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not show the tutorial banner when isTutorial is false (the default)', async () => {
+    renderGame();
+    await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
+    expect(screen.queryByLabelText('Skip tutorial')).toBeNull();
+  });
 });

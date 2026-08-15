@@ -4,8 +4,9 @@
  * interaction logic of apps/web's `components/game/InteractiveGame.tsx`
  * (word-builder state machine: pendingWord -> attemptMove -> submit/pass),
  * trimmed of everything not needed for a bare bot game: no challenge
- * mode, tutorial overlay, boss battles, multiplayer, or vanity filter -
- * those are follow-up slices, not part of this one.
+ * mode, boss battles, multiplayer, or vanity filter - those are
+ * follow-up slices, not part of this one. The first-time tutorial *is*
+ * ported (see `isTutorial` prop below).
  *
  * Interaction model differs from web's drag-and-drop (see AlphabetGrid.tsx
  * and CurrentWord.tsx doc comments): tap a grid letter to append it, tap
@@ -24,8 +25,11 @@ import type { LetterHighlight } from '../components/CurrentWord';
 import { SubmitButton } from '../components/SubmitButton';
 import { ScoreBar } from '../components/ScoreBar';
 import { Menu } from '../components/Menu';
+import { TutorialOverlay } from '../components/TutorialOverlay';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { usePlayerStats } from '../hooks/usePlayerStats';
+import { useTutorialProgress } from '../hooks/useTutorialProgress';
+import { markTutorialSeen } from '../utils/tutorialStorage';
 import { triggerHapticFeedback } from '../utils/haptics';
 
 const MAX_WORD_LENGTH = 10;
@@ -52,9 +56,28 @@ export interface InteractiveGameProps {
    * (handled by the caller, see App.tsx's GameScreenRoute) before
    * actually leaving. Mirrors web's `onResign`. */
   onResign?: () => void;
+  /** Shows the scripted first-time tutorial banner on top of this game
+   * (see hooks/tutorialSteps.ts and hooks/useTutorialProgress.ts). The
+   * caller is responsible for deciding *when* to set this (e.g. the
+   * first time the player ever starts a bot game) and for merging
+   * `TUTORIAL_INITIAL_CONFIG` into `config` - this component only drives
+   * the banner/skip/completion once told to. */
+  isTutorial?: boolean;
+  /** Called once the tutorial banner is dismissed (finished or skipped) -
+   * this component already calls `markTutorialSeen()` itself first. */
+  onTutorialComplete?: () => void;
 }
 
-export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisplayName, config, onGameEnd, onNavigateHome, onResign }) => {
+export const InteractiveGame: React.FC<InteractiveGameProps> = ({
+  botId,
+  botDisplayName,
+  config,
+  onGameEnd,
+  onNavigateHome,
+  onResign,
+  isTutorial = false,
+  onTutorialComplete
+}) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
 
@@ -67,6 +90,20 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
   const [pendingWord, setPendingWord] = useState('');
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const tutorialProgress = useTutorialProgress(pendingWord, isTutorial ? gameState : null);
+  const tutorialCompleteHandledRef = React.useRef(false);
+  useEffect(() => {
+    if (!isTutorial || !tutorialProgress.isComplete || tutorialCompleteHandledRef.current) return;
+    tutorialCompleteHandledRef.current = true;
+    markTutorialSeen().catch(err => console.warn('Failed to persist tutorial-seen flag:', err));
+    onTutorialComplete?.();
+  }, [isTutorial, tutorialProgress.isComplete, onTutorialComplete]);
+
+  const handleSkipTutorial = useCallback(() => {
+    markTutorialSeen().catch(err => console.warn('Failed to persist tutorial-seen flag:', err));
+    onTutorialComplete?.();
+  }, [onTutorialComplete]);
 
   // Keep the editable word in sync with the engine's current word whenever
   // it's not actively being edited (start of game, after a move, after
@@ -330,6 +367,14 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
         onResign={onResign}
         onNavigateHome={onNavigateHome}
       />
+
+      {isTutorial && !tutorialProgress.isComplete && (
+        <TutorialOverlay
+          currentStepIndex={tutorialProgress.currentStepIndex}
+          banner={tutorialProgress.currentStep.banner}
+          onSkip={handleSkipTutorial}
+        />
+      )}
     </SafeAreaView>
   );
 };

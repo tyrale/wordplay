@@ -9,11 +9,11 @@
  *
  * This slice ports: themes (+ dark mode toggle), mechanics toggles +
  * round length selection, unlocked bots (tap to start a game with that
- * bot), the "dictionaries" about entry, the "player-stats" permanent
- * mechanic (opens the real StatsOverlay), reset-unlocks (debug), and
- * home/resign. Deliberately deferred, not silently dropped: the vanity
- * filter system, "vs world"/leaderboard/challenge entries, two of the
- * four "about" sub-overlays (thoughts/the-game), the "word-paths"
+ * bot), the "the basics"/"dictionaries" about entries, the "player-stats"
+ * permanent mechanic (opens the real StatsOverlay), reset-unlocks
+ * (debug), and home/resign. Deliberately deferred, not silently dropped:
+ * the vanity filter system, "vs world"/leaderboard/challenge entries, two
+ * of the four "about" sub-overlays (thoughts/the-game), the "word-paths"
  * permanent mechanic (WordPathExplorer), locked-item previews, and
  * community stats - each depends on a system not yet ported (challenge
  * mode, the vanity filter hook/context, the leaderboard overlay, word
@@ -65,7 +65,7 @@ const getRoundLengthValue = (mechanicId: string): number => parseInt(mechanicId.
 export interface MenuProps {
   isOpen: boolean;
   onClose: () => void;
-  onStartGame?: (gameType: 'bot', botId: string) => void;
+  onStartGame?: (gameType: 'bot' | 'tutorial', botId: string) => void;
   onNavigateHome?: () => void;
   onResign?: () => void;
   isInGame?: boolean;
@@ -220,6 +220,18 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
             <SectionHeader label="about" color={currentTheme.colors.text} onPress={() => toggleSection('about')} />
             {expandedSection === 'about' && (
               <View style={styles.sectionBody}>
+                <Pressable
+                  onPress={() => {
+                    // Force-replay the tutorial on a fresh basicBot game -
+                    // matches web's "the basics" entry (beginTutorialGame).
+                    onStartGame?.('tutorial', 'basicBot');
+                    onClose();
+                  }}
+                  style={styles.row}
+                  accessibilityRole="button"
+                >
+                  <Text style={{ color: currentTheme.colors.text }}>the basics</Text>
+                </Pressable>
                 <Pressable onPress={() => setIsDictionariesOpen(true)} style={styles.row} accessibilityRole="button">
                   <Text style={{ color: currentTheme.colors.text }}>dictionaries</Text>
                 </Pressable>

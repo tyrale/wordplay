@@ -97,4 +97,42 @@ describe('App navigation', () => {
     await waitFor(() => expect(screen.getByText('bot')).toBeTruthy());
     expect(screen.getByText('nobody')).toBeTruthy();
   });
+
+  it('auto-triggers the tutorial the first time a bot game is ever started, and not on a second game', async () => {
+    render(<App />);
+
+    await waitFor(() => expect(screen.getByText('bot')).toBeTruthy());
+    fireEvent.press(screen.getByText('bot'));
+    await waitFor(() => expect(screen.getByText('basicbot')).toBeTruthy());
+    fireEvent.press(screen.getByText('basicbot'));
+
+    await waitFor(() => expect(screen.getByText('Tap the S')).toBeTruthy());
+    fireEvent.press(screen.getByLabelText('Skip tutorial'));
+
+    // Leave and start a second bot game - the tutorial must not reappear.
+    await waitFor(() => expect(screen.getByLabelText('Return to home screen')).toBeTruthy());
+    fireEvent.press(screen.getByLabelText('Return to home screen'));
+
+    await waitFor(() => expect(screen.getByText('bot')).toBeTruthy());
+    fireEvent.press(screen.getByText('bot'));
+    await waitFor(() => expect(screen.getByText('basicbot')).toBeTruthy());
+    fireEvent.press(screen.getByText('basicbot'));
+
+    await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
+    expect(screen.queryByText('Tap the S')).toBeNull();
+  });
+
+  it('"the basics" menu entry replays the tutorial even after it has already been seen', async () => {
+    await AsyncStorage.setItem('wordplay-tutorial-seen', 'true');
+    render(<App />);
+
+    await waitFor(() => expect(screen.getByLabelText('Open menu')).toBeTruthy());
+    fireEvent.press(screen.getByLabelText('Open menu'));
+    await waitFor(() => expect(screen.getByText('about')).toBeTruthy());
+    fireEvent.press(screen.getByText('about'));
+    await waitFor(() => expect(screen.getByText('the basics')).toBeTruthy());
+    fireEvent.press(screen.getByText('the basics'));
+
+    await waitFor(() => expect(screen.getByText('Tap the S')).toBeTruthy());
+  });
 });

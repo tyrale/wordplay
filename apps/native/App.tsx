@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
@@ -19,15 +19,20 @@ import { InteractiveGame } from './src/screens/InteractiveGame';
 import { ZenGame } from './src/screens/ZenGame';
 import { getBotDisplayName } from '@wordplay/engine/botRegistry';
 import { clearActiveGame } from './src/adapters/nativeGameSaveAdapter';
+import { hasSeenTutorial } from './src/utils/tutorialStorage';
+import { TUTORIAL_INITIAL_CONFIG } from './src/hooks/tutorialSteps';
 
 // Phase 3 (see docs/project/REACT_NATIVE_PORT_PLAN.md): a navigation shell
 // replacing Phase 2's single always-mounted game screen. "vs bot" and zen
-// mode are wired to real screens - challenge/tutorial and vs-human
-// multiplayer are separate follow-up slices (see MainScreen.tsx and this
-// file's placeholder alert below).
+// mode are wired to real screens - challenge and vs-human multiplayer are
+// separate follow-up slices (see MainScreen.tsx and this file's
+// placeholder alert below).
 export type RootStackParamList = {
   Main: undefined;
-  Game: { botId: string };
+  /** `forceTutorial` lets the Menu's "the basics" entry replay the
+   * tutorial on demand, bypassing the normal hasSeenTutorial() check
+   * (see GameScreenRoute). */
+  Game: { botId: string; forceTutorial?: boolean };
   Zen: undefined;
 };
 
@@ -41,6 +46,12 @@ function MainScreenRoute({ navigation }: NativeStackScreenProps<RootStackParamLi
     }
     if (gameType === 'zen') {
       navigation.navigate('Zen');
+      return;
+    }
+    if (gameType === 'tutorial' && botId) {
+      // "the basics" - forces a fresh bot game with the tutorial replayed,
+      // matching web's Menu "about" entry (beginTutorialGame).
+      navigation.navigate('Game', { botId, forceTutorial: true });
       return;
     }
     Alert.alert('Coming soon', `"${gameType}" mode isn't available in the native app yet.`);
@@ -86,10 +97,20 @@ interface EndOverlayState {
  * overlay is dismissed.
  */
 function GameScreenRoute({ route, navigation }: NativeStackScreenProps<RootStackParamList, 'Game'>) {
-  const { botId } = route.params;
+  const { botId, forceTutorial } = route.params;
   const [endOverlay, setEndOverlay] = useState<EndOverlayState | null>(null);
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
+
+  // Resolved before InteractiveGame ever mounts, since its tutorial
+  // config override (forced 'WORD' initialWord) must be present from the
+  // very first render - useGameState only reads its config prop once, at
+  // manager-creation time (see hooks/useGameState.ts).
+  const [isTutorial, setIsTutorial] = useState<boolean | null>(forceTutorial ? true : null);
+  useEffect(() => {
+    if (isTutorial !== null) return;
+    hasSeenTutorial().then(seen => setIsTutorial(!seen));
+  }, [isTutorial]);
 
   const handleResign = useCallback(() => {
     // Resigning abandons the in-progress game without it ever reaching
@@ -123,12 +144,21 @@ function GameScreenRoute({ route, navigation }: NativeStackScreenProps<RootStack
     }
   }, [botId, colors.text]);
 
+  // Brief, typically sub-frame wait for the AsyncStorage read to resolve;
+  // rendering nothing here (rather than the game with a possibly-wrong
+  // config) avoids ever mounting InteractiveGame with the wrong tutorial
+  // decision baked in.
+  if (isTutorial === null) return <View style={{ flex: 1, backgroundColor: colors.background }} />;
+
   return (
     <View style={{ flex: 1 }}>
       <InteractiveGame
         key={botId}
         botId={botId}
         botDisplayName={getBotDisplayName(botId)}
+        config={isTutorial ? TUTORIAL_INITIAL_CONFIG : undefined}
+        isTutorial={isTutorial}
+        onTutorialComplete={() => setIsTutorial(false)}
         onNavigateHome={() => navigation.goBack()}
         onResign={handleResign}
         onGameEnd={handleGameEnd}

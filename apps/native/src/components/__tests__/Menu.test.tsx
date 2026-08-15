@@ -130,6 +130,19 @@ describe('native Menu', () => {
     await waitFor(() => expect(screen.getByText('Words played')).toBeTruthy());
   });
 
+  it('"the basics" (about section) calls onStartGame with tutorial + basicBot, and closes the menu', async () => {
+    const onStartGame = jest.fn();
+    const { onClose } = renderMenu({ onStartGame });
+    await waitFor(() => expect(screen.getByText('about')).toBeTruthy());
+
+    fireEvent.press(screen.getByText('about'));
+    await waitFor(() => expect(screen.getByText('the basics')).toBeTruthy());
+    fireEvent.press(screen.getByText('the basics'));
+
+    expect(onStartGame).toHaveBeenCalledWith('tutorial', 'basicBot');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('opens the dictionaries overlay from the about section, and closing it returns to the menu', async () => {
     const onClose = jest.fn();
     renderMenu({ onClose });
