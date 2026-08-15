@@ -9,13 +9,15 @@
  *
  * This slice ports: themes (+ dark mode toggle), mechanics toggles +
  * round length selection, unlocked bots (tap to start a game with that
- * bot), the "dictionaries" about entry, reset-unlocks (debug), and
+ * bot), the "dictionaries" about entry, the "player-stats" permanent
+ * mechanic (opens the real StatsOverlay), reset-unlocks (debug), and
  * home/resign. Deliberately deferred, not silently dropped: the vanity
- * filter system, "vs world"/leaderboard/challenge entries, the other
- * three "about" sub-overlays (thoughts/the-game/stats), locked-item
- * previews, and community stats - each depends on a system not yet
- * ported (challenge mode, the vanity filter hook/context, stats/
- * leaderboard overlays) or was cut for scope in this pass.
+ * filter system, "vs world"/leaderboard/challenge entries, two of the
+ * four "about" sub-overlays (thoughts/the-game), the "word-paths"
+ * permanent mechanic (WordPathExplorer), locked-item previews, and
+ * community stats - each depends on a system not yet ported (challenge
+ * mode, the vanity filter hook/context, the leaderboard overlay, word
+ * path graph tracking) or was cut for scope in this pass.
  */
 import React, { useCallback, useState } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Switch } from 'react-native';
@@ -27,6 +29,7 @@ import { useUnlockedThemes } from '../hooks/useUnlockedThemes';
 import { getBotDisplayNamesMapping } from '@wordplay/engine/botRegistry';
 import type { GameTheme } from '@wordplay/theme/theme';
 import { DictionariesOverlay } from './DictionariesOverlay';
+import { StatsOverlay } from './StatsOverlay';
 
 const ALL_MECHANIC_IDS = ['3-letter-start', '5-letter-start', '6-letter-start', '7-letter-start', '8-letter-start', '9-letter-start', '10-letter-start', 'time-pressure', 'gravity', 'drunk', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
 const ROUND_LENGTH_MECHANIC_IDS = new Set(['round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100']);
@@ -76,6 +79,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
 
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [isDictionariesOpen, setIsDictionariesOpen] = useState(false);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   const unlockedThemeIds = getUnlockedItems('theme');
   const unlockedMechanics = getUnlockedItems('mechanic');
@@ -159,11 +163,25 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                 <SectionHeader label="mechanics" color={currentTheme.colors.text} onPress={() => toggleSection('mechanics')} />
                 {expandedSection === 'mechanics' && (
                   <View style={styles.sectionBody}>
-                    {unlockedPermanentMechanics.map(id => (
-                      <View key={id} style={styles.row}>
-                        <Text style={{ color: currentTheme.colors.text }}>{MECHANIC_DISPLAY_NAMES[id] || id} ✓</Text>
-                      </View>
-                    ))}
+                    {unlockedPermanentMechanics.map(id => {
+                      // "player-stats" opens the real StatsOverlay (see
+                      // below); the rest (word-paths, zen-mode,
+                      // unlock-counter, community-stats) have no on/off
+                      // state and no wired action yet - see this file's
+                      // header doc comment for what's still deferred.
+                      if (id === 'player-stats') {
+                        return (
+                          <Pressable key={id} onPress={() => setIsStatsOpen(true)} style={styles.row} accessibilityRole="button">
+                            <Text style={{ color: currentTheme.colors.text }}>{MECHANIC_DISPLAY_NAMES[id]}</Text>
+                          </Pressable>
+                        );
+                      }
+                      return (
+                        <View key={id} style={styles.row}>
+                          <Text style={{ color: currentTheme.colors.text }}>{MECHANIC_DISPLAY_NAMES[id] || id} ✓</Text>
+                        </View>
+                      );
+                    })}
                     {toggleableMechanics
                       .sort((a, b) => ALL_MECHANIC_IDS.indexOf(a) - ALL_MECHANIC_IDS.indexOf(b))
                       .map(id => (
@@ -220,6 +238,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
           closing it returns to the menu instead of home - matches web's
           usage exactly. */}
       <DictionariesOverlay isVisible={isDictionariesOpen} onClose={() => setIsDictionariesOpen(false)} />
+      <StatsOverlay isVisible={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
     </Modal>
   );
 };

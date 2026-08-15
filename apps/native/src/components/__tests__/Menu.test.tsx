@@ -118,6 +118,18 @@ describe('native Menu', () => {
     await waitFor(() => expect(screen.getByText('gravity')).toBeTruthy());
   });
 
+  it('opens the stats overlay from the mechanics section once player-stats is unlocked', async () => {
+    // "stats" achievement word trigger per unlock-definitions.ts naming convention.
+    renderMenu({}, ['stats']);
+    await waitFor(() => expect(screen.getByText('mechanics')).toBeTruthy());
+
+    fireEvent.press(screen.getByText('mechanics'));
+    await waitFor(() => expect(screen.getByText('stats')).toBeTruthy());
+    fireEvent.press(screen.getByText('stats'));
+
+    await waitFor(() => expect(screen.getByText('Words played')).toBeTruthy());
+  });
+
   it('opens the dictionaries overlay from the about section, and closing it returns to the menu', async () => {
     const onClose = jest.fn();
     renderMenu({ onClose });

@@ -25,6 +25,7 @@ import { SubmitButton } from '../components/SubmitButton';
 import { ScoreBar } from '../components/ScoreBar';
 import { Menu } from '../components/Menu';
 import { useUnlockSystem } from '../providers/UnlockProvider';
+import { usePlayerStats } from '../hooks/usePlayerStats';
 import { triggerHapticFeedback } from '../utils/haptics';
 
 const MAX_WORD_LENGTH = 10;
@@ -61,6 +62,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
     useGameState({ config: { maxTurns: 10, allowBotPlayer: true, botId, ...config } });
   const wordState = useWordState(gameState);
   const { handleWordSubmission, handleGameCompletion } = useUnlockSystem();
+  const { recordMove, recordGameResult } = usePlayerStats();
 
   const [pendingWord, setPendingWord] = useState('');
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
@@ -94,6 +96,27 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
     }
   }, [isBotTurn, isGameActive, isBotThinking, actions]);
 
+  // Record every one of the local human player's moves into the lifetime
+  // player-stats log as they happen (not just at game end), matching
+  // web's InteractiveGame.tsx. Depends on the whole `gameState` object
+  // rather than `gameState.turnHistory` directly: the engine pushes onto
+  // that array in place, so the array reference itself never changes and
+  // a dependency on it alone would never re-fire this effect after the
+  // first move (same fix documented on web for the analogous word-trail
+  // memo).
+  const recordedMoveCountRef = React.useRef(0);
+  useEffect(() => {
+    if (gameState.turnHistory.length <= recordedMoveCountRef.current) return;
+    const newEntries = gameState.turnHistory.slice(recordedMoveCountRef.current);
+    recordedMoveCountRef.current = gameState.turnHistory.length;
+
+    for (const entry of newEntries) {
+      if (entry.playerId === 'human') {
+        recordMove(entry).catch(err => console.warn('Failed to record move stats:', err));
+      }
+    }
+  }, [gameState, recordMove]);
+
   // Report game end to the caller, and check for beat-this-bot unlock
   // achievements (e.g. beating basicBot unlocks easy-bot). Matches web's
   // InteractiveGame.tsx, which checks this at the same gameStatus
@@ -110,9 +133,27 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({ botId, botDisp
     const human = gameState.players.find(p => p.id === 'human')?.score || 0;
     const bot = gameState.players.find(p => p.id === 'bot')?.score || 0;
     const winner = human > bot ? 'human' : bot > human ? 'bot' : null;
+
+    // Show the win/loss overlay immediately - don't block it on unlock
+    // checks or stats recording, matching web's InteractiveGame.tsx.
     onGameEnd?.(winner, { human, bot });
     handleGameCompletion(winner, botId).catch(err => console.warn('Failed to check game completion unlock triggers:', err));
-  }, [isGameFinished, gameState.players, onGameEnd, handleGameCompletion, botId]);
+
+    const gameDurationMs = gameState.gameStartTime && gameState.lastMoveTime
+      ? gameState.lastMoveTime - gameState.gameStartTime
+      : null;
+    recordGameResult({
+      playerId: 'human',
+      botId,
+      won: winner === 'human',
+      tied: human === bot,
+      turnHistory: gameState.turnHistory,
+      totalTurns: gameState.totalMoves,
+      finalScore: human,
+      gameDurationMs,
+      timestamp: Date.now()
+    }).catch(err => console.warn('Failed to record game result stats:', err));
+  }, [isGameFinished, gameState, onGameEnd, handleGameCompletion, botId, recordGameResult]);
 
   const letterStates: LetterState[] = useMemo(() => {
     return ALPHABET.map(letter => {

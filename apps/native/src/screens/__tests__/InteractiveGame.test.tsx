@@ -7,6 +7,8 @@ import { UnlockProvider } from '../../providers/UnlockProvider';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
 import { InteractiveGame } from '../InteractiveGame';
+import { usePlayerStats } from '../../hooks/usePlayerStats';
+import { StatsOverlay } from '../../components/StatsOverlay';
 
 function renderGame(props: React.ComponentProps<typeof InteractiveGame> = {}) {
   return render(
@@ -141,5 +143,49 @@ describe('native InteractiveGame screen', () => {
 
     expect(screen.getByText('round 1')).toBeTruthy();
     expect(screen.queryByText('round 2')).toBeNull();
+  });
+
+  it('regression: a played move and a finished game are actually recorded into the player stats log', async () => {
+    // Same class of bug as the unlock-wiring regression above: usePlayerStats
+    // was fully implemented and unit-tested in isolation (see
+    // hooks/__tests__/usePlayerStats.test.ts), but that alone doesn't prove
+    // this screen actually calls recordMove/recordGameResult during a real
+    // game. Plays a real 1-round game to completion, then mounts a fresh
+    // StatsOverlay (a separate usePlayerStats consumer - see that test's own
+    // comment on why order matters here) to verify the persisted log
+    // reflects the move and the finished game.
+    const onGameEnd = jest.fn();
+    renderGame({ config: { maxTurns: 1, initialWord: 'CAT' }, botId: 'basicBot', onGameEnd });
+    await waitFor(() => expect(screen.getByLabelText('Current word: CAT')).toBeTruthy());
+
+    fireEvent.press(screen.getByLabelText('Letter S'));
+    const submit = await screen.findByLabelText('Submit word');
+    await act(async () => {
+      fireEvent.press(submit);
+    });
+
+    await waitFor(() => expect(onGameEnd).toHaveBeenCalled(), { timeout: 3000 });
+
+    // Give the fire-and-forget recordGameResult() call a tick to persist.
+    await waitFor(async () => {
+      const saved = await AsyncStorage.getItem('wordplay-player-stats');
+      expect(saved).not.toBeNull();
+    });
+
+    render(
+      <ThemeProvider>
+        <StatsOverlay isVisible onClose={jest.fn()} />
+      </ThemeProvider>
+    );
+    // "CATS" appears twice (longest AND shortest word played, since only
+    // one move was recorded), plus once more as the game's starting word
+    // is never itself a "played" word - so just confirm at least one row
+    // shows it, and that the bot game was recorded under the right bot.
+    // Win/loss outcome isn't deterministic here (depends on the bot's
+    // actual move), so just confirm a game was recorded under the right
+    // bot rather than asserting which side won.
+    await waitFor(() => expect(screen.getAllByText('CATS').length).toBeGreaterThan(0));
+    expect(screen.getByText('basicbot')).toBeTruthy();
+    expect(screen.getByText(/W - \d+L \(1 played\)/)).toBeTruthy();
   });
 });
