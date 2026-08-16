@@ -18,6 +18,7 @@ import type { MainScreenGameType } from './src/screens/MainScreen';
 import { InteractiveGame } from './src/screens/InteractiveGame';
 import { ZenGame } from './src/screens/ZenGame';
 import { ChallengeGame } from './src/screens/ChallengeGame';
+import { BossBattleScreen } from './src/screens/BossBattleScreen';
 import { getBotDisplayName } from '@wordplay/engine/botRegistry';
 import { clearActiveGame } from './src/adapters/nativeGameSaveAdapter';
 import { hasSeenTutorial } from './src/utils/tutorialStorage';
@@ -36,6 +37,11 @@ export type RootStackParamList = {
   Game: { botId: string; forceTutorial?: boolean };
   Zen: undefined;
   Challenge: undefined;
+  /** "GUS" boss battle encounter - reached by submitting "GUS" in a normal
+   * bot game or the daily challenge. Always a `replace`, not a `navigate`
+   * push: the game GUS was played in is abandoned, not something to "go
+   * back" to (see GameScreenRoute/ChallengeGameRoute's onBossTrigger). */
+  Boss: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -168,6 +174,12 @@ function GameScreenRoute({ route, navigation }: NativeStackScreenProps<RootStack
         onNavigateHome={() => navigation.goBack()}
         onResign={handleResign}
         onGameEnd={handleGameEnd}
+        // Only wired for a normal bot game, not the tutorial (matches
+        // web's InteractiveGame.tsx comment on onBossTrigger).
+        onBossTrigger={isTutorial ? undefined : () => {
+          clearActiveGame().catch(err => console.warn('Failed to clear saved game on boss trigger:', err));
+          navigation.replace('Boss');
+        }}
       />
       <AlertOverlay
         isVisible={!!endOverlay}
@@ -188,7 +200,16 @@ function ZenGameRoute({ navigation }: NativeStackScreenProps<RootStackParamList,
 }
 
 function ChallengeGameRoute({ navigation }: NativeStackScreenProps<RootStackParamList, 'Challenge'>) {
-  return <ChallengeGame onNavigateHome={() => navigation.goBack()} />;
+  return (
+    <ChallengeGame
+      onNavigateHome={() => navigation.goBack()}
+      onBossTrigger={() => navigation.replace('Boss')}
+    />
+  );
+}
+
+function BossBattleScreenRoute({ navigation }: NativeStackScreenProps<RootStackParamList, 'Boss'>) {
+  return <BossBattleScreen onExit={() => navigation.replace('Main')} />;
 }
 
 export default function App() {
@@ -205,6 +226,7 @@ export default function App() {
                     <Stack.Screen name="Game" component={GameScreenRoute} />
                     <Stack.Screen name="Zen" component={ZenGameRoute} />
                     <Stack.Screen name="Challenge" component={ChallengeGameRoute} />
+                    <Stack.Screen name="Boss" component={BossBattleScreenRoute} />
                   </Stack.Navigator>
                 </NavigationContainer>
                 <StatusBar style="auto" />

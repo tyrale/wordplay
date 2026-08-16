@@ -209,4 +209,33 @@ describe('native InteractiveGame screen', () => {
     await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
     expect(screen.queryByLabelText('Skip tutorial')).toBeNull();
   });
+
+  it('shows a whole-game boss countdown when config.gameTimeLimitSeconds is set, and fires onGameTimeout at zero', async () => {
+    const onGameTimeout = jest.fn();
+    renderGame({ config: { gameTimeLimitSeconds: 1 }, onGameTimeout });
+    await waitFor(() => expect(screen.getByText('1s')).toBeTruthy());
+
+    await waitFor(() => expect(onGameTimeout).toHaveBeenCalledTimes(1), { timeout: 3000 });
+    expect(screen.getByText('0s')).toBeTruthy();
+  });
+
+  it('does not show a boss countdown for a normal game (no gameTimeLimitSeconds)', async () => {
+    renderGame();
+    await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
+    expect(screen.queryByText(/^\d+s$/)).toBeNull();
+  });
+
+  it('fires onBossTrigger when the player submits "GUS"', async () => {
+    const onBossTrigger = jest.fn();
+    renderGame({ config: { initialWord: 'GU' }, onBossTrigger });
+    await waitFor(() => expect(screen.getByLabelText('Current word: GU')).toBeTruthy());
+
+    fireEvent.press(screen.getByLabelText('Letter S'));
+    const submit = await screen.findByLabelText('Submit word');
+    await act(async () => {
+      fireEvent.press(submit);
+    });
+
+    expect(onBossTrigger).toHaveBeenCalledWith('GUS');
+  });
 });

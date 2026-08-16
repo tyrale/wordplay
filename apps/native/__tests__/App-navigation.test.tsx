@@ -135,4 +135,15 @@ describe('App navigation', () => {
 
     await waitFor(() => expect(screen.getByText('Tap the S')).toBeTruthy());
   });
+
+  // A true end-to-end "reach the boss via real UI taps" test isn't
+  // practical here: WordPlay only allows one add/remove/rearrange per
+  // turn, so there's no guaranteed valid single-move path from an
+  // arbitrary *random* starting word to "GUS" - clearing-and-retyping
+  // isn't a legal move. The GUS trigger itself (InteractiveGame.test.tsx,
+  // via a forced `initialWord: 'GU'` config so GU -> GUS is a real valid
+  // add-one-letter move) and the boss encounter screen it navigates to
+  // (BossBattleScreen.test.tsx) are each covered thoroughly at the
+  // component level instead - the right granularity for this specific
+  // wiring, not a gap.
 });

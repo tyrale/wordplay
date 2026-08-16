@@ -4,13 +4,13 @@
  * lines). Deliberately deferred, not silently dropped (each needs
  * infrastructure this port doesn't have yet, several shared with
  * InteractiveGame.tsx/ZenGame.tsx's existing documented gaps): the
- * dictionary/help lookup, word-path graph syncing, the drunk mechanic's
- * visual effect, and the "GUS" boss-battle trigger forward. The
- * challenge's actual daily-word logic, validation, unlock checking,
- * player-stats recording, and the server-side leaderboard are all fully
- * real - see hooks/useChallenge.ts's doc comment for why the daily word
- * itself needs no server dependency (it's a client-side seeded RNG keyed
- * off the date).
+ * dictionary/help lookup, word-path graph syncing, and the drunk
+ * mechanic's visual effect. The challenge's actual daily-word logic,
+ * validation, unlock checking, player-stats recording, the server-side
+ * leaderboard, and the "GUS" boss-battle trigger are all fully real - see
+ * hooks/useChallenge.ts's doc comment for why the daily word itself needs
+ * no server dependency (it's a client-side seeded RNG keyed off the
+ * date).
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
@@ -37,6 +37,11 @@ const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 export interface ChallengeGameProps {
   onNavigateHome?: () => void;
+  /** Fired when the local player submits "GUS". The current challenge is
+   * forfeited first (the boss battle abandons this view entirely), then
+   * this fires so the caller can start the encounter - same contract as
+   * InteractiveGame's onBossTrigger. */
+  onBossTrigger?: (word: string) => void;
 }
 
 interface CompletionOverlayState {
@@ -44,7 +49,7 @@ interface CompletionOverlayState {
   shareText: string;
 }
 
-export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome }) => {
+export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, onBossTrigger }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
 
@@ -202,6 +207,19 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome }) 
             timestamp: Date.now()
           }).catch(err => console.warn('Failed to record challenge move stats:', err));
         }
+
+        // "GUS" triggers the boss battle encounter from the challenge too,
+        // matching web. Forfeits the in-progress challenge first (the
+        // boss battle abandons this view) before reporting the trigger.
+        if (onBossTrigger && pendingWord.trim().toUpperCase() === 'GUS') {
+          try {
+            await forfeitChallenge();
+          } catch (err) {
+            console.warn('Failed to forfeit challenge on boss trigger:', err);
+          }
+          onBossTrigger(pendingWord);
+          return;
+        }
       } else {
         setShowValidationError(true);
       }
@@ -210,7 +228,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome }) 
     } finally {
       setIsProcessingMove(false);
     }
-  }, [canEdit, isValidSubmit, wordUnchanged, showValidationError, forfeitChallenge, submitWord, pendingWord, handleWordChange, handleWordSubmission, challengeState, recordMove]);
+  }, [canEdit, isValidSubmit, wordUnchanged, showValidationError, forfeitChallenge, submitWord, pendingWord, handleWordChange, handleWordSubmission, challengeState, recordMove, onBossTrigger]);
 
   const handleResign = useCallback(async () => {
     try {

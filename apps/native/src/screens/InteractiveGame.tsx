@@ -3,10 +3,10 @@
  * loop" (see docs/project/REACT_NATIVE_PORT_PLAN.md). Ports the core
  * interaction logic of apps/web's `components/game/InteractiveGame.tsx`
  * (word-builder state machine: pendingWord -> attemptMove -> submit/pass),
- * trimmed of everything not needed for a bare bot game: no challenge
- * mode, boss battles, multiplayer, or vanity filter - those are
- * follow-up slices, not part of this one. The first-time tutorial *is*
- * ported (see `isTutorial` prop below).
+ * trimmed of everything not needed for a bare bot game: multiplayer and
+ * the vanity filter aren't part of this port. The first-time tutorial and
+ * the "GUS" boss battle's whole-game countdown *are* ported (see
+ * `isTutorial` and `onGameTimeout`/`onBossTrigger` below).
  *
  * Interaction model differs from web's drag-and-drop (see AlphabetGrid.tsx
  * and CurrentWord.tsx doc comments): tap a grid letter to append it, tap
@@ -66,6 +66,17 @@ export interface InteractiveGameProps {
   /** Called once the tutorial banner is dismissed (finished or skipped) -
    * this component already calls `markTutorialSeen()` itself first. */
   onTutorialComplete?: () => void;
+  /** Fired when the whole-game boss countdown (config.gameTimeLimitSeconds)
+   * reaches zero. The caller (BossBattleScreen) tears the game down in
+   * response - this component doesn't decide what "timeout" means. */
+  onGameTimeout?: () => void;
+  /** Fired when the local player submits a word that should trigger the
+   * boss battle encounter (currently "GUS"). The caller decides whether
+   * to act - this component just reports the submitted word. Only meant
+   * to be wired for a normal bot game (not itself a boss battle), same
+   * as web - the caller (App.tsx there, MainScreenRoute/GameScreenRoute
+   * here) is responsible for that gating. */
+  onBossTrigger?: (word: string) => void;
 }
 
 export const InteractiveGame: React.FC<InteractiveGameProps> = ({
@@ -76,7 +87,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   onNavigateHome,
   onResign,
   isTutorial = false,
-  onTutorialComplete
+  onTutorialComplete,
+  onGameTimeout,
+  onBossTrigger
 }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
@@ -289,6 +302,35 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     ? Math.min(Math.ceil(gameState.currentTurn / gameState.players.length), gameState.maxTurns)
     : undefined;
 
+  // "GUS" boss battle: a whole-game countdown (config.gameTimeLimitSeconds)
+  // replaces the per-turn time-pressure timer. Runs continuously across
+  // both the player's and the bot's turns (unlike a per-turn timer).
+  const isBossBattle = typeof config?.gameTimeLimitSeconds === 'number';
+  const bossTimeLimitSeconds = isBossBattle ? (config!.gameTimeLimitSeconds as number) : null;
+  const [bossTimeRemaining, setBossTimeRemaining] = useState<number | null>(null);
+  const bossTimeoutFiredRef = React.useRef(false);
+
+  useEffect(() => {
+    if (!isBossBattle || !bossTimeLimitSeconds || !isGameActive) {
+      setBossTimeRemaining(null);
+      return;
+    }
+
+    setBossTimeRemaining(bossTimeLimitSeconds);
+    const intervalId = setInterval(() => {
+      setBossTimeRemaining(prev => (prev !== null ? Math.max(prev - 1, 0) : null));
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [isBossBattle, bossTimeLimitSeconds, isGameActive]);
+
+  useEffect(() => {
+    if (bossTimeRemaining === 0 && isBossBattle && isGameActive && !bossTimeoutFiredRef.current) {
+      bossTimeoutFiredRef.current = true;
+      onGameTimeout?.();
+    }
+  }, [bossTimeRemaining, isBossBattle, isGameActive, onGameTimeout]);
+
   const handleSubmit = useCallback(() => {
     if (!canEdit) return;
 
@@ -304,6 +346,14 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         handleWordSubmission(pendingMoveAttempt.newWord, false).catch(err =>
           console.warn('Failed to check word submission unlock triggers:', err)
         );
+
+        // "GUS" boss trigger: report the submitted word to the caller so
+        // it can decide whether to start the boss encounter. Only ever
+        // wired by the caller for a normal bot game, not a boss battle
+        // itself (see onBossTrigger's own doc comment).
+        if (onBossTrigger && pendingMoveAttempt.newWord.toUpperCase() === 'GUS') {
+          onBossTrigger(pendingMoveAttempt.newWord);
+        }
       }
       return;
     }
@@ -313,7 +363,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     if (wordUnchanged || !isValidSubmit) {
       actions.passTurn();
     }
-  }, [canEdit, isValidSubmit, pendingMoveAttempt, wordUnchanged, actions, handleWordSubmission]);
+  }, [canEdit, isValidSubmit, pendingMoveAttempt, wordUnchanged, actions, handleWordSubmission, onBossTrigger]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -328,6 +378,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
           botDisplayName={botDisplayName}
           currentRound={currentRound}
         />
+        {isBossBattle && bossTimeRemaining !== null && (
+          <Text style={[styles.bossTimer, { color: colors.text }]}>{bossTimeRemaining}s</Text>
+        )}
       </View>
 
       <View style={styles.wordArea}>
@@ -388,6 +441,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingTop: 12,
     paddingLeft: 12
+  },
+  bossTimer: {
+    fontSize: 16,
+    fontWeight: '900',
+    marginTop: 4
   },
   wordArea: {
     alignItems: 'center',
