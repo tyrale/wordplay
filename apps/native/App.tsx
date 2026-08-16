@@ -17,16 +17,17 @@ import { MainScreen } from './src/screens/MainScreen';
 import type { MainScreenGameType } from './src/screens/MainScreen';
 import { InteractiveGame } from './src/screens/InteractiveGame';
 import { ZenGame } from './src/screens/ZenGame';
+import { ChallengeGame } from './src/screens/ChallengeGame';
 import { getBotDisplayName } from '@wordplay/engine/botRegistry';
 import { clearActiveGame } from './src/adapters/nativeGameSaveAdapter';
 import { hasSeenTutorial } from './src/utils/tutorialStorage';
 import { TUTORIAL_INITIAL_CONFIG } from './src/hooks/tutorialSteps';
 
 // Phase 3 (see docs/project/REACT_NATIVE_PORT_PLAN.md): a navigation shell
-// replacing Phase 2's single always-mounted game screen. "vs bot" and zen
-// mode are wired to real screens - challenge and vs-human multiplayer are
-// separate follow-up slices (see MainScreen.tsx and this file's
-// placeholder alert below).
+// replacing Phase 2's single always-mounted game screen. "vs bot", zen
+// mode, and the daily challenge are wired to real screens - vs-human
+// multiplayer is a separate follow-up slice (see MainScreen.tsx and this
+// file's placeholder alert below).
 export type RootStackParamList = {
   Main: undefined;
   /** `forceTutorial` lets the Menu's "the basics" entry replay the
@@ -34,6 +35,7 @@ export type RootStackParamList = {
    * (see GameScreenRoute). */
   Game: { botId: string; forceTutorial?: boolean };
   Zen: undefined;
+  Challenge: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -46,6 +48,10 @@ function MainScreenRoute({ navigation }: NativeStackScreenProps<RootStackParamLi
     }
     if (gameType === 'zen') {
       navigation.navigate('Zen');
+      return;
+    }
+    if (gameType === 'challenge') {
+      navigation.navigate('Challenge');
       return;
     }
     if (gameType === 'tutorial' && botId) {
@@ -181,6 +187,10 @@ function ZenGameRoute({ navigation }: NativeStackScreenProps<RootStackParamList,
   return <ZenGame onNavigateHome={() => navigation.goBack()} />;
 }
 
+function ChallengeGameRoute({ navigation }: NativeStackScreenProps<RootStackParamList, 'Challenge'>) {
+  return <ChallengeGame onNavigateHome={() => navigation.goBack()} />;
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
@@ -194,6 +204,7 @@ export default function App() {
                     <Stack.Screen name="Main" component={MainScreenRoute} />
                     <Stack.Screen name="Game" component={GameScreenRoute} />
                     <Stack.Screen name="Zen" component={ZenGameRoute} />
+                    <Stack.Screen name="Challenge" component={ChallengeGameRoute} />
                   </Stack.Navigator>
                 </NavigationContainer>
                 <StatusBar style="auto" />
