@@ -313,14 +313,10 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.wordArea}>
-        <CurrentWord
-          ref={wordRef}
-          word={pendingWord}
-          onLetterPress={canEdit ? handleRemoveLetter : undefined}
-          onWordChange={canEdit ? handleWordChange : undefined}
-        />
-        <View style={styles.submitRow}>
+      {/* See InteractiveGame.tsx's identical comment: the submit row is
+          the actual fixed center point of the board. */}
+      <View style={styles.board}>
+        <View style={styles.submitAnchor}>
           <ScoreDisplay
             moveAttempt={pendingMoveAttempt}
             isValid={isValidSubmit}
@@ -329,23 +325,34 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
             showValidationError={showValidationError}
             isChallengeMode
           />
-        </View>
-        <Text style={[styles.steps, { color: colors.textSecondary }]}>
-          {/* stepCount (not wordSequence.length, which is seeded with the
-              start word and so starts at 1) - this on-screen counter is
-              this port's own addition, not something web renders inside
-              ChallengeGame itself. */}
-          {challengeState ? `${challengeState.stepCount} steps` : ''}
-        </Text>
-      </View>
 
-      <AlphabetGrid
-        letterStates={letterStates}
-        onLetterPress={handleLetterPress}
-        onActionPress={handleActionPress}
-        onLetterDragRelease={handleLetterDragRelease}
-        disabled={!canEdit}
-      />
+          <View style={styles.wordPositioned}>
+            <CurrentWord
+              ref={wordRef}
+              word={pendingWord}
+              onLetterPress={canEdit ? handleRemoveLetter : undefined}
+              onWordChange={canEdit ? handleWordChange : undefined}
+            />
+          </View>
+
+          <View style={styles.gridPositioned}>
+            <AlphabetGrid
+              letterStates={letterStates}
+              onLetterPress={handleLetterPress}
+              onActionPress={handleActionPress}
+              onLetterDragRelease={handleLetterDragRelease}
+              disabled={!canEdit}
+            />
+            <Text style={[styles.steps, { color: colors.textSecondary }]}>
+              {/* stepCount (not wordSequence.length, which is seeded with
+                  the start word and so starts at 1) - this on-screen
+                  counter is this port's own addition, not something web
+                  renders inside ChallengeGame itself. */}
+              {challengeState ? `${challengeState.stepCount} steps` : ''}
+            </Text>
+          </View>
+        </View>
+      </View>
 
       <Menu
         isOpen={isMenuOpen}
@@ -383,19 +390,38 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'space-between'
+    flex: 1
   },
-  wordArea: {
+  board: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    gap: 12
+    alignItems: 'center'
   },
-  submitRow: {
+  // See InteractiveGame.tsx's identical comment: explicit full width so
+  // the absolutely-positioned word/grid overlays below actually span the
+  // full screen instead of the (much narrower) ScoreDisplay row itself.
+  submitAnchor: {
+    width: '100%',
+    alignItems: 'center'
+  },
+  wordPositioned: {
+    position: 'absolute',
+    bottom: '100%',
+    marginBottom: 16,
+    left: 0,
+    right: 0,
+    alignItems: 'center'
+  },
+  gridPositioned: {
+    position: 'absolute',
+    top: '100%',
+    marginTop: 20,
+    left: 0,
+    right: 0,
     alignItems: 'center'
   },
   steps: {
-    fontSize: 13
+    fontSize: 13,
+    marginTop: 8
   }
 });

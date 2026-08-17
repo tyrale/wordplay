@@ -10,10 +10,18 @@
  * using core `Animated`/`PanResponder` (no extra native dependency):
  * while dragging, a pulsing accent-colored "|" drop indicator shows
  * where the letter would land, and the other letters shift aside
- * (translateX) to open a gap for it - the same two visual cues web's
- * WordBuilder.tsx gives (its own live per-frame sibling measurement is
- * approximated here via each letter's already-known on-screen bounds,
- * not a continuous re-measurement, but the visual result matches).
+ * (translateX) to open a gap for it.
+ *
+ * Both are rendered as absolutely-positioned overlays computed from
+ * each letter's *stable* (drag-independent) layout, not as elements
+ * inserted into the row itself - inserting/removing the indicator
+ * inline (an earlier version of this file did that) shifts every later
+ * letter's actual layout box, which re-fires their `onLayout` and feeds
+ * back into the very hit-testing math that decides where the indicator
+ * goes, destabilizing detection while dragging. `transform: translateX`
+ * for the sibling-shift has the same property (it repaints without
+ * moving the underlying layout box), which is why it doesn't have this
+ * problem.
  *
  * Also serves as the drop zone for letters dragged from the alphabet
  * grid: exposes `measureInWindow` via a ref so the screen can check a
@@ -55,6 +63,11 @@ const DRAG_THRESHOLD = 6;
  * translateX(16px). */
 const SIBLING_SHIFT = 16;
 
+interface LetterLayout {
+  x: number;
+  width: number;
+}
+
 export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>(
   ({ word, highlights = [], onLetterPress, onWordChange }, ref) => {
     const { currentTheme, isInverted } = useTheme();
@@ -63,10 +76,14 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
 
     const containerRef = useRef<View>(null);
     const containerXRef = useRef(0);
-    const letterLayoutsRef = useRef<Array<{ x: number; width: number } | null>>([]);
+    // Keyed by letter index - stable for the duration of a drag, since
+    // nothing about how the letters themselves are laid out changes
+    // while dragging (see this file's doc comment).
+    const letterLayoutsRef = useRef<Array<LetterLayout | null>>([]);
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
     const draggedIndexRef = useRef<number | null>(null);
+    const dropTargetIndexRef = useRef<number | null>(null);
     const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
     const pulse = useRef(new Animated.Value(0.5)).current;
 
@@ -121,17 +138,18 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
           }
           if (draggedIndexRef.current === index) {
             pan.setValue({ x: gestureState.dx, y: gestureState.dy });
-            // Live drop-target index, so the gap-opening/indicator can
-            // track the finger while dragging - not just computed once
-            // at release.
             const newDropTarget = computeDropIndex(evt.nativeEvent.pageX);
-            setDropTargetIndex(prev => (newDropTarget !== prev ? newDropTarget : prev));
+            if (newDropTarget !== dropTargetIndexRef.current) {
+              dropTargetIndexRef.current = newDropTarget;
+              setDropTargetIndex(newDropTarget);
+            }
           }
         },
         onPanResponderRelease: (evt, gestureState) => {
           const wasDragging = draggedIndexRef.current === index;
-          const finalDropTarget = dropTargetIndex;
+          const finalDropTarget = dropTargetIndexRef.current;
           draggedIndexRef.current = null;
+          dropTargetIndexRef.current = null;
           setDraggedIndex(null);
           setDropTargetIndex(null);
           pan.setValue({ x: 0, y: 0 });
@@ -155,6 +173,7 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
         },
         onPanResponderTerminate: () => {
           draggedIndexRef.current = null;
+          dropTargetIndexRef.current = null;
           setDraggedIndex(null);
           setDropTargetIndex(null);
           pan.setValue({ x: 0, y: 0 });
@@ -162,6 +181,21 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
       });
 
     const isDragging = draggedIndex !== null;
+
+    // Where to paint the drop indicator overlay - just before the
+    // target letter, or just after the last letter's right edge when
+    // the target is past the end of the word. Computed from the same
+    // stable per-letter layouts the hit-testing itself uses, so it's
+    // always exactly where a drop would actually land.
+    let indicatorLeft: number | null = null;
+    if (isDragging && dropTargetIndex !== null) {
+      if (dropTargetIndex < letters.length) {
+        indicatorLeft = letterLayoutsRef.current[dropTargetIndex]?.x ?? null;
+      } else {
+        const lastLayout = letterLayoutsRef.current[letters.length - 1];
+        indicatorLeft = lastLayout ? lastLayout.x + lastLayout.width : null;
+      }
+    }
 
     return (
       <View
@@ -176,12 +210,6 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
           const isLocked = highlightType === 'locked' || highlightType === 'lockedKey';
           const color = highlightType === 'key' || highlightType === 'lockedKey' ? colors.accent : colors.text;
           const isBeingDragged = draggedIndex === index;
-
-          // Drop indicator immediately before this letter, or after the
-          // last letter when the target is past the end - matches web's
-          // showDropIndicatorBefore/showDropIndicatorAfter exactly.
-          const showDropIndicatorBefore = isDragging && dropTargetIndex === index;
-          const showDropIndicatorAfter = isDragging && dropTargetIndex === letters.length && index === letters.length - 1;
 
           // Shifts this letter aside to open a gap for the dragged
           // letter, mirroring web's WordBuilder.tsx translateX(16px)
@@ -211,61 +239,52 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
             </View>
           );
 
-          const dropIndicator = (before: boolean) => (
-            <Animated.Text
-              key={`drop-${before ? 'before' : 'after'}-${index}`}
-              style={[styles.dropIndicator, { color: colors.accent, opacity: pulse }]}
-            >
-              |
-            </Animated.Text>
-          );
-
           // Locked letters can't be removed or dragged (mirrors the
           // engine rule that rejects removing/moving a locked/lockedKey
           // letter), so they're not wrapped in a gesture handler even
           // when onLetterPress/onWordChange are provided.
           if ((!onLetterPress && !onWordChange) || isLocked) {
-            return (
-              <React.Fragment key={index}>
-                {showDropIndicatorBefore && dropIndicator(true)}
-                {letterEl}
-                {showDropIndicatorAfter && dropIndicator(false)}
-              </React.Fragment>
-            );
+            return <React.Fragment key={index}>{letterEl}</React.Fragment>;
           }
 
           const panResponder = startPanResponderFor(index);
 
           return (
-            <React.Fragment key={index}>
-              {showDropIndicatorBefore && dropIndicator(true)}
-              <Animated.View
-                {...panResponder.panHandlers}
-                // See GridCell.tsx's identical comment: real taps are
-                // detected via the PanResponder release handler above;
-                // this test-only escape hatch is only so `fireEvent.press`
-                // can still exercise a plain tap-to-remove without a full
-                // touch sequence.
-                {...({ onPress: () => onLetterPress?.(index) } as object)}
-                accessibilityRole="button"
-                accessibilityLabel={`Remove letter ${letter}`}
-                style={[
-                  isBeingDragged
-                    ? {
-                        transform: pan.getTranslateTransform(),
-                        zIndex: 10,
-                        elevation: 10,
-                        opacity: 0.85
-                      }
-                    : { transform: [{ translateX: siblingShiftX }] }
-                ]}
-              >
-                {letterEl}
-              </Animated.View>
-              {showDropIndicatorAfter && dropIndicator(false)}
-            </React.Fragment>
+            <Animated.View
+              key={index}
+              {...panResponder.panHandlers}
+              // See GridCell.tsx's identical comment: real taps are
+              // detected via the PanResponder release handler above;
+              // this test-only escape hatch is only so `fireEvent.press`
+              // can still exercise a plain tap-to-remove without a full
+              // touch sequence.
+              {...({ onPress: () => onLetterPress?.(index) } as object)}
+              accessibilityRole="button"
+              accessibilityLabel={`Remove letter ${letter}`}
+              style={
+                isBeingDragged
+                  ? {
+                      transform: pan.getTranslateTransform(),
+                      zIndex: 10,
+                      elevation: 10,
+                      opacity: 0.85
+                    }
+                  : { transform: [{ translateX: siblingShiftX }] }
+              }
+            >
+              {letterEl}
+            </Animated.View>
           );
         })}
+
+        {indicatorLeft !== null && (
+          <Animated.Text
+            style={[styles.dropIndicator, { color: colors.accent, opacity: pulse, left: indicatorLeft }]}
+            pointerEvents="none"
+          >
+            |
+          </Animated.Text>
+        )}
       </View>
     );
   }
@@ -289,9 +308,10 @@ const styles = StyleSheet.create({
     fontWeight: '900'
   },
   dropIndicator: {
+    position: 'absolute',
+    top: 0,
     fontSize: 36,
-    fontWeight: '900',
-    marginHorizontal: 4
+    fontWeight: '900'
   },
   lock: {
     position: 'absolute',

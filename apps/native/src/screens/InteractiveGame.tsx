@@ -396,42 +396,52 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         )}
       </View>
 
-      {/* Absolutely-positioned header above, so it doesn't consume flex
-          space here - this flex:1 area always centers the word/submit
-          row both horizontally and vertically in whatever room is left
-          above the grid, regardless of how many rows ScoreBar renders
-          (matching web's own "fixed centered anchor point" design). */}
-      <View style={styles.wordArea}>
-        <CurrentWord
-          ref={wordRef}
-          word={pendingWord}
-          highlights={pendingWordHighlights}
-          onLetterPress={canEdit ? handleRemoveLetter : undefined}
-          onWordChange={canEdit ? handleWordChange : undefined}
-        />
-        <View style={styles.submitRow}>
+      {/* Matches web's InteractiveGame.css exactly: the submit row (not
+          the word) is the actual fixed center point of the whole board -
+          `board` flex-centers a single zero-content-height anchor point,
+          then the word and grid are positioned as absolute overlays a
+          fixed gap above/below THAT point (`bottom: 100%`/`top: 100%`
+          relative to the anchor, same percentage-positioning semantics
+          RN and CSS share) - not "the word centered in whatever space is
+          left above the grid", which is a different, smaller, and
+          visually off-center region once the grid's own height is
+          accounted for. */}
+      <View style={styles.board}>
+        <View style={styles.submitAnchor}>
           <ScoreDisplay
             moveAttempt={pendingMoveAttempt}
             isValid={isValidSubmit}
             onPress={canEdit ? handleSubmit : undefined}
             disabled={!canEdit}
           />
-        </View>
-        {isBotThinking && (
-          <Text style={[styles.status, { color: colors.textSecondary }]}>Bot is thinking...</Text>
-        )}
-        {isGameFinished && (
-          <Text style={[styles.status, { color: colors.text }]}>Game over!</Text>
-        )}
-      </View>
 
-      <AlphabetGrid
-        letterStates={letterStates}
-        onLetterPress={handleLetterPress}
-        onActionPress={handleActionPress}
-        onLetterDragRelease={handleLetterDragRelease}
-        disabled={!canEdit}
-      />
+          <View style={styles.wordPositioned}>
+            <CurrentWord
+              ref={wordRef}
+              word={pendingWord}
+              highlights={pendingWordHighlights}
+              onLetterPress={canEdit ? handleRemoveLetter : undefined}
+              onWordChange={canEdit ? handleWordChange : undefined}
+            />
+          </View>
+
+          <View style={styles.gridPositioned}>
+            <AlphabetGrid
+              letterStates={letterStates}
+              onLetterPress={handleLetterPress}
+              onActionPress={handleActionPress}
+              onLetterDragRelease={handleLetterDragRelease}
+              disabled={!canEdit}
+            />
+            {isBotThinking && (
+              <Text style={[styles.status, { color: colors.textSecondary }]}>Bot is thinking...</Text>
+            )}
+            {isGameFinished && (
+              <Text style={[styles.status, { color: colors.text }]}>Game over!</Text>
+            )}
+          </View>
+        </View>
+      </View>
 
       {/* onStartGame intentionally omitted: mid-game the Menu's "bots"
           section is reachable (matching web) but tapping a bot is a no-op
@@ -459,8 +469,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'space-between'
+    flex: 1
   },
   header: {
     position: 'absolute',
@@ -474,16 +483,46 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     marginTop: 4
   },
-  wordArea: {
+  // Fills all remaining space below the (absolutely-positioned) header
+  // and flex-centers its one child (submitAnchor) - this is what makes
+  // the anchor the true center point of the whole board.
+  board: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    gap: 12
+    alignItems: 'center'
   },
-  submitRow: {
+  // Explicit full width (matching web's centered-container's own
+  // `width: 100%`) even though its *height* stays collapsed to just the
+  // submit row's own content - `wordPositioned`/`gridPositioned` below
+  // are `left: 0; right: 0` overlays relative to THIS view's bounds, so
+  // it has to actually span the full screen width for them to too, not
+  // auto-size down to the (much narrower) ScoreDisplay row itself.
+  submitAnchor: {
+    width: '100%',
+    alignItems: 'center'
+  },
+  // `bottom: '100%'` = the word's bottom edge sits at the anchor's OWN
+  // top edge (100% of the anchor's height, measured up from its
+  // bottom) - then marginBottom adds the fixed gap on top of that. Same
+  // percentage-positioning semantics as web's `bottom: calc(100% + 20px)`.
+  wordPositioned: {
+    position: 'absolute',
+    bottom: '100%',
+    marginBottom: 16,
+    left: 0,
+    right: 0,
+    alignItems: 'center'
+  },
+  gridPositioned: {
+    position: 'absolute',
+    top: '100%',
+    marginTop: 20,
+    left: 0,
+    right: 0,
     alignItems: 'center'
   },
   status: {
-    fontSize: 14
+    fontSize: 14,
+    marginTop: 8
   }
 });

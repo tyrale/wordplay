@@ -196,26 +196,14 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.wordArea}>
-        {wordTrail.length > 0 && (
-          <ScrollView horizontal style={styles.trail} showsHorizontalScrollIndicator={false}>
-            {wordTrail.map((word, index) => (
-              <Text key={`${word}-${index}`} style={[styles.trailWord, { color: colors.textSecondary }]}>
-                {word}
-              </Text>
-            ))}
-          </ScrollView>
-        )}
-
-        <CurrentWord
-          ref={wordRef}
-          word={pendingWord}
-          highlights={pendingWordHighlights}
-          onLetterPress={canEdit ? handleRemoveLetter : undefined}
-          onWordChange={canEdit ? handleWordChange : undefined}
-        />
-
-        <View style={styles.submitRow}>
+      {/* See InteractiveGame.tsx's identical comment: the submit row is
+          the actual fixed center point of the board, with the word
+          trail/current word positioned a fixed gap above it and the
+          grid a fixed gap below it - not "the word centered above the
+          grid", which visually reads as off-center once the grid's own
+          height is accounted for. */}
+      <View style={styles.board}>
+        <View style={styles.submitAnchor}>
           <ScoreDisplay
             moveAttempt={pendingMoveAttempt}
             isValid={isValidSubmit}
@@ -223,16 +211,37 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
             disabled={!canEdit}
             isChallengeMode
           />
+
+          <View style={styles.wordPositioned}>
+            {wordTrail.length > 0 && (
+              <ScrollView horizontal style={styles.trail} showsHorizontalScrollIndicator={false}>
+                {wordTrail.map((word, index) => (
+                  <Text key={`${word}-${index}`} style={[styles.trailWord, { color: colors.textSecondary }]}>
+                    {word}
+                  </Text>
+                ))}
+              </ScrollView>
+            )}
+            <CurrentWord
+              ref={wordRef}
+              word={pendingWord}
+              highlights={pendingWordHighlights}
+              onLetterPress={canEdit ? handleRemoveLetter : undefined}
+              onWordChange={canEdit ? handleWordChange : undefined}
+            />
+          </View>
+
+          <View style={styles.gridPositioned}>
+            <AlphabetGrid
+              letterStates={letterStates}
+              onLetterPress={handleLetterPress}
+              onActionPress={handleActionPress}
+              onLetterDragRelease={handleLetterDragRelease}
+              disabled={!canEdit}
+            />
+          </View>
         </View>
       </View>
-
-      <AlphabetGrid
-        letterStates={letterStates}
-        onLetterPress={handleLetterPress}
-        onActionPress={handleActionPress}
-        onLetterDragRelease={handleLetterDragRelease}
-        disabled={!canEdit}
-      />
 
       <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} onNavigateHome={onNavigateHome} />
     </SafeAreaView>
@@ -241,24 +250,43 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'space-between'
+    flex: 1
   },
-  wordArea: {
+  board: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    gap: 12
+    alignItems: 'center'
+  },
+  // See InteractiveGame.tsx's identical comment: explicit full width so
+  // the absolutely-positioned word/grid overlays below actually span the
+  // full screen instead of the (much narrower) ScoreDisplay row itself.
+  submitAnchor: {
+    width: '100%',
+    alignItems: 'center'
+  },
+  wordPositioned: {
+    position: 'absolute',
+    bottom: '100%',
+    marginBottom: 16,
+    left: 0,
+    right: 0,
+    alignItems: 'center'
+  },
+  gridPositioned: {
+    position: 'absolute',
+    top: '100%',
+    marginTop: 20,
+    left: 0,
+    right: 0,
+    alignItems: 'center'
   },
   trail: {
-    maxHeight: 30
+    maxHeight: 30,
+    marginBottom: 8
   },
   trailWord: {
     fontSize: 14,
     fontWeight: '700',
     marginHorizontal: 8
-  },
-  submitRow: {
-    alignItems: 'center'
   }
 });
