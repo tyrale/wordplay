@@ -396,6 +396,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         )}
       </View>
 
+      {/* Absolutely-positioned header above, so it doesn't consume flex
+          space here - this flex:1 area always centers the word/submit
+          row both horizontally and vertically in whatever room is left
+          above the grid, regardless of how many rows ScoreBar renders
+          (matching web's own "fixed centered anchor point" design). */}
       <View style={styles.wordArea}>
         <CurrentWord
           ref={wordRef}
@@ -458,9 +463,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between'
   },
   header: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
     alignItems: 'flex-start',
-    paddingTop: 12,
-    paddingLeft: 12
+    zIndex: 1
   },
   bossTimer: {
     fontSize: 16,
@@ -468,7 +475,9 @@ const styles = StyleSheet.create({
     marginTop: 4
   },
   wordArea: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 12
   },
   submitRow: {

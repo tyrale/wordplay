@@ -245,9 +245,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between'
   },
   wordArea: {
+    flex: 1,
     alignItems: 'center',
-    gap: 12,
-    paddingTop: 24
+    justifyContent: 'center',
+    gap: 12
   },
   trail: {
     maxHeight: 30

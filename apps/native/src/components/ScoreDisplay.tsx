@@ -111,9 +111,12 @@ const styles = StyleSheet.create({
     minWidth: 100
   },
   side: {
-    fontSize: 14,
+    // 50% larger than web's literal 28.8px mobile-breakpoint value, per
+    // on-device feedback (the action icons/score text read too small
+    // next to the checkmark once actually rendered on a phone).
+    fontSize: 21,
     fontWeight: '900',
-    minWidth: 28,
+    minWidth: 32,
     textAlign: 'center'
   },
   left: {
