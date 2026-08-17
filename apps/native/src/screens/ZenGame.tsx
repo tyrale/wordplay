@@ -28,8 +28,9 @@ import { AlphabetGrid } from '../components/AlphabetGrid';
 import type { LetterState } from '../components/AlphabetGrid';
 import { CurrentWord } from '../components/CurrentWord';
 import type { LetterHighlight } from '../components/CurrentWord';
-import { SubmitButton } from '../components/SubmitButton';
+import { ScoreDisplay } from '../components/ScoreDisplay';
 import { Menu } from '../components/Menu';
+import { useWordDropZone } from '../hooks/useWordDropZone';
 import { triggerHapticFeedback } from '../utils/haptics';
 
 const MAX_WORD_LENGTH = 10;
@@ -127,6 +128,14 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
     [canEdit, pendingWord, handleWordChange]
   );
 
+  const { wordRef, checkDrop } = useWordDropZone();
+  const handleLetterDragRelease = useCallback(
+    (letter: string, pageX: number, pageY: number) => {
+      checkDrop(pageX, pageY, () => handleLetterPress(letter));
+    },
+    [checkDrop, handleLetterPress]
+  );
+
   const handleRemoveLetter = useCallback(
     (index: number) => {
       if (!canEdit) return;
@@ -178,7 +187,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
       return;
     }
 
-    // Invalid word (or unchanged) -> pass turn, matching web's SubmitButton
+    // Invalid word (or unchanged) -> pass turn, matching web's ScoreDisplay
     // behavior ("Word is invalid - tap to pass turn").
     if (wordUnchanged || !isValidSubmit) {
       actions.passTurn();
@@ -198,14 +207,21 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
           </ScrollView>
         )}
 
-        <CurrentWord word={pendingWord} highlights={pendingWordHighlights} onLetterPress={canEdit ? handleRemoveLetter : undefined} />
+        <CurrentWord
+          ref={wordRef}
+          word={pendingWord}
+          highlights={pendingWordHighlights}
+          onLetterPress={canEdit ? handleRemoveLetter : undefined}
+          onWordChange={canEdit ? handleWordChange : undefined}
+        />
 
         <View style={styles.submitRow}>
-          <SubmitButton
+          <ScoreDisplay
+            moveAttempt={pendingMoveAttempt}
             isValid={isValidSubmit}
-            isInvalid={!isValidSubmit && !wordUnchanged}
             onPress={canEdit ? handleSubmit : undefined}
             disabled={!canEdit}
+            isChallengeMode
           />
         </View>
       </View>
@@ -214,6 +230,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
         letterStates={letterStates}
         onLetterPress={handleLetterPress}
         onActionPress={handleActionPress}
+        onLetterDragRelease={handleLetterDragRelease}
         disabled={!canEdit}
       />
 

@@ -1,28 +1,21 @@
 /**
- * Ports apps/web's `components/game/AlphabetGrid.tsx` for Phase 2's "get a
- * playable loop working" slice - with one deliberate scope cut: this is
- * tap-only, not drag-and-drop.
- *
- * The web grid lets you drag a letter tile directly onto a position in
- * the current word. Native has no drag-and-drop primitive (see the port
- * plan's critical item 6) - implementing an equivalent needs
- * react-native-gesture-handler + react-native-reanimated and a bespoke
- * position-based drop-zone model, which is real, standalone UI work.
- * Tapping a letter to append it to the end of the word (and tapping a
- * letter in CurrentWord to remove it - see CurrentWord.tsx) is a
- * deliberately simpler interim interaction model that's still a fully
- * playable game, so Phase 2 isn't blocked on the hardest UI problem in
- * the whole port. Revisit before considering the native app UI "done".
+ * Ports apps/web's `components/game/AlphabetGrid.tsx`. Tapping a letter
+ * still appends it to the end of the word (and tapping a letter in
+ * CurrentWord still removes it - see CurrentWord.tsx) as a simpler
+ * alternative to dragging, but dragging a letter tile onto the
+ * word-in-play is now also supported (see GridCell.tsx's doc comment for
+ * how, and CurrentWord.tsx for the drop-zone/append side of it) - this
+ * grid only forwards the drag callbacks, it doesn't know what a "drop
+ * zone" is.
  *
  * "Gravity mode" (GravityLetterGrid.tsx on web, a physics-sim/portal-based
- * bot gimmick) is out of scope entirely for this slice - see the port
- * plan's Phase 2 scope-cut note.
+ * bot gimmick) remains out of scope entirely - see the port plan's Phase
+ * 2 scope-cut note.
  */
 import React from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { GridCell } from './GridCell';
 import type { GridCellState } from './GridCell';
-import { BackIcon, ResetIcon, MenuIcon } from './icons';
 
 export interface LetterState {
   letter: string;
@@ -34,6 +27,15 @@ export interface AlphabetGridProps {
   onLetterPress?: (letter: string) => void;
   onActionPress?: (action: string) => void;
   disabled?: boolean;
+  /** Enables the drag gesture on letter cells (default true, matching
+   * web's `enableDrag` default). */
+  enableDrag?: boolean;
+  onLetterDragStart?: (letter: string) => void;
+  onLetterDragMove?: (letter: string, pageX: number, pageY: number) => void;
+  /** Fired when a dragged letter is released - the caller (the game
+   * screen) decides whether the release point landed on the word-in-play
+   * and, if so, appends it. */
+  onLetterDragRelease?: (letter: string, pageX: number, pageY: number) => void;
 }
 
 const ALPHABET_GRID = [
@@ -48,15 +50,6 @@ const ACTION_BUTTONS = ['←', '↻', '?', '≡'];
 const GRID_COLUMNS = 6;
 const GRID_GAP = 6;
 const GRID_HORIZONTAL_PADDING = 16;
-
-// See components/icons.tsx's doc comment for why these three action
-// glyphs get explicit vector icons instead of rendering as plain text
-// ('?' is ordinary ASCII and unaffected, so it stays plain text).
-const ACTION_ICONS: Record<string, React.ComponentType<{ size: number; color: string }>> = {
-  '←': BackIcon,
-  '↻': ResetIcon,
-  '≡': MenuIcon
-};
 
 function getAriaLabel(content: string): string {
   if (ACTION_BUTTONS.includes(content)) {
@@ -75,7 +68,11 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   letterStates = [],
   onLetterPress,
   onActionPress,
-  disabled = false
+  disabled = false,
+  enableDrag = true,
+  onLetterDragStart,
+  onLetterDragMove,
+  onLetterDragRelease
 }) => {
   const { width } = useWindowDimensions();
 
@@ -116,6 +113,7 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
           {row.map(content => {
             const isAction = ACTION_BUTTONS.includes(content);
             const state = stateMap[content] || 'normal';
+            const canDrag = enableDrag && !isAction && !disabled && state !== 'disabled';
 
             return (
               <GridCell
@@ -127,7 +125,10 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
                 disabled={isAlwaysEnabled(content) ? false : disabled || state === 'disabled'}
                 accessibilityLabel={getAriaLabel(content)}
                 size={cellSize}
-                icon={ACTION_ICONS[content]}
+                draggable={canDrag}
+                onDragStart={canDrag ? () => onLetterDragStart?.(content) : undefined}
+                onDragMove={canDrag ? (pageX, pageY) => onLetterDragMove?.(content, pageX, pageY) : undefined}
+                onDragRelease={canDrag ? (pageX, pageY) => onLetterDragRelease?.(content, pageX, pageY) : undefined}
               />
             );
           })}

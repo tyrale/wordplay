@@ -22,13 +22,14 @@ import { AlphabetGrid } from '../components/AlphabetGrid';
 import type { LetterState } from '../components/AlphabetGrid';
 import { CurrentWord } from '../components/CurrentWord';
 import type { LetterHighlight } from '../components/CurrentWord';
-import { SubmitButton } from '../components/SubmitButton';
+import { ScoreDisplay } from '../components/ScoreDisplay';
 import { ScoreBar } from '../components/ScoreBar';
 import { Menu } from '../components/Menu';
 import { TutorialOverlay } from '../components/TutorialOverlay';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { usePlayerStats } from '../hooks/usePlayerStats';
 import { useTutorialProgress } from '../hooks/useTutorialProgress';
+import { useWordDropZone } from '../hooks/useWordDropZone';
 import { markTutorialSeen } from '../utils/tutorialStorage';
 import { triggerHapticFeedback } from '../utils/haptics';
 
@@ -251,6 +252,18 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     [canEdit, pendingWord, handleWordChange]
   );
 
+  // Dragging a letter tile from the grid and releasing it over the word
+  // area appends it - the same action as tapping it, just via web's
+  // other supported gesture (see AlphabetGrid.tsx/GridCell.tsx/
+  // CurrentWord.tsx's doc comments for how the drag itself works).
+  const { wordRef, checkDrop } = useWordDropZone();
+  const handleLetterDragRelease = useCallback(
+    (letter: string, pageX: number, pageY: number) => {
+      checkDrop(pageX, pageY, () => handleLetterPress(letter));
+    },
+    [checkDrop, handleLetterPress]
+  );
+
   const handleRemoveLetter = useCallback(
     (index: number) => {
       if (!canEdit) return;
@@ -358,7 +371,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       return;
     }
 
-    // Invalid word (or unchanged) -> pass turn, matching web's SubmitButton
+    // Invalid word (or unchanged) -> pass turn, matching web's ScoreDisplay
     // behavior ("Word is invalid - tap to pass turn").
     if (wordUnchanged || !isValidSubmit) {
       actions.passTurn();
@@ -384,11 +397,17 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       </View>
 
       <View style={styles.wordArea}>
-        <CurrentWord word={pendingWord} highlights={pendingWordHighlights} onLetterPress={canEdit ? handleRemoveLetter : undefined} />
+        <CurrentWord
+          ref={wordRef}
+          word={pendingWord}
+          highlights={pendingWordHighlights}
+          onLetterPress={canEdit ? handleRemoveLetter : undefined}
+          onWordChange={canEdit ? handleWordChange : undefined}
+        />
         <View style={styles.submitRow}>
-          <SubmitButton
+          <ScoreDisplay
+            moveAttempt={pendingMoveAttempt}
             isValid={isValidSubmit}
-            isInvalid={!isValidSubmit && !wordUnchanged}
             onPress={canEdit ? handleSubmit : undefined}
             disabled={!canEdit}
           />
@@ -405,6 +424,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         letterStates={letterStates}
         onLetterPress={handleLetterPress}
         onActionPress={handleActionPress}
+        onLetterDragRelease={handleLetterDragRelease}
         disabled={!canEdit}
       />
 

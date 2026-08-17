@@ -10,12 +10,13 @@
  * state persistence (AsyncStorage instead of localStorage, made async)
  * differ from web.
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { ChallengeEngine, ChallengeState } from '@wordplay/engine/challenge';
 import { createChallengeEngine } from '@wordplay/engine/challenge';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createNativeAdapter } from '../adapters/nativeAdapter';
-import type { ValidationOptions } from '@wordplay/engine/interfaces';
+import type { NativeAdapter } from '../adapters/nativeAdapter';
+import type { ValidationOptions, ScoringResult } from '@wordplay/engine/interfaces';
 
 export interface ChallengeHookState {
   challengeState: ChallengeState | null;
@@ -28,6 +29,10 @@ export interface ChallengeHookState {
   forfeitChallenge: () => Promise<void>;
   generateSharingText: () => string;
   isValidMove: (fromWord: string, toWord: string) => boolean;
+  /** Scores a hypothetical move without applying it - used by ChallengeGame
+   * to drive ScoreDisplay's action icons (add/remove/rearrange), even
+   * though challenge mode doesn't display the actual score numbers. */
+  calculateScore: (fromWord: string, toWord: string) => ScoringResult | null;
   resetDailyChallenge: () => Promise<void>;
   generateRandomChallenge: () => Promise<void>;
 }
@@ -38,6 +43,7 @@ export function useChallenge(): ChallengeHookState {
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [challengeEngine, setChallengeEngine] = useState<ChallengeEngine | null>(null);
+  const gameAdapterRef = useRef<NativeAdapter | null>(null);
 
   useEffect(() => {
     const initializeEngine = async () => {
@@ -46,6 +52,7 @@ export function useChallenge(): ChallengeHookState {
         setError(null);
 
         const gameAdapter = await createNativeAdapter();
+        gameAdapterRef.current = gameAdapter;
 
         const dictStatus = gameAdapter.getDictionaryStatus();
         if (!dictStatus.loaded) {
@@ -217,6 +224,11 @@ export function useChallenge(): ChallengeHookState {
     return challengeEngine.isValidMove(fromWord, toWord);
   }, [challengeEngine]);
 
+  const calculateScore = useCallback((fromWord: string, toWord: string): ScoringResult | null => {
+    if (!gameAdapterRef.current) return null;
+    return gameAdapterRef.current.getGameDependencies().calculateScore(fromWord, toWord, { keyLetters: [] });
+  }, []);
+
   const resetDailyChallenge = useCallback(async () => {
     if (!challengeEngine) {
       setError('Challenge engine not initialized');
@@ -260,6 +272,7 @@ export function useChallenge(): ChallengeHookState {
     forfeitChallenge,
     generateSharingText,
     isValidMove,
+    calculateScore,
     resetDailyChallenge,
     generateRandomChallenge
   };

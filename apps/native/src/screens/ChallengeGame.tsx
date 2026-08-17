@@ -15,6 +15,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type { MoveAttempt } from '@wordplay/engine/interfaces';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useChallenge } from '../hooks/useChallenge';
 import { useUnlockSystem } from '../providers/UnlockProvider';
@@ -22,7 +23,8 @@ import { usePlayerStats } from '../hooks/usePlayerStats';
 import { AlphabetGrid } from '../components/AlphabetGrid';
 import type { LetterState } from '../components/AlphabetGrid';
 import { CurrentWord } from '../components/CurrentWord';
-import { SubmitButton } from '../components/SubmitButton';
+import { ScoreDisplay } from '../components/ScoreDisplay';
+import { useWordDropZone } from '../hooks/useWordDropZone';
 import { Menu } from '../components/Menu';
 import { AlertOverlay } from '../components/AlertOverlay';
 import type { AlertOverlayVariant } from '../components/AlertOverlay';
@@ -61,13 +63,19 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
     submitWord,
     forfeitChallenge,
     generateSharingText,
-    isValidMove
+    isValidMove,
+    calculateScore
   } = useChallenge();
   const { handleWordSubmission } = useUnlockSystem();
   const { recordMove, recordChallengeResult } = usePlayerStats();
 
   const [pendingWord, setPendingWord] = useState('');
   const [isValidSubmit, setIsValidSubmit] = useState(false);
+  // Feeds ScoreDisplay's add/-remove/~rearrange action icons (challenge
+  // mode never shows the actual score numbers, but the checkmark itself
+  // still depends on this being a real, non-empty action set - see
+  // ScoreDisplay.tsx's own doc comment).
+  const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
   const [showValidationError, setShowValidationError] = useState(false);
   const [isProcessingMove, setIsProcessingMove] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -87,21 +95,37 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
     }
   }, [challengeState?.currentWord]);
 
-  // Re-validate whenever the pending word changes (mirrors web's
-  // validatePendingWord effect, simplified: this screen doesn't need the
-  // full ActionState/ScoreBreakdown web computes for its ScoreDisplay,
-  // since this screen's SubmitButton only needs a valid/invalid boolean).
+  // Re-validate whenever the pending word changes, mirroring web's
+  // validatePendingWord effect - including computing a real scoring
+  // breakdown (via calculateScore) purely to drive ScoreDisplay's
+  // add/-remove/~rearrange action icons, even though challenge mode
+  // never shows the actual score numbers.
   useEffect(() => {
     if (!pendingWord || !challengeState || pendingWord === challengeState.currentWord) {
       setIsValidSubmit(false);
+      setPendingMoveAttempt(null);
       return;
     }
     if (challengeState.wordSequence.includes(pendingWord)) {
       setIsValidSubmit(false);
+      setPendingMoveAttempt(null);
       return;
     }
-    setIsValidSubmit(isValidMove(challengeState.currentWord, pendingWord));
-  }, [pendingWord, challengeState, isValidMove]);
+
+    const canApply = isValidMove(challengeState.currentWord, pendingWord);
+    setIsValidSubmit(canApply);
+
+    const scoringResult = canApply ? calculateScore(challengeState.currentWord, pendingWord) : null;
+    setPendingMoveAttempt({
+      newWord: pendingWord,
+      isValid: canApply,
+      validationResult: canApply
+        ? { isValid: true, word: pendingWord }
+        : { isValid: false, reason: 'INVALID_MOVE', word: pendingWord, userMessage: 'illegal action' },
+      scoringResult,
+      canApply
+    });
+  }, [pendingWord, challengeState, isValidMove, calculateScore]);
 
   const letterStates: LetterState[] = useMemo(() => {
     // Challenge mode has no key/locked letters (matches web).
@@ -123,6 +147,14 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
       handleWordChange(pendingWord + letter);
     },
     [canEdit, pendingWord, handleWordChange]
+  );
+
+  const { wordRef, checkDrop } = useWordDropZone();
+  const handleLetterDragRelease = useCallback(
+    (letter: string, pageX: number, pageY: number) => {
+      checkDrop(pageX, pageY, () => handleLetterPress(letter));
+    },
+    [checkDrop, handleLetterPress]
   );
 
   const handleRemoveLetter = useCallback(
@@ -282,13 +314,20 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.wordArea}>
-        <CurrentWord word={pendingWord} onLetterPress={canEdit ? handleRemoveLetter : undefined} />
+        <CurrentWord
+          ref={wordRef}
+          word={pendingWord}
+          onLetterPress={canEdit ? handleRemoveLetter : undefined}
+          onWordChange={canEdit ? handleWordChange : undefined}
+        />
         <View style={styles.submitRow}>
-          <SubmitButton
+          <ScoreDisplay
+            moveAttempt={pendingMoveAttempt}
             isValid={isValidSubmit}
-            isInvalid={!isValidSubmit && !wordUnchanged}
             onPress={canEdit ? handleSubmit : undefined}
             disabled={!canEdit}
+            showValidationError={showValidationError}
+            isChallengeMode
           />
         </View>
         <Text style={[styles.steps, { color: colors.textSecondary }]}>
@@ -304,6 +343,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
         letterStates={letterStates}
         onLetterPress={handleLetterPress}
         onActionPress={handleActionPress}
+        onLetterDragRelease={handleLetterDragRelease}
         disabled={!canEdit}
       />
 

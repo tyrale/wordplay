@@ -8,7 +8,6 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../providers/UnlockProvider';
-import { CloseIcon } from './icons';
 
 export interface DictionariesOverlayProps {
   isVisible: boolean;
@@ -71,7 +70,7 @@ export const DictionariesOverlay: React.FC<DictionariesOverlayProps> = ({ isVisi
       </ScrollView>
 
       <Pressable onPress={onClose} style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close">
-        <CloseIcon size={28} color={currentTheme.colors.text} />
+        <Text style={[styles.closeButtonText, { color: currentTheme.colors.text }]}>×</Text>
       </Pressable>
     </View>
   );
@@ -118,6 +117,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 40,
     alignSelf: 'center',
-    padding: 16
+    padding: 12
+  },
+  closeButtonText: {
+    fontSize: 32,
+    fontWeight: '900',
+    lineHeight: 32
   }
 });

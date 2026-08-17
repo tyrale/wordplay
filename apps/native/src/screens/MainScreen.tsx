@@ -24,7 +24,6 @@ import { useTheme } from '../theme/ThemeProvider';
 import { getAllBots } from '@wordplay/engine/botRegistry';
 import { Menu } from '../components/Menu';
 import { AlertOverlay } from '../components/AlertOverlay';
-import { BackIcon, MenuIcon } from '../components/icons';
 
 export type MainScreenGameType = 'bot' | 'challenge' | 'tutorial' | 'zen';
 
@@ -70,12 +69,12 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
     <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.colors.background }]}>
       {currentView !== 'main' && (
         <Pressable onPress={handleBack} accessibilityRole="button" accessibilityLabel="Back" style={styles.backButton}>
-          <BackIcon size={28} color={currentTheme.colors.text} />
+          <Text style={[styles.backButtonText, { color: currentTheme.colors.text }]}>←</Text>
         </Pressable>
       )}
 
       <Pressable onPress={() => setIsMenuOpen(true)} accessibilityRole="button" accessibilityLabel="Open menu" style={styles.menuButton}>
-        <MenuIcon size={28} color={currentTheme.colors.accent} />
+        <Text style={[styles.menuButtonText, { color: currentTheme.colors.accent }]}>≡</Text>
       </Pressable>
 
       <View style={styles.content}>
@@ -143,17 +142,31 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
+    bottom: 8,
+    left: 8,
     zIndex: 1,
-    padding: 8
+    width: 60,
+    height: 60,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  backButtonText: {
+    fontSize: 38,
+    fontWeight: '900'
   },
   menuButton: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
+    bottom: 8,
+    right: 8,
     zIndex: 1,
-    padding: 8
+    width: 60,
+    height: 60,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  menuButtonText: {
+    fontSize: 38,
+    fontWeight: '900'
   },
   content: {
     flex: 1,
@@ -168,7 +181,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8
   },
   gameOptionText: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '900'
   },
   botList: {
@@ -179,7 +192,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8
   },
   botOptionText: {
-    fontSize: 24,
-    fontWeight: '900'
+    fontSize: 26,
+    fontWeight: '900',
+    textTransform: 'uppercase'
   }
 });
