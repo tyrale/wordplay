@@ -27,11 +27,13 @@
  * silently corrupting the gesture on every single frame, making dragging
  * within the word not really work at all despite the drop-indicator/
  * gap-opening logic itself being correct in isolation. `DraggableLetter`
- * reports raw gesture data (page coordinates) up to this parent via
- * stable callback props (routed through a ref, same pattern GridCell.tsx
- * uses, so the callbacks *themselves* being recreated each render is
- * fine); the parent owns all the shared coordination state (which letter
- * is dragging, the live drop target, the shared Animated.ValueXY used to
+ * reports relative gesture data (dx/dy from the gesture's own start
+ * point, not absolute screen coordinates - see the drop-target math note
+ * below for why that distinction matters) up to this parent via stable
+ * callback props (routed through a ref, same pattern GridCell.tsx uses,
+ * so the callbacks *themselves* being recreated each render is fine);
+ * the parent owns all the shared coordination state (which letter is
+ * dragging, the live drop target, the shared Animated.ValueXY used to
  * paint the dragged letter's live offset).
  *
  * The indicator/gap-opening are still absolutely-positioned overlays
@@ -40,6 +42,30 @@
  * inline would shift every later letter's actual layout box, re-firing
  * their `onLayout` and feeding back into the very hit-testing math that
  * decides where the indicator goes.
+ *
+ * Drop-target math note (a second real bug found after the PanResponder
+ * fix above - dragging worked, but only ever landed at the very first or
+ * last position, never in between): `DraggableLetter` used to report the
+ * gesture's absolute `pageX` (screen coordinates), which this parent
+ * compared against each letter's *local* layout position converted to
+ * screen coordinates via a separately-`measureInWindow`'d container
+ * offset. That conversion could be stale (measured on an earlier layout
+ * pass than the one actually in effect once this component sits inside
+ * the anchor-relative absolute-positioning the game screens use - see
+ * InteractiveGame.tsx's `wordPositioned`) or just momentarily
+ * inconsistent with the live `pageX`, which systematically only produced
+ * a *correct-enough* result at the extremes (dragging far enough past
+ * every letter still resolves to "the end" even with an offset error)
+ * while every in-between comparison could land on the wrong side of a
+ * threshold. Fixed by never touching absolute screen coordinates at all:
+ * `DraggableLetter` reports `gestureState.dx`/`dy` (relative to the
+ * gesture's own start point), and the drop target is computed by
+ * comparing the *dragged letter's own live center* (its original local
+ * layout position plus `dx`) against every other letter's original,
+ * static local center - both quantities are already in the exact same
+ * coordinate space (this container's local layout), so there's no
+ * conversion, and therefore no way for it to be wrong at some scroll/
+ * position offsets but not others.
  *
  * Also serves as the drop zone for letters dragged from the alphabet
  * grid: exposes `measureInWindow` via a ref so the screen can check a
@@ -86,13 +112,52 @@ interface LetterLayout {
   width: number;
 }
 
+/**
+ * Compares the *dragged letter's own live center* (its original layout
+ * position plus however far the finger has moved it) against every
+ * other letter's original, static center - not the raw finger position
+ * against absolute on-screen coordinates. This is both more robust (no
+ * coordinate-space conversion between `pageX` and a separately-
+ * `measureInWindow`'d container offset - a real bug in an earlier
+ * version of this file: mixing absolute screen coordinates with local
+ * layout coordinates through an offset that could be stale or measured
+ * before the final layout pass settled, which systematically only
+ * worked out correctly for far-left/far-right drags, never anything in
+ * between) and closer to how drag-reorder libraries typically decide
+ * "has this card been dragged far enough over its neighbor to swap".
+ *
+ * A standalone, exported pure function (rather than inlined in the
+ * component) specifically so it's unit-testable without needing to
+ * simulate a real native touch-drag sequence through PanResponder, which
+ * isn't practical in this project's test environment.
+ */
+export function computeDropIndex(letterLayouts: Array<LetterLayout | null>, draggedIdx: number, dx: number): number {
+  const draggedLayout = letterLayouts[draggedIdx];
+  if (!draggedLayout) return draggedIdx;
+  const draggedCenterX = draggedLayout.x + draggedLayout.width / 2 + dx;
+
+  for (let i = 0; i < letterLayouts.length; i++) {
+    if (i === draggedIdx) continue;
+    const layout = letterLayouts[i];
+    if (!layout) continue;
+    const center = layout.x + layout.width / 2;
+    if (draggedCenterX < center) return i;
+  }
+  return letterLayouts.length;
+}
+
 interface DraggableLetterProps {
   index: number;
   disabled: boolean;
   accessibilityLabel: string;
   onDragStart: (index: number) => void;
-  onDragMove: (index: number, pageX: number, dx: number, dy: number) => void;
-  onDragRelease: (index: number, pageX: number, dx: number, dy: number) => void;
+  /** `dx`/`dy` are relative to the gesture's *start* point (PanResponder's
+   * own gestureState), not absolute screen coordinates - see this file's
+   * doc comment for why the drop-target math is built entirely on this
+   * plus each letter's local layout, and deliberately never touches
+   * `pageX`/`measureInWindow`. */
+  onDragMove: (index: number, dx: number, dy: number) => void;
+  onDragRelease: (index: number, dx: number, dy: number) => void;
   /** The gesture was cancelled by the OS mid-drag (e.g. an interrupting
    * system alert) - reset visual state without attempting a reorder. */
   onDragCancel: (index: number) => void;
@@ -128,19 +193,19 @@ const DraggableLetter: React.FC<DraggableLetterProps> = ({ index, disabled, acce
       onPanResponderGrant: () => {
         hasStartedDragRef.current = false;
       },
-      onPanResponderMove: (evt, gestureState) => {
+      onPanResponderMove: (_evt, gestureState) => {
         const distance = Math.sqrt(gestureState.dx * gestureState.dx + gestureState.dy * gestureState.dy);
         if (!hasStartedDragRef.current) {
           if (distance < DRAG_THRESHOLD) return;
           hasStartedDragRef.current = true;
           latestRef.current.onDragStart(index);
         }
-        latestRef.current.onDragMove(index, evt.nativeEvent.pageX, gestureState.dx, gestureState.dy);
+        latestRef.current.onDragMove(index, gestureState.dx, gestureState.dy);
       },
-      onPanResponderRelease: (evt, gestureState) => {
+      onPanResponderRelease: (_evt, gestureState) => {
         if (hasStartedDragRef.current) {
           hasStartedDragRef.current = false;
-          latestRef.current.onDragRelease(index, evt.nativeEvent.pageX, gestureState.dx, gestureState.dy);
+          latestRef.current.onDragRelease(index, gestureState.dx, gestureState.dy);
           return;
         }
         const distance = Math.sqrt(gestureState.dx * gestureState.dx + gestureState.dy * gestureState.dy);
@@ -181,10 +246,12 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
     const letters = word.toUpperCase().split('');
 
     const containerRef = useRef<View>(null);
-    const containerXRef = useRef(0);
     // Keyed by letter index - stable for the duration of a drag, since
     // nothing about how the letters themselves are laid out changes
-    // while dragging (see this file's doc comment).
+    // while dragging (see this file's doc comment). Coordinates are
+    // local to this container (straight from `onLayout`), matching the
+    // coordinate space `gestureState.dx` is measured in too - the drop-
+    // target math below never has to convert between coordinate spaces.
     const letterLayoutsRef = useRef<Array<LetterLayout | null>>([]);
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
@@ -216,40 +283,23 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
       return () => loop.stop();
     }, [pulse]);
 
-    const handleContainerLayout = () => {
-      containerRef.current?.measureInWindow(x => {
-        containerXRef.current = x;
-      });
-    };
-
     const highlightMap = highlights.reduce((acc, { index, type }) => {
       acc[index] = type;
       return acc;
     }, {} as Record<number, 'key' | 'locked' | 'lockedKey'>);
-
-    const computeDropIndex = (pointerX: number): number => {
-      const currentLetters = lettersRef.current;
-      for (let i = 0; i < currentLetters.length; i++) {
-        const layout = letterLayoutsRef.current[i];
-        if (!layout) continue;
-        const absoluteCenter = containerXRef.current + layout.x + layout.width / 2;
-        if (pointerX < absoluteCenter) return i;
-      }
-      return currentLetters.length;
-    };
 
     const handleDragStart = (index: number) => {
       setDraggedIndex(index);
       setDropTargetIndex(index);
     };
 
-    const handleDragMove = (index: number, pageX: number, dx: number, dy: number) => {
+    const handleDragMove = (index: number, dx: number, dy: number) => {
       pan.setValue({ x: dx, y: dy });
-      setDropTargetIndex(computeDropIndex(pageX));
+      setDropTargetIndex(computeDropIndex(letterLayoutsRef.current, index, dx));
     };
 
-    const handleDragRelease = (index: number, pageX: number, dx: number, dy: number) => {
-      const dropIndex = computeDropIndex(pageX);
+    const handleDragRelease = (index: number, dx: number, dy: number) => {
+      const dropIndex = computeDropIndex(letterLayoutsRef.current, index, dx);
       pan.setValue({ x: 0, y: 0 });
       setDraggedIndex(null);
       setDropTargetIndex(null);
@@ -295,7 +345,6 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
     return (
       <View
         ref={containerRef}
-        onLayout={handleContainerLayout}
         style={styles.container}
         accessibilityRole="text"
         accessibilityLabel={`Current word: ${word}`}

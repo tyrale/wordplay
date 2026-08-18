@@ -1,8 +1,75 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import { ThemeProvider } from '../../theme/ThemeProvider';
-import { CurrentWord } from '../CurrentWord';
+import { CurrentWord, computeDropIndex } from '../CurrentWord';
 import type { CurrentWordHandle } from '../CurrentWord';
+
+// "CATS" laid out left-to-right, each letter 20px wide with no gaps -
+// C:[0,20) A:[20,40) T:[40,60) S:[60,80). Centers: C=10, A=30, T=50, S=70.
+const CATS_LAYOUTS = [
+  { x: 0, width: 20 },
+  { x: 20, width: 20 },
+  { x: 40, width: 20 },
+  { x: 60, width: 20 }
+];
+
+describe('native computeDropIndex (within-word drag hit-testing)', () => {
+  it('returns the dragged index unchanged when there is no movement', () => {
+    // Dragging A (index 1, center 30) with dx=0 stays at its own center
+    // (30), which is not less than any *other* letter's center it's
+    // compared against (T=50, S=70 are greater; C=10 is less) - so the
+    // first center greater than 30 is T's (50) -> index 2. That's
+    // "still adjacent to its own original neighbor", the no-op case the
+    // caller's `dropIndex === index || dropIndex === index + 1` guard
+    // catches (index+1 = 2 here).
+    expect(computeDropIndex(CATS_LAYOUTS, 1, 0)).toBe(2);
+  });
+
+  it('resolves to a middle position, not just the first or last - the regression this test exists for', () => {
+    // Drag C (index 0, center 10) far enough right (dx=45) that its
+    // live center (55) is between T's center (50) and S's center (70) -
+    // should land between T and S (index 3), not snap to the front or
+    // very end.
+    expect(computeDropIndex(CATS_LAYOUTS, 0, 45)).toBe(3);
+  });
+
+  it('resolves to a middle position when dragging from the end backwards too', () => {
+    // Drag S (index 3, center 70) left by 45 -> live center 25, which
+    // sits between C's center (10) and A's center (30) -> index 1.
+    expect(computeDropIndex(CATS_LAYOUTS, 3, -45)).toBe(1);
+  });
+
+  it('resolves to the very front when dragged past every other letter', () => {
+    expect(computeDropIndex(CATS_LAYOUTS, 3, -1000)).toBe(0);
+  });
+
+  it('resolves to the very end when dragged past every other letter', () => {
+    expect(computeDropIndex(CATS_LAYOUTS, 0, 1000)).toBe(4);
+  });
+
+  it('skips comparing the dragged letter against its own original layout', () => {
+    // Dragging T (index 2) with dx=0 - if the loop didn't skip i===2, T's
+    // own center (50) vs its own live center (50) is not `<`, so this
+    // wouldn't false-trigger on itself; explicitly confirms the skip
+    // still resolves sensibly at zero movement.
+    expect(computeDropIndex(CATS_LAYOUTS, 2, 0)).toBe(3);
+  });
+
+  it('falls back to the dragged index if that letter has no measured layout yet', () => {
+    const layouts = [...CATS_LAYOUTS];
+    layouts[1] = null as unknown as { x: number; width: number };
+    expect(computeDropIndex(layouts, 1, 100)).toBe(1);
+  });
+
+  it('skips letters with no measured layout when scanning for the target', () => {
+    const layouts = [...CATS_LAYOUTS];
+    layouts[2] = null as unknown as { x: number; width: number }; // T's layout missing
+    // Drag C (index 0) to live center 55 (between T and S) - T is
+    // unmeasured so it's skipped, landing against S's center (70)
+    // instead of throwing or misbehaving.
+    expect(computeDropIndex(layouts, 0, 45)).toBe(3);
+  });
+});
 
 describe('native CurrentWord', () => {
   it('renders each letter and exposes an accessible label for the whole word', async () => {
