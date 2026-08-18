@@ -12,16 +12,34 @@
  * where the letter would land, and the other letters shift aside
  * (translateX) to open a gap for it.
  *
- * Both are rendered as absolutely-positioned overlays computed from
- * each letter's *stable* (drag-independent) layout, not as elements
- * inserted into the row itself - inserting/removing the indicator
- * inline (an earlier version of this file did that) shifts every later
- * letter's actual layout box, which re-fires their `onLayout` and feeds
- * back into the very hit-testing math that decides where the indicator
- * goes, destabilizing detection while dragging. `transform: translateX`
- * for the sibling-shift has the same property (it repaints without
- * moving the underlying layout box), which is why it doesn't have this
- * problem.
+ * Architecture note (this went through two broken versions before this
+ * one - worth documenting why): each letter's `PanResponder` is owned by
+ * its own stable sub-component (`DraggableLetter`), created exactly once
+ * via `useRef` and never recreated. `PanResponder.create()` allocates a
+ * fresh internal `gestureState` object (tracking the gesture's starting
+ * point, accumulated dx/dy, etc.) every time it's called - calling it
+ * again mid-gesture (e.g. from a plain function invoked straight from
+ * render, re-run on every re-render) throws that tracking state away and
+ * starts over, even though the OS is still sending touch-move events for
+ * the *same* physical gesture. Since dragging inherently changes this
+ * component's own state every frame (to move the drop indicator/open a
+ * gap), re-rendering happens constantly *during* a drag - which was
+ * silently corrupting the gesture on every single frame, making dragging
+ * within the word not really work at all despite the drop-indicator/
+ * gap-opening logic itself being correct in isolation. `DraggableLetter`
+ * reports raw gesture data (page coordinates) up to this parent via
+ * stable callback props (routed through a ref, same pattern GridCell.tsx
+ * uses, so the callbacks *themselves* being recreated each render is
+ * fine); the parent owns all the shared coordination state (which letter
+ * is dragging, the live drop target, the shared Animated.ValueXY used to
+ * paint the dragged letter's live offset).
+ *
+ * The indicator/gap-opening are still absolutely-positioned overlays
+ * computed from each letter's stable, drag-independent layout (not
+ * elements inserted into the row) - inserting/removing the indicator
+ * inline would shift every later letter's actual layout box, re-firing
+ * their `onLayout` and feeding back into the very hit-testing math that
+ * decides where the indicator goes.
  *
  * Also serves as the drop zone for letters dragged from the alphabet
  * grid: exposes `measureInWindow` via a ref so the screen can check a
@@ -68,6 +86,94 @@ interface LetterLayout {
   width: number;
 }
 
+interface DraggableLetterProps {
+  index: number;
+  disabled: boolean;
+  accessibilityLabel: string;
+  onDragStart: (index: number) => void;
+  onDragMove: (index: number, pageX: number, dx: number, dy: number) => void;
+  onDragRelease: (index: number, pageX: number, dx: number, dy: number) => void;
+  /** The gesture was cancelled by the OS mid-drag (e.g. an interrupting
+   * system alert) - reset visual state without attempting a reorder. */
+  onDragCancel: (index: number) => void;
+  onTap: (index: number) => void;
+  children: React.ReactNode;
+  // Deliberately loose (internal implementation detail component, not a
+  // public API) - Animated.View's style prop type is awkward to spell
+  // out exactly for a value that's sometimes a plain object, sometimes
+  // an array mixing plain and Animated-interpolated values.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  style?: any;
+}
+
+/**
+ * Owns one letter's PanResponder, created exactly once (see this file's
+ * doc comment for why that's essential). All the values its callbacks
+ * need are routed through a ref updated every render, so the responder
+ * itself never has to be (and never is) recreated - same pattern as
+ * GridCell.tsx's `latestRef`.
+ */
+const DraggableLetter: React.FC<DraggableLetterProps> = ({ index, disabled, accessibilityLabel, onDragStart, onDragMove, onDragRelease, onDragCancel, onTap, children, style }) => {
+  const latestRef = useRef({ disabled, onDragStart, onDragMove, onDragRelease, onDragCancel, onTap });
+  useEffect(() => {
+    latestRef.current = { disabled, onDragStart, onDragMove, onDragRelease, onDragCancel, onTap };
+  }, [disabled, onDragStart, onDragMove, onDragRelease, onDragCancel, onTap]);
+
+  const hasStartedDragRef = useRef(false);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => !latestRef.current.disabled,
+      onMoveShouldSetPanResponder: () => !latestRef.current.disabled,
+      onPanResponderGrant: () => {
+        hasStartedDragRef.current = false;
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        const distance = Math.sqrt(gestureState.dx * gestureState.dx + gestureState.dy * gestureState.dy);
+        if (!hasStartedDragRef.current) {
+          if (distance < DRAG_THRESHOLD) return;
+          hasStartedDragRef.current = true;
+          latestRef.current.onDragStart(index);
+        }
+        latestRef.current.onDragMove(index, evt.nativeEvent.pageX, gestureState.dx, gestureState.dy);
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (hasStartedDragRef.current) {
+          hasStartedDragRef.current = false;
+          latestRef.current.onDragRelease(index, evt.nativeEvent.pageX, gestureState.dx, gestureState.dy);
+          return;
+        }
+        const distance = Math.sqrt(gestureState.dx * gestureState.dx + gestureState.dy * gestureState.dy);
+        if (distance < DRAG_THRESHOLD && !latestRef.current.disabled) {
+          latestRef.current.onTap(index);
+        }
+      },
+      onPanResponderTerminate: () => {
+        if (hasStartedDragRef.current) {
+          hasStartedDragRef.current = false;
+          latestRef.current.onDragCancel(index);
+        }
+      }
+    })
+  ).current;
+
+  return (
+    <Animated.View
+      {...panResponder.panHandlers}
+      // See GridCell.tsx's identical comment: real taps are detected via
+      // the PanResponder release handler above; this test-only escape
+      // hatch is only so `fireEvent.press` in tests can still exercise a
+      // plain tap without simulating a full touch sequence.
+      {...({ onPress: () => !disabled && onTap(index) } as object)}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      style={style}
+    >
+      {children}
+    </Animated.View>
+  );
+};
+
 export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>(
   ({ word, highlights = [], onLetterPress, onWordChange }, ref) => {
     const { currentTheme, isInverted } = useTheme();
@@ -82,10 +188,15 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
     const letterLayoutsRef = useRef<Array<LetterLayout | null>>([]);
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
-    const draggedIndexRef = useRef<number | null>(null);
-    const dropTargetIndexRef = useRef<number | null>(null);
     const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
     const pulse = useRef(new Animated.Value(0.5)).current;
+    // The word/highlights this render's callbacks should act on - a ref
+    // so DraggableLetter's own stable callback props (onDragMove etc.,
+    // freshly created every render but that's fine, see this file's doc
+    // comment) always see the current word even though they're captured
+    // once inside DraggableLetter's own frozen PanResponder.
+    const lettersRef = useRef(letters);
+    lettersRef.current = letters;
 
     useImperativeHandle(ref, () => ({
       measureInWindow: callback => containerRef.current?.measureInWindow(callback)
@@ -117,68 +228,52 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
     }, {} as Record<number, 'key' | 'locked' | 'lockedKey'>);
 
     const computeDropIndex = (pointerX: number): number => {
-      for (let i = 0; i < letters.length; i++) {
+      const currentLetters = lettersRef.current;
+      for (let i = 0; i < currentLetters.length; i++) {
         const layout = letterLayoutsRef.current[i];
         if (!layout) continue;
         const absoluteCenter = containerXRef.current + layout.x + layout.width / 2;
         if (pointerX < absoluteCenter) return i;
       }
-      return letters.length;
+      return currentLetters.length;
     };
 
-    const startPanResponderFor = (index: number) =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderMove: (evt, gestureState) => {
-          const distance = Math.sqrt(gestureState.dx * gestureState.dx + gestureState.dy * gestureState.dy);
-          if (draggedIndexRef.current === null && distance >= DRAG_THRESHOLD) {
-            draggedIndexRef.current = index;
-            setDraggedIndex(index);
-          }
-          if (draggedIndexRef.current === index) {
-            pan.setValue({ x: gestureState.dx, y: gestureState.dy });
-            const newDropTarget = computeDropIndex(evt.nativeEvent.pageX);
-            if (newDropTarget !== dropTargetIndexRef.current) {
-              dropTargetIndexRef.current = newDropTarget;
-              setDropTargetIndex(newDropTarget);
-            }
-          }
-        },
-        onPanResponderRelease: (evt, gestureState) => {
-          const wasDragging = draggedIndexRef.current === index;
-          const finalDropTarget = dropTargetIndexRef.current;
-          draggedIndexRef.current = null;
-          dropTargetIndexRef.current = null;
-          setDraggedIndex(null);
-          setDropTargetIndex(null);
-          pan.setValue({ x: 0, y: 0 });
+    const handleDragStart = (index: number) => {
+      setDraggedIndex(index);
+      setDropTargetIndex(index);
+    };
 
-          if (wasDragging && onWordChange) {
-            const dropIndex = finalDropTarget ?? computeDropIndex(evt.nativeEvent.pageX);
-            if (dropIndex !== index && dropIndex !== index + 1) {
-              const letterArray = [...letters];
-              const [movedLetter] = letterArray.splice(index, 1);
-              const insertIndex = dropIndex > index ? dropIndex - 1 : dropIndex;
-              letterArray.splice(insertIndex, 0, movedLetter);
-              onWordChange(letterArray.join(''));
-            }
-            return;
-          }
+    const handleDragMove = (index: number, pageX: number, dx: number, dy: number) => {
+      pan.setValue({ x: dx, y: dy });
+      setDropTargetIndex(computeDropIndex(pageX));
+    };
 
-          const distance = Math.sqrt(gestureState.dx * gestureState.dx + gestureState.dy * gestureState.dy);
-          if (distance < DRAG_THRESHOLD) {
-            onLetterPress?.(index);
-          }
-        },
-        onPanResponderTerminate: () => {
-          draggedIndexRef.current = null;
-          dropTargetIndexRef.current = null;
-          setDraggedIndex(null);
-          setDropTargetIndex(null);
-          pan.setValue({ x: 0, y: 0 });
-        }
-      });
+    const handleDragRelease = (index: number, pageX: number, dx: number, dy: number) => {
+      const dropIndex = computeDropIndex(pageX);
+      pan.setValue({ x: 0, y: 0 });
+      setDraggedIndex(null);
+      setDropTargetIndex(null);
+
+      if (!onWordChange) return;
+      if (dropIndex === index || dropIndex === index + 1) return;
+
+      const currentLetters = lettersRef.current;
+      const letterArray = [...currentLetters];
+      const [movedLetter] = letterArray.splice(index, 1);
+      const insertIndex = dropIndex > index ? dropIndex - 1 : dropIndex;
+      letterArray.splice(insertIndex, 0, movedLetter);
+      onWordChange(letterArray.join(''));
+    };
+
+    const handleDragCancel = (_index: number) => {
+      pan.setValue({ x: 0, y: 0 });
+      setDraggedIndex(null);
+      setDropTargetIndex(null);
+    };
+
+    const handleTap = (index: number) => {
+      onLetterPress?.(index);
+    };
 
     const isDragging = draggedIndex !== null;
 
@@ -247,33 +342,25 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
             return <React.Fragment key={index}>{letterEl}</React.Fragment>;
           }
 
-          const panResponder = startPanResponderFor(index);
-
           return (
-            <Animated.View
+            <DraggableLetter
               key={index}
-              {...panResponder.panHandlers}
-              // See GridCell.tsx's identical comment: real taps are
-              // detected via the PanResponder release handler above;
-              // this test-only escape hatch is only so `fireEvent.press`
-              // can still exercise a plain tap-to-remove without a full
-              // touch sequence.
-              {...({ onPress: () => onLetterPress?.(index) } as object)}
-              accessibilityRole="button"
+              index={index}
+              disabled={false}
               accessibilityLabel={`Remove letter ${letter}`}
+              onDragStart={handleDragStart}
+              onDragMove={handleDragMove}
+              onDragRelease={handleDragRelease}
+              onDragCancel={handleDragCancel}
+              onTap={handleTap}
               style={
                 isBeingDragged
-                  ? {
-                      transform: pan.getTranslateTransform(),
-                      zIndex: 10,
-                      elevation: 10,
-                      opacity: 0.85
-                    }
-                  : { transform: [{ translateX: siblingShiftX }] }
+                  ? [styles.removeLabel, { transform: pan.getTranslateTransform(), zIndex: 10, elevation: 10, opacity: 0.85 }]
+                  : [styles.removeLabel, { transform: [{ translateX: siblingShiftX }] }]
               }
             >
               {letterEl}
-            </Animated.View>
+            </DraggableLetter>
           );
         })}
 
@@ -302,6 +389,10 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginHorizontal: 1
   },
+  // Purely a hook for the accessibilityLabel test infra expects on the
+  // remove-letter gesture target; DraggableLetter doesn't otherwise
+  // style itself, its child (letterEl) carries all the visuals.
+  removeLabel: {},
   letter: {
     // Matches web's CurrentWord.css mobile breakpoint (48px * 0.75).
     fontSize: 36,

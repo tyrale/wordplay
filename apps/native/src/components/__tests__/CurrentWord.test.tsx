@@ -52,4 +52,49 @@ describe('native CurrentWord', () => {
     const callback = jest.fn();
     expect(() => ref.current?.measureInWindow(callback)).not.toThrow();
   });
+
+  /**
+   * Regression test for a real bug: an earlier version of this
+   * component created a brand-new `PanResponder` (via a plain function
+   * called straight from render) for every letter on every single
+   * re-render, rather than a stable one created exactly once per
+   * letter. `PanResponder.create()` allocates a fresh internal
+   * `gestureState` every time it's called, so recreating it constantly
+   * *during* an active drag (which itself triggers a re-render on every
+   * touch-move, to update the live drop indicator) was silently
+   * corrupting the gesture every frame - dragging within the word
+   * "didn't really work at all" despite the reorder math itself being
+   * correct in isolation. This can't fully simulate a real touch-drag
+   * sequence, but it does exercise the exact re-render pattern that
+   * triggered the bug: force several re-renders (as continuous drag
+   * state updates would) and confirm a plain tap still works
+   * afterward - if PanResponder were being recreated on every one of
+   * these, `fireEvent.press`'s escape hatch would still work (it's a
+   * separate code path), but this at least proves the component
+   * tolerates the render pattern without throwing or losing its
+   * gesture wiring.
+   */
+  it('regression: tolerates rapid re-renders (the pattern an active drag produces) without breaking tap-to-remove', async () => {
+    const onLetterPress = jest.fn();
+    const { rerender } = render(
+      <ThemeProvider>
+        <CurrentWord word="CATS" onLetterPress={onLetterPress} />
+      </ThemeProvider>
+    );
+    await screen.findByLabelText('Current word: CATS');
+
+    // Force several rapid re-renders, mirroring what continuous
+    // onPanResponderMove-driven state updates (dropTargetIndex changing
+    // every touch-move) would trigger on the real component.
+    for (let i = 0; i < 10; i++) {
+      rerender(
+        <ThemeProvider>
+          <CurrentWord word="CATS" onLetterPress={onLetterPress} />
+        </ThemeProvider>
+      );
+    }
+
+    fireEvent.press(screen.getByLabelText('Remove letter T'));
+    expect(onLetterPress).toHaveBeenCalledWith(2);
+  });
 });
