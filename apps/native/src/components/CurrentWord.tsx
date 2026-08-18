@@ -79,6 +79,7 @@ import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Animated, PanResponder, Text, View, StyleSheet } from 'react-native';
 import { LockIcon } from './LockIcon';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
+import { triggerHapticFeedback } from '../utils/haptics';
 
 export interface LetterHighlight {
   index: number;
@@ -104,6 +105,14 @@ const DRAG_THRESHOLD = 6;
  * letter being dragged over/past it - matches web's WordBuilder.tsx
  * translateX(16px). */
 const SIBLING_SHIFT = 16;
+/** How far a letter lifts off the row while being dragged, and how much
+ * it tilts - 80% of the letter's own font size (per user direction) and
+ * a fixed counter-clockwise tilt, matching (and extending) web's
+ * WordBuilder.css `--dragging` lift/rotate feedback. Negative Y moves it
+ * up (RN's Y axis increases downward); negative rotation is counter-
+ * clockwise. */
+const DRAG_LIFT = -(36 * 0.8);
+const DRAG_ROTATION = '-15deg';
 
 interface LetterLayout {
   x: number;
@@ -301,17 +310,31 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
     }, {} as Record<number, 'key' | 'locked' | 'lockedKey'>);
 
     const handleDragStart = (index: number) => {
+      // "Picking up" the letter - a distinct, immediate confirmation
+      // that the drag has actually started (as opposed to a plain tap),
+      // separate from the per-target-change feedback in handleDragMove
+      // below and the on-drop feedback in handleDragRelease.
+      triggerHapticFeedback('move');
       setDraggedIndex(index);
       setDropTargetIndex(index);
     };
 
     const handleDragMove = (index: number, dx: number, dy: number) => {
       pan.setValue({ x: dx, y: dy });
-      setDropTargetIndex(computeDropIndex(letterLayoutsRef.current, index, dx));
+      const newDropTarget = computeDropIndex(letterLayoutsRef.current, index, dx);
+      // Only on an actual change of target (matches web's WordBuilder.tsx
+      // behavior exactly) - firing on every touch-move event, rather than
+      // only when the drop position actually changes, would buzz
+      // continuously instead of reading as discrete "clicks" into place.
+      if (newDropTarget !== dropTargetIndex) {
+        triggerHapticFeedback('move');
+      }
+      setDropTargetIndex(newDropTarget);
     };
 
     const handleDragRelease = (index: number, dx: number, dy: number) => {
       const dropIndex = computeDropIndex(letterLayoutsRef.current, index, dx);
+      triggerHapticFeedback('move');
       pan.setValue({ x: 0, y: 0 });
       setDraggedIndex(null);
       setDropTargetIndex(null);
@@ -427,7 +450,21 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
               onTap={handleTap}
               style={
                 isBeingDragged
-                  ? [styles.removeLabel, { transform: pan.getTranslateTransform(), zIndex: 10, elevation: 10, opacity: 0.85 }]
+                  ? [
+                      styles.removeLabel,
+                      {
+                        // Horizontal position tracks the finger (pan.x);
+                        // vertical is a fixed lift rather than tracking
+                        // the finger's real vertical position, matching
+                        // web's WordBuilder.css lifted/tilted "picked up"
+                        // look (which also uses a fixed lift, not the
+                        // real drag offset, for the vertical axis).
+                        transform: [{ translateX: pan.x }, { translateY: DRAG_LIFT }, { rotate: DRAG_ROTATION }],
+                        zIndex: 10,
+                        elevation: 10,
+                        opacity: 0.85
+                      }
+                    ]
                   : [styles.removeLabel, { transform: [{ translateX: siblingShiftX }] }]
               }
             >
