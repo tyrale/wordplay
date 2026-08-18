@@ -151,7 +151,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   backButtonText: {
-    fontSize: 38,
+    // Matches GridCell.tsx's action-glyph ratio for a 60px button
+    // (60 * 0.482) after the same on-device size correction.
+    fontSize: 29,
     fontWeight: '900'
   },
   menuButton: {
@@ -165,7 +167,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   menuButtonText: {
-    fontSize: 38,
+    // See backButtonText's identical comment.
+    fontSize: 29,
     fontWeight: '900'
   },
   content: {

@@ -77,10 +77,11 @@ export const GridCell: React.FC<GridCellProps> = ({
 
   const textColor = type === 'action' || state === 'key' ? colors.accent : colors.text;
   // Web's GridCell.css mobile breakpoint ratios are ~28px/60px cell for
-  // letters and ~38px/60px for action glyphs; scaled down ~10% from that
-  // per on-device feedback (web's ratio read slightly too large once
-  // actually rendered on a phone).
-  const fontSize = type === 'action' ? size * 0.567 : size * 0.423;
+  // letters and ~38px/60px for action glyphs; scaled down ~25% from that
+  // per on-device feedback (in two rounds: -10%, then another -15% -
+  // web's literal ratio reads noticeably too large once actually
+  // rendered on a phone).
+  const fontSize = type === 'action' ? size * 0.482 : size * 0.36;
 
   const canDrag = draggable && !disabled && type === 'letter';
   const [isDragging, setIsDragging] = useState(false);

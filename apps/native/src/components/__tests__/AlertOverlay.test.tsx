@@ -32,18 +32,14 @@ describe('estimateFontSize', () => {
     expect(size).toBeGreaterThanOrEqual(24);
   });
 
-  it('caps the size for very short lines relative to the headline block height', () => {
+  it('caps the size for very short lines relative to the frame height', () => {
     // A wide-but-short overlay: width alone would suggest a huge font, but
-    // the height-based cap (55% of 500, for a single line) should bind instead.
+    // the height-based cap (30% of 500, matching web's MAX_FONT_SIZE_VH_FRACTION
+    // exactly - a flat per-line cap, not divided by how many lines there
+    // are, since this is now only a *starting guess* for FitLine's real
+    // onTextLayout-based measurement to correct, not the final answer).
     const size = estimateFontSize('A', 2000, 500);
-    expect(size).toBeLessThanOrEqual(500 * 0.55);
-  });
-
-  it('divides the height cap across multiple lines, so a 4-line phrase gets a smaller per-line cap than a 1-line phrase', () => {
-    const oneLineSize = estimateFontSize('A', 2000, 500, 1);
-    const fourLineSize = estimateFontSize('A', 2000, 500, 4);
-    expect(fourLineSize).toBeLessThan(oneLineSize);
-    expect(fourLineSize).toBeLessThanOrEqual((500 * 0.55) / 4);
+    expect(size).toBeLessThanOrEqual(500 * 0.3);
   });
 });
 
@@ -84,5 +80,51 @@ describe('native AlertOverlay', () => {
 
     fireEvent.press(screen.getByText('Share'));
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * The headline's actual "fills to the edge" behavior - unlike web
+   * (which measures via canvas synchronously before ever painting), this
+   * renders once at a heuristic guess, then corrects using the *real*
+   * rendered width once React Native reports it via `onTextLayout`. This
+   * confirms that correction actually happens: if the real render came
+   * out much wider or narrower than the initial guess assumed, the font
+   * size should change to compensate, converging toward actually filling
+   * the target width rather than just guessing at it forever.
+   */
+  it('corrects the headline font size once the real rendered width is known, rather than trusting the initial estimate forever', () => {
+    renderOverlay({ lines: ['HELLO'] });
+    const line = screen.getByText('HELLO');
+    const initialFontSize = (line.props.style as { fontSize: number }[]).find(s => 'fontSize' in s)?.fontSize;
+    expect(typeof initialFontSize).toBe('number');
+
+    // Report a rendered width far narrower than the initial guess assumed
+    // (as if the real system font is much narrower per-character than the
+    // AVG_CHAR_WIDTH_RATIO heuristic guessed) - the corrected font size
+    // should grow to compensate, not stay at the original guess.
+    fireEvent(line, 'textLayout', { nativeEvent: { lines: [{ width: 10, x: 0, y: 0, height: 20 }] } });
+
+    const correctedFontSize = (screen.getByText('HELLO').props.style as { fontSize: number }[]).find(
+      s => 'fontSize' in s
+    )?.fontSize;
+    expect(correctedFontSize).toBeGreaterThan(initialFontSize as number);
+  });
+
+  it('does not re-correct the font size on a second textLayout event (measures once per mount)', () => {
+    renderOverlay({ lines: ['HELLO'] });
+    const line = screen.getByText('HELLO');
+
+    fireEvent(line, 'textLayout', { nativeEvent: { lines: [{ width: 10, x: 0, y: 0, height: 20 }] } });
+    const afterFirst = (screen.getByText('HELLO').props.style as { fontSize: number }[]).find(s => 'fontSize' in s)
+      ?.fontSize;
+
+    fireEvent(screen.getByText('HELLO'), 'textLayout', {
+      nativeEvent: { lines: [{ width: 999, x: 0, y: 0, height: 20 }] }
+    });
+    const afterSecond = (screen.getByText('HELLO').props.style as { fontSize: number }[]).find(
+      s => 'fontSize' in s
+    )?.fontSize;
+
+    expect(afterSecond).toBe(afterFirst);
   });
 });

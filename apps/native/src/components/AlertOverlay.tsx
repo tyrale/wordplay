@@ -7,23 +7,24 @@
  * alerts). Per the user's explicit direction, this is a real full-screen
  * overlay matching web's pattern - not a toast/snackbar.
  *
- * One deliberate implementation difference: the web version measures each
- * line's rendered width via an offscreen `<canvas>` and scales its
- * font-size so the line fills ~105% of the viewport width (independent
- * per line - a 2-letter and 8-letter line both end up filling the
- * screen). React Native has no canvas text-measurement API. Rather than
- * building a multi-pass `onTextLayout`-based measurement (real, but adds
- * meaningful complexity and needs on-device tuning to get pixel-perfect,
- * which isn't practical to verify in this environment without a
- * simulator), this uses a deterministic character-count heuristic
- * (`estimateFontSize`) that approximates the same "fill the width"
- * effect. The `AVG_CHAR_WIDTH_RATIO` constant is the one value worth
- * tuning against the real system font on a device - it's a pure,
- * dependency-free function, easy to unit test and adjust independently
- * of the rest of the component.
+ * Headline sizing: web measures each line's rendered width via an
+ * offscreen `<canvas>` (`ctx.measureText`) and scales its font-size so
+ * the line fills ~105% of the frame width - independent per line, so a
+ * 2-letter and 8-letter line both end up bleeding past the screen edges
+ * by design. React Native has no canvas text-measurement API, so this
+ * uses `onTextLayout` instead: render each line once at a reasonable
+ * initial guess (the same character-count heuristic this used to rely
+ * on *entirely* - now only a starting point), read back its *actual*
+ * rendered width once RN has laid it out, and correct the font size by
+ * the same proportional-scaling formula web's canvas measurement uses
+ * (font metrics scale linearly with font size for a fixed string, so a
+ * single correction pass converges very close to exact - this isn't an
+ * estimate anymore, it's a real measurement, just arriving one render
+ * later than web's synchronous canvas call can).
  */
-import React, { useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import type { NativeSyntheticEvent, TextLayoutEventData } from 'react-native';
 import { triggerHapticFeedback } from '../utils/haptics';
 import type { HapticPattern } from '../utils/haptics';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
@@ -46,7 +47,7 @@ export interface AlertOverlayProps {
 
 /** Target line width as a fraction of the overlay's width - lines are
  * deliberately ~5% too wide so their outermost letter edges bleed past
- * the screen (matches web's design intent exactly). */
+ * the screen (matches web's `TARGET_WIDTH_VW` exactly). */
 const TARGET_WIDTH_FRACTION = 1.05;
 /** Each line's measurement/layout box is wider than TARGET_WIDTH_FRACTION
  * itself, purely so React Native's text layout has enough room to never
@@ -56,29 +57,29 @@ const TARGET_WIDTH_FRACTION = 1.05;
  * oversized, unclipped box is what makes the line bleed symmetrically
  * past both screen edges. */
 const LINE_BOX_WIDTH_FRACTION = 1.4;
+/** Matches web's MIN_FONT_SIZE/MAX_FONT_SIZE_VH_FRACTION exactly - a flat
+ * per-line cap, not divided across however many lines there are (web
+ * doesn't do that either; headline phrases are assumed short). */
 const MIN_FONT_SIZE = 24;
-/** Cap a single line's height as a fraction of the *total headline
- * block* budget (not the full overlay height) - divided across however
- * many lines there are, so a 4-line phrase doesn't collectively push the
- * meta text/close button off-screen the way a single short line's cap
- * would if applied per-line regardless of line count. */
-const HEADLINE_BLOCK_HEIGHT_FRACTION = 0.55;
+const MAX_FONT_SIZE_VH_FRACTION = 0.3;
+/** Tight leading so multiple stacked headline words sit close together -
+ * matches web's AlertOverlay.css `line-height: 0.8` exactly (RN's
+ * `lineHeight` is an absolute px value, not a unitless multiplier, so
+ * this gets multiplied by the line's own fitted font size below). */
+const LINE_HEIGHT_RATIO = 0.8;
 /** Empirical average glyph-width-to-font-size ratio for the system's
- * default bold sans-serif - the one constant worth tuning on a real
- * device (see module doc comment). */
+ * default bold sans-serif - used only to pick a reasonable *starting*
+ * font size before the real `onTextLayout` measurement corrects it (see
+ * module doc comment), not as the final answer the way it used to be. */
 const AVG_CHAR_WIDTH_RATIO = 0.62;
 
-/** Pure, dependency-free so it's directly unit-testable without rendering. */
-export function estimateFontSize(
-  line: string,
-  containerWidth: number,
-  containerHeight: number,
-  totalLineCount: number = 1
-): number {
+/** Pure, dependency-free so it's directly unit-testable without
+ * rendering - the initial guess `FitLine` below measures and corrects. */
+export function estimateFontSize(line: string, containerWidth: number, containerHeight: number): number {
   const length = Math.max(line.trim().length, 1);
   const targetWidth = containerWidth * TARGET_WIDTH_FRACTION;
   const estimated = targetWidth / (length * AVG_CHAR_WIDTH_RATIO);
-  const maxSize = (containerHeight * HEADLINE_BLOCK_HEIGHT_FRACTION) / Math.max(totalLineCount, 1);
+  const maxSize = containerHeight * MAX_FONT_SIZE_VH_FRACTION;
   return Math.max(MIN_FONT_SIZE, Math.min(estimated, maxSize));
 }
 
@@ -89,6 +90,45 @@ const VARIANT_HAPTIC: Record<AlertOverlayVariant, HapticPattern> = {
   unlock: 'unlock',
   win: 'win',
   lose: 'lose'
+};
+
+interface FitLineProps {
+  text: string;
+  displayText: string;
+  targetWidth: number;
+  maxFontSize: number;
+  color: string;
+}
+
+/** Renders one headline line, correcting its own font size once real
+ * layout measurement is available - see this file's doc comment. */
+const FitLine: React.FC<FitLineProps> = ({ text, displayText, targetWidth, maxFontSize, color }) => {
+  const [fontSize, setFontSize] = useState(() => estimateFontSize(text, targetWidth / TARGET_WIDTH_FRACTION, maxFontSize / MAX_FONT_SIZE_VH_FRACTION));
+  const correctedRef = useRef(false);
+
+  const handleTextLayout = (e: NativeSyntheticEvent<TextLayoutEventData>) => {
+    if (correctedRef.current) return;
+    correctedRef.current = true;
+
+    const measuredWidth = e.nativeEvent.lines.reduce((sum, l) => sum + l.width, 0);
+    if (measuredWidth <= 0) return;
+
+    const fitSize = (targetWidth / measuredWidth) * fontSize;
+    const clamped = Math.max(MIN_FONT_SIZE, Math.min(fitSize, maxFontSize));
+    if (Math.abs(clamped - fontSize) > 0.5) {
+      setFontSize(clamped);
+    }
+  };
+
+  return (
+    <Text
+      numberOfLines={1}
+      onTextLayout={handleTextLayout}
+      style={[styles.line, { fontSize, lineHeight: fontSize * LINE_HEIGHT_RATIO, color }]}
+    >
+      {displayText}
+    </Text>
+  );
 };
 
 export const AlertOverlay: React.FC<AlertOverlayProps> = ({ isVisible, lines, onClose, variant = 'default', meta, actions }) => {
@@ -107,18 +147,21 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({ isVisible, lines, on
   // Matches web: lose/error variants use the theme's text color; every
   // other variant (including the default) uses the accent color.
   const lineColor = variant === 'lose' || variant === 'error' ? colors.text : colors.accent;
+  const targetWidth = width * TARGET_WIDTH_FRACTION;
+  const maxFontSize = height * MAX_FONT_SIZE_VH_FRACTION;
 
   return (
     <View style={[styles.overlay, { backgroundColor: colors.background }]} accessibilityRole="alert" accessibilityViewIsModal>
       <View style={styles.linesContainer}>
         {lines.map((line, index) => (
-          <View key={index} style={{ width: width * LINE_BOX_WIDTH_FRACTION, alignItems: 'center' }}>
-            <Text
-              numberOfLines={1}
-              style={[styles.line, { fontSize: estimateFontSize(line, width, height, lines.length), color: lineColor }]}
-            >
-              {variant === 'start' ? line : line.toUpperCase()}
-            </Text>
+          <View key={`${index}-${line}`} style={{ width: width * LINE_BOX_WIDTH_FRACTION, alignItems: 'center' }}>
+            <FitLine
+              text={line}
+              displayText={variant === 'start' ? line : line.toUpperCase()}
+              targetWidth={targetWidth}
+              maxFontSize={maxFontSize}
+              color={lineColor}
+            />
           </View>
         ))}
       </View>
