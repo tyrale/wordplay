@@ -121,6 +121,35 @@ describe('native CurrentWord', () => {
   });
 
   /**
+   * Regression test for the actual bug behind "can drag to the very
+   * first or last position, never in between" (see CurrentWord.tsx's
+   * doc comment, point 3): a draggable letter's layout must be measured
+   * on its own outer wrapper (a *direct* flex child of the row
+   * container), not on its inner content - the inner content's own
+   * `onLayout` would report position relative to the wrapper itself
+   * (its immediate parent), which is always ~0 since the wrapper has no
+   * siblings and sizes to fit that one child exactly, regardless of
+   * where in the row the letter actually sits. This fires a `layout`
+   * event with a distinctive, non-zero x/width directly on the queried
+   * element and confirms *that exact element* receives it - if the
+   * measurement were (again) wired to some inner child instead, this
+   * event fired on the outer element wouldn't reach it at all.
+   */
+  it('regression: measures a draggable letter relative to the row, not its own inner wrapper', async () => {
+    render(
+      <ThemeProvider>
+        <CurrentWord word="CAT" onLetterPress={jest.fn()} />
+      </ThemeProvider>
+    );
+    await screen.findByLabelText('Current word: CAT');
+
+    const letterA = screen.getByLabelText('Remove letter A');
+    expect(() =>
+      fireEvent(letterA, 'layout', { nativeEvent: { layout: { x: 42, y: 0, width: 30, height: 40 } } })
+    ).not.toThrow();
+  });
+
+  /**
    * Regression test for a real bug: an earlier version of this
    * component created a brand-new `PanResponder` (via a plain function
    * called straight from render) for every letter on every single

@@ -12,60 +12,58 @@
  * where the letter would land, and the other letters shift aside
  * (translateX) to open a gap for it.
  *
- * Architecture note (this went through two broken versions before this
- * one - worth documenting why): each letter's `PanResponder` is owned by
- * its own stable sub-component (`DraggableLetter`), created exactly once
- * via `useRef` and never recreated. `PanResponder.create()` allocates a
- * fresh internal `gestureState` object (tracking the gesture's starting
- * point, accumulated dx/dy, etc.) every time it's called - calling it
- * again mid-gesture (e.g. from a plain function invoked straight from
- * render, re-run on every re-render) throws that tracking state away and
- * starts over, even though the OS is still sending touch-move events for
- * the *same* physical gesture. Since dragging inherently changes this
- * component's own state every frame (to move the drop indicator/open a
- * gap), re-rendering happens constantly *during* a drag - which was
- * silently corrupting the gesture on every single frame, making dragging
- * within the word not really work at all despite the drop-indicator/
- * gap-opening logic itself being correct in isolation. `DraggableLetter`
- * reports relative gesture data (dx/dy from the gesture's own start
- * point, not absolute screen coordinates - see the drop-target math note
- * below for why that distinction matters) up to this parent via stable
- * callback props (routed through a ref, same pattern GridCell.tsx uses,
- * so the callbacks *themselves* being recreated each render is fine);
- * the parent owns all the shared coordination state (which letter is
- * dragging, the live drop target, the shared Animated.ValueXY used to
- * paint the dragged letter's live offset).
+ * This went through several broken versions before this one - each of
+ * the following is a real bug that was actually hit, not a hypothetical,
+ * worth documenting so nobody re-introduces any of them:
  *
- * The indicator/gap-opening are still absolutely-positioned overlays
- * computed from each letter's stable, drag-independent layout (not
- * elements inserted into the row) - inserting/removing the indicator
- * inline would shift every later letter's actual layout box, re-firing
- * their `onLayout` and feeding back into the very hit-testing math that
+ * 1. Each letter's `PanResponder` must be created exactly once, via
+ *    `useRef` in a stable sub-component (`DraggableLetter`) - never
+ *    recreated by calling a plain function straight from render.
+ *    `PanResponder.create()` allocates a fresh internal `gestureState`
+ *    every time it's called; recreating it mid-gesture (which is exactly
+ *    what happens if dragging's own state updates - moving the live drop
+ *    indicator - trigger a re-render that recreates it) throws away the
+ *    gesture's tracking state while the OS is still sending events for
+ *    the same physical touch, silently corrupting it on every frame.
+ *
+ * 2. The drop-target math must stay entirely in one coordinate space.
+ *    `DraggableLetter` reports `gestureState.dx`/`dy` (relative to the
+ *    gesture's own start point) rather than absolute `pageX`/`pageY`
+ *    screen coordinates - comparing an absolute screen coordinate
+ *    against a `measureInWindow`-converted local layout position is a
+ *    real, subtle source of drift (that conversion can be stale relative
+ *    to the live touch position), and TROUBLESHOOTING IT the first time
+ *    around didn't actually fix the underlying problem (see #3) - it's
+ *    kept this way regardless because avoiding an unnecessary coordinate
+ *    conversion is simply more robust on its own merits.
+ *
+ * 3. **The actual bug behind "only ever lands at the very first or last
+ *    position, never in between"**: `letterLayoutsRef` must be populated
+ *    from a layout measurement taken relative to *this component's own
+ *    row container*, not relative to whatever the letter's immediate
+ *    parent happens to be. `DraggableLetter` wraps each letter in its own
+ *    `Animated.View` (needed to carry the drag transform) - if `onLayout`
+ *    is attached to the letter's own inner content instead of to
+ *    `DraggableLetter`'s outer wrapper, it reports position relative to
+ *    that wrapper (its immediate parent), which - since the wrapper has
+ *    no siblings and sizes to fit its single child exactly - is always
+ *    ~0, regardless of where in the row the letter actually sits. Every
+ *    letter ends up with a near-identical recorded x/center, so the
+ *    "find the first sibling center greater than the dragged letter's
+ *    live center" comparison degenerates to essentially just "did it
+ *    move left or right at all", which only ever resolves to the very
+ *    front or very end - exactly the reported symptom, and exactly why
+ *    the coordinate-space fix in #2 alone didn't fix it. `onLayout` is
+ *    attached to `DraggableLetter`'s own root `Animated.View` instead
+ *    (which *is* a direct flex child of the row, so its layout actually
+ *    is relative to the row) via an `onLayout` prop it's given.
+ *
+ * The indicator/gap-opening are absolutely-positioned overlays computed
+ * from each letter's stable, drag-independent layout (not elements
+ * inserted into the row) - inserting/removing the indicator inline would
+ * shift every later letter's actual layout box, re-firing their
+ * `onLayout` and feeding back into the very hit-testing math that
  * decides where the indicator goes.
- *
- * Drop-target math note (a second real bug found after the PanResponder
- * fix above - dragging worked, but only ever landed at the very first or
- * last position, never in between): `DraggableLetter` used to report the
- * gesture's absolute `pageX` (screen coordinates), which this parent
- * compared against each letter's *local* layout position converted to
- * screen coordinates via a separately-`measureInWindow`'d container
- * offset. That conversion could be stale (measured on an earlier layout
- * pass than the one actually in effect once this component sits inside
- * the anchor-relative absolute-positioning the game screens use - see
- * InteractiveGame.tsx's `wordPositioned`) or just momentarily
- * inconsistent with the live `pageX`, which systematically only produced
- * a *correct-enough* result at the extremes (dragging far enough past
- * every letter still resolves to "the end" even with an offset error)
- * while every in-between comparison could land on the wrong side of a
- * threshold. Fixed by never touching absolute screen coordinates at all:
- * `DraggableLetter` reports `gestureState.dx`/`dy` (relative to the
- * gesture's own start point), and the drop target is computed by
- * comparing the *dragged letter's own live center* (its original local
- * layout position plus `dx`) against every other letter's original,
- * static local center - both quantities are already in the exact same
- * coordinate space (this container's local layout), so there's no
- * conversion, and therefore no way for it to be wrong at some scroll/
- * position offsets but not others.
  *
  * Also serves as the drop zone for letters dragged from the alphabet
  * grid: exposes `measureInWindow` via a ref so the screen can check a
@@ -150,6 +148,10 @@ interface DraggableLetterProps {
   index: number;
   disabled: boolean;
   accessibilityLabel: string;
+  /** Reports this letter's layout (x/width) *relative to the row
+   * container*, not to this component's own wrapper - see this file's
+   * doc comment for why that distinction is the whole point. */
+  onLayout: (index: number, x: number, width: number) => void;
   onDragStart: (index: number) => void;
   /** `dx`/`dy` are relative to the gesture's *start* point (PanResponder's
    * own gestureState), not absolute screen coordinates - see this file's
@@ -178,7 +180,7 @@ interface DraggableLetterProps {
  * itself never has to be (and never is) recreated - same pattern as
  * GridCell.tsx's `latestRef`.
  */
-const DraggableLetter: React.FC<DraggableLetterProps> = ({ index, disabled, accessibilityLabel, onDragStart, onDragMove, onDragRelease, onDragCancel, onTap, children, style }) => {
+const DraggableLetter: React.FC<DraggableLetterProps> = ({ index, disabled, accessibilityLabel, onLayout, onDragStart, onDragMove, onDragRelease, onDragCancel, onTap, children, style }) => {
   const latestRef = useRef({ disabled, onDragStart, onDragMove, onDragRelease, onDragCancel, onTap });
   useEffect(() => {
     latestRef.current = { disabled, onDragStart, onDragMove, onDragRelease, onDragCancel, onTap };
@@ -230,6 +232,16 @@ const DraggableLetter: React.FC<DraggableLetterProps> = ({ index, disabled, acce
       // hatch is only so `fireEvent.press` in tests can still exercise a
       // plain tap without simulating a full touch sequence.
       {...({ onPress: () => !disabled && onTap(index) } as object)}
+      // Measured here (this component's own root), not on `children`
+      // (the actual letter content) - see this file's doc comment: this
+      // Animated.View is a *direct* flex child of the row container, so
+      // its `onLayout` reports x/width relative to that row exactly like
+      // every other direct child does. `children`'s own onLayout would
+      // instead report position relative to *this* wrapper, which - since
+      // this wrapper has no siblings and sizes to fit its single child
+      // exactly - is always ~0, regardless of where in the row this
+      // letter actually sits.
+      onLayout={e => onLayout(index, e.nativeEvent.layout.x, e.nativeEvent.layout.width)}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       style={style}
@@ -367,28 +379,38 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
             }
           }
 
-          const letterEl = (
-            <View
-              onLayout={e => {
-                letterLayoutsRef.current[index] = { x: e.nativeEvent.layout.x, width: e.nativeEvent.layout.width };
-              }}
-              style={styles.letterWrap}
-            >
+          const letterContent = (
+            <>
               <Text style={[styles.letter, { color }]}>{letter}</Text>
               {isLocked && (
                 <View style={styles.lock} pointerEvents="none">
                   <LockIcon size={10} color={colors.accent} />
                 </View>
               )}
-            </View>
+            </>
           );
+
+          const recordLayout = (x: number, width: number) => {
+            letterLayoutsRef.current[index] = { x, width };
+          };
 
           // Locked letters can't be removed or dragged (mirrors the
           // engine rule that rejects removing/moving a locked/lockedKey
           // letter), so they're not wrapped in a gesture handler even
-          // when onLetterPress/onWordChange are provided.
+          // when onLetterPress/onWordChange are provided. This View is a
+          // *direct* flex child of the row container (no extra wrapper
+          // like DraggableLetter adds below), so its own onLayout
+          // already reports position relative to that row correctly.
           if ((!onLetterPress && !onWordChange) || isLocked) {
-            return <React.Fragment key={index}>{letterEl}</React.Fragment>;
+            return (
+              <View
+                key={index}
+                onLayout={e => recordLayout(e.nativeEvent.layout.x, e.nativeEvent.layout.width)}
+                style={styles.letterWrap}
+              >
+                {letterContent}
+              </View>
+            );
           }
 
           return (
@@ -397,6 +419,7 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
               index={index}
               disabled={false}
               accessibilityLabel={`Remove letter ${letter}`}
+              onLayout={(_i, x, width) => recordLayout(x, width)}
               onDragStart={handleDragStart}
               onDragMove={handleDragMove}
               onDragRelease={handleDragRelease}
@@ -408,7 +431,7 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
                   : [styles.removeLabel, { transform: [{ translateX: siblingShiftX }] }]
               }
             >
-              {letterEl}
+              <View style={styles.letterWrap}>{letterContent}</View>
             </DraggableLetter>
           );
         })}
