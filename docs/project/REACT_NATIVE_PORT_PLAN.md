@@ -156,6 +156,18 @@ Steps:
 - Deferred, documented rather than silently dropped: reconnect-on-foreground hardening for the realtime channel subscription (RN apps backgrounding is a real condition browsers don't have in the same way - the port plan's own critical item 4 flagged this explicitly), real deep-linking for shared invite links (URLs aren't how this app is normally opened; joining by typed invite code already works), tap-to-rename mid-game (`ScoreBar`'s `onOwnNameTap` plumbing exists but isn't wired to anything yet), and the time-pressure mechanic entirely (not multiplayer-specific - still not ported into `InteractiveGame.tsx` at all, consistent with every earlier phase's notes).
 - Test coverage: 47 new tests across the adapter, hook, and three new screens/components, plus `ScoreBar.tsx`'s new multiplayer behavior - full workspace suite at 650 tests (94 web + 347 engine + 209 native), `tsc --noEmit` clean, verified via real Metro bundle fetches for both iOS and Android (not just Jest/tsc, per this port's own established practice).
 
+### Phase 3.5 — WordTrail (gap closure)
+**Goal**: Close a real, self-inflicted gap in this plan's own bookkeeping - `WordTrail` was listed as a Phase 2 component to port, explicitly deferred at the end of that phase ("still open for a later pass"), and then never re-mentioned in any of Phase 3's otherwise-thorough per-slice "deferred" lists. It just fell through the cracks rather than being deliberately re-scoped. Until this phase, `InteractiveGame.tsx` (vs-bot and, since Phase 4, multiplayer) and `ChallengeGame.tsx` had no word trail at all, and `ZenGame.tsx` only had a simplified stand-in (a plain list of past words, explicitly documented in its own code comment as not the real component).
+
+Steps:
+- Port `WordTrail.tsx`: per-word key-letter highlighting, scores/pass indicators (regular mode), and challenge mode's distinct layout (start/target words threaded into the first/last trail entries, with an empty state before any words are played).
+- Wire into `InteractiveGame.tsx` (matches web's `wordTrailMoves` computation from `gameState.turnHistory`, generalized via `localPlayerId` the same way Phase 4's other fixes were), `ChallengeGame.tsx` (from `challengeState.wordSequence`, with `startWord`/`targetWord`), and `ZenGame.tsx` (replacing its simplified stand-in with the real component, no scores - matches its own "no score" design intent).
+
+✅ **Done**:
+- Native `WordTrail.tsx` ported with one deliberate layout simplification: web positions the start/target word labels *absolutely, anchored to a specific letter* (the first/last letter of the relevant trail entry); native instead prepends/appends them as an inline `"START →"`/`"← TARGET"` row segment - same information, simpler layout primitive, no loss of function.
+- `maskWord` (the ninja-bot dash-masking gimmick) is supported by the component itself, but **not wired up** in any screen - ninja-bot's other gimmicks (invisible grid, gravity) aren't ported either, so wiring only the word-trail-masking half would be a half-implemented gimmick. Stays consistent with every earlier phase's scope on ninja-bot.
+- Test coverage: dedicated `WordTrail.test.tsx` covering regular mode (key letters, scores, pass, masking) and challenge mode (empty state, single-move both-labels case, multi-move first/last labels), plus updated tests for the three screens it's wired into. Full workspace suite verified green, `tsc --noEmit` clean, real Metro bundle fetches for both platforms.
+
 ### Phase 5 — Platform polish, store readiness, and release
 **Goal**: Everything needed to actually ship to the App Store and Google Play.
 

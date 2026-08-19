@@ -89,7 +89,9 @@ describe('native ChallengeGame screen', () => {
     // overlay has a real, freshly-persisted local challenge result to
     // show - proving it opened and isn't showing the "no challenge
     // started today" placeholder (the words themselves are date-seeded
-    // and not worth hardcoding here).
-    expect(screen.getByText('→')).toBeTruthy();
+    // and not worth hardcoding here). `getAllByText` (not `getByText`)
+    // since WordTrail's own start/target labels underneath the overlay
+    // also render a "→".
+    expect(screen.getAllByText('→').length).toBeGreaterThan(0);
   });
 });

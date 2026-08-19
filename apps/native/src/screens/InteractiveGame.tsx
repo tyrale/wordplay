@@ -33,8 +33,11 @@ import { CurrentWord } from '../components/CurrentWord';
 import type { LetterHighlight } from '../components/CurrentWord';
 import { ScoreDisplay } from '../components/ScoreDisplay';
 import { ScoreBar } from '../components/ScoreBar';
+import { WordTrail } from '../components/WordTrail';
+import type { WordMove } from '../components/WordTrail';
 import { Menu } from '../components/Menu';
 import { TutorialOverlay } from '../components/TutorialOverlay';
+import { getBotDisplayName } from '@wordplay/engine/botRegistry';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { usePlayerStats } from '../hooks/usePlayerStats';
 import { useTutorialProgress } from '../hooks/useTutorialProgress';
@@ -274,6 +277,23 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       .filter((h): h is LetterHighlight => h !== null);
   }, [pendingWord, wordState.keyLetters, wordState.lockedLetters, wordState.lockedKeyLetters]);
 
+  // Word trail with move details - matches web's InteractiveGame.tsx
+  // exactly, generalized via localPlayerId the same way Phase 4's other
+  // fixes were. Ninjabot's dash-masking gimmick is deliberately not
+  // wired here - see WordTrail.tsx's doc comment.
+  const wordTrailMoves: WordMove[] = useMemo(() => {
+    const localId = localPlayerId ?? 'human';
+    return gameState.turnHistory.map(turn => ({
+      word: turn.newWord,
+      score: turn.score,
+      player: turn.playerId,
+      opponentName: turn.playerId === 'bot' && botId ? getBotDisplayName(botId) : undefined,
+      turnNumber: turn.turnNumber,
+      keyLetters: turn.scoringBreakdown.keyLettersUsed || [],
+      scoreBreakdown: turn.scoringBreakdown.breakdown
+    }));
+  }, [gameState, botId, localPlayerId]);
+
   const handleWordChange = useCallback(
     (newWord: string) => {
       setPendingWord(newWord);
@@ -464,6 +484,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
           />
 
           <View style={styles.wordPositioned}>
+            {wordTrailMoves.length > 0 && (
+              <View style={styles.wordTrail}>
+                <WordTrail moves={wordTrailMoves} showScores />
+              </View>
+            )}
             <CurrentWord
               ref={wordRef}
               word={pendingWord}
@@ -560,6 +585,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center'
+  },
+  wordTrail: {
+    marginBottom: 20
   },
   gridPositioned: {
     position: 'absolute',

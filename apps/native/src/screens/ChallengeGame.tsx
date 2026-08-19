@@ -24,6 +24,8 @@ import { AlphabetGrid } from '../components/AlphabetGrid';
 import type { LetterState } from '../components/AlphabetGrid';
 import { CurrentWord } from '../components/CurrentWord';
 import { ScoreDisplay } from '../components/ScoreDisplay';
+import { WordTrail } from '../components/WordTrail';
+import type { WordMove } from '../components/WordTrail';
 import { useWordDropZone } from '../hooks/useWordDropZone';
 import { Menu } from '../components/Menu';
 import { AlertOverlay } from '../components/AlertOverlay';
@@ -131,6 +133,17 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
     // Challenge mode has no key/locked letters (matches web).
     return ALPHABET.map(letter => ({ letter, state: 'normal' as const }));
   }, []);
+
+  // Word trail shows only played words - start and target words are
+  // rendered separately (inline "START →"/"← TARGET" labels) by
+  // WordTrail itself via its startWord/targetWord/isChallengeMode props,
+  // matching web's ChallengeGame.tsx exactly.
+  const wordTrailMoves: WordMove[] = useMemo(() => {
+    if (!challengeState) return [];
+    return challengeState.wordSequence
+      .filter(word => word !== challengeState.startWord)
+      .map((word, index) => ({ word, score: 0, turnNumber: index + 1 }));
+  }, [challengeState]);
 
   const canEdit = !isProcessingMove && !!challengeState && !challengeState.completed && !challengeState.failed;
 
@@ -327,6 +340,16 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
           />
 
           <View style={styles.wordPositioned}>
+            {challengeState && (
+              <View style={styles.wordTrail}>
+                <WordTrail
+                  moves={wordTrailMoves}
+                  isChallengeMode
+                  startWord={challengeState.startWord}
+                  targetWord={challengeState.targetWord}
+                />
+              </View>
+            )}
             <CurrentWord
               ref={wordRef}
               word={pendingWord}
@@ -411,6 +434,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center'
+  },
+  wordTrail: {
+    marginBottom: 20
   },
   gridPositioned: {
     position: 'absolute',

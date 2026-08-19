@@ -18,7 +18,7 @@
  * clears the pending edit, matching a *single* tap's meaning on web).
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { MoveAttempt } from '@wordplay/engine/interfaces';
 import { useGameState, useWordState } from '../hooks/useGameState';
@@ -29,13 +29,14 @@ import type { LetterState } from '../components/AlphabetGrid';
 import { CurrentWord } from '../components/CurrentWord';
 import type { LetterHighlight } from '../components/CurrentWord';
 import { ScoreDisplay } from '../components/ScoreDisplay';
+import { WordTrail } from '../components/WordTrail';
+import type { WordMove } from '../components/WordTrail';
 import { Menu } from '../components/Menu';
 import { useWordDropZone } from '../hooks/useWordDropZone';
 import { triggerHapticFeedback } from '../utils/haptics';
 
 const MAX_WORD_LENGTH = 10;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-const MAX_TRAIL_VISIBLE = 5;
 
 export interface ZenGameProps {
   onNavigateHome?: () => void;
@@ -93,16 +94,18 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
       .filter((h): h is LetterHighlight => h !== null);
   }, [pendingWord, wordState.keyLetters, wordState.lockedLetters, wordState.lockedKeyLetters]);
 
-  // Simplified word trail: just the sequence of words played since the
-  // last reset, most recent first, no scores shown (matching zen mode's
-  // scoreless design intent - web's richer WordTrail component with
-  // per-key-letter styling is deferred).
-  const wordTrail = useMemo(() => {
-    return gameState.turnHistory
-      .map(turn => turn.newWord)
-      .slice(-MAX_TRAIL_VISIBLE)
-      .reverse();
-  }, [gameState.turnHistory]);
+  // Word trail - matches web's ZenGame.tsx exactly: no scores (zen mode
+  // is scoreless by design), key letters still highlighted. Ninjabot's
+  // permanent dash-masking unlock (`ninja-word-trail`) is deliberately
+  // not wired here - see WordTrail.tsx's doc comment.
+  const wordTrailMoves: WordMove[] = useMemo(() => {
+    return gameState.turnHistory.map(turn => ({
+      word: turn.newWord,
+      score: 0,
+      turnNumber: turn.turnNumber,
+      keyLetters: turn.scoringBreakdown.keyLettersUsed || []
+    }));
+  }, [gameState]);
 
   const handleWordChange = useCallback(
     (newWord: string) => {
@@ -213,14 +216,10 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
           />
 
           <View style={styles.wordPositioned}>
-            {wordTrail.length > 0 && (
-              <ScrollView horizontal style={styles.trail} showsHorizontalScrollIndicator={false}>
-                {wordTrail.map((word, index) => (
-                  <Text key={`${word}-${index}`} style={[styles.trailWord, { color: colors.textSecondary }]}>
-                    {word}
-                  </Text>
-                ))}
-              </ScrollView>
+            {wordTrailMoves.length > 0 && (
+              <View style={styles.wordTrail}>
+                <WordTrail moves={wordTrailMoves} />
+              </View>
             )}
             <CurrentWord
               ref={wordRef}
@@ -280,13 +279,7 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center'
   },
-  trail: {
-    maxHeight: 30,
-    marginBottom: 8
-  },
-  trailWord: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginHorizontal: 8
+  wordTrail: {
+    marginBottom: 20
   }
 });
