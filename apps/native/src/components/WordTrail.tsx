@@ -157,7 +157,13 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         accessibilityLabel={`Word: ${item.word}${effectiveShowScores ? `, ${item.score} points` : ''}`}
         style={styles.row}
       >
-        {content}
+        {/* The word is centered across the *full row width*, independent
+            of whether a score is shown next to it - the score floats as
+            an absolutely-positioned overlay at the right edge instead of
+            a normal flex sibling, so its presence/width never shifts the
+            word off-center (a flex-row sibling would shrink the space
+            available to center within, pushing the word left). */}
+        <View style={styles.rowContent}>{content}</View>
         {effectiveShowScores && (
           <Text style={[styles.score, { color: colors.textSecondary }]}>{formatScore(item)}</Text>
         )}
@@ -205,10 +211,23 @@ export const WordTrail: React.FC<WordTrailProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    width: '100%',
     alignItems: 'center',
     gap: 4
   },
+  // Spans the full trail width (not shrink-wrapped to content) so
+  // `rowContent`'s centering below is relative to the *row*, not to
+  // whatever width the word+score happen to add up to - and `position:
+  // relative` gives `score` (below) a positioning context to float
+  // against without affecting this row's own layout/height.
   row: {
+    width: '100%',
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 24
+  },
+  rowContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8
@@ -241,6 +260,10 @@ const styles = StyleSheet.create({
     fontWeight: '700'
   },
   score: {
+    position: 'absolute',
+    right: 8,
+    top: '50%',
+    transform: [{ translateY: -8 }],
     fontSize: 12,
     fontWeight: '700'
   }
