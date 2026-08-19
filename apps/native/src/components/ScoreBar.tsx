@@ -1,45 +1,102 @@
 /**
- * Simplified port of apps/web's `components/game/ScoreBar.tsx` for this
- * Phase 2 slice - vanity display names (via nativeAuthAdapter) and the
- * multiplayer/self-tap-to-rename behavior are deferred; this just shows
- * each player's id-derived label and score, matching the bot-game default
- * (P1/bot name) case only.
+ * Ports apps/web's `components/game/ScoreBar.tsx`. Phase 2's slice only
+ * needed the bot-game default (P1/bot name) case; Phase 4 (vs-human
+ * multiplayer) adds real vanity display names via `isMultiplayer` -
+ * without it, both multiplayer players would show as "P1"/"P2" since
+ * neither has `isBot: true` the way a real bot opponent does.
  */
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import type { Player } from '@wordplay/engine/interfaces';
 import { useTheme } from '../theme/ThemeProvider';
+import { getDisplayName as getVanityName, hasConfirmedDisplayName } from '../adapters/nativeAuthAdapter';
 
 export interface ScoreBarProps {
   players: Player[];
   botDisplayName?: string;
+  /** vs-human multiplayer: show each player's vanity name instead of P1/P2. */
+  isMultiplayer?: boolean;
   currentRound?: number;
+  /** Authenticated player id treated as "the local player" in multiplayer
+   * games, used to identify which row is tappable for renaming. */
+  localPlayerId?: string;
+  /** Called when the local player taps their own name, to open the
+   * rename overlay. */
+  onOwnNameTap?: () => void;
 }
 
-export const ScoreBar: React.FC<ScoreBarProps> = ({ players, botDisplayName, currentRound }) => {
+/**
+ * Own display name always comes from local storage (kept in sync with the
+ * server in multiplayer via setDisplayName), so a rename is reflected
+ * immediately without waiting on a server refetch - matches web exactly.
+ */
+function getDisplayName(player: Player, humanIndex: number, isSelf: boolean, botDisplayName: string | undefined, isMultiplayer: boolean, hasConfirmedName: boolean): string {
+  if (player.isBot) {
+    return botDisplayName || player.name;
+  }
+  if (hasConfirmedName && (isMultiplayer ? isSelf : humanIndex === 0)) {
+    return getVanityName();
+  }
+  if (isMultiplayer) {
+    return player.name;
+  }
+  return `P${humanIndex + 1}`;
+}
+
+export const ScoreBar: React.FC<ScoreBarProps> = ({
+  players,
+  botDisplayName,
+  isMultiplayer = false,
+  currentRound,
+  localPlayerId,
+  onOwnNameTap
+}) => {
   const { currentTheme } = useTheme();
   if (players.length === 0) return null;
+
+  // `hasConfirmedDisplayName()` is async (AsyncStorage-backed) on native,
+  // unlike web's synchronous localStorage read - synchronously assume
+  // "confirmed" is false on first render (falls back to P1/vanilla player
+  // name, same as before any name was ever set) rather than blocking this
+  // component on a storage read; it'll only ever actually matter once the
+  // name prompt has already resolved earlier in the multiplayer flow
+  // anyway (see MultiplayerLobby.tsx), so this isn't a real gap in
+  // practice.
+  const [hasConfirmedName, setHasConfirmedName] = React.useState(false);
+  React.useEffect(() => {
+    hasConfirmedDisplayName().then(setHasConfirmedName);
+  }, []);
 
   let humanIndex = 0;
 
   return (
     <View style={styles.stack}>
       {players.map(player => {
-        const displayName = player.isBot ? (botDisplayName || player.name) : `P${humanIndex + 1}`;
+        // In multiplayer, "self" is the authenticated localPlayerId; in
+        // vs-bot/tutorial play, the first non-bot player is always self.
+        const isSelf = !player.isBot && (localPlayerId ? player.id === localPlayerId : humanIndex === 0);
+        const displayName = getDisplayName(player, humanIndex, isSelf, botDisplayName, isMultiplayer, hasConfirmedName);
         if (!player.isBot) humanIndex += 1;
         const rowColor = player.isCurrentPlayer ? currentTheme.colors.accent : currentTheme.colors.text;
 
-        return (
-          // Left-aligned as a compact inline pill (name + score together),
-          // matching web's ScoreBar.css exactly - not a name/score pair
-          // spread across a fixed-width row.
-          <View key={player.id} style={styles.row}>
+        const row = (
+          <View style={styles.row}>
             <Text style={[styles.name, { color: rowColor }]}>{displayName}</Text>
             <Text style={[styles.score, { color: rowColor }]}>
               {player.score === 0 ? '-' : player.score}
             </Text>
           </View>
         );
+
+        if (isSelf && onOwnNameTap) {
+          return (
+            <Pressable key={player.id} onPress={onOwnNameTap} accessibilityRole="button" accessibilityLabel={`Rename yourself (currently ${displayName})`}>
+              {row}
+            </Pressable>
+          );
+        }
+
+        return <View key={player.id}>{row}</View>;
       })}
       {typeof currentRound === 'number' && (
         <Text style={[styles.round, { color: currentTheme.colors.text }]}>round {currentRound}</Text>

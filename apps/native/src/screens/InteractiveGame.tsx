@@ -2,20 +2,29 @@
  * Native InteractiveGame screen - Phase 2's "smallest complete gameplay
  * loop" (see docs/project/REACT_NATIVE_PORT_PLAN.md). Ports the core
  * interaction logic of apps/web's `components/game/InteractiveGame.tsx`
- * (word-builder state machine: pendingWord -> attemptMove -> submit/pass),
- * trimmed of everything not needed for a bare bot game: multiplayer and
- * the vanity filter aren't part of this port. The first-time tutorial and
- * the "GUS" boss battle's whole-game countdown *are* ported (see
- * `isTutorial` and `onGameTimeout`/`onBossTrigger` below).
+ * (word-builder state machine: pendingWord -> attemptMove -> submit/pass).
+ * The first-time tutorial, the "GUS" boss battle's whole-game countdown,
+ * and (Phase 4) vs-human multiplayer are all wired via the same board -
+ * see `isTutorial`/`onGameTimeout`/`onBossTrigger` and
+ * `externalManager`/`localPlayerId`/`currentGameMode` below. The vanity
+ * (bad word) filter is still not part of this port.
  *
- * Interaction model differs from web's drag-and-drop (see AlphabetGrid.tsx
- * and CurrentWord.tsx doc comments): tap a grid letter to append it, tap
- * a letter in the current word to remove it.
+ * Multiplayer note: `externalManager`/`localPlayerId` let a caller
+ * (MultiplayerGame.tsx) supply an already-constructed
+ * `RemoteGameStateManager` instead of the local bot-game manager - the
+ * board renders exactly as it does for a bot game, just driven by that
+ * manager's state/actions instead (see `useGameState.ts`, which already
+ * had this plumbing from Phase 2 even though nothing used it until now).
+ * Every place this file otherwise hardcoded the literal ids `'human'`/
+ * `'bot'` (only ever true for vs-bot games) now resolves via
+ * `localPlayerId ?? 'human'` and "whichever other player" instead,
+ * matching web's InteractiveGame.tsx exactly - ported as a real
+ * generalization, not multiplayer-specific special-casing.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { GameConfig, MoveAttempt } from '@wordplay/engine/interfaces';
+import type { GameConfig, MoveAttempt, IGameStateManager } from '@wordplay/engine/interfaces';
 import { useGameState, useWordState } from '../hooks/useGameState';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { AlphabetGrid } from '../components/AlphabetGrid';
@@ -78,6 +87,25 @@ export interface InteractiveGameProps {
    * as web - the caller (App.tsx there, MainScreenRoute/GameScreenRoute
    * here) is responsible for that gating. */
   onBossTrigger?: (word: string) => void;
+  /**
+   * Use an already-constructed manager instead of the local bot-game
+   * manager - e.g. a `RemoteGameStateManager` for vs-human multiplayer
+   * (see MultiplayerGame.tsx). When provided, the board renders exactly
+   * as it does for a bot game, just driven by this manager's state/
+   * actions instead.
+   */
+  externalManager?: IGameStateManager;
+  /** The authenticated player id to treat as "the local player" when
+   * using `externalManager` - every place this component would
+   * otherwise assume the literal id `'human'` resolves through this
+   * instead. */
+  localPlayerId?: string;
+  /** Distinguishes a vs-human multiplayer game from a plain bot game for
+   * the few places that need it (currently just player-stats/game-end
+   * id resolution) - mirrors web's `currentGameMode` prop, trimmed to
+   * only the multiplayer case since tutorial/boss are already covered by
+   * their own dedicated props here. */
+  currentGameMode?: 'bot' | 'multiplayer';
 }
 
 export const InteractiveGame: React.FC<InteractiveGameProps> = ({
@@ -90,13 +118,21 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   isTutorial = false,
   onTutorialComplete,
   onGameTimeout,
-  onBossTrigger
+  onBossTrigger,
+  externalManager,
+  localPlayerId,
+  currentGameMode = 'bot'
 }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
 
   const { gameState, actions, isPlayerTurn, isProcessingMove, isGameActive, isGameFinished, isBotTurn, isBotThinking } =
-    useGameState({ config: { maxTurns: 10, allowBotPlayer: true, botId, ...config } });
+    useGameState({
+      config: { maxTurns: 10, allowBotPlayer: true, botId, ...config },
+      externalManager,
+      localPlayerId,
+      skipSavedGamePersistence: !!externalManager
+    });
   const wordState = useWordState(gameState);
   const { handleWordSubmission, handleGameCompletion } = useUnlockSystem();
   const { recordMove, recordGameResult } = usePlayerStats();
@@ -161,12 +197,13 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     const newEntries = gameState.turnHistory.slice(recordedMoveCountRef.current);
     recordedMoveCountRef.current = gameState.turnHistory.length;
 
+    const localId = localPlayerId ?? 'human';
     for (const entry of newEntries) {
-      if (entry.playerId === 'human') {
+      if (entry.playerId === localId) {
         recordMove(entry).catch(err => console.warn('Failed to record move stats:', err));
       }
     }
-  }, [gameState, recordMove]);
+  }, [gameState, recordMove, localPlayerId]);
 
   // Report game end to the caller, and check for beat-this-bot unlock
   // achievements (e.g. beating basicBot unlocks easy-bot). Matches web's
@@ -181,22 +218,31 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     if (hasHandledGameEndRef.current) return;
     hasHandledGameEndRef.current = true;
 
-    const human = gameState.players.find(p => p.id === 'human')?.score || 0;
-    const bot = gameState.players.find(p => p.id === 'bot')?.score || 0;
-    const winner = human > bot ? 'human' : bot > human ? 'bot' : null;
+    // `localId`/`opponentId` resolve generically instead of assuming the
+    // literal ids 'human'/'bot' - true for every vs-bot game, but a real
+    // Supabase user id in multiplayer. Matches web's InteractiveGame.tsx
+    // exactly (ported as a real generalization, not new behavior).
+    const localId = localPlayerId ?? 'human';
+    const opponentId = localPlayerId ? gameState.players.find(p => p.id !== localId)?.id : 'bot';
+    const human = gameState.players.find(p => p.id === localId)?.score || 0;
+    const bot = gameState.players.find(p => p.id === opponentId)?.score || 0;
+    const winner = gameState.winner?.id || null;
 
     // Show the win/loss overlay immediately - don't block it on unlock
     // checks or stats recording, matching web's InteractiveGame.tsx.
     onGameEnd?.(winner, { human, bot });
+    // `botId` is only ever set for a real vs-bot game (undefined for
+    // multiplayer), and handleGameCompletion's own achievement check is a
+    // no-op without one - safe to call unconditionally here.
     handleGameCompletion(winner, botId).catch(err => console.warn('Failed to check game completion unlock triggers:', err));
 
     const gameDurationMs = gameState.gameStartTime && gameState.lastMoveTime
       ? gameState.lastMoveTime - gameState.gameStartTime
       : null;
     recordGameResult({
-      playerId: 'human',
+      playerId: localId,
       botId,
-      won: winner === 'human',
+      won: winner === localId,
       tied: human === bot,
       turnHistory: gameState.turnHistory,
       totalTurns: gameState.totalMoves,
@@ -204,7 +250,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       gameDurationMs,
       timestamp: Date.now()
     }).catch(err => console.warn('Failed to record game result stats:', err));
-  }, [isGameFinished, gameState, onGameEnd, handleGameCompletion, botId, recordGameResult]);
+  }, [isGameFinished, gameState, onGameEnd, handleGameCompletion, botId, recordGameResult, localPlayerId]);
 
   const letterStates: LetterState[] = useMemo(() => {
     return ALPHABET.map(letter => {
@@ -390,6 +436,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
           players={gameState.players}
           botDisplayName={botDisplayName}
           currentRound={currentRound}
+          isMultiplayer={currentGameMode === 'multiplayer'}
+          localPlayerId={localPlayerId}
         />
         {isBossBattle && bossTimeRemaining !== null && (
           <Text style={[styles.bossTimer, { color: colors.text }]}>{bossTimeRemaining}s</Text>

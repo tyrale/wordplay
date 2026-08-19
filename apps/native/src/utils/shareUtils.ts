@@ -27,6 +27,23 @@ export async function shareChallengeResult(shareText: string): Promise<ShareResu
   }
 }
 
+/** Shares a multiplayer invite code - mirrors web's MultiplayerLobby.tsx
+ * handleShareInvite (Web Share API there, RN's Share module here). */
+export async function shareInviteCode(inviteCode: string): Promise<ShareResult> {
+  try {
+    const result = await Share.share({
+      message: `Join my Wordplay game with code ${inviteCode}`,
+      title: 'Join my Wordplay game'
+    });
+    if (result.action === Share.dismissedAction) {
+      return { success: false, method: 'dismissed' };
+    }
+    return { success: true, method: 'native' };
+  } catch (error) {
+    return { success: false, method: 'dismissed', error: error instanceof Error ? error.message : 'Sharing failed' };
+  }
+}
+
 export function getShareResultMessage(result: ShareResult): string {
   if (result.success) return 'Shared successfully!';
   return result.error || 'Sharing cancelled.';

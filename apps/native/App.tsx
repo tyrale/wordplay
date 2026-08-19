@@ -19,16 +19,23 @@ import { InteractiveGame } from './src/screens/InteractiveGame';
 import { ZenGame } from './src/screens/ZenGame';
 import { ChallengeGame } from './src/screens/ChallengeGame';
 import { BossBattleScreen } from './src/screens/BossBattleScreen';
+import { MultiplayerLobby } from './src/screens/MultiplayerLobby';
+import { MultiplayerGame } from './src/screens/MultiplayerGame';
+import type { MultiplayerGameResult } from './src/screens/MultiplayerGame';
 import { getBotDisplayName } from '@wordplay/engine/botRegistry';
 import { clearActiveGame } from './src/adapters/nativeGameSaveAdapter';
+import {
+  saveActiveMultiplayerGameId,
+  loadActiveMultiplayerGameId,
+  clearActiveMultiplayerGameId
+} from './src/adapters/nativeMultiplayerAdapter';
 import { hasSeenTutorial } from './src/utils/tutorialStorage';
 import { TUTORIAL_INITIAL_CONFIG } from './src/hooks/tutorialSteps';
 
-// Phase 3 (see docs/project/REACT_NATIVE_PORT_PLAN.md): a navigation shell
-// replacing Phase 2's single always-mounted game screen. "vs bot", zen
-// mode, and the daily challenge are wired to real screens - vs-human
-// multiplayer is a separate follow-up slice (see MainScreen.tsx and this
-// file's placeholder alert below).
+// Phase 3/4 (see docs/project/REACT_NATIVE_PORT_PLAN.md): a navigation
+// shell replacing Phase 2's single always-mounted game screen. Every
+// single-player mode plus (Phase 4) vs-human multiplayer are wired to
+// real screens.
 export type RootStackParamList = {
   Main: undefined;
   /** `forceTutorial` lets the Menu's "the basics" entry replay the
@@ -42,6 +49,12 @@ export type RootStackParamList = {
    * push: the game GUS was played in is abandoned, not something to "go
    * back" to (see GameScreenRoute/ChallengeGameRoute's onBossTrigger). */
   Boss: undefined;
+  MultiplayerLobby: undefined;
+  /** Native equivalent of web's `?mgame=<id>` URL param resume mechanism
+   * (see nativeMultiplayerAdapter.ts's save/load/clearActiveMultiplayer
+   * GameId - AsyncStorage instead of a URL, per the port plan's Phase 4
+   * note). */
+  MultiplayerGame: { gameId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -86,7 +99,21 @@ function MainScreenRoute({ navigation }: NativeStackScreenProps<RootStackParamLi
     <MainScreen
       key={resetKey}
       onStartGame={handleStartGame}
-      onStartMultiplayer={() => Alert.alert('Coming soon', 'Multiplayer isn\'t available in the native app yet.')}
+      onStartMultiplayer={() => navigation.navigate('MultiplayerLobby')}
+    />
+  );
+}
+
+function MultiplayerLobbyRoute({ navigation }: NativeStackScreenProps<RootStackParamList, 'MultiplayerLobby'>) {
+  return (
+    <MultiplayerLobby
+      onBack={() => navigation.goBack()}
+      onGameReady={gameId => {
+        saveActiveMultiplayerGameId(gameId).catch(err =>
+          console.warn('Failed to persist active multiplayer game id:', err)
+        );
+        navigation.navigate('MultiplayerGame', { gameId });
+      }}
     />
   );
 }
@@ -195,6 +222,80 @@ function GameScreenRoute({ route, navigation }: NativeStackScreenProps<RootStack
   );
 }
 
+/**
+ * A vs-human multiplayer game's win/lose/resigned end screens, ported
+ * from apps/web's App.tsx (handleMultiplayerGameEnd + the same
+ * win/lose/quit AlertOverlay rendering GameScreenRoute above uses for
+ * bot games) - a resignation (by either player) shows a distinct "match
+ * ended" overlay instead of a win/lose result, since it isn't a fairly-
+ * earned outcome.
+ */
+function MultiplayerGameRoute({ route, navigation }: NativeStackScreenProps<RootStackParamList, 'MultiplayerGame'>) {
+  const { gameId } = route.params;
+  const [endOverlay, setEndOverlay] = useState<EndOverlayState | null>(null);
+  const { currentTheme, isInverted } = useTheme();
+  const colors = getEffectiveColors(currentTheme, isInverted);
+
+  const clearAndGoTo = useCallback((target: 'lobby' | 'main') => {
+    clearActiveMultiplayerGameId().catch(err => console.warn('Failed to clear active multiplayer game id:', err));
+    if (target === 'lobby') {
+      navigation.replace('MultiplayerLobby');
+    } else {
+      navigation.navigate('Main');
+    }
+  }, [navigation]);
+
+  const handleGameEnd = useCallback(({ winnerId, localPlayerId, localScore, opponentScore, opponentName, resigned }: MultiplayerGameResult) => {
+    if (resigned) {
+      const resignedCopy = alertCopy.multiplayerResigned;
+      setEndOverlay({ lines: [...resignedCopy.lines], meta: resignedCopy.meta });
+      return;
+    }
+
+    const metaTextStyle = { color: colors.text, fontSize: 14, textAlign: 'center' as const };
+    const meta = (
+      <>
+        <Text style={metaTextStyle}>{`You: ${localScore}`}</Text>
+        <Text style={metaTextStyle}>{`${opponentName}: ${opponentScore}`}</Text>
+      </>
+    );
+
+    if (winnerId === localPlayerId) {
+      const winCopy = pickAlertVariant(alertCopy.win);
+      setEndOverlay({ lines: [...winCopy.lines], variant: 'win', meta });
+    } else {
+      // Tie is treated as a loss screen, matching web's handleMultiplayerGameEnd.
+      const loseCopy = pickAlertVariant(alertCopy.losePvp);
+      setEndOverlay({ lines: [...loseCopy.lines], variant: 'lose', meta });
+    }
+  }, [colors.text]);
+
+  return (
+    <View style={{ flex: 1 }}>
+      <MultiplayerGame
+        key={gameId}
+        gameId={gameId}
+        onExit={() => clearAndGoTo('lobby')}
+        onGameEnd={handleGameEnd}
+        onBossTrigger={() => {
+          clearActiveMultiplayerGameId().catch(err => console.warn('Failed to clear active multiplayer game id on boss trigger:', err));
+          navigation.replace('Boss');
+        }}
+      />
+      <AlertOverlay
+        isVisible={!!endOverlay}
+        lines={endOverlay?.lines ?? []}
+        variant={endOverlay?.variant}
+        meta={endOverlay?.meta}
+        onClose={() => {
+          setEndOverlay(null);
+          clearAndGoTo('lobby');
+        }}
+      />
+    </View>
+  );
+}
+
 function ZenGameRoute({ navigation }: NativeStackScreenProps<RootStackParamList, 'Zen'>) {
   return <ZenGame onNavigateHome={() => navigation.goBack()} />;
 }
@@ -212,6 +313,47 @@ function BossBattleScreenRoute({ navigation }: NativeStackScreenProps<RootStackP
   return <BossBattleScreen onExit={() => navigation.replace('Main')} />;
 }
 
+/**
+ * Native equivalent of web's `getMultiplayerGameIdFromUrl()`/initial
+ * `appState` computation: resume an in-progress multiplayer game across
+ * an app restart (not just a screen navigation) rather than losing your
+ * place and bouncing back to the main menu. Resolved once, before the
+ * navigator ever mounts, so `initialRouteName`/`initialParams` reflect it
+ * from the very first render instead of flashing the main menu first.
+ */
+function AppNavigator() {
+  const [initialGameId, setInitialGameId] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    loadActiveMultiplayerGameId()
+      .then(setInitialGameId)
+      .catch(() => setInitialGameId(null));
+  }, []);
+
+  if (initialGameId === undefined) return null;
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator
+        screenOptions={{ headerShown: false }}
+        initialRouteName={initialGameId ? 'MultiplayerGame' : 'Main'}
+      >
+        <Stack.Screen name="Main" component={MainScreenRoute} />
+        <Stack.Screen name="Game" component={GameScreenRoute} />
+        <Stack.Screen name="Zen" component={ZenGameRoute} />
+        <Stack.Screen name="Challenge" component={ChallengeGameRoute} />
+        <Stack.Screen name="Boss" component={BossBattleScreenRoute} />
+        <Stack.Screen name="MultiplayerLobby" component={MultiplayerLobbyRoute} />
+        <Stack.Screen
+          name="MultiplayerGame"
+          component={MultiplayerGameRoute}
+          initialParams={initialGameId ? { gameId: initialGameId } : undefined}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
@@ -220,15 +362,7 @@ export default function App() {
           <UnlockProvider>
             <MechanicsSettingsProvider>
               <RoundLengthProvider>
-                <NavigationContainer>
-                  <Stack.Navigator screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="Main" component={MainScreenRoute} />
-                    <Stack.Screen name="Game" component={GameScreenRoute} />
-                    <Stack.Screen name="Zen" component={ZenGameRoute} />
-                    <Stack.Screen name="Challenge" component={ChallengeGameRoute} />
-                    <Stack.Screen name="Boss" component={BossBattleScreenRoute} />
-                  </Stack.Navigator>
-                </NavigationContainer>
+                <AppNavigator />
                 <StatusBar style="auto" />
               </RoundLengthProvider>
             </MechanicsSettingsProvider>
