@@ -586,7 +586,14 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center'
   },
+  // `wordPositioned`'s own `alignItems: 'center'` shrink-wraps its
+  // children to their content by default - without overriding that
+  // here, WordTrail's internal `width: '100%'` (needed so its score can
+  // float to the true right edge instead of landing right next to/on
+  // top of the word) would just be 100% of a box barely wider than the
+  // word itself, doing nothing.
   wordTrail: {
+    alignSelf: 'stretch',
     marginBottom: 20
   },
   gridPositioned: {

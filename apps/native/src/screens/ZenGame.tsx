@@ -279,7 +279,11 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center'
   },
+  // See InteractiveGame.tsx's identical comment: overrides `wordPositioned`'s
+  // shrink-wrapping `alignItems: 'center'` so WordTrail actually gets the
+  // full row width its internal layout needs.
   wordTrail: {
+    alignSelf: 'stretch',
     marginBottom: 20
   }
 });
