@@ -157,16 +157,22 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         accessibilityLabel={`Word: ${item.word}${effectiveShowScores ? `, ${item.score} points` : ''}`}
         style={styles.row}
       >
-        {/* The word is centered across the *full row width*, independent
-            of whether a score is shown next to it - the score floats as
-            an absolutely-positioned overlay at the right edge instead of
-            a normal flex sibling, so its presence/width never shifts the
-            word off-center (a flex-row sibling would shrink the space
-            available to center within, pushing the word left). */}
-        <View style={styles.rowContent}>{content}</View>
-        {effectiveShowScores && (
-          <Text style={[styles.score, { color: colors.textSecondary }]}>{formatScore(item)}</Text>
-        )}
+        {/* `rowContent` is centered across the *full row width* (shrink-
+            wrapped to exactly the word's own rendered width) independent
+            of whether a score is shown - and `position: relative` gives
+            the score below a positioning context anchored to the WORD
+            itself, not the row. `left: '100%'` then floats it immediately
+            past the word's right edge, wherever that happens to be once
+            centered, rather than pinned to the row/screen's right edge -
+            and because it's absolutely positioned, it doesn't add to
+            `rowContent`'s own width, so it can never re-shift the word's
+            centering either. */}
+        <View style={styles.rowContent}>
+          {content}
+          {effectiveShowScores && (
+            <Text style={[styles.score, { color: colors.textSecondary }]}>{formatScore(item)}</Text>
+          )}
+        </View>
       </Pressable>
     );
   };
@@ -215,19 +221,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4
   },
-  // Spans the full trail width (not shrink-wrapped to content) so
-  // `rowContent`'s centering below is relative to the *row*, not to
-  // whatever width the word+score happen to add up to - and `position:
-  // relative` gives `score` (below) a positioning context to float
-  // against without affecting this row's own layout/height.
+  // Spans the full trail width (not shrink-wrapped to content) purely so
+  // `justifyContent: 'center'` below centers `rowContent` across the
+  // *whole row*, not just whatever narrower width the row itself would
+  // otherwise shrink-wrap to.
   row: {
     width: '100%',
-    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 24
   },
+  // Shrink-wrapped to exactly the word's own rendered width (score is
+  // absolutely positioned, so it doesn't count towards this). `position:
+  // relative` gives `score` a positioning context anchored to the word
+  // itself rather than the row.
   rowContent: {
+    position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8
@@ -259,12 +268,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700'
   },
+  // `left: '100%'` positions this relative to `rowContent`'s own right
+  // edge (i.e. the word's right edge), not the row/screen's - floating
+  // immediately past the word wherever it's centered, rather than pinned
+  // to the far right of the trail.
   score: {
     position: 'absolute',
-    right: 8,
+    left: '100%',
+    marginLeft: 8,
     top: '50%',
     transform: [{ translateY: -8 }],
     fontSize: 12,
-    fontWeight: '700'
+    fontWeight: '700',
+    // Prevents the score from ever line-wrapping onto a second line,
+    // which `left: '100%'` combined with the row's own width could
+    // otherwise trigger for a word centered near the right edge.
+    width: 100
   }
 });
