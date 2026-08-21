@@ -21,9 +21,15 @@
  * current rendering (`void showTurnNumbers; void maxVisible;`), so this
  * isn't a native-specific omission.
  */
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
+
+/** How tall the trail can grow before it starts scrolling instead of
+ * pushing the rest of the board around - matches web's own fixed-height-
+ * then-scroll behavior (`.word-trail__container`'s `height: 100%` within
+ * a capped-height parent), picked here as roughly 4 rows' worth. */
+const DEFAULT_MAX_HEIGHT = 150;
 
 export interface WordMoveScoreBreakdown {
   addLetterPoints: number;
@@ -56,6 +62,9 @@ export interface WordTrailProps {
   startWord?: string;
   targetWord?: string;
   isChallengeMode?: boolean;
+  /** Caps how tall the trail can grow before scrolling kicks in.
+   * Defaults to `DEFAULT_MAX_HEIGHT`. */
+  maxHeight?: number;
 }
 
 interface DisplayItem {
@@ -90,10 +99,18 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   onWordPress,
   startWord,
   targetWord,
-  isChallengeMode = false
+  isChallengeMode = false,
+  maxHeight = DEFAULT_MAX_HEIGHT
 }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
+  const scrollRef = useRef<ScrollView>(null);
+  // Keeps the most recently played word in view (scrolled to the bottom)
+  // whenever the trail grows - matches web's own "newest word anchored
+  // at bottom" intent (see WordTrail.css). Not animated: an animated
+  // scroll on every single new row reads as jumpy rather than smooth for
+  // a list that's typically only gaining one row at a time.
+  const handleContentSizeChange = () => scrollRef.current?.scrollToEnd({ animated: false });
 
   // Challenge mode never shows scores (it's scoreless by design - see
   // ChallengeGame.tsx, which never actually passes showScores=true for
@@ -196,28 +213,49 @@ export const WordTrail: React.FC<WordTrailProps> = ({
     // Chronological order (oldest first) renders oldest-at-top,
     // newest-at-bottom in a plain column layout - the most recently
     // played word should sit closest to the board/current word below it,
-    // not scroll away to the top.
+    // not scroll away to the top. Once that exceeds `maxHeight`, it
+    // scrolls (scrollbar hidden, matching web's `scrollbar-width: none`)
+    // rather than growing the board layout around it.
     return (
-      <View style={styles.container} accessibilityRole="text" accessibilityLabel="Challenge word trail">
+      <ScrollView
+        ref={scrollRef}
+        style={[styles.scrollContainer, { maxHeight }]}
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+        onContentSizeChange={handleContentSizeChange}
+        accessibilityRole="text"
+        accessibilityLabel="Challenge word trail"
+      >
         {displayData.map((item, index) => {
           const isFirstWord = index === 0;
           const isLastWord = index === displayData.length - 1;
           return renderRow(item, index, { showStart: isFirstWord, showTarget: isLastWord });
         })}
-      </View>
+      </ScrollView>
     );
   }
 
   if (displayData.length === 0) return null;
 
   return (
-    <View style={styles.container} accessibilityRole="text" accessibilityLabel="Game word history">
+    <ScrollView
+      ref={scrollRef}
+      style={[styles.scrollContainer, { maxHeight }]}
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+      onContentSizeChange={handleContentSizeChange}
+      accessibilityRole="text"
+      accessibilityLabel="Game word history"
+    >
       {displayData.map((item, index) => renderRow(item, index))}
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    width: '100%'
+  },
   container: {
     width: '100%',
     alignItems: 'center',

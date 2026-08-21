@@ -1,4 +1,5 @@
 import React from 'react';
+import { ScrollView } from 'react-native';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { WordTrail } from '../WordTrail';
@@ -92,6 +93,25 @@ describe('native WordTrail (regular mode)', () => {
 
     fireEvent.press(await screen.findByRole('button'));
     expect(onWordPress).toHaveBeenCalledWith('CAT', 0);
+  });
+
+  it('scrolls (with a hidden scroll indicator) once there is history, capped at a default max height', async () => {
+    const { UNSAFE_getByType } = renderTrail({ moves: [{ word: 'CAT', score: 1, turnNumber: 1 }] });
+    await screen.findByText('C');
+
+    const scrollView = UNSAFE_getByType(ScrollView);
+    expect(scrollView.props.showsVerticalScrollIndicator).toBe(false);
+    const flattenedStyle = [scrollView.props.style].flat();
+    expect(flattenedStyle).toEqual(expect.arrayContaining([expect.objectContaining({ maxHeight: 150 })]));
+  });
+
+  it('respects a custom maxHeight override', async () => {
+    const { UNSAFE_getByType } = renderTrail({ moves: [{ word: 'CAT', score: 1, turnNumber: 1 }], maxHeight: 80 });
+    await screen.findByText('C');
+
+    const scrollView = UNSAFE_getByType(ScrollView);
+    const flattenedStyle = [scrollView.props.style].flat();
+    expect(flattenedStyle).toEqual(expect.arrayContaining([expect.objectContaining({ maxHeight: 80 })]));
   });
 });
 
