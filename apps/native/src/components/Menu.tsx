@@ -143,18 +143,26 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                 {isDarkModeUnlocked && (
                   <ToggleRow label="dark mode" value={isInverted} onToggle={toggleInverted} textColor={currentTheme.colors.text} accentColor={currentTheme.colors.accent} />
                 )}
-                {unlockedThemes.map(theme => (
-                  <Pressable
-                    key={theme.name}
-                    onPress={() => handleThemeSelect(theme)}
-                    style={styles.row}
-                    accessibilityRole="button"
-                  >
-                    <Text style={{ color: theme.name === currentTheme.name ? currentTheme.colors.accent : currentTheme.colors.text, fontWeight: theme.name === currentTheme.name ? '900' : '400' }}>
-                      {theme.name.toLowerCase()}
-                    </Text>
-                  </Pressable>
-                ))}
+                {unlockedThemes.map(theme => {
+                  const isSelected = theme.name === currentTheme.name;
+                  return (
+                    <Pressable
+                      key={theme.name}
+                      onPress={() => handleThemeSelect(theme)}
+                      style={styles.row}
+                      accessibilityRole="button"
+                      // The selected theme is otherwise only distinguished
+                      // by accent color/font weight - neither perceivable
+                      // via a screen reader, so its selected state needs
+                      // to be conveyed explicitly here too.
+                      accessibilityState={{ selected: isSelected }}
+                    >
+                      <Text style={{ color: isSelected ? currentTheme.colors.accent : currentTheme.colors.text, fontWeight: isSelected ? '900' : '400' }}>
+                        {theme.name.toLowerCase()}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             )}
 
@@ -194,13 +202,22 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                           accentColor={currentTheme.colors.accent}
                         />
                       ))}
-                    {unlockedRoundLengths.map(id => (
-                      <Pressable key={id} onPress={() => handleRoundLengthSelect(id)} style={styles.row} accessibilityRole="button">
-                        <Text style={{ color: getRoundLengthValue(id) === roundLength ? currentTheme.colors.accent : currentTheme.colors.text, fontWeight: getRoundLengthValue(id) === roundLength ? '900' : '400' }}>
-                          {MECHANIC_DISPLAY_NAMES[id] || id}
-                        </Text>
-                      </Pressable>
-                    ))}
+                    {unlockedRoundLengths.map(id => {
+                      const isSelected = getRoundLengthValue(id) === roundLength;
+                      return (
+                        <Pressable
+                          key={id}
+                          onPress={() => handleRoundLengthSelect(id)}
+                          style={styles.row}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: isSelected }}
+                        >
+                          <Text style={{ color: isSelected ? currentTheme.colors.accent : currentTheme.colors.text, fontWeight: isSelected ? '900' : '400' }}>
+                            {MECHANIC_DISPLAY_NAMES[id] || id}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
                   </View>
                 )}
               </>
@@ -270,7 +287,19 @@ const ToggleRow: React.FC<{ label: string; value: boolean; onToggle: () => void;
 }) => (
   <View style={styles.toggleRow}>
     <Text style={{ color: textColor }}>{label}</Text>
-    <Switch value={value} onValueChange={onToggle} trackColor={{ true: accentColor }} />
+    {/* RN doesn't reliably associate a bare `Switch` with an adjacent
+        sibling `Text` for screen readers the way an HTML `<label>`
+        does - an explicit accessibilityLabel/Role/State here is
+        required, not just nice-to-have, so VoiceOver/TalkBack announce
+        "dark mode switch, on" instead of just "switch". */}
+    <Switch
+      value={value}
+      onValueChange={onToggle}
+      trackColor={{ true: accentColor }}
+      accessibilityRole="switch"
+      accessibilityLabel={label}
+      accessibilityState={{ checked: value }}
+    />
   </View>
 );
 

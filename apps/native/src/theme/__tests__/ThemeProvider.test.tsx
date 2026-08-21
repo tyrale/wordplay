@@ -2,7 +2,7 @@ import React from 'react';
 import { Text } from 'react-native';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ThemeProvider, useTheme, getEffectiveColors } from '../ThemeProvider';
+import { ThemeProvider, useTheme, getEffectiveColors, getPerceivedLuminance, isLightBackground } from '../ThemeProvider';
 import { defaultTheme, availableThemes } from '@wordplay/theme/theme';
 
 function ThemeProbe() {
@@ -91,5 +91,34 @@ describe('getEffectiveColors', () => {
     expect(inverted.text).toBe(defaultTheme.colors.background);
     // Everything else stays the same.
     expect(inverted.primary).toBe(defaultTheme.colors.primary);
+  });
+});
+
+describe('getPerceivedLuminance/isLightBackground (Phase 5: per-theme status bar)', () => {
+  it('computes 0 for pure black and 1 for pure white', () => {
+    expect(getPerceivedLuminance('#000000')).toBe(0);
+    expect(getPerceivedLuminance('#ffffff')).toBe(1);
+  });
+
+  it('supports 3-digit shorthand hex', () => {
+    expect(getPerceivedLuminance('#fff')).toBe(1);
+    expect(getPerceivedLuminance('#000')).toBe(0);
+  });
+
+  it('treats white/light colors as a light background', () => {
+    expect(isLightBackground('#ffffff')).toBe(true);
+    expect(isLightBackground('#f5f5f5')).toBe(true);
+  });
+
+  it('treats black/dark colors as not a light background', () => {
+    expect(isLightBackground('#000000')).toBe(false);
+    expect(isLightBackground('#1a1a1a')).toBe(false);
+  });
+
+  it('every theme background resolves to a definite light/dark answer without throwing', () => {
+    for (const theme of availableThemes) {
+      expect(() => isLightBackground(theme.colors.background)).not.toThrow();
+      expect(typeof isLightBackground(theme.colors.background)).toBe('boolean');
+    }
   });
 });

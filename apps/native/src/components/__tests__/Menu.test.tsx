@@ -162,4 +162,40 @@ describe('native Menu', () => {
     expect(screen.getByText('reset unlocks (debug)')).toBeTruthy();
     expect(onClose).not.toHaveBeenCalled();
   });
+
+  // Placed last in the file (not interleaved with the other tests above)
+  // since unlocking a mechanic here persists to AsyncStorage - keeping it
+  // after every other test avoids any risk of that unlock leaking into
+  // an unrelated test's expectations (e.g. "does not show a mechanics
+  // section when no mechanics are unlocked").
+  it('marks the active theme as selected for screen readers (Phase 5 accessibility pass)', async () => {
+    renderMenu();
+    await waitFor(() => expect(screen.getByText('themes')).toBeTruthy());
+    fireEvent.press(screen.getByText('themes'));
+    await waitFor(() => expect(screen.getByText('classic blue')).toBeTruthy());
+
+    // Classic Blue is the default theme, so its row should be marked
+    // selected - not distinguishable to a screen reader via color/weight
+    // alone. Walk up from the Text node to the Pressable that actually
+    // carries accessibilityState.
+    let node = screen.getByText('classic blue');
+    while (node && node.props.accessibilityState === undefined && node.parent) {
+      node = node.parent;
+    }
+    expect(node.props.accessibilityState).toEqual({ selected: true });
+  });
+
+  it('exposes an accessible switch (label + checked state) for a toggleable mechanic', async () => {
+    // "gravity" mechanic word trigger, per the existing "shows the
+    // mechanics section..." test above; gravity defaults to *on* (only
+    // time-pressure defaults off - see MechanicsSettingsContext.tsx).
+    renderMenu({}, ['gravity']);
+    await waitFor(() => expect(screen.getByText('mechanics')).toBeTruthy());
+    fireEvent.press(screen.getByText('mechanics'));
+    await waitFor(() => expect(screen.getByText('gravity')).toBeTruthy());
+
+    const toggle = await screen.findByLabelText('gravity');
+    expect(toggle.props.accessibilityRole).toBe('switch');
+    expect(toggle.props.accessibilityState).toEqual(expect.objectContaining({ checked: true }));
+  });
 });

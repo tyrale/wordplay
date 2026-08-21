@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { ThemedStatusBar } from './src/components/ThemedStatusBar';
 import { NavigationContainer, useFocusEffect } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -363,7 +363,7 @@ export default function App() {
             <MechanicsSettingsProvider>
               <RoundLengthProvider>
                 <AppNavigator />
-                <StatusBar style="auto" />
+                <ThemedStatusBar />
               </RoundLengthProvider>
             </MechanicsSettingsProvider>
           </UnlockProvider>

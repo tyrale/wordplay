@@ -40,7 +40,12 @@
     "web": "expo start --web",
     "test": "jest",
     "test:watch": "jest --watchAll",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "doctor": "expo-doctor",
+    "build:dev": "eas build --profile development",
+    "build:preview": "eas build --profile preview",
+    "build:production": "eas build --profile production",
+    "submit:production": "eas submit --profile production"
   },
   "private": true,
   "jest": {

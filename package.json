@@ -15,6 +15,7 @@
     "test:engine": "npm run test --workspace=packages/engine",
     "test:native": "npm run test --workspace=apps/native",
     "lint": "npm run lint --workspace=apps/web",
+    "format:check": "npm run format:check --workspace=apps/web",
     "play": "npm run play --workspace=packages/engine",
     "native": "npm run start --workspace=apps/native",
     "typecheck:native": "npm run typecheck --workspace=apps/native",

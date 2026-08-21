@@ -132,3 +132,30 @@ export function getEffectiveColors(theme: GameTheme, isInverted: boolean): GameT
     text: theme.colors.background
   };
 }
+
+/**
+ * Perceived (ITU-R BT.601) luminance of a `#rgb`/`#rrggbb` hex color, 0
+ * (black) to 1 (white). Every theme's `colors.background` is a hex
+ * string (verified against all 75 themes in `@wordplay/theme/theme`),
+ * so this doesn't need to handle `rgb()`/named CSS colors.
+ */
+export function getPerceivedLuminance(hexColor: string): number {
+  const hex = hexColor.replace('#', '');
+  const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+  const value = parseInt(full, 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+/**
+ * Whether `hexColor` is light enough that dark (not light) status bar
+ * content should be used against it - i.e. the same "is this background
+ * light or dark" question web never has to answer explicitly (a browser
+ * chrome's own status bar isn't themed), but native's status bar sits
+ * directly over the app's own background per-theme.
+ */
+export function isLightBackground(hexColor: string): boolean {
+  return getPerceivedLuminance(hexColor) > 0.5;
+}
