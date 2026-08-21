@@ -21,15 +21,18 @@
  * current rendering (`void showTurnNumbers; void maxVisible;`), so this
  * isn't a native-specific omission.
  */
-import React, { useRef } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 
-/** How tall the trail can grow before it starts scrolling instead of
- * pushing the rest of the board around - matches web's own fixed-height-
- * then-scroll behavior (`.word-trail__container`'s `height: 100%` within
- * a capped-height parent), picked here as roughly 4 rows' worth. */
-const DEFAULT_MAX_HEIGHT = 150;
+/** How tall the trail can grow (as a fraction of window height) before it
+ * starts scrolling instead of pushing the rest of the board around -
+ * matches web's own fixed-height-then-scroll behavior (`.word-trail__
+ * played-words`'s `max-height: 40dvh`). A proportion of the actual screen
+ * rather than a small fixed pixel constant, so the cut-off edge uses a
+ * meaningful chunk of real available space instead of an arbitrarily
+ * cramped window. */
+const DEFAULT_MAX_HEIGHT_RATIO = 0.35;
 
 export interface WordMoveScoreBreakdown {
   addLetterPoints: number;
@@ -63,7 +66,7 @@ export interface WordTrailProps {
   targetWord?: string;
   isChallengeMode?: boolean;
   /** Caps how tall the trail can grow before scrolling kicks in.
-   * Defaults to `DEFAULT_MAX_HEIGHT`. */
+   * Defaults to `DEFAULT_MAX_HEIGHT_RATIO` of the window's height. */
   maxHeight?: number;
 }
 
@@ -100,17 +103,25 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   startWord,
   targetWord,
   isChallengeMode = false,
-  maxHeight = DEFAULT_MAX_HEIGHT
+  maxHeight
 }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
+  const { height: windowHeight } = useWindowDimensions();
+  const effectiveMaxHeight = maxHeight ?? Math.round(windowHeight * DEFAULT_MAX_HEIGHT_RATIO);
   const scrollRef = useRef<ScrollView>(null);
-  // Keeps the most recently played word in view (scrolled to the bottom)
-  // whenever the trail grows - matches web's own "newest word anchored
-  // at bottom" intent (see WordTrail.css). Not animated: an animated
+  // The bottom of the trail (the most recently played word, right above
+  // the current word in play) is a fixed floor that must never scroll
+  // away - scrolling only ever reveals *older* words further up, the
+  // same way a chat log stays pinned to its latest message. Scrolled to
+  // the bottom on mount and again whenever the trail grows, so the floor
+  // is always where the view rests by default. Not animated: an animated
   // scroll on every single new row reads as jumpy rather than smooth for
   // a list that's typically only gaining one row at a time.
-  const handleContentSizeChange = () => scrollRef.current?.scrollToEnd({ animated: false });
+  const scrollToFloor = () => scrollRef.current?.scrollToEnd({ animated: false });
+  useEffect(() => {
+    scrollToFloor();
+  }, []);
 
   // Challenge mode never shows scores (it's scoreless by design - see
   // ChallengeGame.tsx, which never actually passes showScores=true for
@@ -213,16 +224,16 @@ export const WordTrail: React.FC<WordTrailProps> = ({
     // Chronological order (oldest first) renders oldest-at-top,
     // newest-at-bottom in a plain column layout - the most recently
     // played word should sit closest to the board/current word below it,
-    // not scroll away to the top. Once that exceeds `maxHeight`, it
-    // scrolls (scrollbar hidden, matching web's `scrollbar-width: none`)
-    // rather than growing the board layout around it.
+    // not scroll away to the top. Once that exceeds `effectiveMaxHeight`,
+    // it scrolls (scrollbar hidden, matching web's `scrollbar-width:
+    // none`) rather than growing the board layout around it.
     return (
       <ScrollView
         ref={scrollRef}
-        style={[styles.scrollContainer, { maxHeight }]}
+        style={[styles.scrollContainer, { maxHeight: effectiveMaxHeight }]}
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={handleContentSizeChange}
+        onContentSizeChange={scrollToFloor}
         accessibilityRole="text"
         accessibilityLabel="Challenge word trail"
       >
@@ -240,10 +251,10 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   return (
     <ScrollView
       ref={scrollRef}
-      style={[styles.scrollContainer, { maxHeight }]}
+      style={[styles.scrollContainer, { maxHeight: effectiveMaxHeight }]}
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
-      onContentSizeChange={handleContentSizeChange}
+      onContentSizeChange={scrollToFloor}
       accessibilityRole="text"
       accessibilityLabel="Game word history"
     >
@@ -256,9 +267,17 @@ const styles = StyleSheet.create({
   scrollContainer: {
     width: '100%'
   },
+  // `flexGrow: 1` + `justifyContent: 'flex-end'` (used as the ScrollView's
+  // `contentContainerStyle`) bottom-aligns short content against the
+  // floor (the current word below it) instead of leaving it stranded at
+  // the top with empty space beneath - the same "fill from bottom up"
+  // intent as web's `.word-trail__container { justify-content: flex-
+  // start }` combined with its `column-reverse` direction.
   container: {
     width: '100%',
+    flexGrow: 1,
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: 4
   },
   // Spans the full trail width (not shrink-wrapped to content) purely so

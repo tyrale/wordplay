@@ -1,9 +1,11 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, Dimensions } from 'react-native';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { WordTrail } from '../WordTrail';
 import type { WordMove } from '../WordTrail';
+
+const DEFAULT_MAX_HEIGHT_RATIO = 0.35;
 
 function renderTrail(props: Partial<React.ComponentProps<typeof WordTrail>> = {}) {
   return render(
@@ -95,14 +97,15 @@ describe('native WordTrail (regular mode)', () => {
     expect(onWordPress).toHaveBeenCalledWith('CAT', 0);
   });
 
-  it('scrolls (with a hidden scroll indicator) once there is history, capped at a default max height', async () => {
+  it('scrolls (with a hidden scroll indicator) once there is history, capped at a default proportion of the window height', async () => {
     const { UNSAFE_getByType } = renderTrail({ moves: [{ word: 'CAT', score: 1, turnNumber: 1 }] });
     await screen.findByText('C');
 
     const scrollView = UNSAFE_getByType(ScrollView);
     expect(scrollView.props.showsVerticalScrollIndicator).toBe(false);
+    const expectedMaxHeight = Math.round(Dimensions.get('window').height * DEFAULT_MAX_HEIGHT_RATIO);
     const flattenedStyle = [scrollView.props.style].flat();
-    expect(flattenedStyle).toEqual(expect.arrayContaining([expect.objectContaining({ maxHeight: 150 })]));
+    expect(flattenedStyle).toEqual(expect.arrayContaining([expect.objectContaining({ maxHeight: expectedMaxHeight })]));
   });
 
   it('respects a custom maxHeight override', async () => {
@@ -112,6 +115,16 @@ describe('native WordTrail (regular mode)', () => {
     const scrollView = UNSAFE_getByType(ScrollView);
     const flattenedStyle = [scrollView.props.style].flat();
     expect(flattenedStyle).toEqual(expect.arrayContaining([expect.objectContaining({ maxHeight: 80 })]));
+  });
+
+  it('bottom-aligns content against the floor (the current word below it) so a short trail is not stranded at the top', async () => {
+    const { UNSAFE_getByType } = renderTrail({ moves: [{ word: 'CAT', score: 1, turnNumber: 1 }] });
+    await screen.findByText('C');
+
+    const scrollView = UNSAFE_getByType(ScrollView);
+    expect(scrollView.props.contentContainerStyle).toEqual(
+      expect.objectContaining({ flexGrow: 1, justifyContent: 'flex-end' })
+    );
   });
 });
 
