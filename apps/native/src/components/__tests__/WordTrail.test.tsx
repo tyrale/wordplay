@@ -18,7 +18,7 @@ describe('native WordTrail (regular mode)', () => {
     expect(toJSON()).toBeNull();
   });
 
-  it('renders each word most-recent-first', async () => {
+  it('renders words in chronological order, oldest at top and the most recent at the bottom (closest to the board)', async () => {
     const moves: WordMove[] = [
       { word: 'CAT', score: 1, turnNumber: 1 },
       { word: 'CATS', score: 2, turnNumber: 2 }
@@ -28,9 +28,8 @@ describe('native WordTrail (regular mode)', () => {
     // No onWordPress provided, so rows aren't buttons - query by their
     // accessibility label instead.
     const rows = await screen.findAllByLabelText(/^Word: /);
-    // Most recent (CATS) first.
-    expect(rows[0].props.accessibilityLabel).toContain('CATS');
-    expect(rows[1].props.accessibilityLabel).toContain('CAT');
+    expect(rows[0].props.accessibilityLabel).toContain('CAT');
+    expect(rows[1].props.accessibilityLabel).toContain('CATS');
   });
 
   it('falls back to a plain `words` list (no scores/highlights) when `moves` is not provided', async () => {

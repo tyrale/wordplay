@@ -193,12 +193,15 @@ export const WordTrail: React.FC<WordTrailProps> = ({
       );
     }
 
-    const reversed = [...displayData].reverse();
+    // Chronological order (oldest first) renders oldest-at-top,
+    // newest-at-bottom in a plain column layout - the most recently
+    // played word should sit closest to the board/current word below it,
+    // not scroll away to the top.
     return (
       <View style={styles.container} accessibilityRole="text" accessibilityLabel="Challenge word trail">
-        {reversed.map((item, index) => {
-          const isFirstWord = index === reversed.length - 1;
-          const isLastWord = index === 0;
+        {displayData.map((item, index) => {
+          const isFirstWord = index === 0;
+          const isLastWord = index === displayData.length - 1;
           return renderRow(item, index, { showStart: isFirstWord, showTarget: isLastWord });
         })}
       </View>
@@ -207,10 +210,9 @@ export const WordTrail: React.FC<WordTrailProps> = ({
 
   if (displayData.length === 0) return null;
 
-  const reversed = [...displayData].reverse();
   return (
     <View style={styles.container} accessibilityRole="text" accessibilityLabel="Game word history">
-      {reversed.map((item, index) => renderRow(item, index))}
+      {displayData.map((item, index) => renderRow(item, index))}
     </View>
   );
 };
