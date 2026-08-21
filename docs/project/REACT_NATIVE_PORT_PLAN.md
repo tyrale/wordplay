@@ -168,6 +168,21 @@ Steps:
 - `maskWord` (the ninja-bot dash-masking gimmick) is supported by the component itself, but **not wired up** in any screen - ninja-bot's other gimmicks (invisible grid, gravity) aren't ported either, so wiring only the word-trail-masking half would be a half-implemented gimmick. Stays consistent with every earlier phase's scope on ninja-bot.
 - Test coverage: dedicated `WordTrail.test.tsx` covering regular mode (key letters, scores, pass, masking) and challenge mode (empty state, single-move both-labels case, multi-move first/last labels), plus updated tests for the three screens it's wired into. Full workspace suite verified green, `tsc --noEmit` clean, real Metro bundle fetches for both platforms.
 
+### Phase 3.6 — Dictionary/help ("?") lookup (gap closure)
+**Goal**: Close another real, self-inflicted gap in this plan's own bookkeeping, the same shape as Phase 3.5's `WordTrail` one - "dictionary/help lookup" was flagged as deferred in every one of Phase 3's InteractiveGame/ZenGame/ChallengeGame slices, but never actually scheduled anywhere concrete for when it would get done.
+
+Steps:
+- Port `utils/wordHelp.ts` (word-legality reasoning, Seuss-word checks, and a `fetch()`/`AbortController`-based external dictionary lookup against dictionaryapi.dev with a Wiktionary fallback) - pure TS with no DOM dependency, so expect a near-verbatim copy.
+- Wire the "?" action (previously a no-op in all three screens) into each of InteractiveGame.tsx/ChallengeGame.tsx/ZenGame.tsx, reusing the `AlertProvider`/`showCustomAlert` mechanism already used for unlock notifications.
+
+✅ **Done**:
+- `utils/wordHelp.ts` ported essentially verbatim - `fetch`/`AbortController`/`setTimeout` all work identically under Hermes, so this wasn't really a "port" so much as a copy.
+- New shared `hooks/useDictionaryData.ts`: web duplicates its small `wordData`-loading hook inline in each of InteractiveGame.tsx/ChallengeGame.tsx/ZenGame.tsx; native has no equivalent constraint forcing that duplication, so it's a single hook reused by all three instead.
+- Wired "?" into all three screens' `handleActionPress`, always reachable (not gated behind whose turn it is), matching web's InteractiveGame.tsx exactly. ChallengeGame.tsx/ZenGame.tsx's versions omit the Grinchbot-invented-word special case InteractiveGame.tsx has, matching web (neither mode has a bot opponent to be mid-fight against).
+- Reused the already-ported `AlertProvider`'s `showCustomAlert` - no new overlay infrastructure needed, since the unlock-notification system already provided exactly this "show arbitrary custom content in the alert overlay" mechanism.
+- Test coverage: 23 tests for the ported `wordHelp.ts` utilities (including `fetchWordDefinition`'s dictionaryapi.dev/Wiktionary fallback chain via a mocked `global.fetch` - web doesn't test these network-dependent functions at all, so this exceeds web's own coverage), 2 for the new hook, and one "press Help, see the definition" integration test per screen.
+- Verified via real Metro bundle fetches for both iOS and Android, `tsc --noEmit` clean, full workspace suite green.
+
 ### Phase 5 — Platform polish, store readiness, and release
 **Goal**: Everything needed to actually ship to the App Store and Google Play.
 

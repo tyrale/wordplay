@@ -43,6 +43,27 @@ describe('native ZenGame screen', () => {
     expect(screen.queryByText('resign')).toBeNull();
   });
 
+  it('shows a dictionary/help overlay (word + legality reason + definition) when "Help" is pressed', async () => {
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [{ meanings: [{ definitions: [{ definition: 'a fake test definition' }] }] }]
+    });
+
+    try {
+      renderZen();
+      await waitFor(() => expect(screen.getByLabelText(/^Current word: .+/)).toBeTruthy());
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText('Help'));
+      });
+
+      await waitFor(() => expect(screen.getByText('a fake test definition')).toBeTruthy());
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
   it('calls onNavigateHome when the back action is pressed', async () => {
     const onNavigateHome = jest.fn();
     renderZen({ onNavigateHome });

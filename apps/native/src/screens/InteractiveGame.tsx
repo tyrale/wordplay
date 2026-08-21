@@ -42,6 +42,16 @@ import { useUnlockSystem } from '../providers/UnlockProvider';
 import { usePlayerStats } from '../hooks/usePlayerStats';
 import { useTutorialProgress } from '../hooks/useTutorialProgress';
 import { useWordDropZone } from '../hooks/useWordDropZone';
+import { useDictionaryData } from '../hooks/useDictionaryData';
+import { useAlert } from '../providers/AlertProvider';
+import {
+  getWordLegalityReason,
+  getVariantDefinitionNote,
+  isPlayableWord,
+  isSeussWord,
+  isSeussInventedWord,
+  fetchWordDefinition
+} from '../utils/wordHelp';
 import { markTutorialSeen } from '../utils/tutorialStorage';
 import { triggerHapticFeedback } from '../utils/haptics';
 
@@ -137,8 +147,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       skipSavedGamePersistence: !!externalManager
     });
   const wordState = useWordState(gameState);
-  const { handleWordSubmission, handleGameCompletion } = useUnlockSystem();
+  const { handleWordSubmission, handleGameCompletion, getUnlockedItems } = useUnlockSystem();
   const { recordMove, recordGameResult } = usePlayerStats();
+  const { wordData } = useDictionaryData();
+  const { showCustomAlert } = useAlert();
 
   const [pendingWord, setPendingWord] = useState('');
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
@@ -341,6 +353,54 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     [canEdit, pendingWord, handleWordChange]
   );
 
+  // Dictionary/help lookup ("?"): shows the currently-typed word's
+  // legality reason and a fetched definition. Matches web's
+  // InteractiveGame.tsx handleHelp exactly, including the Grinchbot/Seuss
+  // special-casing - see docs/project/REACT_NATIVE_PORT_PLAN.md's "Phase
+  // 3.6" section for why this was a real, previously-unscheduled gap.
+  const handleHelp = useCallback(async () => {
+    const word = pendingWord.trim().toUpperCase();
+    if (!word) return;
+
+    // If the player has unlocked the Grinchbot and the word is a Dr.
+    // Seuss word, show a special Seuss message instead of a dictionary
+    // definition.
+    const grinchBotUnlocked = getUnlockedItems('bot').includes('grinch-bot');
+    if (grinchBotUnlocked && isSeussWord(word, wordData)) {
+      if (botId === 'grinch-bot' && isSeussInventedWord(word, wordData)) {
+        showCustomAlert(['DONT', 'QUESTION', 'ME!'], {
+          meta: <Text style={{ color: colors.text, fontSize: 14, textAlign: 'center' }}>I'm the Grinch I can say what i want.</Text>
+        });
+      } else {
+        showCustomAlert([word], {
+          meta: <Text style={{ color: colors.text, fontSize: 14, textAlign: 'center' }}>This is a Dr. Seuss word and it's fantastic.</Text>
+        });
+      }
+      return;
+    }
+
+    const definition = await fetchWordDefinition(word);
+    const reason = getWordLegalityReason(word, wordData);
+    const variantNote = getVariantDefinitionNote(word, wordData, definition);
+    const isInvalid = !isPlayableWord(word, wordData);
+
+    showCustomAlert([word], {
+      meta: (
+        <>
+          <Text style={{ color: isInvalid ? '#DC2626' : colors.text, fontSize: 14, textAlign: 'center', fontWeight: '700' }}>
+            {reason}
+          </Text>
+          {variantNote && (
+            <Text style={{ color: colors.textSecondary, fontSize: 12, textAlign: 'center', marginTop: 4 }}>{variantNote}</Text>
+          )}
+          <Text style={{ color: colors.text, fontSize: 14, textAlign: 'center', marginTop: 8 }}>
+            {definition || 'No definition available'}
+          </Text>
+        </>
+      )
+    });
+  }, [pendingWord, wordData, showCustomAlert, getUnlockedItems, botId, colors]);
+
   const handleActionPress = useCallback(
     (action: string) => {
       if (action === '←') {
@@ -351,15 +411,17 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         setIsMenuOpen(true);
         return;
       }
-      // '?' (help/dictionary lookup) is deferred in this slice - no-op.
-      if (action === '?') return;
+      if (action === '?') {
+        handleHelp();
+        return;
+      }
 
       if (!canEdit) return;
       if (action === '↻') {
         handleWordChange(wordState.currentWord);
       }
     },
-    [canEdit, handleWordChange, wordState.currentWord, onNavigateHome]
+    [canEdit, handleWordChange, wordState.currentWord, onNavigateHome, handleHelp]
   );
 
   const isValidSubmit = pendingMoveAttempt?.canApply || false;

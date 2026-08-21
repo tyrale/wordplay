@@ -42,6 +42,32 @@ describe('native InteractiveGame screen', () => {
     });
   });
 
+  it('shows a dictionary/help overlay (word + legality reason + definition) when "Help" is pressed', async () => {
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [{ meanings: [{ definitions: [{ definition: 'a fake test definition' }] }] }]
+    });
+
+    try {
+      renderGame();
+      // Wait for the actual starting word to be populated (not just for
+      // the always-rendered "Help" button to exist) - pendingWord starts
+      // empty and is only synced from the async game manager's current
+      // word once it initializes, and handleHelp is a no-op on an empty
+      // word.
+      await waitFor(() => expect(screen.getByLabelText(/^Current word: .+/)).toBeTruthy());
+
+      await act(async () => {
+        fireEvent.press(screen.getByLabelText('Help'));
+      });
+
+      await waitFor(() => expect(screen.getByText('a fake test definition')).toBeTruthy());
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
   it('lets the player tap a letter to append it, then reset it back', async () => {
     renderGame();
     await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());

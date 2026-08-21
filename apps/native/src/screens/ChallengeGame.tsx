@@ -2,15 +2,16 @@
  * Native Challenge Game screen ("vs world") - a significantly scoped-down
  * port of apps/web's `components/challenge/ChallengeGame.tsx` (~800
  * lines). Deliberately deferred, not silently dropped (each needs
- * infrastructure this port doesn't have yet, several shared with
- * InteractiveGame.tsx/ZenGame.tsx's existing documented gaps): the
- * dictionary/help lookup, word-path graph syncing, and the drunk
- * mechanic's visual effect. The challenge's actual daily-word logic,
- * validation, unlock checking, player-stats recording, the server-side
- * leaderboard, and the "GUS" boss-battle trigger are all fully real - see
- * hooks/useChallenge.ts's doc comment for why the daily word itself needs
- * no server dependency (it's a client-side seeded RNG keyed off the
- * date).
+ * infrastructure this port doesn't have yet, shared with
+ * InteractiveGame.tsx/ZenGame.tsx's existing documented gaps):
+ * word-path graph syncing and the drunk mechanic's visual effect. The
+ * challenge's actual daily-word logic, validation, unlock checking,
+ * player-stats recording, the server-side leaderboard, the "GUS"
+ * boss-battle trigger, and (see docs/project/REACT_NATIVE_PORT_PLAN.md's
+ * "Phase 3.6" section) the dictionary/help ("?") lookup are all fully
+ * real - see hooks/useChallenge.ts's doc comment for why the daily word
+ * itself needs no server dependency (it's a client-side seeded RNG keyed
+ * off the date).
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
@@ -20,6 +21,15 @@ import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useChallenge } from '../hooks/useChallenge';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { usePlayerStats } from '../hooks/usePlayerStats';
+import { useDictionaryData } from '../hooks/useDictionaryData';
+import { useAlert } from '../providers/AlertProvider';
+import {
+  getWordLegalityReason,
+  getVariantDefinitionNote,
+  isPlayableWord,
+  isSeussWord,
+  fetchWordDefinition
+} from '../utils/wordHelp';
 import { AlphabetGrid } from '../components/AlphabetGrid';
 import type { LetterState } from '../components/AlphabetGrid';
 import { CurrentWord } from '../components/CurrentWord';
@@ -68,8 +78,10 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
     isValidMove,
     calculateScore
   } = useChallenge();
-  const { handleWordSubmission } = useUnlockSystem();
+  const { handleWordSubmission, getUnlockedItems } = useUnlockSystem();
   const { recordMove, recordChallengeResult } = usePlayerStats();
+  const { wordData } = useDictionaryData();
+  const { showCustomAlert } = useAlert();
 
   const [pendingWord, setPendingWord] = useState('');
   const [isValidSubmit, setIsValidSubmit] = useState(false);
@@ -179,6 +191,45 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
     [canEdit, pendingWord, handleWordChange]
   );
 
+  // Dictionary/help lookup ("?"): matches web's ChallengeGame.tsx
+  // handleHelp exactly, minus the Grinchbot-invented-word special case
+  // (challenge mode has no bot/config.botId - it's always the daily
+  // challenge, so only the simpler Seuss-word branch applies). See
+  // docs/project/REACT_NATIVE_PORT_PLAN.md's "Phase 3.6" section.
+  const handleHelp = useCallback(async () => {
+    const word = pendingWord.trim().toUpperCase();
+    if (!word) return;
+
+    const grinchBotUnlocked = getUnlockedItems('bot').includes('grinch-bot');
+    if (grinchBotUnlocked && isSeussWord(word, wordData)) {
+      showCustomAlert([word], {
+        meta: <Text style={{ color: colors.text, fontSize: 14, textAlign: 'center' }}>This is a Dr. Seuss word and it's fantastic.</Text>
+      });
+      return;
+    }
+
+    const definition = await fetchWordDefinition(word);
+    const reason = getWordLegalityReason(word, wordData);
+    const variantNote = getVariantDefinitionNote(word, wordData, definition);
+    const isInvalid = !isPlayableWord(word, wordData);
+
+    showCustomAlert([word], {
+      meta: (
+        <>
+          <Text style={{ color: isInvalid ? '#DC2626' : colors.text, fontSize: 14, textAlign: 'center', fontWeight: '700' }}>
+            {reason}
+          </Text>
+          {variantNote && (
+            <Text style={{ color: colors.textSecondary, fontSize: 12, textAlign: 'center', marginTop: 4 }}>{variantNote}</Text>
+          )}
+          <Text style={{ color: colors.text, fontSize: 14, textAlign: 'center', marginTop: 8 }}>
+            {definition || 'No definition available'}
+          </Text>
+        </>
+      )
+    });
+  }, [pendingWord, wordData, showCustomAlert, getUnlockedItems, colors]);
+
   const handleActionPress = useCallback(
     (action: string) => {
       if (action === '←') {
@@ -189,15 +240,17 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
         setIsMenuOpen(true);
         return;
       }
-      // '?' (help/dictionary lookup) is deferred in this slice - no-op.
-      if (action === '?') return;
+      if (action === '?') {
+        handleHelp();
+        return;
+      }
 
       if (!canEdit) return;
       if (action === '↻') {
         handleWordChange(challengeState?.currentWord || '');
       }
     },
-    [canEdit, handleWordChange, challengeState?.currentWord, onNavigateHome]
+    [canEdit, handleWordChange, challengeState?.currentWord, onNavigateHome, handleHelp]
   );
 
   const wordUnchanged = pendingWord === (challengeState?.currentWord || '');
