@@ -11,10 +11,14 @@
  * challenge-mode start/target word labels *absolutely, anchored to a
  * specific letter* (the first/last letter of the relevant trail entry -
  * see web's `renderWordWithStartWord`/`renderWordWithTargetWord`).
- * Native instead prepends/appends them as an inline "START →"/"← TARGET"
- * row segment - same information (which word is the actual start/target,
- * and which end of the trail they're closest to), a simpler layout
- * primitive, no loss of function.
+ * Native instead floats them entirely outside the played word - "START →"
+ * to its left, "← TARGET" to its right - the same technique (and the
+ * same reasoning) as the regular-mode score float below: the played word
+ * itself stays centered exactly like the vs-bot trail, and the label is
+ * an absolutely-positioned overlay anchored to the word's own edge that
+ * can never affect that centering, rather than a normal flex sibling
+ * that would compete with the word for space and center the *group*
+ * instead of the word itself.
  *
  * `showTurnNumbers`/`maxVisible` are accepted (matching web's prop
  * surface) but unused - web itself doesn't actually use them in its
@@ -156,26 +160,6 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   };
 
   const renderRow = (item: DisplayItem, index: number, options: { showStart?: boolean; showTarget?: boolean } = {}) => {
-    const content = (
-      <>
-        {options.showStart && startWord && (
-          <View style={styles.labelRow}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>START</Text>
-            {renderWord({ word: startWord, score: 0, keyLetters: [], maskWord: false })}
-            <Text style={[styles.arrow, { color: colors.textSecondary }]}>→</Text>
-          </View>
-        )}
-        {renderWord(item)}
-        {options.showTarget && targetWord && (
-          <View style={styles.labelRow}>
-            <Text style={[styles.arrow, { color: colors.textSecondary }]}>←</Text>
-            {renderWord({ word: targetWord, score: 0, keyLetters: [], maskWord: false })}
-            <Text style={[styles.label, { color: colors.textSecondary }]}>TARGET</Text>
-          </View>
-        )}
-      </>
-    );
-
     return (
       <Pressable
         key={`${item.word}-${index}`}
@@ -186,17 +170,28 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         style={styles.row}
       >
         {/* `rowContent` is centered across the *full row width* (shrink-
-            wrapped to exactly the word's own rendered width) independent
-            of whether a score is shown - and `position: relative` gives
-            the score below a positioning context anchored to the WORD
-            itself, not the row. `left: '100%'` then floats it immediately
-            past the word's right edge, wherever that happens to be once
-            centered, rather than pinned to the row/screen's right edge -
-            and because it's absolutely positioned, it doesn't add to
-            `rowContent`'s own width, so it can never re-shift the word's
-            centering either. */}
+            wrapped to exactly the played word's own rendered width),
+            independent of whether a score or start/target label is
+            shown - `position: relative` gives those a positioning
+            context anchored to the WORD itself, not the row, so as
+            absolutely-positioned overlays they can never re-shift the
+            word's own centering the way a normal flex sibling would. */}
         <View style={styles.rowContent}>
-          {content}
+          {renderWord(item)}
+          {options.showStart && startWord && (
+            <View testID="word-trail-start-label" style={[styles.floatingLabel, styles.floatingLabelLeft]}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>START</Text>
+              {renderWord({ word: startWord, score: 0, keyLetters: [], maskWord: false })}
+              <Text style={[styles.arrow, { color: colors.textSecondary }]}>→</Text>
+            </View>
+          )}
+          {options.showTarget && targetWord && (
+            <View testID="word-trail-target-label" style={[styles.floatingLabel, styles.floatingLabelRight]}>
+              <Text style={[styles.arrow, { color: colors.textSecondary }]}>←</Text>
+              {renderWord({ word: targetWord, score: 0, keyLetters: [], maskWord: false })}
+              <Text style={[styles.label, { color: colors.textSecondary }]}>TARGET</Text>
+            </View>
+          )}
           {effectiveShowScores && (
             <Text style={[styles.score, { color: colors.textSecondary }]}>{formatScore(item)}</Text>
           )}
@@ -307,10 +302,34 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center'
   },
-  labelRow: {
+  // Challenge mode's start/target labels - same floating technique as
+  // `score` below, just on either side instead of only the right, and
+  // wide enough to fit "START <word> →"/"← <word> TARGET" without
+  // wrapping (score only ever needs to fit a short "+N").
+  floatingLabel: {
+    position: 'absolute',
+    top: '50%',
+    transform: [{ translateY: -9 }],
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4
+    gap: 4,
+    width: 160
+  },
+  // Anchored to `rowContent`'s left edge (the word's left edge) via
+  // `right: '100%'`, and right-aligned within its own width so its
+  // content hugs that edge instead of floating away from the word with
+  // empty space in between.
+  floatingLabelLeft: {
+    right: '100%',
+    marginRight: 8,
+    justifyContent: 'flex-end'
+  },
+  // Mirrors `score`'s positioning exactly (`left: '100%'` off
+  // `rowContent`'s right edge), just with more content.
+  floatingLabelRight: {
+    left: '100%',
+    marginLeft: 8,
+    justifyContent: 'flex-start'
   },
   wordContainer: {
     flexDirection: 'row'

@@ -148,6 +148,31 @@ describe('native WordTrail (challenge mode)', () => {
     expect(screen.getByText('TARGET')).toBeTruthy();
   });
 
+  it('floats the start/target labels as absolutely-positioned overlays on either side, not inline siblings that would shift the played word off-center', async () => {
+    renderTrail({
+      isChallengeMode: true,
+      startWord: 'COLD',
+      targetWord: 'WARM',
+      moves: [{ word: 'CORD', score: 0, turnNumber: 1 }]
+    });
+
+    const startLabel = await screen.findByTestId('word-trail-start-label');
+    expect(startLabel.props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ position: 'absolute' }),
+        expect.objectContaining({ right: '100%' })
+      ])
+    );
+
+    const targetLabel = screen.getByTestId('word-trail-target-label');
+    expect(targetLabel.props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ position: 'absolute' }),
+        expect.objectContaining({ left: '100%' })
+      ])
+    );
+  });
+
   it('shows the start label on the earliest move and the target label on the most recent move', async () => {
     renderTrail({
       isChallengeMode: true,
