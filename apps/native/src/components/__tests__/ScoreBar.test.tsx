@@ -114,4 +114,14 @@ describe('native ScoreBar', () => {
     renderScoreBar({ players: [player()], currentRound: 3 });
     expect(await screen.findByText('round 3')).toBeTruthy();
   });
+
+  it('renders the score value at the heaviest available font weight (900)', async () => {
+    renderScoreBar({
+      players: [player({ id: 'p1', name: 'p1', score: 12 })]
+    });
+
+    const score = await screen.findByText('12');
+    const flattenedStyle = [score.props.style].flat();
+    expect(flattenedStyle).toEqual(expect.arrayContaining([expect.objectContaining({ fontWeight: '900' })]));
+  });
 });

@@ -264,5 +264,12 @@ describe('native Menu', () => {
     // the three rather than hardcoding brittle totals here.
     const counts = screen.getAllByText(/^\d+\/\d+$/);
     expect(counts).toHaveLength(3);
+
+    // Heaviest weight available (900), same treatment as ScoreBar.tsx's
+    // score numbers - these are earned/counted values too.
+    for (const count of counts) {
+      const flattenedStyle = [count.props.style].flat();
+      expect(flattenedStyle).toEqual(expect.arrayContaining([expect.objectContaining({ fontWeight: '900' })]));
+    }
   });
 });

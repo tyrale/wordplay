@@ -52,6 +52,13 @@ describe('native WordTrail (regular mode)', () => {
     expect(await screen.findByText('+3')).toBeTruthy();
   });
 
+  it('renders the score value at the heaviest available font weight (900)', async () => {
+    renderTrail({ moves: [{ word: 'CAT', score: 3, turnNumber: 1 }], showScores: true });
+    const score = await screen.findByText('+3');
+    const flattenedStyle = [score.props.style].flat();
+    expect(flattenedStyle).toEqual(expect.arrayContaining([expect.objectContaining({ fontWeight: '900' })]));
+  });
+
   it('splits base and key-letter bonus points from the score breakdown', async () => {
     renderTrail({
       moves: [

@@ -122,9 +122,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase'
   },
+  // Heaviest weight available (900) - a player's actual score value,
+  // same treatment as ScoreDisplay.tsx's score/checkmark and Menu.tsx's
+  // "N/N unlocked" counts.
   score: {
     fontSize: 16,
-    fontWeight: '700'
+    fontWeight: '900'
   },
   round: {
     fontSize: 16,

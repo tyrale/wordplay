@@ -402,9 +402,14 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16
   },
+  // Right-justified throughout, matching web's Menu.css (`.menu-list`/
+  // `.menu-tier1-item`/`.menu-tier2-item` are all `align-items: flex-end`/
+  // `text-align: right`) - every row hugs the right edge of the sheet
+  // instead of the left.
   scrollContent: {
     padding: 20,
-    gap: 4
+    gap: 4,
+    alignItems: 'flex-end'
   },
   sectionHeader: {
     paddingVertical: 12
@@ -418,30 +423,33 @@ const styles = StyleSheet.create({
     fontWeight: '900'
   },
   // "N/N unlocked" count shown before the section label - matches web's
-  // Menu.css `.menu-tier1-item__count` (accent color, smaller than the
-  // label, a small gap before it).
+  // Menu.css `.menu-tier1-item__count` (accent color, a small gap before
+  // the label). Heaviest weight available (900) per this file's own
+  // convention for numeric values a player has "earned" - same
+  // reasoning as ScoreBar.tsx's score numbers.
   sectionHeaderCount: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '900',
     marginRight: 8
   },
   sectionBody: {
-    paddingLeft: 12,
     paddingBottom: 8,
-    gap: 8
+    gap: 8,
+    alignItems: 'flex-end'
   },
   row: {
     paddingVertical: 6
   },
   toggleRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 12,
     paddingVertical: 6
   },
   themesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'flex-end',
     gap: 8
   },
   // No border - the theme's own background fill is the entire preview,

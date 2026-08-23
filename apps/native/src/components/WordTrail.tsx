@@ -349,7 +349,9 @@ const styles = StyleSheet.create({
   // `left: '100%'` positions this relative to `rowContent`'s own right
   // edge (i.e. the word's right edge), not the row/screen's - floating
   // immediately past the word wherever it's centered, rather than pinned
-  // to the far right of the trail.
+  // to the far right of the trail. Heaviest weight available (900) - a
+  // player's actual earned score value, same treatment as ScoreBar.tsx's
+  // score numbers.
   score: {
     position: 'absolute',
     left: '100%',
@@ -357,7 +359,7 @@ const styles = StyleSheet.create({
     top: '50%',
     transform: [{ translateY: -8 }],
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '900',
     // Prevents the score from ever line-wrapping onto a second line,
     // which `left: '100%'` combined with the row's own width could
     // otherwise trigger for a word centered near the right edge.
