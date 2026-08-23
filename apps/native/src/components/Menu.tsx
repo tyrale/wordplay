@@ -19,7 +19,7 @@
  * mode, the vanity filter hook/context, the leaderboard overlay, word
  * path graph tracking) or was cut for scope in this pass.
  */
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Switch } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../providers/UnlockProvider';
@@ -143,26 +143,16 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                 {isDarkModeUnlocked && (
                   <ToggleRow label="dark mode" value={isInverted} onToggle={toggleInverted} textColor={currentTheme.colors.text} accentColor={currentTheme.colors.accent} />
                 )}
-                {unlockedThemes.map(theme => {
-                  const isSelected = theme.name === currentTheme.name;
-                  return (
-                    <Pressable
+                <View style={styles.themesGrid}>
+                  {unlockedThemes.map(theme => (
+                    <ThemeSwatch
                       key={theme.name}
+                      theme={theme}
+                      isSelected={theme.name === currentTheme.name}
                       onPress={() => handleThemeSelect(theme)}
-                      style={styles.row}
-                      accessibilityRole="button"
-                      // The selected theme is otherwise only distinguished
-                      // by accent color/font weight - neither perceivable
-                      // via a screen reader, so its selected state needs
-                      // to be conveyed explicitly here too.
-                      accessibilityState={{ selected: isSelected }}
-                    >
-                      <Text style={{ color: isSelected ? currentTheme.colors.accent : currentTheme.colors.text, fontWeight: isSelected ? '900' : '400' }}>
-                        {theme.name.toLowerCase()}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+                    />
+                  ))}
+                </View>
               </View>
             )}
 
@@ -278,6 +268,58 @@ const SectionHeader: React.FC<{ label: string; color: string; onPress: () => voi
   </Pressable>
 );
 
+/**
+ * Deterministically picks one letter of a theme's name to highlight in
+ * its own accent color - "random" in the sense of not simply always
+ * being the first/last letter, but stable across re-renders (a hash of
+ * the name, not `Math.random()`) so it doesn't visually jitter every
+ * time the Menu re-renders. Matches web's Menu.tsx `renderThemeName`
+ * (same hash-of-char-codes approach), just without its dark-mode-
+ * inversion swap - see this file's ThemeSwatch doc comment for why.
+ */
+function getAccentLetterIndex(name: string): number {
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return hash % name.length;
+}
+
+/**
+ * A theme's own row in the Menu's "themes" section, styled as a preview
+ * of the theme itself rather than plain text: a filled (no border) box
+ * using the theme's own background color, its name in the theme's own
+ * text color, and one letter of the name highlighted in the theme's own
+ * accent color - so picking a theme also previews what it'll actually
+ * look like, matching web's Menu.tsx theme grid intent (ported without
+ * its `isInverted` background/text swap - the rest of this file doesn't
+ * apply that swap to any of its other rows either, so doing it only here
+ * would be an inconsistency this port doesn't already have).
+ */
+const ThemeSwatch: React.FC<{ theme: GameTheme; isSelected: boolean; onPress: () => void }> = ({ theme, isSelected, onPress }) => {
+  const name = theme.name.toLowerCase();
+  const accentLetterIndex = useMemo(() => getAccentLetterIndex(name), [name]);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.themeSwatch, { backgroundColor: theme.colors.background }]}
+      accessibilityRole="button"
+      // The selected theme is otherwise only distinguished by the small
+      // checkmark below - not reliably perceivable via a screen reader,
+      // so its selected state needs to be conveyed explicitly here too.
+      accessibilityState={{ selected: isSelected }}
+      accessibilityLabel={`${name} theme${isSelected ? ', selected' : ''}`}
+    >
+      <Text style={styles.themeSwatchName}>
+        {name.split('').map((letter, index) => (
+          <Text key={index} style={{ color: index === accentLetterIndex ? theme.colors.accent : theme.colors.text }}>
+            {letter}
+          </Text>
+        ))}
+      </Text>
+      {isSelected && <Text style={[styles.themeSwatchCheck, { color: theme.colors.accent }]}>✓</Text>}
+    </Pressable>
+  );
+};
+
 const ToggleRow: React.FC<{ label: string; value: boolean; onToggle: () => void; textColor: string; accentColor: string }> = ({
   label,
   value,
@@ -338,5 +380,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 6
+  },
+  themesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8
+  },
+  // No border - the theme's own background fill is the entire preview,
+  // matching this file's ThemeSwatch doc comment.
+  themeSwatch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8
+  },
+  themeSwatchName: {
+    fontSize: 14,
+    fontWeight: '700'
+  },
+  themeSwatchCheck: {
+    fontSize: 14,
+    fontWeight: '900'
   }
 });

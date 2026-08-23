@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
+import { render, screen, waitFor, fireEvent, act, within } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
@@ -197,5 +197,46 @@ describe('native Menu', () => {
     const toggle = await screen.findByLabelText('gravity');
     expect(toggle.props.accessibilityRole).toBe('switch');
     expect(toggle.props.accessibilityState).toEqual(expect.objectContaining({ checked: true }));
+  });
+
+  it('previews each theme as a borderless swatch: box uses the theme\'s own background, the name uses its own text color, and exactly one letter uses its accent color', async () => {
+    renderMenu();
+    await waitFor(() => expect(screen.getByText('themes')).toBeTruthy());
+    fireEvent.press(screen.getByText('themes'));
+    await waitFor(() => expect(screen.getByText('classic blue')).toBeTruthy());
+
+    const swatch = screen.getByLabelText(/^classic blue theme/);
+    const flattenedStyle = [swatch.props.style].flat();
+    // Classic Blue (the default theme): background #ffffff, text #1e3a8a,
+    // accent #3b82f6 - see packages/theme/theme.ts.
+    expect(flattenedStyle).toEqual(expect.arrayContaining([expect.objectContaining({ backgroundColor: '#ffffff' })]));
+    // No border color set anywhere on the swatch - it's a filled box only.
+    expect(flattenedStyle.some(s => 'borderColor' in (s as object))).toBe(false);
+
+    // A lone space character doesn't come back as its own queryable Text
+    // match (RNTL normalizes/trims whitespace-only text), so this only
+    // ever sees the actual letters - "classicblue" (11), not "classic
+    // blue" (12).
+    const letters = within(swatch).getAllByText(/^[a-z]$/);
+    const nonSpaceLetterCount = 'classic blue'.replace(/\s/g, '').length;
+    expect(letters).toHaveLength(nonSpaceLetterCount);
+    const accentLetters = letters.filter(letter => letter.props.style?.color === '#3b82f6');
+    const textLetters = letters.filter(letter => letter.props.style?.color === '#1e3a8a');
+    // Exactly one letter highlighted, the rest in the theme's plain text color.
+    expect(accentLetters).toHaveLength(1);
+    expect(textLetters).toHaveLength(nonSpaceLetterCount - 1);
+  });
+
+  it('shows a checkmark (in the theme\'s own accent color) only on the currently-selected theme swatch', async () => {
+    renderMenu({}, ['red']);
+    await waitFor(() => expect(screen.getByText('themes')).toBeTruthy());
+    fireEvent.press(screen.getByText('themes'));
+    await waitFor(() => expect(screen.getByText('red')).toBeTruthy());
+
+    const selectedSwatch = screen.getByLabelText(/^classic blue theme, selected/);
+    expect(within(selectedSwatch).getByText('✓')).toBeTruthy();
+
+    const unselectedSwatch = screen.getByLabelText(/^red theme$/);
+    expect(within(unselectedSwatch).queryByText('✓')).toBeNull();
   });
 });
