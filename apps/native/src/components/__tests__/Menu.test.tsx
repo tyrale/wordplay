@@ -239,4 +239,30 @@ describe('native Menu', () => {
     const unselectedSwatch = screen.getByLabelText(/^red theme$/);
     expect(within(unselectedSwatch).queryByText('✓')).toBeNull();
   });
+
+  it('does not show "N/N unlocked" counts next to section headers until the "unlock counter" mechanic is unlocked', async () => {
+    renderMenu();
+    await waitFor(() => expect(screen.getByText('themes')).toBeTruthy());
+
+    expect(screen.queryByText(/^\d+\/\d+$/)).toBeNull();
+  });
+
+  it('shows "N/N unlocked" counts next to the themes/mechanics/bots section headers once "unlock" is played', async () => {
+    // "unlock" mechanic word trigger (unlocks the "unlock-counter"
+    // mechanic) per unlock-definitions.ts naming convention. Unlocking
+    // "unlock-counter" is itself a permanent mechanic, so wait for the
+    // mechanics section to actually appear - proof the (async)
+    // checkWordTriggers has resolved - rather than for "themes" (always
+    // present regardless of unlock state, so it wouldn't actually wait
+    // for anything here).
+    renderMenu({}, ['unlock']);
+    await waitFor(() => expect(screen.getByText('mechanics')).toBeTruthy());
+
+    // themes/mechanics/bots all show a count once unlock-counter is on -
+    // exact totals depend on the full theme/bot/mechanic catalogs, so
+    // just confirm the "N/N" pattern is actually rendered for each of
+    // the three rather than hardcoding brittle totals here.
+    const counts = screen.getAllByText(/^\d+\/\d+$/);
+    expect(counts).toHaveLength(3);
+  });
 });

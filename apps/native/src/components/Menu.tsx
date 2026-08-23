@@ -7,11 +7,15 @@
  * "????" locked-item previews, and a community "X/X found worldwide"
  * progress line.
  *
- * This slice ports: themes (+ dark mode toggle), mechanics toggles +
- * round length selection, unlocked bots (tap to start a game with that
- * bot), the "the basics"/"dictionaries" about entries, the "player-stats"
- * permanent mechanic (opens the real StatsOverlay), reset-unlocks
- * (debug), and home/resign. Deliberately deferred, not silently dropped:
+ * This slice ports: themes (+ dark mode toggle, previewed per-theme via
+ * `ThemeSwatch` below), mechanics toggles + round length selection,
+ * unlocked bots (tap to start a game with that bot), the "the basics"/
+ * "dictionaries" about entries, the "player-stats" permanent mechanic
+ * (opens the real StatsOverlay), the "unlock-counter" permanent mechanic
+ * (shows "N/N unlocked" next to the themes/mechanics/bots section
+ * headers once unlocked by playing "unlock" - matches web's
+ * `showUnlockCounts` exactly), reset-unlocks (debug), and home/resign.
+ * Deliberately deferred, not silently dropped:
  * the vanity filter system, "vs world"/leaderboard/challenge entries, two
  * of the four "about" sub-overlays (thoughts/the-game), the "word-paths"
  * permanent mechanic (WordPathExplorer), locked-item previews, and
@@ -26,7 +30,8 @@ import { useUnlockSystem } from '../providers/UnlockProvider';
 import { useMechanicsSettings } from '../contexts/MechanicsSettingsContext';
 import { useRoundLength, DEFAULT_ROUND_LENGTH } from '../contexts/RoundLengthContext';
 import { useUnlockedThemes } from '../hooks/useUnlockedThemes';
-import { getBotDisplayNamesMapping } from '@wordplay/engine/botRegistry';
+import { getBotDisplayNamesMapping, getVisibleBots } from '@wordplay/engine/botRegistry';
+import { availableThemes as ALL_THEMES } from '@wordplay/theme/theme';
 import type { GameTheme } from '@wordplay/theme/theme';
 import { DictionariesOverlay } from './DictionariesOverlay';
 import { StatsOverlay } from './StatsOverlay';
@@ -95,6 +100,18 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
   const unlockedPermanentMechanics = PERMANENT_MECHANIC_IDS.filter(id => unlockedMechanics.includes(id));
   const hasMechanicsSection = toggleableMechanics.length > 0 || unlockedRoundLengths.length > 0 || unlockedPermanentMechanics.length > 0;
 
+  // "N/N unlocked" counts next to the themes/mechanics/bots section
+  // headers, shown only once the player has unlocked the "unlock
+  // counter" mechanic by playing the word "unlock" - matches web's
+  // Menu.tsx exactly (showUnlockCounts + each tier1Item.count).
+  const showUnlockCounts = unlockedMechanics.includes('unlock-counter');
+  const themesCount = { unlocked: unlockedThemes.length, total: ALL_THEMES.length };
+  const mechanicsCount = {
+    unlocked: unlockedMechanics.filter(id => id !== DARK_MODE_MECHANIC_ID).length,
+    total: ALL_MECHANIC_IDS.length + PERMANENT_MECHANIC_IDS.length
+  };
+  const botsCount = { unlocked: availableBots.length, total: getVisibleBots().length };
+
   const toggleSection = useCallback((section: string) => {
     setExpandedSection(prev => (prev === section ? null : section));
   }, []);
@@ -137,7 +154,13 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
               <SectionHeader label="resign" color={'#DC2626'} onPress={handleResign} />
             )}
 
-            <SectionHeader label="themes" color={currentTheme.colors.text} onPress={() => toggleSection('themes')} />
+            <SectionHeader
+              label="themes"
+              color={currentTheme.colors.text}
+              accentColor={currentTheme.colors.accent}
+              count={showUnlockCounts ? themesCount : undefined}
+              onPress={() => toggleSection('themes')}
+            />
             {expandedSection === 'themes' && (
               <View style={styles.sectionBody}>
                 {isDarkModeUnlocked && (
@@ -158,7 +181,13 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
 
             {hasMechanicsSection && (
               <>
-                <SectionHeader label="mechanics" color={currentTheme.colors.text} onPress={() => toggleSection('mechanics')} />
+                <SectionHeader
+                  label="mechanics"
+                  color={currentTheme.colors.text}
+                  accentColor={currentTheme.colors.accent}
+                  count={showUnlockCounts ? mechanicsCount : undefined}
+                  onPress={() => toggleSection('mechanics')}
+                />
                 {expandedSection === 'mechanics' && (
                   <View style={styles.sectionBody}>
                     {unlockedPermanentMechanics.map(id => {
@@ -213,7 +242,13 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
               </>
             )}
 
-            <SectionHeader label="bots" color={currentTheme.colors.text} onPress={() => toggleSection('bots')} />
+            <SectionHeader
+              label="bots"
+              color={currentTheme.colors.text}
+              accentColor={currentTheme.colors.accent}
+              count={showUnlockCounts ? botsCount : undefined}
+              onPress={() => toggleSection('bots')}
+            />
             {expandedSection === 'bots' && (
               <View style={styles.sectionBody}>
                 {availableBots.map(botId => (
@@ -262,8 +297,19 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
   );
 };
 
-const SectionHeader: React.FC<{ label: string; color: string; onPress: () => void }> = ({ label, color, onPress }) => (
-  <Pressable onPress={onPress} style={styles.sectionHeader} accessibilityRole="button">
+const SectionHeader: React.FC<{ label: string; color: string; accentColor?: string; count?: { unlocked: number; total: number }; onPress: () => void }> = ({
+  label,
+  color,
+  accentColor,
+  count,
+  onPress
+}) => (
+  <Pressable onPress={onPress} style={[styles.sectionHeader, styles.sectionHeaderRow]} accessibilityRole="button">
+    {count && (
+      <Text style={[styles.sectionHeaderCount, { color: accentColor ?? color }]}>
+        {count.unlocked}/{count.total}
+      </Text>
+    )}
     <Text style={[styles.sectionHeaderText, { color }]}>{label}</Text>
   </Pressable>
 );
@@ -363,9 +409,21 @@ const styles = StyleSheet.create({
   sectionHeader: {
     paddingVertical: 12
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline'
+  },
   sectionHeaderText: {
     fontSize: 20,
     fontWeight: '900'
+  },
+  // "N/N unlocked" count shown before the section label - matches web's
+  // Menu.css `.menu-tier1-item__count` (accent color, smaller than the
+  // label, a small gap before it).
+  sectionHeaderCount: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginRight: 8
   },
   sectionBody: {
     paddingLeft: 12,
