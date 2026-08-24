@@ -1,22 +1,36 @@
 import React from 'react';
+import { Animated } from 'react-native';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
-import { UnlockProvider } from '../../providers/UnlockProvider';
+import { UnlockProvider, useUnlockSystem } from '../../providers/UnlockProvider';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
 import { InteractiveGame } from '../InteractiveGame';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
 import { StatsOverlay } from '../../components/StatsOverlay';
 
-function renderGame(props: React.ComponentProps<typeof InteractiveGame> = {}) {
+function Unlocker({ words }: { words: string[] }) {
+  const { checkWordTriggers, isLoading } = useUnlockSystem();
+  const ranRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!isLoading && !ranRef.current) {
+      ranRef.current = true;
+      words.forEach(word => checkWordTriggers(word));
+    }
+  }, [isLoading, checkWordTriggers, words]);
+  return null;
+}
+
+function renderGame(props: React.ComponentProps<typeof InteractiveGame> = {}, unlockWords: string[] = []) {
   return render(
     <ThemeProvider>
       <AlertProvider>
         <UnlockProvider>
           <MechanicsSettingsProvider>
             <RoundLengthProvider>
+              <Unlocker words={unlockWords} />
               <InteractiveGame {...props} />
             </RoundLengthProvider>
           </MechanicsSettingsProvider>
@@ -263,5 +277,54 @@ describe('native InteractiveGame screen', () => {
     });
 
     expect(onBossTrigger).toHaveBeenCalledWith('GUS');
+  });
+
+  it('shows a live per-turn countdown once the time-pressure mechanic is unlocked and toggled on', async () => {
+    // "time-pressure" defaults *off* even once unlocked (see
+    // MechanicsSettingsContext.tsx's DEFAULT_OFF_MECHANICS) - pre-seed
+    // its toggle as explicitly on, matching what the Menu's toggle would
+    // persist once the player switches it on themselves.
+    await AsyncStorage.setItem('wordplay-mechanics-settings', JSON.stringify({ 'time-pressure': true }));
+    renderGame({}, ['time']);
+
+    // The right side of ScoreDisplay shows the countdown (starting at 7,
+    // per TURN_TIME_LIMIT_SECONDS) instead of the usual pass/score
+    // content, once the mechanic is actually unlocked+on and it's the
+    // player's turn.
+    expect(await screen.findByText('7')).toBeTruthy();
+  });
+
+  it('does not show a countdown when time-pressure is unlocked but left off (the default)', async () => {
+    renderGame({}, ['time']);
+    await waitFor(() => expect(screen.getByLabelText(/^Current word: .+/)).toBeTruthy());
+    expect(screen.queryByText('7')).toBeNull();
+  });
+
+  // Order matters here: the "not unlocked" case runs first, before this
+  // file ever calls `checkWordTriggers('drunk')` - the Unlocker helper's
+  // unlock write is fire-and-forget, so running the negative case second
+  // risks a previous test's still-in-flight persistence write leaking in
+  // (AsyncStorage.clear() in beforeEach only guards against state left
+  // over from *before* that call resolves, not a write that lands after).
+  it('does not apply a wobble transform when drunk mode is not unlocked', async () => {
+    const { UNSAFE_getByType } = renderGame();
+    await waitFor(() => expect(screen.getByLabelText(/^Current word: .+/)).toBeTruthy());
+
+    const wobbleView = UNSAFE_getByType(Animated.View);
+    const flattenedStyle = [wobbleView.props.style].flat();
+    const hasTransform = flattenedStyle.some(s => s && typeof s === 'object' && 'transform' in s);
+    expect(hasTransform).toBe(false);
+  });
+
+  it('applies a looping wobble transform to the board once drunk mode is unlocked and toggled on (defaults on once unlocked)', async () => {
+    const { UNSAFE_getByType } = renderGame({}, ['drunk']);
+    await waitFor(() => expect(screen.getByLabelText(/^Current word: .+/)).toBeTruthy());
+
+    await waitFor(() => {
+      const wobbleView = UNSAFE_getByType(Animated.View);
+      const flattenedStyle = [wobbleView.props.style].flat();
+      const hasTransform = flattenedStyle.some(s => s && typeof s === 'object' && 'transform' in s);
+      expect(hasTransform).toBe(true);
+    });
   });
 });

@@ -183,6 +183,21 @@ Steps:
 - Test coverage: 23 tests for the ported `wordHelp.ts` utilities (including `fetchWordDefinition`'s dictionaryapi.dev/Wiktionary fallback chain via a mocked `global.fetch` - web doesn't test these network-dependent functions at all, so this exceeds web's own coverage), 2 for the new hook, and one "press Help, see the definition" integration test per screen.
 - Verified via real Metro bundle fetches for both iOS and Android, `tsc --noEmit` clean, full workspace suite green.
 
+### Phase 3.7 — Mechanics gap closure (time-pressure, drunk mode, locked-item previews)
+
+**Goal**: Close a whole cluster of real, self-inflicted gaps discovered by direct user testing - "I unlocked time-pressure and drunk mode, saw the alert overlay, but they don't do anything in-game" and "I played 'bots' and don't see the list of ????'s for what's not unlocked yet". Auditing against web turned up that this port had wired the unlock *engine* side of several mechanics (the achievement fires, the Menu toggle exists) but never actually threaded the *effect* through to the game screens - a different, easier-to-miss kind of gap than a feature simply not being started yet.
+
+✅ **Done**:
+- **Starting word length** (3/5/6/7/8/9/10-letter-start) and **Seuss canonical words**: both already existed as real `GameConfig` fields (`startingWordLength`/`allowSeussCanonical`) that the engine fully supports - native's InteractiveGame.tsx/ZenGame.tsx just never computed and passed them. Now do, matching web's random-pick-among-unlocked-lengths logic exactly.
+- **Time-pressure**: a real per-turn 7-second countdown (`TURN_TIME_LIMIT_SECONDS`), auto-passing the turn at zero, wired into InteractiveGame.tsx and ZenGame.tsx (not ChallengeGame.tsx - web doesn't have it there either). Threaded into `ScoreDisplay`'s existing (already-built, but until now unused for this) `timerSeconds` prop.
+- **Drunk mode**: web applies a CSS `rotate`/`scale`/`translate` wobble keyframe animation plus a `blur`/`saturate` filter to the whole game view. Native has no CSS filter equivalent without a new dependency (e.g. `expo-blur`), so this ports the wobble motion via core `Animated` (already a dependency) and documents the blur/saturate omission rather than silently dropping the whole mechanic. Wired into all three game screens (InteractiveGame/ZenGame/ChallengeGame - web has it in all three).
+- **Ninja word trail**: the permanent `ninja-word-trail` unlock (dash-masks the word trail) was wired for InteractiveGame.tsx already but missing from ZenGame.tsx - now wired there too.
+- **Locked "????" previews**: ported web's `maskName`/`hashString`/`shuffleLockedItems` helpers and the `reveal`-category-gated locked-item computation for themes/mechanics/bots (`getUnlockedItems('reveal')` - already supported by the shared unlock engine, just never queried from native's Menu.tsx). Playing "themes"/"mechanics"/"bots" now reveals masked previews of everything in that category not yet unlocked, exactly matching web's anti-spoiler reveal gating.
+- **Menu row font weight**: every remaining Menu row `Text` that wasn't already at the heaviest available weight (900) - mechanic toggle labels, bot list entries, "about" entries, permanent-mechanic rows, theme swatch names - bumped to 900, per direct request.
+- Explicitly still out of scope, not silently dropped: the **gravity** mechanic (a physics-driven falling/rolling letter grid - no native equivalent component exists, a much bigger standalone build than anything else in this cluster) and **community-stats**/**word-paths** (each needs its own not-yet-built overlay).
+
+Testing: 19 new tests across InteractiveGame/ZenGame/ChallengeGame/Menu (time-pressure countdown appearing/not appearing, drunk wobble transform present/absent, locked previews appearing only once revealed, font-weight assertions). Full workspace suite: 726 tests (94 web + 347 engine + 285 native, up from 707 before this pass), `tsc --noEmit` clean, verified via real Metro bundle fetches for both iOS and Android.
+
 ### Phase 5 — Platform polish, store readiness, and release
 **Goal**: Everything needed to actually ship to the App Store and Google Play.
 

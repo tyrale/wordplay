@@ -1,20 +1,34 @@
 import React from 'react';
+import { Animated } from 'react-native';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
-import { UnlockProvider } from '../../providers/UnlockProvider';
+import { UnlockProvider, useUnlockSystem } from '../../providers/UnlockProvider';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
 import { ZenGame } from '../ZenGame';
 
-function renderZen(props: React.ComponentProps<typeof ZenGame> = {}) {
+function Unlocker({ words }: { words: string[] }) {
+  const { checkWordTriggers, isLoading } = useUnlockSystem();
+  const ranRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!isLoading && !ranRef.current) {
+      ranRef.current = true;
+      words.forEach(word => checkWordTriggers(word));
+    }
+  }, [isLoading, checkWordTriggers, words]);
+  return null;
+}
+
+function renderZen(props: React.ComponentProps<typeof ZenGame> = {}, unlockWords: string[] = []) {
   return render(
     <ThemeProvider>
       <AlertProvider>
         <UnlockProvider>
           <MechanicsSettingsProvider>
             <RoundLengthProvider>
+              <Unlocker words={unlockWords} />
               <ZenGame {...props} />
             </RoundLengthProvider>
           </MechanicsSettingsProvider>
@@ -94,5 +108,38 @@ describe('native ZenGame screen', () => {
     // than the screen showing a game-over state.
     await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
     expect(screen.getByLabelText('Letter A')).toBeTruthy();
+  });
+
+  it('does not apply a wobble transform when drunk mode is not unlocked', async () => {
+    const { UNSAFE_getByType } = renderZen();
+    await waitFor(() => expect(screen.getByLabelText(/^Current word: .+/)).toBeTruthy());
+
+    const wobbleView = UNSAFE_getByType(Animated.View);
+    const flattenedStyle = [wobbleView.props.style].flat();
+    expect(flattenedStyle.some(s => s && typeof s === 'object' && 'transform' in s)).toBe(false);
+  });
+
+  it('applies a looping wobble transform once drunk mode is unlocked and toggled on (defaults on once unlocked)', async () => {
+    const { UNSAFE_getByType } = renderZen({}, ['drunk']);
+    await waitFor(() => expect(screen.getByLabelText(/^Current word: .+/)).toBeTruthy());
+
+    await waitFor(() => {
+      const wobbleView = UNSAFE_getByType(Animated.View);
+      const flattenedStyle = [wobbleView.props.style].flat();
+      expect(flattenedStyle.some(s => s && typeof s === 'object' && 'transform' in s)).toBe(true);
+    });
+  });
+
+  it('does not show a countdown when time-pressure is unlocked but left off (the default)', async () => {
+    renderZen({}, ['time']);
+    await waitFor(() => expect(screen.getByLabelText(/^Current word: .+/)).toBeTruthy());
+    expect(screen.queryByText('7')).toBeNull();
+  });
+
+  it('shows a live per-turn countdown once the time-pressure mechanic is unlocked and toggled on', async () => {
+    await AsyncStorage.setItem('wordplay-mechanics-settings', JSON.stringify({ 'time-pressure': true }));
+    renderZen({}, ['time']);
+
+    expect(await screen.findByText('7')).toBeTruthy();
   });
 });

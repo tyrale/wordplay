@@ -1,20 +1,34 @@
 import React from 'react';
+import { Animated } from 'react-native';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
-import { UnlockProvider } from '../../providers/UnlockProvider';
+import { UnlockProvider, useUnlockSystem } from '../../providers/UnlockProvider';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
 import { ChallengeGame } from '../ChallengeGame';
 
-function renderChallenge(props: React.ComponentProps<typeof ChallengeGame> = {}) {
+function Unlocker({ words }: { words: string[] }) {
+  const { checkWordTriggers, isLoading } = useUnlockSystem();
+  const ranRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!isLoading && !ranRef.current) {
+      ranRef.current = true;
+      words.forEach(word => checkWordTriggers(word));
+    }
+  }, [isLoading, checkWordTriggers, words]);
+  return null;
+}
+
+function renderChallenge(props: React.ComponentProps<typeof ChallengeGame> = {}, unlockWords: string[] = []) {
   return render(
     <ThemeProvider>
       <AlertProvider>
         <UnlockProvider>
           <MechanicsSettingsProvider>
             <RoundLengthProvider>
+              <Unlocker words={unlockWords} />
               <ChallengeGame {...props} />
             </RoundLengthProvider>
           </MechanicsSettingsProvider>
@@ -114,5 +128,25 @@ describe('native ChallengeGame screen', () => {
     // since WordTrail's own start/target labels underneath the overlay
     // also render a "→".
     expect(screen.getAllByText('→').length).toBeGreaterThan(0);
+  });
+
+  it('does not apply a wobble transform when drunk mode is not unlocked', async () => {
+    const { UNSAFE_getByType } = renderChallenge();
+    await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
+
+    const wobbleView = UNSAFE_getByType(Animated.View);
+    const flattenedStyle = [wobbleView.props.style].flat();
+    expect(flattenedStyle.some(s => s && typeof s === 'object' && 'transform' in s)).toBe(false);
+  });
+
+  it('applies a looping wobble transform once drunk mode is unlocked and toggled on (defaults on once unlocked)', async () => {
+    const { UNSAFE_getByType } = renderChallenge({}, ['drunk']);
+    await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
+
+    await waitFor(() => {
+      const wobbleView = UNSAFE_getByType(Animated.View);
+      const flattenedStyle = [wobbleView.props.style].flat();
+      expect(flattenedStyle.some(s => s && typeof s === 'object' && 'transform' in s)).toBe(true);
+    });
   });
 });

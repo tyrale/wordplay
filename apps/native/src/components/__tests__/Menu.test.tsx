@@ -272,4 +272,69 @@ describe('native Menu', () => {
       expect(flattenedStyle).toEqual(expect.arrayContaining([expect.objectContaining({ fontWeight: '900' })]));
     }
   });
+
+  it('does not show any locked "????" bot previews until the "bots" category is revealed', async () => {
+    renderMenu();
+    await waitFor(() => expect(screen.getByText('bots')).toBeTruthy());
+    fireEvent.press(screen.getByText('bots'));
+
+    // Only "basicbot" (the always-unlocked default) shows - no masked
+    // previews for anything else yet.
+    await waitFor(() => expect(screen.getByText('basicbot')).toBeTruthy());
+    expect(screen.queryByText(/^\?+$/)).toBeNull();
+  });
+
+  it('shows masked "????" previews for not-yet-unlocked bots once "bots" is played (revealing the category)', async () => {
+    renderMenu({}, ['bots']);
+    await waitFor(() => expect(screen.getByText('bots')).toBeTruthy());
+    fireEvent.press(screen.getByText('bots'));
+    await waitFor(() => expect(screen.getByText('basicbot')).toBeTruthy());
+
+    // At least one masked preview (a run of one-or-more '?' characters,
+    // spaces preserved as gaps) shows up for a bot that isn't unlocked -
+    // real bot names never contain '?', so this can't false-positive on
+    // an already-unlocked bot's real name.
+    const maskedPreviews = screen.getAllByText(/^[?\s]+$/);
+    expect(maskedPreviews.length).toBeGreaterThan(0);
+  });
+
+  it('shows masked "????" previews for not-yet-unlocked themes once "themes" is played (revealing the category)', async () => {
+    renderMenu({}, ['themes']);
+    await waitFor(() => expect(screen.getByText('themes')).toBeTruthy());
+    fireEvent.press(screen.getByText('themes'));
+    await waitFor(() => expect(screen.getByText('classic blue')).toBeTruthy());
+
+    const maskedPreviews = screen.getAllByText(/^[?\s]+$/);
+    expect(maskedPreviews.length).toBeGreaterThan(0);
+  });
+
+  it('reveals a mechanics section with only masked "????" previews once "mechanics" is played, even with no mechanic actually unlocked', async () => {
+    renderMenu({}, ['mechanics']);
+
+    // Before this reveal, no mechanics section exists at all (see "does
+    // not show a mechanics section when no mechanics are unlocked").
+    await waitFor(() => expect(screen.getByText('mechanics')).toBeTruthy());
+    fireEvent.press(screen.getByText('mechanics'));
+
+    const maskedPreviews = await screen.findAllByText(/^[?\s]+$/);
+    expect(maskedPreviews.length).toBeGreaterThan(0);
+  });
+
+  it('renders every menu row item (bots, "about" entries, mechanic toggle labels) at the heaviest available font weight (900)', async () => {
+    renderMenu({}, ['gravity']);
+
+    await waitFor(() => expect(screen.getByText('bots')).toBeTruthy());
+    fireEvent.press(screen.getByText('bots'));
+    const bot = await screen.findByText('basicbot');
+    expect([bot.props.style].flat()).toEqual(expect.arrayContaining([expect.objectContaining({ fontWeight: '900' })]));
+
+    await waitFor(() => expect(screen.getByText('mechanics')).toBeTruthy());
+    fireEvent.press(screen.getByText('mechanics'));
+    const mechanicToggleLabel = await screen.findByText('gravity');
+    expect([mechanicToggleLabel.props.style].flat()).toEqual(expect.arrayContaining([expect.objectContaining({ fontWeight: '900' })]));
+
+    fireEvent.press(screen.getByText('about'));
+    const aboutEntry = await screen.findByText('the basics');
+    expect([aboutEntry.props.style].flat()).toEqual(expect.arrayContaining([expect.objectContaining({ fontWeight: '900' })]));
+  });
 });

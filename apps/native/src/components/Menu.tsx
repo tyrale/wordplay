@@ -14,14 +14,17 @@
  * (opens the real StatsOverlay), the "unlock-counter" permanent mechanic
  * (shows "N/N unlocked" next to the themes/mechanics/bots section
  * headers once unlocked by playing "unlock" - matches web's
- * `showUnlockCounts` exactly), reset-unlocks (debug), and home/resign.
+ * `showUnlockCounts` exactly), masked "????" locked-item previews (once
+ * a category is "revealed" by playing its own name - "themes"/
+ * "mechanics"/"bots" - see `lockedThemeItems`/`lockedMechanicItems`/
+ * `lockedBotItems` below), reset-unlocks (debug), and home/resign.
  * Deliberately deferred, not silently dropped:
  * the vanity filter system, "vs world"/leaderboard/challenge entries, two
  * of the four "about" sub-overlays (thoughts/the-game), the "word-paths"
- * permanent mechanic (WordPathExplorer), locked-item previews, and
- * community stats - each depends on a system not yet ported (challenge
- * mode, the vanity filter hook/context, the leaderboard overlay, word
- * path graph tracking) or was cut for scope in this pass.
+ * permanent mechanic (WordPathExplorer), and community stats - each
+ * depends on a system not yet ported (challenge mode, the vanity filter
+ * hook/context, the leaderboard overlay, word path graph tracking) or
+ * was cut for scope in this pass.
  */
 import React, { useCallback, useMemo, useState } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Switch } from 'react-native';
@@ -67,6 +70,30 @@ const MECHANIC_DISPLAY_NAMES: Record<string, string> = {
 
 const getRoundLengthValue = (mechanicId: string): number => parseInt(mechanicId.replace('round-length-', ''), 10);
 
+// Masks a display name into '?' characters (one per non-space
+// character), preserving spaces as gaps - matches web's Menu.tsx exactly.
+const maskName = (name: string): string => name.replace(/[^\s]/g, '?');
+
+// Simple deterministic string hash, used to derive a stable "random"
+// sort order for locked item previews so they don't just appear in
+// alphabetical order, but also don't reshuffle on every re-render -
+// matches web's Menu.tsx exactly.
+const hashString = (str: string): number => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) | 0;
+  }
+  return hash;
+};
+
+// Shuffles items into a stable, non-alphabetical order based on a hash
+// of each item's id - matches web's Menu.tsx exactly.
+function shuffleLockedItems<T extends { id: string }>(items: T[]): T[] {
+  return [...items].sort((a, b) => hashString(a.id) - hashString(b.id));
+}
+
+const getMechanicTitle = (mechanicId: string): string => MECHANIC_DISPLAY_NAMES[mechanicId] || mechanicId;
+
 export interface MenuProps {
   isOpen: boolean;
   onClose: () => void;
@@ -91,6 +118,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
   const unlockedBots = getUnlockedItems('bot');
   const availableBots = isLoading ? ['basicBot'] : (unlockedBots.length > 0 ? unlockedBots : ['basicBot']);
   const unlockedThemes = useUnlockedThemes({ unlockedThemes: unlockedThemeIds });
+  const botDisplayNames = getBotDisplayNamesMapping();
 
   const isDarkModeUnlocked = unlockedMechanics.includes(DARK_MODE_MECHANIC_ID);
   const toggleableMechanics = unlockedMechanics.filter(
@@ -111,6 +139,35 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
     total: ALL_MECHANIC_IDS.length + PERMANENT_MECHANIC_IDS.length
   };
   const botsCount = { unlocked: availableBots.length, total: getVisibleBots().length };
+
+  // Locked "????" previews for each category - only computed (and shown)
+  // once that category has been "revealed" by playing its own name as a
+  // word (see unlock-definitions.ts's reveal_themes/reveal_mechanics/
+  // reveal_bots) - matches web's Menu.tsx `revealedCategories` gating
+  // exactly, including the deterministic (not actually random) shuffle
+  // so the list doesn't reshuffle on every re-render.
+  const revealedCategories = getUnlockedItems('reveal');
+  const lockedThemeItems = revealedCategories.includes('themes')
+    ? shuffleLockedItems(
+        ALL_THEMES
+          .filter(theme => !unlockedThemes.some(unlocked => unlocked.name === theme.name))
+          .map(theme => ({ id: `locked-theme-${theme.name.toLowerCase().replace(/\s+/g, '-')}`, title: maskName(theme.name.toLowerCase()) }))
+      )
+    : [];
+  const lockedMechanicItems = revealedCategories.includes('mechanics')
+    ? shuffleLockedItems(
+        ALL_MECHANIC_IDS
+          .filter(mechanicId => !unlockedMechanics.includes(mechanicId))
+          .map(mechanicId => ({ id: `locked-mechanic-${mechanicId}`, title: maskName(getMechanicTitle(mechanicId)) }))
+      )
+    : [];
+  const lockedBotItems = revealedCategories.includes('bots')
+    ? shuffleLockedItems(
+        getVisibleBots()
+          .filter(bot => !availableBots.includes(bot.id))
+          .map(bot => ({ id: `locked-bot-${bot.id}`, title: maskName(botDisplayNames[bot.id] || bot.id) }))
+      )
+    : [];
 
   const toggleSection = useCallback((section: string) => {
     setExpandedSection(prev => (prev === section ? null : section));
@@ -139,8 +196,6 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
     onResign?.();
     onClose();
   }, [onResign, onClose]);
-
-  const botDisplayNames = getBotDisplayNamesMapping();
 
   return (
     <Modal visible={isOpen} animationType="slide" transparent onRequestClose={onClose}>
@@ -175,11 +230,14 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                       onPress={() => handleThemeSelect(theme)}
                     />
                   ))}
+                  {lockedThemeItems.map(item => (
+                    <LockedSwatch key={item.id} title={item.title} textColor={currentTheme.colors.textSecondary} />
+                  ))}
                 </View>
               </View>
             )}
 
-            {hasMechanicsSection && (
+            {(hasMechanicsSection || lockedMechanicItems.length > 0) && (
               <>
                 <SectionHeader
                   label="mechanics"
@@ -199,13 +257,13 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                       if (id === 'player-stats') {
                         return (
                           <Pressable key={id} onPress={() => setIsStatsOpen(true)} style={styles.row} accessibilityRole="button">
-                            <Text style={{ color: currentTheme.colors.text }}>{MECHANIC_DISPLAY_NAMES[id]}</Text>
+                            <Text style={{ color: currentTheme.colors.text, fontWeight: '900' }}>{MECHANIC_DISPLAY_NAMES[id]}</Text>
                           </Pressable>
                         );
                       }
                       return (
                         <View key={id} style={styles.row}>
-                          <Text style={{ color: currentTheme.colors.text }}>{MECHANIC_DISPLAY_NAMES[id] || id} ✓</Text>
+                          <Text style={{ color: currentTheme.colors.text, fontWeight: '900' }}>{MECHANIC_DISPLAY_NAMES[id] || id} ✓</Text>
                         </View>
                       );
                     })}
@@ -231,12 +289,17 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                           accessibilityRole="button"
                           accessibilityState={{ selected: isSelected }}
                         >
-                          <Text style={{ color: isSelected ? currentTheme.colors.accent : currentTheme.colors.text, fontWeight: isSelected ? '900' : '400' }}>
+                          <Text style={{ color: isSelected ? currentTheme.colors.accent : currentTheme.colors.text, fontWeight: '900' }}>
                             {MECHANIC_DISPLAY_NAMES[id] || id}
                           </Text>
                         </Pressable>
                       );
                     })}
+                    {lockedMechanicItems.map(item => (
+                      <View key={item.id} style={styles.row}>
+                        <Text style={{ color: currentTheme.colors.textSecondary, fontWeight: '900' }}>{item.title}</Text>
+                      </View>
+                    ))}
                   </View>
                 )}
               </>
@@ -253,8 +316,13 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
               <View style={styles.sectionBody}>
                 {availableBots.map(botId => (
                   <Pressable key={botId} onPress={() => handleBotSelect(botId)} style={styles.row} accessibilityRole="button">
-                    <Text style={{ color: currentTheme.colors.text }}>{botDisplayNames[botId] || botId}</Text>
+                    <Text style={{ color: currentTheme.colors.text, fontWeight: '900' }}>{botDisplayNames[botId] || botId}</Text>
                   </Pressable>
+                ))}
+                {lockedBotItems.map(item => (
+                  <View key={item.id} style={styles.row}>
+                    <Text style={{ color: currentTheme.colors.textSecondary, fontWeight: '900' }}>{item.title}</Text>
+                  </View>
                 ))}
               </View>
             )}
@@ -272,13 +340,13 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                   style={styles.row}
                   accessibilityRole="button"
                 >
-                  <Text style={{ color: currentTheme.colors.text }}>the basics</Text>
+                  <Text style={{ color: currentTheme.colors.text, fontWeight: '900' }}>the basics</Text>
                 </Pressable>
                 <Pressable onPress={() => setIsDictionariesOpen(true)} style={styles.row} accessibilityRole="button">
-                  <Text style={{ color: currentTheme.colors.text }}>dictionaries</Text>
+                  <Text style={{ color: currentTheme.colors.text, fontWeight: '900' }}>dictionaries</Text>
                 </Pressable>
                 <Pressable onPress={resetUnlocksToFresh} style={styles.row} accessibilityRole="button">
-                  <Text style={{ color: currentTheme.colors.textSecondary }}>reset unlocks (debug)</Text>
+                  <Text style={{ color: currentTheme.colors.textSecondary, fontWeight: '900' }}>reset unlocks (debug)</Text>
                 </Pressable>
               </View>
             )}
@@ -366,6 +434,20 @@ const ThemeSwatch: React.FC<{ theme: GameTheme; isSelected: boolean; onPress: ()
   );
 };
 
+/**
+ * A not-yet-unlocked theme's "????" preview - same box shape as
+ * `ThemeSwatch` (same reason to previews grid-align together), but a
+ * flat, non-interactive gray box since there's no real theme to draw
+ * colors from - matches web's Menu.tsx comment on locked theme previews
+ * exactly ("Locked previews have no theme colors to show - render as a
+ * flat gray box").
+ */
+const LockedSwatch: React.FC<{ title: string; textColor: string }> = ({ title, textColor }) => (
+  <View style={[styles.themeSwatch, styles.lockedSwatch]} accessibilityRole="text" accessibilityLabel="Locked, not yet unlocked">
+    <Text style={[styles.themeSwatchName, { color: textColor }]}>{title}</Text>
+  </View>
+);
+
 const ToggleRow: React.FC<{ label: string; value: boolean; onToggle: () => void; textColor: string; accentColor: string }> = ({
   label,
   value,
@@ -374,7 +456,7 @@ const ToggleRow: React.FC<{ label: string; value: boolean; onToggle: () => void;
   accentColor
 }) => (
   <View style={styles.toggleRow}>
-    <Text style={{ color: textColor }}>{label}</Text>
+    <Text style={{ color: textColor, fontWeight: '900' }}>{label}</Text>
     {/* RN doesn't reliably associate a bare `Switch` with an adjacent
         sibling `Text` for screen readers the way an HTML `<label>`
         does - an explicit accessibilityLabel/Role/State here is
@@ -462,9 +544,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8
   },
+  lockedSwatch: {
+    backgroundColor: 'rgba(128, 128, 128, 0.2)'
+  },
   themeSwatchName: {
     fontSize: 14,
-    fontWeight: '700'
+    fontWeight: '900'
   },
   themeSwatchCheck: {
     fontSize: 14,
