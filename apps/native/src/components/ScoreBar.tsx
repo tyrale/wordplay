@@ -52,7 +52,6 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({
   onOwnNameTap
 }) => {
   const { currentTheme } = useTheme();
-  if (players.length === 0) return null;
 
   // `hasConfirmedDisplayName()` is async (AsyncStorage-backed) on native,
   // unlike web's synchronous localStorage read - synchronously assume
@@ -62,10 +61,18 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({
   // name prompt has already resolved earlier in the multiplayer flow
   // anyway (see MultiplayerLobby.tsx), so this isn't a real gap in
   // practice.
+  //
+  // Both hooks must run before the `players.length === 0` early return
+  // below - hooks can never be conditional (Rules of Hooks), and this one
+  // used to sit after the early return, which broke the moment `players`
+  // transitioned from empty to non-empty between renders (changing hook
+  // call order and crashing with "Expected static flag was missing").
   const [hasConfirmedName, setHasConfirmedName] = React.useState(false);
   React.useEffect(() => {
     hasConfirmedDisplayName().then(setHasConfirmedName);
   }, []);
+
+  if (players.length === 0) return null;
 
   let humanIndex = 0;
 
