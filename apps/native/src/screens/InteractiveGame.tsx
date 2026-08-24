@@ -22,7 +22,7 @@
  * generalization, not multiplayer-specific special-casing.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { GameConfig, MoveAttempt, IGameStateManager } from '@wordplay/engine/interfaces';
 import { useGameState, useWordState } from '../hooks/useGameState';
@@ -187,16 +187,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // MultiplayerGame.tsx's own deferred note on this same mechanic).
   const isTimePressureOn = !isBossBattle && currentGameMode !== 'multiplayer'
     && unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
-
-  // Drunk mechanic: unlocked via the "drunk" word and toggled on in the
-  // mechanics menu. Makes the whole game view hazy and wobbly, like
-  // looking at it drunk - web does this via a CSS animation (rotate/
-  // scale/translate keyframes + a blur/saturate filter); native has no
-  // CSS filter equivalent without a new native dependency (e.g.
-  // expo-blur), so this ports the wobble motion via core `Animated`
-  // (already a dependency, no new one needed) and skips the blur - the
-  // motion is the dominant, most noticeable part of the effect.
-  const isDrunkOn = unlockedMechanics.includes('drunk') && isMechanicOn('drunk');
 
   const [pendingWord, setPendingWord] = useState('');
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
@@ -544,46 +534,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     }
   }, [turnTimeRemaining, isTimePressureOn, isPlayerTurn, isGameActive, actions, wordState.currentWord]);
 
-  // Drunk mode wobble: a looping rotate/scale/translate animation applied
-  // to the whole board - see this file's `isDrunkOn` doc comment above
-  // for why the blur/saturate half of web's effect isn't ported.
-  const drunkAnim = React.useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (!isDrunkOn) {
-      drunkAnim.stopAnimation();
-      drunkAnim.setValue(0);
-      return;
-    }
-
-    const loop = Animated.loop(
-      Animated.timing(drunkAnim, {
-        toValue: 1,
-        duration: 6000,
-        easing: Easing.inOut(Easing.sin),
-        useNativeDriver: true
-      })
-    );
-    loop.start();
-
-    return () => loop.stop();
-  }, [isDrunkOn, drunkAnim]);
-
-  const drunkStyle = {
-    transform: [
-      {
-        rotate: drunkAnim.interpolate({
-          inputRange: [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1],
-          outputRange: ['0deg', '1deg', '-1.2deg', '0.8deg', '-0.6deg', '1.3deg', '-0.8deg', '0deg']
-        })
-      },
-      {
-        scale: drunkAnim.interpolate({
-          inputRange: [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1],
-          outputRange: [1, 1.015, 0.99, 1.01, 1, 0.995, 1.005, 1]
-        })
-      }
-    ]
-  };
 
   const handleSubmit = useCallback(() => {
     if (!canEdit) return;
@@ -621,11 +571,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* The whole game view wobbles when drunk mode is on (see this
-          file's `isDrunkOn`/`drunkStyle` doc comments) - wrapped here
-          rather than applied to the SafeAreaView itself, so the
-          animation doesn't fight with safe-area inset calculations. */}
-      <Animated.View style={[styles.drunkWrapper, isDrunkOn ? drunkStyle : undefined]}>
       {/* Left-aligned overlay near the top of the screen, matching web's
           ScoreBar.css exactly (position: absolute; left: 0; right: 0;
           align-items: flex-start) - not centered, and not a separate
@@ -717,16 +662,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
           onSkip={handleSkipTutorial}
         />
       )}
-      </Animated.View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
-  },
-  drunkWrapper: {
     flex: 1
   },
   header: {

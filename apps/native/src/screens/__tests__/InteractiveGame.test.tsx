@@ -1,5 +1,4 @@
 import React from 'react';
-import { Animated } from 'react-native';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
@@ -300,31 +299,6 @@ describe('native InteractiveGame screen', () => {
     expect(screen.queryByText('7')).toBeNull();
   });
 
-  // Order matters here: the "not unlocked" case runs first, before this
-  // file ever calls `checkWordTriggers('drunk')` - the Unlocker helper's
-  // unlock write is fire-and-forget, so running the negative case second
-  // risks a previous test's still-in-flight persistence write leaking in
-  // (AsyncStorage.clear() in beforeEach only guards against state left
-  // over from *before* that call resolves, not a write that lands after).
-  it('does not apply a wobble transform when drunk mode is not unlocked', async () => {
-    const { UNSAFE_getByType } = renderGame();
-    await waitFor(() => expect(screen.getByLabelText(/^Current word: .+/)).toBeTruthy());
-
-    const wobbleView = UNSAFE_getByType(Animated.View);
-    const flattenedStyle = [wobbleView.props.style].flat();
-    const hasTransform = flattenedStyle.some(s => s && typeof s === 'object' && 'transform' in s);
-    expect(hasTransform).toBe(false);
-  });
-
-  it('applies a looping wobble transform to the board once drunk mode is unlocked and toggled on (defaults on once unlocked)', async () => {
-    const { UNSAFE_getByType } = renderGame({}, ['drunk']);
-    await waitFor(() => expect(screen.getByLabelText(/^Current word: .+/)).toBeTruthy());
-
-    await waitFor(() => {
-      const wobbleView = UNSAFE_getByType(Animated.View);
-      const flattenedStyle = [wobbleView.props.style].flat();
-      const hasTransform = flattenedStyle.some(s => s && typeof s === 'object' && 'transform' in s);
-      expect(hasTransform).toBe(true);
-    });
-  });
+  // Drunk mode's wobble is wired app-wide via App.tsx's `DrunkModeOverlay`,
+  // not per-screen - see DrunkModeOverlay.test.tsx for wobble coverage.
 });

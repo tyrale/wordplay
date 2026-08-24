@@ -4,11 +4,12 @@
  * lines covering a double-tap-to-reset-with-a-new-word gesture and
  * player stats recording/word-path graph syncing - not yet ported
  * (shared gaps with InteractiveGame.tsx, not zen-specific) - plus
- * mechanics gating (starting-word-length, time-pressure, drunk mode,
- * seuss-canonical words, ninja-word-trail), which *is* now wired (see
- * below), matching web exactly except for gravity (still fully out of
- * scope - no native physics-driven letter grid exists yet, a much
- * bigger standalone component than this port has attempted).
+ * mechanics gating (starting-word-length, time-pressure, seuss-canonical
+ * words, ninja-word-trail), which *is* now wired (see below), matching
+ * web exactly except for gravity (still fully out of scope - no native
+ * physics-driven letter grid exists yet, a much bigger standalone
+ * component than this port has attempted). Drunk mode is wired app-wide
+ * instead of per-screen - see App.tsx's `DrunkModeOverlay`.
  *
  * This slice ports the actual core of "zen mode": free play, no bot, no
  * score, no round limit, using the exact same shared game engine
@@ -24,7 +25,7 @@
  * edit, matching a *single* tap's meaning on web).
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { MoveAttempt } from '@wordplay/engine/interfaces';
 import { useGameState, useWordState } from '../hooks/useGameState';
@@ -81,7 +82,6 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
     : undefined;
   const allowSeussCanonical = unlockedMechanics.includes('seuss-canonical-words');
   const isTimePressureOn = unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
-  const isDrunkOn = unlockedMechanics.includes('drunk') && isMechanicOn('drunk');
   const ninjaWordTrailUnlocked = unlockedMechanics.includes('ninja-word-trail');
 
   // No bot, no round limit, and skip the shared active-game save slot
@@ -121,47 +121,6 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
       setTurnTimeRemaining(null);
     }
   }, [turnTimeRemaining, isTimePressureOn, isPlayerTurn, isGameActive, actions]);
-
-  // Drunk mode wobble - see InteractiveGame.tsx's identical block for
-  // the full reasoning (blur/saturate half of web's effect isn't ported,
-  // just the rotate/scale wobble motion via core `Animated`).
-  const drunkAnim = React.useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (!isDrunkOn) {
-      drunkAnim.stopAnimation();
-      drunkAnim.setValue(0);
-      return;
-    }
-
-    const loop = Animated.loop(
-      Animated.timing(drunkAnim, {
-        toValue: 1,
-        duration: 6000,
-        easing: Easing.inOut(Easing.sin),
-        useNativeDriver: true
-      })
-    );
-    loop.start();
-
-    return () => loop.stop();
-  }, [isDrunkOn, drunkAnim]);
-
-  const drunkStyle = {
-    transform: [
-      {
-        rotate: drunkAnim.interpolate({
-          inputRange: [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1],
-          outputRange: ['0deg', '1deg', '-1.2deg', '0.8deg', '-0.6deg', '1.3deg', '-0.8deg', '0deg']
-        })
-      },
-      {
-        scale: drunkAnim.interpolate({
-          inputRange: [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1],
-          outputRange: [1, 1.015, 0.99, 1.01, 1, 0.995, 1.005, 1]
-        })
-      }
-    ]
-  };
 
   const [pendingWord, setPendingWord] = useState('');
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
@@ -347,9 +306,6 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* See InteractiveGame.tsx's identical comment for why drunk mode
-          is wrapped here rather than applied to the SafeAreaView. */}
-      <Animated.View style={[styles.drunkWrapper, isDrunkOn ? drunkStyle : undefined]}>
       {/* See InteractiveGame.tsx's identical comment: the submit row is
           the actual fixed center point of the board, with the word
           trail/current word positioned a fixed gap above it and the
@@ -395,16 +351,12 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
       </View>
 
       <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} onNavigateHome={onNavigateHome} />
-      </Animated.View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
-  },
-  drunkWrapper: {
     flex: 1
   },
   board: {

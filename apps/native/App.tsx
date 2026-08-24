@@ -13,6 +13,7 @@ import { alertCopy, pickAlertVariant } from './src/content/alertCopy';
 import { UnlockProvider } from './src/providers/UnlockProvider';
 import { MechanicsSettingsProvider } from './src/contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from './src/contexts/RoundLengthContext';
+import { DrunkModeOverlay } from './src/components/DrunkModeOverlay';
 import { MainScreen } from './src/screens/MainScreen';
 import type { MainScreenGameType } from './src/screens/MainScreen';
 import { InteractiveGame } from './src/screens/InteractiveGame';
@@ -362,7 +363,9 @@ export default function App() {
           <UnlockProvider>
             <MechanicsSettingsProvider>
               <RoundLengthProvider>
-                <AppNavigator />
+                <DrunkModeOverlay>
+                  <AppNavigator />
+                </DrunkModeOverlay>
                 <ThemedStatusBar />
               </RoundLengthProvider>
             </MechanicsSettingsProvider>

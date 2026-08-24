@@ -1,5 +1,4 @@
 import React from 'react';
-import { Animated } from 'react-native';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
@@ -130,23 +129,6 @@ describe('native ChallengeGame screen', () => {
     expect(screen.getAllByText('→').length).toBeGreaterThan(0);
   });
 
-  it('does not apply a wobble transform when drunk mode is not unlocked', async () => {
-    const { UNSAFE_getByType } = renderChallenge();
-    await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
-
-    const wobbleView = UNSAFE_getByType(Animated.View);
-    const flattenedStyle = [wobbleView.props.style].flat();
-    expect(flattenedStyle.some(s => s && typeof s === 'object' && 'transform' in s)).toBe(false);
-  });
-
-  it('applies a looping wobble transform once drunk mode is unlocked and toggled on (defaults on once unlocked)', async () => {
-    const { UNSAFE_getByType } = renderChallenge({}, ['drunk']);
-    await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
-
-    await waitFor(() => {
-      const wobbleView = UNSAFE_getByType(Animated.View);
-      const flattenedStyle = [wobbleView.props.style].flat();
-      expect(flattenedStyle.some(s => s && typeof s === 'object' && 'transform' in s)).toBe(true);
-    });
-  });
+  // Drunk mode's wobble is wired app-wide via App.tsx's `DrunkModeOverlay`,
+  // not per-screen - see DrunkModeOverlay.test.tsx for wobble coverage.
 });

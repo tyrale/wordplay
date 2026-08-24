@@ -4,24 +4,22 @@
  * lines). Deliberately deferred, not silently dropped (each needs
  * infrastructure this port doesn't have yet, shared with
  * InteractiveGame.tsx/ZenGame.tsx's existing documented gaps):
- * word-path graph syncing. The drunk mechanic's visual effect *is* wired
- * (see `isDrunkOn` below - same wobble-only treatment as InteractiveGame.
- * tsx/ZenGame.tsx). The challenge's actual daily-word logic, validation,
- * unlock checking, player-stats recording, the server-side leaderboard,
- * the "GUS" boss-battle trigger, and (see docs/project/
+ * word-path graph syncing. The challenge's actual daily-word logic,
+ * validation, unlock checking, player-stats recording, the server-side
+ * leaderboard, the "GUS" boss-battle trigger, and (see docs/project/
  * REACT_NATIVE_PORT_PLAN.md's "Phase 3.6" section) the dictionary/help
  * ("?") lookup are all fully real - see hooks/useChallenge.ts's doc
  * comment for why the daily word itself needs no server dependency (it's
- * a client-side seeded RNG keyed off the date).
+ * a client-side seeded RNG keyed off the date). Drunk mode is wired
+ * app-wide instead of per-screen - see App.tsx's `DrunkModeOverlay`.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { MoveAttempt } from '@wordplay/engine/interfaces';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useChallenge } from '../hooks/useChallenge';
 import { useUnlockSystem } from '../providers/UnlockProvider';
-import { useMechanicsSettings } from '../contexts/MechanicsSettingsContext';
 import { usePlayerStats } from '../hooks/usePlayerStats';
 import { useDictionaryData } from '../hooks/useDictionaryData';
 import { useAlert } from '../providers/AlertProvider';
@@ -81,54 +79,9 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
     calculateScore
   } = useChallenge();
   const { handleWordSubmission, getUnlockedItems } = useUnlockSystem();
-  const { isMechanicOn } = useMechanicsSettings();
   const { recordMove, recordChallengeResult } = usePlayerStats();
   const { wordData } = useDictionaryData();
   const { showCustomAlert } = useAlert();
-
-  // Drunk mechanic: unlocked via the "drunk" word and toggled on in the
-  // mechanics menu. Must apply even in challenge mode (matches web's
-  // ChallengeGame.tsx exactly) - see InteractiveGame.tsx's identical
-  // `isDrunkOn` doc comment for why only the wobble motion is ported,
-  // not the blur/saturate filter half of web's effect.
-  const isDrunkOn = getUnlockedItems('mechanic').includes('drunk') && isMechanicOn('drunk');
-  const drunkAnim = React.useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (!isDrunkOn) {
-      drunkAnim.stopAnimation();
-      drunkAnim.setValue(0);
-      return;
-    }
-
-    const loop = Animated.loop(
-      Animated.timing(drunkAnim, {
-        toValue: 1,
-        duration: 6000,
-        easing: Easing.inOut(Easing.sin),
-        useNativeDriver: true
-      })
-    );
-    loop.start();
-
-    return () => loop.stop();
-  }, [isDrunkOn, drunkAnim]);
-
-  const drunkStyle = {
-    transform: [
-      {
-        rotate: drunkAnim.interpolate({
-          inputRange: [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1],
-          outputRange: ['0deg', '1deg', '-1.2deg', '0.8deg', '-0.6deg', '1.3deg', '-0.8deg', '0deg']
-        })
-      },
-      {
-        scale: drunkAnim.interpolate({
-          inputRange: [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1],
-          outputRange: [1, 1.015, 0.99, 1.01, 1, 0.995, 1.005, 1]
-        })
-      }
-    ]
-  };
 
   const [pendingWord, setPendingWord] = useState('');
   const [isValidSubmit, setIsValidSubmit] = useState(false);
@@ -426,9 +379,6 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* See InteractiveGame.tsx's identical comment for why drunk mode
-          is wrapped here rather than applied to the SafeAreaView. */}
-      <Animated.View style={[styles.drunkWrapper, isDrunkOn ? drunkStyle : undefined]}>
       {/* See InteractiveGame.tsx's identical comment: the submit row is
           the actual fixed center point of the board. */}
       <View style={styles.board}>
@@ -510,16 +460,12 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
       )}
 
       <LeaderboardOverlay isVisible={isLeaderboardOpen} onClose={() => setIsLeaderboardOpen(false)} />
-      </Animated.View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
-  },
-  drunkWrapper: {
     flex: 1
   },
   board: {
