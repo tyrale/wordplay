@@ -80,8 +80,9 @@ export const GridCell: React.FC<GridCellProps> = ({
   // letters and ~38px/60px for action glyphs; scaled down ~25% from that
   // per on-device feedback (in two rounds: -10%, then another -15% -
   // web's literal ratio reads noticeably too large once actually
-  // rendered on a phone).
-  const fontSize = type === 'action' ? size * 0.482 : size * 0.36;
+  // rendered on a phone). Reduced by a further 15% per on-device
+  // feedback that the fonts were still too large on iPhone.
+  const fontSize = type === 'action' ? size * 0.482 * 0.85 : size * 0.36 * 0.85;
 
   const canDrag = draggable && !disabled && type === 'letter';
   const [isDragging, setIsDragging] = useState(false);
@@ -187,7 +188,7 @@ export const GridCell: React.FC<GridCellProps> = ({
         </Animated.View>
         {(state === 'locked' || state === 'lockedKey') && (
           <View style={styles.lock} pointerEvents="none">
-            <LockIcon size={size * 0.11} color={colors.accent} />
+            <LockIcon size={size * 0.275} color={colors.accent} />
           </View>
         )}
       </View>
@@ -216,7 +217,7 @@ export const GridCell: React.FC<GridCellProps> = ({
       {cellContent}
       {(state === 'locked' || state === 'lockedKey') && (
         <View style={styles.lock} pointerEvents="none">
-          <LockIcon size={size * 0.11} color={colors.accent} />
+          <LockIcon size={size * 0.275} color={colors.accent} />
         </View>
       )}
     </Pressable>
@@ -240,7 +241,9 @@ const styles = StyleSheet.create({
   },
   lock: {
     position: 'absolute',
-    top: '28%',
-    right: '8%'
+    bottom: '2%',
+    left: 0,
+    right: 0,
+    alignItems: 'center'
   }
 });

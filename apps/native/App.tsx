@@ -12,7 +12,7 @@ import type { AlertOverlayVariant } from './src/components/AlertOverlay';
 import { alertCopy, pickAlertVariant } from './src/content/alertCopy';
 import { UnlockProvider } from './src/providers/UnlockProvider';
 import { MechanicsSettingsProvider } from './src/contexts/MechanicsSettingsContext';
-import { RoundLengthProvider } from './src/contexts/RoundLengthContext';
+import { RoundLengthProvider, useRoundLength } from './src/contexts/RoundLengthContext';
 import { DrunkModeOverlay } from './src/components/DrunkModeOverlay';
 import { MainScreen } from './src/screens/MainScreen';
 import type { MainScreenGameType } from './src/screens/MainScreen';
@@ -32,6 +32,7 @@ import {
 } from './src/adapters/nativeMultiplayerAdapter';
 import { hasSeenTutorial } from './src/utils/tutorialStorage';
 import { TUTORIAL_INITIAL_CONFIG } from './src/hooks/tutorialSteps';
+import { useBotSwitchConfirm } from './src/hooks/useBotSwitchConfirm';
 
 // Phase 3/4 (see docs/project/REACT_NATIVE_PORT_PLAN.md): a navigation
 // shell replacing Phase 2's single always-mounted game screen. Every
@@ -139,8 +140,20 @@ interface EndOverlayState {
 function GameScreenRoute({ route, navigation }: NativeStackScreenProps<RootStackParamList, 'Game'>) {
   const { botId, forceTutorial } = route.params;
   const [endOverlay, setEndOverlay] = useState<EndOverlayState | null>(null);
+  // The in-game Menu's "bots" section - unlike web (which switches bots
+  // mid-game instantly with no confirmation), this asks first since
+  // switching here abandons the current game's progress. Shared across
+  // every screen with a Menu "bots" section - see useBotSwitchConfirm.
+  const { handleSwitchBot, handleReplayTutorial, confirmOverlay } = useBotSwitchConfirm(
+    (id, options) => navigation.replace('Game', { botId: id, forceTutorial: options?.forceTutorial })
+  );
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
+  // Matches web's App.tsx, which passes `maxTurns: roundLength` for a
+  // normal (non-tutorial) game - without this, InteractiveGame.tsx's own
+  // `maxTurns: 10` default is used regardless of the player's round-length
+  // selection (e.g. picking "40 rounds" in the Menu had no actual effect).
+  const { roundLength } = useRoundLength();
 
   // Resolved before InteractiveGame ever mounts, since its tutorial
   // config override (forced 'WORD' initialWord) must be present from the
@@ -196,7 +209,7 @@ function GameScreenRoute({ route, navigation }: NativeStackScreenProps<RootStack
         key={botId}
         botId={botId}
         botDisplayName={getBotDisplayName(botId)}
-        config={isTutorial ? TUTORIAL_INITIAL_CONFIG : undefined}
+        config={isTutorial ? TUTORIAL_INITIAL_CONFIG : { maxTurns: roundLength }}
         isTutorial={isTutorial}
         onTutorialComplete={() => setIsTutorial(false)}
         onNavigateHome={() => navigation.goBack()}
@@ -208,7 +221,10 @@ function GameScreenRoute({ route, navigation }: NativeStackScreenProps<RootStack
           clearActiveGame().catch(err => console.warn('Failed to clear saved game on boss trigger:', err));
           navigation.replace('Boss');
         }}
+        onSwitchBot={handleSwitchBot}
+        onReplayTutorial={handleReplayTutorial}
       />
+      {confirmOverlay}
       <AlertOverlay
         isVisible={!!endOverlay}
         lines={endOverlay?.lines ?? []}
@@ -298,15 +314,36 @@ function MultiplayerGameRoute({ route, navigation }: NativeStackScreenProps<Root
 }
 
 function ZenGameRoute({ navigation }: NativeStackScreenProps<RootStackParamList, 'Zen'>) {
-  return <ZenGame onNavigateHome={() => navigation.goBack()} />;
+  const { handleSwitchBot, handleReplayTutorial, confirmOverlay } = useBotSwitchConfirm(
+    (id, options) => navigation.replace('Game', { botId: id, forceTutorial: options?.forceTutorial })
+  );
+  return (
+    <>
+      <ZenGame
+        onNavigateHome={() => navigation.goBack()}
+        onBossTrigger={() => navigation.replace('Boss')}
+        onSwitchBot={handleSwitchBot}
+        onReplayTutorial={handleReplayTutorial}
+      />
+      {confirmOverlay}
+    </>
+  );
 }
 
 function ChallengeGameRoute({ navigation }: NativeStackScreenProps<RootStackParamList, 'Challenge'>) {
+  const { handleSwitchBot, handleReplayTutorial, confirmOverlay } = useBotSwitchConfirm(
+    (id, options) => navigation.replace('Game', { botId: id, forceTutorial: options?.forceTutorial })
+  );
   return (
-    <ChallengeGame
-      onNavigateHome={() => navigation.goBack()}
-      onBossTrigger={() => navigation.replace('Boss')}
-    />
+    <>
+      <ChallengeGame
+        onNavigateHome={() => navigation.goBack()}
+        onBossTrigger={() => navigation.replace('Boss')}
+        onSwitchBot={handleSwitchBot}
+        onReplayTutorial={handleReplayTutorial}
+      />
+      {confirmOverlay}
+    </>
   );
 }
 

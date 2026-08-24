@@ -65,6 +65,38 @@ describe('native ChallengeGame screen', () => {
     expect(screen.getByText('leaderboard')).toBeTruthy();
   });
 
+  it('calls onSwitchBot (not onReplayTutorial) when a bot is tapped in the Menu\'s "bots" section', async () => {
+    const onSwitchBot = jest.fn();
+    const onReplayTutorial = jest.fn();
+    renderChallenge({ onSwitchBot, onReplayTutorial });
+    await waitFor(() => expect(screen.getByLabelText('Settings menu')).toBeTruthy());
+
+    fireEvent.press(screen.getByLabelText('Settings menu'));
+    await waitFor(() => expect(screen.getByText('bots')).toBeTruthy());
+    fireEvent.press(screen.getByText('bots'));
+    await waitFor(() => expect(screen.getByText('basicbot')).toBeTruthy());
+    fireEvent.press(screen.getByText('basicbot'));
+
+    expect(onSwitchBot).toHaveBeenCalledWith('basicBot');
+    expect(onReplayTutorial).not.toHaveBeenCalled();
+  });
+
+  it('calls onReplayTutorial (not onSwitchBot) from the Menu\'s "the basics" entry', async () => {
+    const onSwitchBot = jest.fn();
+    const onReplayTutorial = jest.fn();
+    renderChallenge({ onSwitchBot, onReplayTutorial });
+    await waitFor(() => expect(screen.getByLabelText('Settings menu')).toBeTruthy());
+
+    fireEvent.press(screen.getByLabelText('Settings menu'));
+    await waitFor(() => expect(screen.getByText('about')).toBeTruthy());
+    fireEvent.press(screen.getByText('about'));
+    await waitFor(() => expect(screen.getByText('the basics')).toBeTruthy());
+    fireEvent.press(screen.getByText('the basics'));
+
+    expect(onReplayTutorial).toHaveBeenCalledWith('basicBot');
+    expect(onSwitchBot).not.toHaveBeenCalled();
+  });
+
   it('shows a dictionary/help overlay (word + legality reason + definition) when "Help" is pressed', async () => {
     const originalFetch = global.fetch;
     global.fetch = jest.fn().mockResolvedValue({

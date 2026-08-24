@@ -117,14 +117,59 @@ describe('native InteractiveGame screen', () => {
     expect(onNavigateHome).not.toHaveBeenCalled();
   });
 
-  it('calling passTurn via the submit button (unchanged word) advances the turn without crashing', async () => {
-    renderGame();
-    await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
+  it('calls onSwitchBot (not onReplayTutorial) when a different bot is tapped in the Menu\'s "bots" section', async () => {
+    const onSwitchBot = jest.fn();
+    const onReplayTutorial = jest.fn();
+    renderGame({ onSwitchBot, onReplayTutorial });
+    await waitFor(() => expect(screen.getByLabelText('Settings menu')).toBeTruthy());
 
-    const submit = await screen.findByLabelText('Word is invalid - tap to pass turn');
+    fireEvent.press(screen.getByLabelText('Settings menu'));
+    await waitFor(() => expect(screen.getByText('bots')).toBeTruthy());
+    fireEvent.press(screen.getByText('bots'));
+    await waitFor(() => expect(screen.getByText('basicbot')).toBeTruthy());
+    fireEvent.press(screen.getByText('basicbot'));
+
+    expect(onSwitchBot).toHaveBeenCalledWith('basicBot');
+    expect(onReplayTutorial).not.toHaveBeenCalled();
+  });
+
+  it('calls onReplayTutorial (not onSwitchBot) from the Menu\'s "the basics" entry', async () => {
+    const onSwitchBot = jest.fn();
+    const onReplayTutorial = jest.fn();
+    renderGame({ onSwitchBot, onReplayTutorial });
+    await waitFor(() => expect(screen.getByLabelText('Settings menu')).toBeTruthy());
+
+    fireEvent.press(screen.getByLabelText('Settings menu'));
+    await waitFor(() => expect(screen.getByText('about')).toBeTruthy());
+    fireEvent.press(screen.getByText('about'));
+    await waitFor(() => expect(screen.getByText('the basics')).toBeTruthy());
+    fireEvent.press(screen.getByText('the basics'));
+
+    expect(onReplayTutorial).toHaveBeenCalledWith('basicBot');
+    expect(onSwitchBot).not.toHaveBeenCalled();
+  });
+
+  it('requires a double tap on the submit button (unchanged word) to pass the turn - the first tap only shows the hint', async () => {
+    // A forced deterministic starting word (matching the pattern of the
+    // "ten" unlock-trigger regression test below) avoids the random
+    // startingWordLength-selection path timing out the submit button's
+    // enabled state before this test's own waitFor gets to check it.
+    renderGame({ config: { initialWord: 'CAT' } });
+    await waitFor(() => expect(screen.getByLabelText('Current word: CAT')).toBeTruthy());
+
+    // First tap: reveals the "tap to pass" hint but does not pass yet -
+    // no "pass" entry should appear in the word trail.
     await act(async () => {
-      fireEvent.press(submit);
+      fireEvent.press(screen.getByLabelText('Word is invalid - tap to pass turn'));
     });
+    await waitFor(() => expect(screen.getByText('tap to pass')).toBeTruthy());
+    expect(screen.queryByText('pass')).toBeNull();
+
+    // Second tap (with the hint already showing): actually passes the turn.
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText('Word is invalid - tap to pass turn'));
+    });
+    await waitFor(() => expect(screen.getByText('pass')).toBeTruthy());
   });
 
   it('regression: submitting a real unlock-trigger word (e.g. "ten") actually shows the unlock alert', async () => {

@@ -26,7 +26,7 @@ const MechanicsSettingsContext = createContext<MechanicsSettingsContextValue | n
 const STORAGE_KEY = 'wordplay-mechanics-settings';
 
 // Mechanics that default to "off" until the player explicitly turns them on
-const DEFAULT_OFF_MECHANICS = new Set(['time-pressure']);
+const DEFAULT_OFF_MECHANICS = new Set(['time-pressure', 'type-to-clear']);
 
 interface MechanicsSettingsProviderProps {
   children: ReactNode;

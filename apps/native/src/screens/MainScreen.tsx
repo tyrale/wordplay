@@ -20,7 +20,7 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUnlockSystem } from '../providers/UnlockProvider';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { getAllBots } from '@wordplay/engine/botRegistry';
 import { Menu } from '../components/Menu';
 import { AlertOverlay } from '../components/AlertOverlay';
@@ -33,7 +33,8 @@ export interface MainScreenProps {
 }
 
 export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMultiplayer }) => {
-  const { currentTheme } = useTheme();
+  const { currentTheme, isInverted } = useTheme();
+  const colors = getEffectiveColors(currentTheme, isInverted);
   const [currentView, setCurrentView] = useState<'main' | 'bots'>('main');
   const [showVsHumanLocked, setShowVsHumanLocked] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -66,25 +67,25 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
   const handleBack = useCallback(() => setCurrentView('main'), []);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {currentView !== 'main' && (
         <Pressable onPress={handleBack} accessibilityRole="button" accessibilityLabel="Back" style={styles.backButton}>
-          <Text style={[styles.backButtonText, { color: currentTheme.colors.text }]}>←</Text>
+          <Text style={[styles.backButtonText, { color: colors.text }]}>←</Text>
         </Pressable>
       )}
 
       <Pressable onPress={() => setIsMenuOpen(true)} accessibilityRole="button" accessibilityLabel="Open menu" style={styles.menuButton}>
-        <Text style={[styles.menuButtonText, { color: currentTheme.colors.accent }]}>≡</Text>
+        <Text style={[styles.menuButtonText, { color: colors.accent }]}>≡</Text>
       </Pressable>
 
       <View style={styles.content}>
         {currentView === 'main' && (
           <View style={styles.gameSelection}>
-            <GameOption label="world" prefix="vs" onPress={() => handleGameTypeSelect('challenge')} color={currentTheme.colors.text} accentColor={currentTheme.colors.accent} />
-            <GameOption label="human" prefix="vs" onPress={() => handleGameTypeSelect('vs-human')} color={currentTheme.colors.text} accentColor={currentTheme.colors.accent} />
-            <GameOption label="bot" prefix="vs" onPress={() => handleGameTypeSelect('vs-bot')} color={currentTheme.colors.text} accentColor={currentTheme.colors.accent} />
+            <GameOption label="world" prefix="vs" onPress={() => handleGameTypeSelect('challenge')} color={colors.text} accentColor={colors.accent} />
+            <GameOption label="human" prefix="vs" onPress={() => handleGameTypeSelect('vs-human')} color={colors.text} accentColor={colors.accent} />
+            <GameOption label="bot" prefix="vs" onPress={() => handleGameTypeSelect('vs-bot')} color={colors.text} accentColor={colors.accent} />
             {isZenModeUnlocked && (
-              <GameOption label="nobody" prefix="vs" onPress={() => handleGameTypeSelect('zen')} color={currentTheme.colors.text} accentColor={currentTheme.colors.accent} />
+              <GameOption label="nobody" prefix="vs" onPress={() => handleGameTypeSelect('zen')} color={colors.text} accentColor={colors.accent} />
             )}
           </View>
         )}
@@ -98,7 +99,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
                 style={({ pressed }) => [styles.botOption, { opacity: pressed ? 0.6 : 1 }]}
                 accessibilityRole="button"
               >
-                <Text style={[styles.botOptionText, { color: currentTheme.colors.text }]}>{bot.displayName}</Text>
+                <Text style={[styles.botOptionText, { color: colors.text }]}>{bot.displayName}</Text>
               </Pressable>
             ))}
           </View>

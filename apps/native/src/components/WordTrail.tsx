@@ -25,9 +25,17 @@
  * current rendering (`void showTurnNumbers; void maxVisible;`), so this
  * isn't a native-specific omission.
  */
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
+
+type EffectiveColors = ReturnType<typeof getEffectiveColors>;
+
+/** Placeholder glyph width (the word trail's letters are a fixed, bold
+ * 18px uppercase) used only until `onLayout` reports the real measured
+ * word width - see `WordRow`'s doc comment below for why this matters. */
+const AVERAGE_LETTER_WIDTH = 13;
 
 /** How tall the trail can grow (as a fraction of window height) before it
  * starts scrolling instead of pushing the rest of the board around -
@@ -83,6 +91,107 @@ interface DisplayItem {
 }
 
 const maskWordAsDashes = (word: string): string => '-'.repeat(word.length);
+
+function renderWord(item: DisplayItem, colors: EffectiveColors) {
+  const displayWord = item.maskWord ? maskWordAsDashes(item.word) : item.word;
+  const letters = displayWord.toUpperCase().split('');
+  return (
+    <View style={styles.wordContainer}>
+      {letters.map((letter, index) => {
+        const isKeyLetter = !item.maskWord && item.keyLetters.includes(letter);
+        return (
+          <Text key={index} style={[styles.letter, { color: isKeyLetter ? colors.accent : colors.text }]}>
+            {letter}
+          </Text>
+        );
+      })}
+    </View>
+  );
+}
+
+interface WordRowProps {
+  item: DisplayItem;
+  colors: EffectiveColors;
+  onPress?: () => void;
+  showStart?: boolean;
+  showTarget?: boolean;
+  startWord?: string;
+  targetWord?: string;
+  effectiveShowScores: boolean;
+}
+
+/** One played-word row, floating its score (and, in challenge mode, its
+ * start/target labels) off the word's own left/right edge without
+ * disturbing the word's centering - see this file's doc comment for why
+ * that's an absolutely-positioned overlay rather than a normal flex
+ * sibling.
+ *
+ * That overlay's offset is a *measured pixel* value (via `onLayout` on
+ * the word itself), not the simpler `left: '100%'`/`right: '100%'` this
+ * used to be: `rowContent` below is deliberately left auto-width
+ * (shrink-wrapped to the word, not given an explicit number), and RN's
+ * native layout engine (Yoga) only resolves a percentage `left`/`right`
+ * on an absolutely-positioned child when the positioned ancestor's own
+ * dimension is explicitly set, not one it only ends up with via content-
+ * based sizing - so on-device that percentage silently failed to
+ * resolve, leaving the score positioned with an effective offset of 0
+ * (invisible, collapsed behind the word) even though it rendered
+ * correctly in the web preview (react-native-web maps the very same
+ * style straight to real CSS, which has no such restriction). */
+const WordRow: React.FC<WordRowProps> = ({
+  item,
+  colors,
+  onPress,
+  showStart,
+  showTarget,
+  startWord,
+  targetWord,
+  effectiveShowScores
+}) => {
+  const [measuredWordWidth, setMeasuredWordWidth] = useState<number | null>(null);
+  const handleWordLayout = (e: LayoutChangeEvent) => setMeasuredWordWidth(e.nativeEvent.layout.width);
+  // Reasonable placeholder for the one frame before onLayout reports the
+  // real width, so the score/labels don't visibly pop in a frame late.
+  const wordWidth = measuredWordWidth ?? item.word.length * AVERAGE_LETTER_WIDTH;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : 'text'}
+      accessibilityLabel={`Word: ${item.word}${effectiveShowScores ? `, ${item.score} points` : ''}`}
+      style={styles.row}
+    >
+      {/* `rowContent` is centered across the *full row width* (shrink-
+          wrapped to exactly the played word's own rendered width),
+          independent of whether a score or start/target label is
+          shown - `position: relative` gives those a positioning
+          context anchored to the WORD itself, not the row, so as
+          absolutely-positioned overlays they can never re-shift the
+          word's own centering the way a normal flex sibling would. */}
+      <View style={styles.rowContent}>
+        <View onLayout={handleWordLayout}>{renderWord(item, colors)}</View>
+        {showStart && startWord && (
+          <View testID="word-trail-start-label" style={[styles.floatingLabel, styles.floatingLabelLeft, { right: wordWidth }]}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>START</Text>
+            {renderWord({ word: startWord, score: 0, keyLetters: [], maskWord: false }, colors)}
+            <Text style={[styles.arrow, { color: colors.textSecondary }]}>→</Text>
+          </View>
+        )}
+        {showTarget && targetWord && (
+          <View testID="word-trail-target-label" style={[styles.floatingLabel, styles.floatingLabelRight, { left: wordWidth }]}>
+            <Text style={[styles.arrow, { color: colors.textSecondary }]}>←</Text>
+            {renderWord({ word: targetWord, score: 0, keyLetters: [], maskWord: false }, colors)}
+            <Text style={[styles.label, { color: colors.textSecondary }]}>TARGET</Text>
+          </View>
+        )}
+        {effectiveShowScores && (
+          <Text style={[styles.score, { color: colors.textSecondary, left: wordWidth }]}>{formatScore(item)}</Text>
+        )}
+      </View>
+    </Pressable>
+  );
+};
 
 function formatScore(item: DisplayItem): string {
   if (item.score === 0) return 'pass';
@@ -142,63 +251,19 @@ export const WordTrail: React.FC<WordTrailProps> = ({
       }))
     : words.map(word => ({ word, score: 0, keyLetters: [], maskWord: false }));
 
-  const renderWord = (item: DisplayItem) => {
-    const displayWord = item.maskWord ? maskWordAsDashes(item.word) : item.word;
-    const letters = displayWord.toUpperCase().split('');
-    return (
-      <View style={styles.wordContainer}>
-        {letters.map((letter, index) => {
-          const isKeyLetter = !item.maskWord && item.keyLetters.includes(letter);
-          return (
-            <Text key={index} style={[styles.letter, { color: isKeyLetter ? colors.accent : colors.text }]}>
-              {letter}
-            </Text>
-          );
-        })}
-      </View>
-    );
-  };
-
-  const renderRow = (item: DisplayItem, index: number, options: { showStart?: boolean; showTarget?: boolean } = {}) => {
-    return (
-      <Pressable
-        key={`${item.word}-${index}`}
-        onPress={onWordPress ? () => onWordPress(item.word, index) : undefined}
-        disabled={!onWordPress}
-        accessibilityRole={onWordPress ? 'button' : 'text'}
-        accessibilityLabel={`Word: ${item.word}${effectiveShowScores ? `, ${item.score} points` : ''}`}
-        style={styles.row}
-      >
-        {/* `rowContent` is centered across the *full row width* (shrink-
-            wrapped to exactly the played word's own rendered width),
-            independent of whether a score or start/target label is
-            shown - `position: relative` gives those a positioning
-            context anchored to the WORD itself, not the row, so as
-            absolutely-positioned overlays they can never re-shift the
-            word's own centering the way a normal flex sibling would. */}
-        <View style={styles.rowContent}>
-          {renderWord(item)}
-          {options.showStart && startWord && (
-            <View testID="word-trail-start-label" style={[styles.floatingLabel, styles.floatingLabelLeft]}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>START</Text>
-              {renderWord({ word: startWord, score: 0, keyLetters: [], maskWord: false })}
-              <Text style={[styles.arrow, { color: colors.textSecondary }]}>→</Text>
-            </View>
-          )}
-          {options.showTarget && targetWord && (
-            <View testID="word-trail-target-label" style={[styles.floatingLabel, styles.floatingLabelRight]}>
-              <Text style={[styles.arrow, { color: colors.textSecondary }]}>←</Text>
-              {renderWord({ word: targetWord, score: 0, keyLetters: [], maskWord: false })}
-              <Text style={[styles.label, { color: colors.textSecondary }]}>TARGET</Text>
-            </View>
-          )}
-          {effectiveShowScores && (
-            <Text style={[styles.score, { color: colors.textSecondary }]}>{formatScore(item)}</Text>
-          )}
-        </View>
-      </Pressable>
-    );
-  };
+  const renderRow = (item: DisplayItem, index: number, options: { showStart?: boolean; showTarget?: boolean } = {}) => (
+    <WordRow
+      key={`${item.word}-${index}`}
+      item={item}
+      colors={colors}
+      onPress={onWordPress ? () => onWordPress(item.word, index) : undefined}
+      showStart={options.showStart}
+      showTarget={options.showTarget}
+      startWord={startWord}
+      targetWord={targetWord}
+      effectiveShowScores={effectiveShowScores}
+    />
+  );
 
   if (isChallengeMode && startWord && targetWord) {
     if (displayData.length === 0) {
@@ -206,10 +271,10 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         <View style={styles.container} accessibilityRole="text" accessibilityLabel="Challenge word trail">
           <View style={styles.emptyRow}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>START</Text>
-            {renderWord({ word: startWord, score: 0, keyLetters: [], maskWord: false })}
+            {renderWord({ word: startWord, score: 0, keyLetters: [], maskWord: false }, colors)}
             <Text style={[styles.arrow, { color: colors.textSecondary }]}>→</Text>
             <Text style={[styles.arrow, { color: colors.textSecondary }]}>←</Text>
-            {renderWord({ word: targetWord, score: 0, keyLetters: [], maskWord: false })}
+            {renderWord({ word: targetWord, score: 0, keyLetters: [], maskWord: false }, colors)}
             <Text style={[styles.label, { color: colors.textSecondary }]}>TARGET</Text>
           </View>
         </View>
@@ -315,19 +380,20 @@ const styles = StyleSheet.create({
     gap: 4,
     width: 160
   },
-  // Anchored to `rowContent`'s left edge (the word's left edge) via
-  // `right: '100%'`, and right-aligned within its own width so its
-  // content hugs that edge instead of floating away from the word with
-  // empty space in between.
+  // Anchored to the word's own left edge - `right` is set inline (the
+  // word's measured pixel width, so its right edge lands flush there;
+  // see `WordRow`'s doc comment for why this isn't a plain `right:
+  // '100%'`), right-aligned within its own width so its content hugs
+  // that edge instead of floating away from the word with empty space
+  // in between.
   floatingLabelLeft: {
-    right: '100%',
     marginRight: 8,
     justifyContent: 'flex-end'
   },
-  // Mirrors `score`'s positioning exactly (`left: '100%'` off
-  // `rowContent`'s right edge), just with more content.
+  // Mirrors `score`'s positioning exactly (`left` set inline to the
+  // word's measured pixel width, off the word's own right edge), just
+  // with more content.
   floatingLabelRight: {
-    left: '100%',
     marginLeft: 8,
     justifyContent: 'flex-start'
   },
@@ -346,23 +412,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700'
   },
-  // `left: '100%'` positions this relative to `rowContent`'s own right
-  // edge (i.e. the word's right edge), not the row/screen's - floating
-  // immediately past the word wherever it's centered, rather than pinned
-  // to the far right of the trail. Heaviest weight available (900) - a
-  // player's actual earned score value, same treatment as ScoreBar.tsx's
-  // score numbers.
+  // `left` is set inline (the word's measured pixel width - see
+  // `WordRow`'s doc comment) so this floats immediately past the word's
+  // own right edge wherever it's centered, rather than pinned to the far
+  // right of the trail. Heaviest weight available (900) - a player's
+  // actual earned score value, same treatment as ScoreBar.tsx's score
+  // numbers.
   score: {
     position: 'absolute',
-    left: '100%',
     marginLeft: 8,
     top: '50%',
     transform: [{ translateY: -8 }],
     fontSize: 12,
     fontWeight: '900',
-    // Prevents the score from ever line-wrapping onto a second line,
-    // which `left: '100%'` combined with the row's own width could
-    // otherwise trigger for a word centered near the right edge.
+    // Prevents the score from ever line-wrapping onto a second line.
     width: 100
   }
 });

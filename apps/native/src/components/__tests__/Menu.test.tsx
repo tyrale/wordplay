@@ -103,10 +103,13 @@ describe('native Menu', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('does not show a mechanics section when no mechanics are unlocked', async () => {
+  it('still shows a mechanics section when no mechanics are unlocked, for the always-available "type to clear" toggle', async () => {
     renderMenu();
     await waitFor(() => expect(screen.getByText('home')).toBeTruthy());
-    expect(screen.queryByText('mechanics')).toBeNull();
+    expect(screen.getByText('mechanics')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('mechanics'));
+    await waitFor(() => expect(screen.getByText('type to clear')).toBeTruthy());
   });
 
   it('shows the mechanics section with a toggle once a mechanic is unlocked, and toggling it does not crash', async () => {
@@ -249,20 +252,23 @@ describe('native Menu', () => {
 
   it('shows "N/N unlocked" counts next to the themes/mechanics/bots section headers once "unlock" is played', async () => {
     // "unlock" mechanic word trigger (unlocks the "unlock-counter"
-    // mechanic) per unlock-definitions.ts naming convention. Unlocking
-    // "unlock-counter" is itself a permanent mechanic, so wait for the
-    // mechanics section to actually appear - proof the (async)
-    // checkWordTriggers has resolved - rather than for "themes" (always
-    // present regardless of unlock state, so it wouldn't actually wait
-    // for anything here).
+    // mechanic) per unlock-definitions.ts naming convention. The
+    // mechanics section itself is always present now (the "type to
+    // clear" mechanic is available from the start, unlike every other
+    // mechanic here), so it can't be used as proof the (async)
+    // checkWordTriggers has resolved - wait for the actual "N/N" count
+    // text to appear instead.
     renderMenu({}, ['unlock']);
-    await waitFor(() => expect(screen.getByText('mechanics')).toBeTruthy());
+    const counts = await waitFor(() => {
+      const found = screen.getAllByText(/^\d+\/\d+$/);
+      expect(found).toHaveLength(3);
+      return found;
+    });
 
     // themes/mechanics/bots all show a count once unlock-counter is on -
     // exact totals depend on the full theme/bot/mechanic catalogs, so
     // just confirm the "N/N" pattern is actually rendered for each of
     // the three rather than hardcoding brittle totals here.
-    const counts = screen.getAllByText(/^\d+\/\d+$/);
     expect(counts).toHaveLength(3);
 
     // Heaviest weight available (900), same treatment as ScoreBar.tsx's

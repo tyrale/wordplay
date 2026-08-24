@@ -8,7 +8,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import type { Player } from '@wordplay/engine/interfaces';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { getDisplayName as getVanityName, hasConfirmedDisplayName } from '../adapters/nativeAuthAdapter';
 
 export interface ScoreBarProps {
@@ -51,7 +51,8 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({
   localPlayerId,
   onOwnNameTap
 }) => {
-  const { currentTheme } = useTheme();
+  const { currentTheme, isInverted } = useTheme();
+  const colors = getEffectiveColors(currentTheme, isInverted);
 
   // `hasConfirmedDisplayName()` is async (AsyncStorage-backed) on native,
   // unlike web's synchronous localStorage read - synchronously assume
@@ -84,7 +85,7 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({
         const isSelf = !player.isBot && (localPlayerId ? player.id === localPlayerId : humanIndex === 0);
         const displayName = getDisplayName(player, humanIndex, isSelf, botDisplayName, isMultiplayer, hasConfirmedName);
         if (!player.isBot) humanIndex += 1;
-        const rowColor = player.isCurrentPlayer ? currentTheme.colors.accent : currentTheme.colors.text;
+        const rowColor = player.isCurrentPlayer ? colors.accent : colors.text;
 
         const row = (
           <View style={styles.row}>
@@ -106,7 +107,7 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({
         return <View key={player.id}>{row}</View>;
       })}
       {typeof currentRound === 'number' && (
-        <Text style={[styles.round, { color: currentTheme.colors.text }]}>round {currentRound}</Text>
+        <Text style={[styles.round, { color: colors.text }]}>round {currentRound}</Text>
       )}
     </View>
   );
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2
   },
   name: {
-    fontSize: 16,
+    fontSize: 9.6,
     fontWeight: '700',
     textTransform: 'uppercase'
   },
@@ -133,11 +134,11 @@ const styles = StyleSheet.create({
   // same treatment as ScoreDisplay.tsx's score/checkmark and Menu.tsx's
   // "N/N unlocked" counts.
   score: {
-    fontSize: 16,
+    fontSize: 9.6,
     fontWeight: '900'
   },
   round: {
-    fontSize: 16,
+    fontSize: 9.6,
     fontWeight: '700',
     textTransform: 'uppercase',
     paddingHorizontal: 10,

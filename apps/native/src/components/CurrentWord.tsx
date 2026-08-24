@@ -113,6 +113,11 @@ const SIBLING_SHIFT = 16;
  * clockwise. */
 const DRAG_LIFT = -(36 * 0.8);
 const DRAG_ROTATION = '-15deg';
+/** Sized relative to the letter's own font size (36) using the same
+ * lock-icon-to-letter ratio GridCell.tsx uses on the board
+ * (`size * 0.275` lock vs. `size * 0.36 * 0.85` letter font), so the
+ * lock icon reads at the same relative size here as it does there. */
+const LOCK_ICON_SIZE = (36 * (0.275 / (0.36 * 0.85))) / 2;
 
 interface LetterLayout {
   x: number;
@@ -407,7 +412,7 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
               <Text style={[styles.letter, { color }]}>{letter}</Text>
               {isLocked && (
                 <View style={styles.lock} pointerEvents="none">
-                  <LockIcon size={10} color={colors.accent} />
+                  <LockIcon size={LOCK_ICON_SIZE} color={colors.accent} />
                 </View>
               )}
             </>
@@ -515,7 +520,9 @@ const styles = StyleSheet.create({
   },
   lock: {
     position: 'absolute',
-    top: 2,
-    right: -4
+    top: '100%',
+    left: 0,
+    right: 0,
+    alignItems: 'center'
   }
 });

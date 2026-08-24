@@ -92,6 +92,17 @@ describe('getEffectiveColors', () => {
     // Everything else stays the same.
     expect(inverted.primary).toBe(defaultTheme.colors.primary);
   });
+
+  it('recomputes textSecondary/disabled off the new (inverted) text color, not the original one', () => {
+    // textSecondary/disabled are just `text` with alpha transparency
+    // appended (see packages/theme/theme.ts's createTheme) - if inversion
+    // swapped background/text but left these untouched, they'd still be
+    // tinted with the *original* text color, which can render nearly
+    // invisible blended into the new, inverted background.
+    const inverted = getEffectiveColors(defaultTheme, true);
+    expect(inverted.textSecondary).toBe(`${defaultTheme.colors.background}80`);
+    expect(inverted.disabled).toBe(`${defaultTheme.colors.background}40`);
+  });
 });
 
 describe('getPerceivedLuminance/isLightBackground (Phase 5: per-theme status bar)', () => {

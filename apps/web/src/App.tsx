@@ -610,6 +610,7 @@ function AppContent() {
                 <ZenGame
                   onNavigateHome={handleNavigateHome}
                   onStartGame={handleStartGame}
+                  onBossTrigger={handleBossTrigger}
                 />
               )}
               

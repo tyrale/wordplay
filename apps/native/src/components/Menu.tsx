@@ -10,25 +10,25 @@
  * This slice ports: themes (+ dark mode toggle, previewed per-theme via
  * `ThemeSwatch` below), mechanics toggles + round length selection,
  * unlocked bots (tap to start a game with that bot), the "the basics"/
- * "dictionaries" about entries, the "player-stats" permanent mechanic
- * (opens the real StatsOverlay), the "unlock-counter" permanent mechanic
- * (shows "N/N unlocked" next to the themes/mechanics/bots section
- * headers once unlocked by playing "unlock" - matches web's
+ * "dictionaries"/"thoughts" about entries, the "player-stats" permanent
+ * mechanic (opens the real StatsOverlay), the "unlock-counter" permanent
+ * mechanic (shows "N/N unlocked" next to the themes/mechanics/bots
+ * section headers once unlocked by playing "unlock" - matches web's
  * `showUnlockCounts` exactly), masked "????" locked-item previews (once
  * a category is "revealed" by playing its own name - "themes"/
  * "mechanics"/"bots" - see `lockedThemeItems`/`lockedMechanicItems`/
  * `lockedBotItems` below), reset-unlocks (debug), and home/resign.
  * Deliberately deferred, not silently dropped:
- * the vanity filter system, "vs world"/leaderboard/challenge entries, two
- * of the four "about" sub-overlays (thoughts/the-game), the "word-paths"
+ * the vanity filter system, "vs world"/leaderboard/challenge entries, one
+ * of the four "about" sub-overlays ("the-game"), the "word-paths"
  * permanent mechanic (WordPathExplorer), and community stats - each
  * depends on a system not yet ported (challenge mode, the vanity filter
  * hook/context, the leaderboard overlay, word path graph tracking) or
  * was cut for scope in this pass.
  */
-import React, { useCallback, useMemo, useState } from 'react';
-import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Switch } from 'react-native';
-import { useTheme } from '../theme/ThemeProvider';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Animated } from 'react-native';
+import { useTheme, getEffectiveColors, darkenColor } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { useMechanicsSettings } from '../contexts/MechanicsSettingsContext';
 import { useRoundLength, DEFAULT_ROUND_LENGTH } from '../contexts/RoundLengthContext';
@@ -37,12 +37,18 @@ import { getBotDisplayNamesMapping, getVisibleBots } from '@wordplay/engine/botR
 import { availableThemes as ALL_THEMES } from '@wordplay/theme/theme';
 import type { GameTheme } from '@wordplay/theme/theme';
 import { DictionariesOverlay } from './DictionariesOverlay';
+import { ThoughtsOverlay } from './ThoughtsOverlay';
 import { StatsOverlay } from './StatsOverlay';
 
 const ALL_MECHANIC_IDS = ['3-letter-start', '5-letter-start', '6-letter-start', '7-letter-start', '8-letter-start', '9-letter-start', '10-letter-start', 'time-pressure', 'gravity', 'drunk', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
 const ROUND_LENGTH_MECHANIC_IDS = new Set(['round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100']);
 const PERMANENT_MECHANIC_IDS = ['player-stats', 'word-paths', 'zen-mode', 'unlock-counter', 'community-stats'];
 const DARK_MODE_MECHANIC_ID = 'dark-mode';
+// Mechanic IDs that are available to every player from the start - no
+// unlock word required, and not counted in the mechanics unlock progress
+// (unlike ALL_MECHANIC_IDS). Still gated by the on/off toggle in
+// MechanicsSettingsContext, just always shown regardless of unlock state.
+const ALWAYS_AVAILABLE_MECHANIC_IDS = ['type-to-clear'];
 
 const MECHANIC_DISPLAY_NAMES: Record<string, string> = {
   '3-letter-start': '3 letters start',
@@ -65,7 +71,8 @@ const MECHANIC_DISPLAY_NAMES: Record<string, string> = {
   'word-paths': 'paths',
   'zen-mode': 'zen mode',
   'unlock-counter': 'unlock counter',
-  'community-stats': 'community stats'
+  'community-stats': 'community stats',
+  'type-to-clear': 'type to clear'
 };
 
 const getRoundLengthValue = (mechanicId: string): number => parseInt(mechanicId.replace('round-length-', ''), 10);
@@ -105,12 +112,14 @@ export interface MenuProps {
 
 export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavigateHome, onResign, isInGame = false }) => {
   const { currentTheme, setTheme, isInverted, toggleInverted } = useTheme();
+  const colors = getEffectiveColors(currentTheme, isInverted);
   const { getUnlockedItems, resetUnlocksToFresh, isLoading } = useUnlockSystem();
   const { isMechanicOn, toggleMechanic } = useMechanicsSettings();
   const { roundLength, setRoundLength } = useRoundLength();
 
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [isDictionariesOpen, setIsDictionariesOpen] = useState(false);
+  const [isThoughtsOpen, setIsThoughtsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   const unlockedThemeIds = getUnlockedItems('theme');
@@ -126,7 +135,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
   );
   const unlockedRoundLengths = unlockedMechanics.filter(id => ROUND_LENGTH_MECHANIC_IDS.has(id));
   const unlockedPermanentMechanics = PERMANENT_MECHANIC_IDS.filter(id => unlockedMechanics.includes(id));
-  const hasMechanicsSection = toggleableMechanics.length > 0 || unlockedRoundLengths.length > 0 || unlockedPermanentMechanics.length > 0;
+  const hasMechanicsSection = toggleableMechanics.length > 0 || unlockedRoundLengths.length > 0 || unlockedPermanentMechanics.length > 0 || ALWAYS_AVAILABLE_MECHANIC_IDS.length > 0;
 
   // "N/N unlocked" counts next to the themes/mechanics/bots section
   // headers, shown only once the player has unlocked the "unlock
@@ -201,7 +210,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
     <Modal visible={isOpen} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose} accessibilityRole="none">
         <Pressable
-          style={[styles.container, { backgroundColor: currentTheme.colors.background }]}
+          style={[styles.container, { backgroundColor: colors.background }]}
           onPress={e => e.stopPropagation()}
         >
           <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -211,15 +220,15 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
 
             <SectionHeader
               label="themes"
-              color={currentTheme.colors.text}
-              accentColor={currentTheme.colors.accent}
+              color={colors.text}
+              accentColor={colors.accent}
               count={showUnlockCounts ? themesCount : undefined}
               onPress={() => toggleSection('themes')}
             />
             {expandedSection === 'themes' && (
               <View style={styles.sectionBody}>
                 {isDarkModeUnlocked && (
-                  <ToggleRow label="dark mode" value={isInverted} onToggle={toggleInverted} textColor={currentTheme.colors.text} accentColor={currentTheme.colors.accent} />
+                  <ToggleRow label="dark mode" value={isInverted} onToggle={toggleInverted} textColor={colors.text} accentColor={colors.accent} />
                 )}
                 <View style={styles.themesGrid}>
                   {unlockedThemes.map(theme => (
@@ -231,7 +240,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                     />
                   ))}
                   {lockedThemeItems.map(item => (
-                    <LockedSwatch key={item.id} title={item.title} textColor={currentTheme.colors.textSecondary} />
+                    <LockedSwatch key={item.id} title={item.title} textColor={colors.textSecondary} />
                   ))}
                 </View>
               </View>
@@ -241,8 +250,8 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
               <>
                 <SectionHeader
                   label="mechanics"
-                  color={currentTheme.colors.text}
-                  accentColor={currentTheme.colors.accent}
+                  color={colors.text}
+                  accentColor={colors.accent}
                   count={showUnlockCounts ? mechanicsCount : undefined}
                   onPress={() => toggleSection('mechanics')}
                 />
@@ -257,16 +266,26 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                       if (id === 'player-stats') {
                         return (
                           <Pressable key={id} onPress={() => setIsStatsOpen(true)} style={styles.row} accessibilityRole="button">
-                            <Text style={{ color: currentTheme.colors.text, fontWeight: '900' }}>{MECHANIC_DISPLAY_NAMES[id]}</Text>
+                            <Text style={{ color: colors.text, fontWeight: '900' }}>{MECHANIC_DISPLAY_NAMES[id]}</Text>
                           </Pressable>
                         );
                       }
                       return (
                         <View key={id} style={styles.row}>
-                          <Text style={{ color: currentTheme.colors.text, fontWeight: '900' }}>{MECHANIC_DISPLAY_NAMES[id] || id} ✓</Text>
+                          <Text style={{ color: colors.text, fontWeight: '900' }}>{MECHANIC_DISPLAY_NAMES[id] || id} ✓</Text>
                         </View>
                       );
                     })}
+                    {ALWAYS_AVAILABLE_MECHANIC_IDS.map(id => (
+                      <ToggleRow
+                        key={id}
+                        label={MECHANIC_DISPLAY_NAMES[id] || id}
+                        value={isMechanicOn(id)}
+                        onToggle={() => toggleMechanic(id)}
+                        textColor={colors.text}
+                        accentColor={colors.accent}
+                      />
+                    ))}
                     {toggleableMechanics
                       .sort((a, b) => ALL_MECHANIC_IDS.indexOf(a) - ALL_MECHANIC_IDS.indexOf(b))
                       .map(id => (
@@ -275,29 +294,23 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                           label={MECHANIC_DISPLAY_NAMES[id] || id}
                           value={isMechanicOn(id)}
                           onToggle={() => toggleMechanic(id)}
-                          textColor={currentTheme.colors.text}
-                          accentColor={currentTheme.colors.accent}
+                          textColor={colors.text}
+                          accentColor={colors.accent}
                         />
                       ))}
-                    {unlockedRoundLengths.map(id => {
-                      const isSelected = getRoundLengthValue(id) === roundLength;
-                      return (
-                        <Pressable
-                          key={id}
-                          onPress={() => handleRoundLengthSelect(id)}
-                          style={styles.row}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: isSelected }}
-                        >
-                          <Text style={{ color: isSelected ? currentTheme.colors.accent : currentTheme.colors.text, fontWeight: '900' }}>
-                            {MECHANIC_DISPLAY_NAMES[id] || id}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
+                    {unlockedRoundLengths.map(id => (
+                      <ToggleRow
+                        key={id}
+                        label={MECHANIC_DISPLAY_NAMES[id] || id}
+                        value={getRoundLengthValue(id) === roundLength}
+                        onToggle={() => handleRoundLengthSelect(id)}
+                        textColor={colors.text}
+                        accentColor={colors.accent}
+                      />
+                    ))}
                     {lockedMechanicItems.map(item => (
                       <View key={item.id} style={styles.row}>
-                        <Text style={{ color: currentTheme.colors.textSecondary, fontWeight: '900' }}>{item.title}</Text>
+                        <Text style={{ color: colors.textSecondary, fontWeight: '900' }}>{item.title}</Text>
                       </View>
                     ))}
                   </View>
@@ -307,8 +320,8 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
 
             <SectionHeader
               label="bots"
-              color={currentTheme.colors.text}
-              accentColor={currentTheme.colors.accent}
+              color={colors.text}
+              accentColor={colors.accent}
               count={showUnlockCounts ? botsCount : undefined}
               onPress={() => toggleSection('bots')}
             />
@@ -316,18 +329,18 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
               <View style={styles.sectionBody}>
                 {availableBots.map(botId => (
                   <Pressable key={botId} onPress={() => handleBotSelect(botId)} style={styles.row} accessibilityRole="button">
-                    <Text style={{ color: currentTheme.colors.text, fontWeight: '900' }}>{botDisplayNames[botId] || botId}</Text>
+                    <Text style={{ color: colors.text, fontWeight: '900' }}>{botDisplayNames[botId] || botId}</Text>
                   </Pressable>
                 ))}
                 {lockedBotItems.map(item => (
                   <View key={item.id} style={styles.row}>
-                    <Text style={{ color: currentTheme.colors.textSecondary, fontWeight: '900' }}>{item.title}</Text>
+                    <Text style={{ color: colors.textSecondary, fontWeight: '900' }}>{item.title}</Text>
                   </View>
                 ))}
               </View>
             )}
 
-            <SectionHeader label="about" color={currentTheme.colors.text} onPress={() => toggleSection('about')} />
+            <SectionHeader label="about" color={colors.text} onPress={() => toggleSection('about')} />
             {expandedSection === 'about' && (
               <View style={styles.sectionBody}>
                 <Pressable
@@ -340,18 +353,21 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                   style={styles.row}
                   accessibilityRole="button"
                 >
-                  <Text style={{ color: currentTheme.colors.text, fontWeight: '900' }}>the basics</Text>
+                  <Text style={{ color: colors.text, fontWeight: '900' }}>the basics</Text>
                 </Pressable>
                 <Pressable onPress={() => setIsDictionariesOpen(true)} style={styles.row} accessibilityRole="button">
-                  <Text style={{ color: currentTheme.colors.text, fontWeight: '900' }}>dictionaries</Text>
+                  <Text style={{ color: colors.text, fontWeight: '900' }}>dictionaries</Text>
+                </Pressable>
+                <Pressable onPress={() => setIsThoughtsOpen(true)} style={styles.row} accessibilityRole="button">
+                  <Text style={{ color: colors.text, fontWeight: '900' }}>thoughts</Text>
                 </Pressable>
                 <Pressable onPress={resetUnlocksToFresh} style={styles.row} accessibilityRole="button">
-                  <Text style={{ color: currentTheme.colors.textSecondary, fontWeight: '900' }}>reset unlocks (debug)</Text>
+                  <Text style={{ color: colors.textSecondary, fontWeight: '900' }}>reset unlocks (debug)</Text>
                 </Pressable>
               </View>
             )}
 
-            <SectionHeader label="home" color={currentTheme.colors.text} onPress={handleHome} />
+            <SectionHeader label="home" color={colors.text} onPress={handleHome} />
           </ScrollView>
         </Pressable>
       </Pressable>
@@ -360,6 +376,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
           closing it returns to the menu instead of home - matches web's
           usage exactly. */}
       <DictionariesOverlay isVisible={isDictionariesOpen} onClose={() => setIsDictionariesOpen(false)} />
+      <ThoughtsOverlay isVisible={isThoughtsOpen} onClose={() => setIsThoughtsOpen(false)} />
       <StatsOverlay isVisible={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
     </Modal>
   );
@@ -448,30 +465,54 @@ const LockedSwatch: React.FC<{ title: string; textColor: string }> = ({ title, t
   </View>
 );
 
+const TOGGLE_KNOB_TRAVEL = 18;
+
 const ToggleRow: React.FC<{ label: string; value: boolean; onToggle: () => void; textColor: string; accentColor: string }> = ({
   label,
   value,
   onToggle,
   textColor,
   accentColor
-}) => (
-  <View style={styles.toggleRow}>
-    <Text style={{ color: textColor, fontWeight: '900' }}>{label}</Text>
-    {/* RN doesn't reliably associate a bare `Switch` with an adjacent
-        sibling `Text` for screen readers the way an HTML `<label>`
-        does - an explicit accessibilityLabel/Role/State here is
-        required, not just nice-to-have, so VoiceOver/TalkBack announce
-        "dark mode switch, on" instead of just "switch". */}
-    <Switch
-      value={value}
-      onValueChange={onToggle}
-      trackColor={{ true: accentColor }}
-      accessibilityRole="switch"
-      accessibilityLabel={label}
-      accessibilityState={{ checked: value }}
-    />
-  </View>
-);
+}) => {
+  // Native `Switch` can't be used here: on iOS its "off" track is a fixed
+  // system white/light-gray fill - `trackColor.false` only tints a thin
+  // border ring, not the fill itself - so no accent-derived color is ever
+  // visible against a light theme's background. Instead this mirrors
+  // web's own custom `.dark-mode-toggle` (Menu.css) exactly: a 40x20
+  // pill track (full accent color when on, accent darkened 15% toward
+  // black when off) with a 16x16 knob that slides between the two ends.
+  const knobOffset = useRef(new Animated.Value(value ? TOGGLE_KNOB_TRAVEL : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(knobOffset, {
+      toValue: value ? TOGGLE_KNOB_TRAVEL : 0,
+      duration: 200,
+      useNativeDriver: true
+    }).start();
+  }, [value, knobOffset]);
+
+  return (
+    <View style={styles.toggleRow}>
+      <Text style={{ color: textColor, fontWeight: '900' }}>{label}</Text>
+      {/* RN doesn't reliably associate a bare toggle with an adjacent
+          sibling `Text` for screen readers the way an HTML `<label>`
+          does - an explicit accessibilityLabel/Role/State here is
+          required, not just nice-to-have, so VoiceOver/TalkBack announce
+          "dark mode switch, on" instead of just "switch". */}
+      <Pressable
+        onPress={onToggle}
+        accessibilityRole="switch"
+        accessibilityLabel={label}
+        accessibilityState={{ checked: value }}
+        style={[styles.toggleTrack, { backgroundColor: value ? accentColor : darkenColor(accentColor, 0.15) }]}
+      >
+        <Animated.View
+          style={[styles.toggleKnob, { backgroundColor: textColor, transform: [{ translateX: knobOffset }] }]}
+        />
+      </Pressable>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   overlay: {
@@ -527,6 +568,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingVertical: 6
+  },
+  // Matches web's `.dark-mode-toggle`/`.dark-mode-toggle__slider` (Menu.css) exactly.
+  toggleTrack: {
+    width: 40,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center'
+  },
+  toggleKnob: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginLeft: 2
   },
   themesGrid: {
     flexDirection: 'row',

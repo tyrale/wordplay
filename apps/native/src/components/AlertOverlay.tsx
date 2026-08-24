@@ -21,6 +21,17 @@
  * single correction pass converges very close to exact - this isn't an
  * estimate anymore, it's a real measurement, just arriving one render
  * later than web's synchronous canvas call can).
+ *
+ * Unlike a DOM `<div>` (which hugs its own content width unless told
+ * otherwise), an RN `<Text>` always wraps to whatever layout width Yoga
+ * hands it - there's no "intrinsic content width" fallback. So each
+ * line still sits in a `width`-constrained box (`LINE_BOX_WIDTH_FRACTION`
+ * below), but that box now has to be wide enough to comfortably fit the
+ * *initial, uncorrected* guess too, not just the final fitted size - a
+ * too-narrow box previously forced a wrap/truncate on that first render
+ * (before the real measurement/correction ever got a chance to run),
+ * which fed the correction formula a bogus, way-too-small "real width"
+ * and made short/wide words like "THE" balloon to a broken size.
  */
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
@@ -49,24 +60,44 @@ export interface AlertOverlayProps {
  * deliberately ~5% too wide so their outermost letter edges bleed past
  * the screen (matches web's `TARGET_WIDTH_VW` exactly). */
 const TARGET_WIDTH_FRACTION = 1.05;
-/** Each line's measurement/layout box is wider than TARGET_WIDTH_FRACTION
- * itself, purely so React Native's text layout has enough room to never
- * need to wrap the line (RN Text wraps by default whenever it doesn't
- * fit its available width - unlike the web version, which only needed
- * `white-space: nowrap` to prevent that). Centering this deliberately
- * oversized, unclipped box is what makes the line bleed symmetrically
- * past both screen edges. */
-const LINE_BOX_WIDTH_FRACTION = 1.4;
 /** Matches web's MIN_FONT_SIZE/MAX_FONT_SIZE_VH_FRACTION exactly - a flat
  * per-line cap, not divided across however many lines there are (web
  * doesn't do that either; headline phrases are assumed short). */
 const MIN_FONT_SIZE = 24;
 const MAX_FONT_SIZE_VH_FRACTION = 0.3;
-/** Tight leading so multiple stacked headline words sit close together -
- * matches web's AlertOverlay.css `line-height: 0.8` exactly (RN's
- * `lineHeight` is an absolute px value, not a unitless multiplier, so
- * this gets multiplied by the line's own fitted font size below). */
-const LINE_HEIGHT_RATIO = 0.8;
+/** Each line's layout box, as a multiple of screen width - deliberately
+ * huge (not just "a bit more than" TARGET_WIDTH_FRACTION) so that even
+ * the worst case - a very short line whose *initial, uncorrected* guess
+ * hits the MAX_FONT_SIZE_VH_FRACTION cap - never wraps or truncates
+ * before `onTextLayout`'s real measurement/correction can run (see this
+ * file's doc comment). A short line hitting that cap can plausibly need
+ * up to roughly `(chars) * maxFontSize` of width at very wide glyph
+ * proportions; this multiplier comfortably covers that for any headline
+ * short enough to realistically hit the cap in the first place (longer
+ * lines settle for a much smaller initial guess and need nowhere near
+ * this much room) - and an oversized box has no visual cost since only
+ * the actually-fitted text (bounded by TARGET_WIDTH_FRACTION) is ever
+ * visible on screen either way. */
+const LINE_BOX_WIDTH_FRACTION = 8;
+/** Tight leading so multiple stacked headline words sit almost touching -
+ * aims to match web's AlertOverlay.css `line-height: 0.8`, but *not* via
+ * RN's `lineHeight` style prop the way this used to: a browser happily
+ * lets a glyph visually overflow a `line-height` box shorter than the
+ * font needs (that's exactly how the tight-leading look works on web),
+ * but RN's native text renderer treats `lineHeight` as a hard clip box -
+ * setting it below the font's natural line height on-device clipped the
+ * *top* off every glyph. Applying the equivalent reduction as a negative
+ * `marginTop` instead (see FitLine below, and skipped on the first line)
+ * achieves the same tight overlap by pulling each line's already-full-
+ * height, unclipped text box closer to the one above it, rather than
+ * shrinking the box text renders into. One-sided (not `marginVertical`)
+ * so this maps directly to the actual gap between two lines, instead of
+ * being doubled by both lines each contributing their own top+bottom
+ * margin. A flat pixel value rather than scaled off each line's own
+ * (independently-fitted, often very different) font size, so the gap
+ * between lines reads consistently regardless of how big any one word
+ * happened to render. */
+const NEGATIVE_LEADING_MARGIN = -60;
 /** Empirical average glyph-width-to-font-size ratio for the system's
  * default bold sans-serif - used only to pick a reasonable *starting*
  * font size before the real `onTextLayout` measurement corrects it (see
@@ -98,11 +129,27 @@ interface FitLineProps {
   targetWidth: number;
   maxFontSize: number;
   color: string;
+  /** Skips the negative top margin - there's no previous line to pull
+   * this one closer to, and the whole block is already centered as a
+   * unit, so the first line shouldn't shift independently of it. */
+  isFirst: boolean;
 }
 
 /** Renders one headline line, correcting its own font size once real
- * layout measurement is available - see this file's doc comment. */
-const FitLine: React.FC<FitLineProps> = ({ text, displayText, targetWidth, maxFontSize, color }) => {
+ * layout measurement is available - see this file's doc comment.
+ *
+ * Deliberately has no `numberOfLines` - wrapping to a second line or
+ * truncating with an ellipsis are both explicitly unwanted here (a
+ * headline is always meant to render as one bled-past-the-edges line),
+ * and either one would corrupt the `onTextLayout` measurement this
+ * relies on to correct the font size (a wrapped/truncated line reports
+ * a much narrower "real width" than the line actually needs, which
+ * over-corrects the font size even larger in response). Sitting in the
+ * generously wide `LINE_BOX_WIDTH_FRACTION` box (see above) is what
+ * actually prevents the wrap/truncate from happening in the first
+ * place - this component doesn't need to know about that, just that it
+ * must never self-limit past whatever room its parent gives it. */
+const FitLine: React.FC<FitLineProps> = ({ text, displayText, targetWidth, maxFontSize, color, isFirst }) => {
   const [fontSize, setFontSize] = useState(() => estimateFontSize(text, targetWidth / TARGET_WIDTH_FRACTION, maxFontSize / MAX_FONT_SIZE_VH_FRACTION));
   const correctedRef = useRef(false);
 
@@ -122,9 +169,8 @@ const FitLine: React.FC<FitLineProps> = ({ text, displayText, targetWidth, maxFo
 
   return (
     <Text
-      numberOfLines={1}
       onTextLayout={handleTextLayout}
-      style={[styles.line, { fontSize, lineHeight: fontSize * LINE_HEIGHT_RATIO, color }]}
+      style={[styles.line, { fontSize, marginTop: isFirst ? 0 : NEGATIVE_LEADING_MARGIN, color }]}
     >
       {displayText}
     </Text>
@@ -133,6 +179,7 @@ const FitLine: React.FC<FitLineProps> = ({ text, displayText, targetWidth, maxFo
 
 export const AlertOverlay: React.FC<AlertOverlayProps> = ({ isVisible, lines, onClose, variant = 'default', meta, actions }) => {
   const { width, height } = useWindowDimensions();
+  const lineBoxWidth = width * LINE_BOX_WIDTH_FRACTION;
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
 
@@ -154,13 +201,14 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({ isVisible, lines, on
     <View style={[styles.overlay, { backgroundColor: colors.background }]} accessibilityRole="alert" accessibilityViewIsModal>
       <View style={styles.linesContainer}>
         {lines.map((line, index) => (
-          <View key={`${index}-${line}`} style={{ width: width * LINE_BOX_WIDTH_FRACTION, alignItems: 'center' }}>
+          <View key={`${index}-${line}`} style={[styles.lineBox, { width: lineBoxWidth }]}>
             <FitLine
               text={line}
               displayText={variant === 'start' ? line : line.toUpperCase()}
               targetWidth={targetWidth}
               maxFontSize={maxFontSize}
               color={lineColor}
+              isFirst={index === 0}
             />
           </View>
         ))}
@@ -208,9 +256,17 @@ const styles = StyleSheet.create({
   linesContainer: {
     alignItems: 'center'
   },
+  // `width` is set inline (LINE_BOX_WIDTH_FRACTION * screen width) - see
+  // this file's doc comment. `flexShrink: 0` stops the flex column from
+  // ever squeezing a line narrower than that.
+  lineBox: {
+    alignItems: 'center',
+    flexShrink: 0
+  },
   line: {
     fontWeight: '900',
-    textAlign: 'center'
+    textAlign: 'center',
+    flexShrink: 0
   },
   meta: {
     marginTop: 16,

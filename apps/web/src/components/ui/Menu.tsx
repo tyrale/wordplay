@@ -46,6 +46,12 @@ const DARK_MODE_MECHANIC_ID = 'dark-mode';
 // first since they also act as shortcuts to their own overlays.
 const PERMANENT_MECHANIC_IDS = ['player-stats', 'word-paths', 'zen-mode', 'unlock-counter', 'community-stats'];
 
+// Mechanic IDs that are available to every player from the start - no
+// unlock word required, and not counted in the mechanics unlock progress
+// (unlike ALL_MECHANIC_IDS). Still gated by the on/off toggle in
+// MechanicsSettingsContext, just always shown regardless of unlock state.
+const ALWAYS_AVAILABLE_MECHANIC_IDS = ['type-to-clear'];
+
 // Extracts the numeric turn count from a round-length mechanic id (e.g. 'round-length-10' -> 10)
 const getRoundLengthValue = (mechanicId: string): number => parseInt(mechanicId.replace('round-length-', ''), 10);
 
@@ -99,7 +105,8 @@ const mechanicDisplayNames: Record<string, string> = {
   'word-paths': 'paths',
   'zen-mode': 'zen mode',
   'unlock-counter': 'unlock counter',
-  'community-stats': 'community stats'
+  'community-stats': 'community stats',
+  'type-to-clear': 'type to clear'
 };
 
 // Updated menu structure based on requirements and unlock state
@@ -197,8 +204,9 @@ const getMenuItems = (
     ]
   },
   // Show mechanics section if there are unlocked mechanics (excluding dark mode,
-  // which lives under the themes section instead) or if locked previews are revealed
-  ...(unlockedMechanics.filter(id => id !== DARK_MODE_MECHANIC_ID).length > 0 || lockedMechanicItems.length > 0 ? [{
+  // which lives under the themes section instead), always-available mechanics,
+  // or if locked previews are revealed
+  ...(unlockedMechanics.filter(id => id !== DARK_MODE_MECHANIC_ID).length > 0 || lockedMechanicItems.length > 0 || ALWAYS_AVAILABLE_MECHANIC_IDS.length > 0 ? [{
     id: 'mechanics',
     title: 'mechanics',
     ...(showUnlockCounts ? {
@@ -216,6 +224,13 @@ const getMenuItems = (
           title: getMechanicTitle(mechanicId),
           isPermanentUnlock: true
         })),
+      // Always-available mechanics (no unlock required) - shown as
+      // regular toggles, same as unlocked mechanics below.
+      ...ALWAYS_AVAILABLE_MECHANIC_IDS.map(mechanicId => ({
+        id: mechanicId,
+        title: mechanicDisplayNames[mechanicId] || mechanicId,
+        isSelected: isMechanicOn(mechanicId)
+      })),
       ...unlockedMechanics
         .filter(mechanicId => mechanicId !== DARK_MODE_MECHANIC_ID && !PERMANENT_MECHANIC_IDS.includes(mechanicId))
         // Sort by ALL_MECHANIC_IDS' order (grouped logically: filter, letter-start
@@ -623,10 +638,11 @@ export const Menu: React.FC<MenuProps> = ({
                                 <button
                                   key={tier2Item.id}
                                   className={`menu-tier2-item menu-tier2-item--theme ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''} ${tier2Item.isLocked ? 'menu-tier2-item--locked' : ''}`}
-                                  disabled={tier2Item.isLocked}
                                   aria-disabled={tier2Item.isLocked}
+                                  tabIndex={tier2Item.isLocked ? -1 : 0}
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    if (tier2Item.isLocked) return;
                                     handleTier2Click(tier1Item.id, tier2Item.id);
                                   }}
                                   style={{
@@ -662,10 +678,11 @@ export const Menu: React.FC<MenuProps> = ({
                           <button
                             key={tier2Item.id}
                             className={`menu-tier2-item ${isToggle ? 'menu-tier2-item--toggle' : ''} ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''} ${tier2Item.isLocked ? 'menu-tier2-item--locked' : ''}`}
-                            disabled={tier2Item.isLocked}
                             aria-disabled={tier2Item.isLocked}
+                            tabIndex={tier2Item.isLocked ? -1 : 0}
                             onClick={(e) => {
                               e.stopPropagation();
+                              if (tier2Item.isLocked) return;
                               handleTier2Click(tier1Item.id, tier2Item.id);
                             }}
                             style={{

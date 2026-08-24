@@ -16,7 +16,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 
 export interface NamePromptOverlayProps {
   isVisible: boolean;
@@ -46,7 +46,8 @@ export const NamePromptOverlay: React.FC<NamePromptOverlayProps> = ({
   submitLabel = 'Continue',
   onCancel
 }) => {
-  const { currentTheme } = useTheme();
+  const { currentTheme, isInverted } = useTheme();
+  const colors = getEffectiveColors(currentTheme, isInverted);
   const [name, setName] = useState(defaultName);
 
   useEffect(() => {
@@ -60,14 +61,14 @@ export const NamePromptOverlay: React.FC<NamePromptOverlayProps> = ({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: currentTheme.colors.surface }]} pointerEvents="box-none">
+    <View style={[styles.container, { backgroundColor: colors.surface }]} pointerEvents="box-none">
       <View style={styles.lines}>
-        <Text style={[styles.line, { color: currentTheme.colors.text }]}>{title}</Text>
-        <Text style={[styles.line, { color: currentTheme.colors.text }]}>{subtitle}</Text>
+        <Text style={[styles.line, { color: colors.text }]}>{title}</Text>
+        <Text style={[styles.line, { color: colors.text }]}>{subtitle}</Text>
       </View>
 
       <TextInput
-        style={[styles.input, { color: currentTheme.colors.text, borderColor: currentTheme.colors.text }]}
+        style={[styles.input, { color: colors.text, borderColor: colors.text }]}
         value={name}
         onChangeText={setName}
         maxLength={10}
@@ -78,12 +79,12 @@ export const NamePromptOverlay: React.FC<NamePromptOverlayProps> = ({
       />
 
       <Pressable onPress={handleSubmit} accessibilityRole="button" accessibilityLabel={submitLabel}>
-        <Text style={[styles.submit, { color: currentTheme.colors.accent }]}>{submitLabel}</Text>
+        <Text style={[styles.submit, { color: colors.accent }]}>{submitLabel}</Text>
       </Pressable>
 
       {onCancel && (
         <Pressable onPress={onCancel} accessibilityRole="button" accessibilityLabel="Cancel">
-          <Text style={[styles.cancel, { color: currentTheme.colors.textSecondary }]}>Cancel</Text>
+          <Text style={[styles.cancel, { color: colors.textSecondary }]}>Cancel</Text>
         </Pressable>
       )}
     </View>

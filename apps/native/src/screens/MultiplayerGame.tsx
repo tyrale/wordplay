@@ -14,7 +14,7 @@ import { InteractiveGame } from './InteractiveGame';
 import { useMultiplayerManager } from '../hooks/useMultiplayerManager';
 import { getGameJoinInfo, startWaitingGame } from '../adapters/nativeMultiplayerAdapter';
 import { useUnlockSystem } from '../providers/UnlockProvider';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 
 export interface MultiplayerGameResult {
   winnerId: string | null;
@@ -47,7 +47,8 @@ export interface MultiplayerGameProps {
 }
 
 export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit, onGameEnd, onBossTrigger }) => {
-  const { currentTheme } = useTheme();
+  const { currentTheme, isInverted } = useTheme();
+  const colors = getEffectiveColors(currentTheme, isInverted);
   const { manager, localPlayerId, isLoading, error } = useMultiplayerManager(gameId);
   const [maxPlayers, setMaxPlayers] = useState<number | null>(null);
   const [isStarting, setIsStarting] = useState(false);
@@ -155,19 +156,19 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.center, { backgroundColor: currentTheme.colors.background }]}>
-        <ActivityIndicator color={currentTheme.colors.accent} />
-        <Text style={[styles.loadingText, { color: currentTheme.colors.text }]}>Loading game…</Text>
+      <SafeAreaView style={[styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator color={colors.accent} />
+        <Text style={[styles.loadingText, { color: colors.text }]}>Loading game…</Text>
       </SafeAreaView>
     );
   }
 
   if (error || !manager || !localPlayerId) {
     return (
-      <SafeAreaView style={[styles.center, { backgroundColor: currentTheme.colors.background }]}>
-        <Text style={[styles.loadingText, { color: currentTheme.colors.text }]}>{error ?? 'Failed to load game'}</Text>
+      <SafeAreaView style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={[styles.loadingText, { color: colors.text }]}>{error ?? 'Failed to load game'}</Text>
         <Pressable onPress={onExit} accessibilityRole="button">
-          <Text style={[styles.backLink, { color: currentTheme.colors.accent }]}>Back to Menu</Text>
+          <Text style={[styles.backLink, { color: colors.accent }]}>Back to Menu</Text>
         </Pressable>
       </SafeAreaView>
     );
@@ -181,14 +182,14 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
   if (state.gameStatus === 'waiting') {
     const isHost = state.players[0]?.id === localPlayerId;
     return (
-      <SafeAreaView style={[styles.waiting, { backgroundColor: currentTheme.colors.background }]}>
-        <Text style={[styles.waitingTitle, { color: currentTheme.colors.text }]}>Waiting for players…</Text>
+      <SafeAreaView style={[styles.waiting, { backgroundColor: colors.background }]}>
+        <Text style={[styles.waitingTitle, { color: colors.text }]}>Waiting for players…</Text>
         {state.players.map(player => (
-          <Text key={player.id} style={[styles.waitingPlayer, { color: currentTheme.colors.text }]}>
+          <Text key={player.id} style={[styles.waitingPlayer, { color: colors.text }]}>
             {player.id === localPlayerId ? `${player.name} (you)` : player.name}
           </Text>
         ))}
-        <Text style={[styles.waitingCount, { color: currentTheme.colors.textSecondary }]}>
+        <Text style={[styles.waitingCount, { color: colors.textSecondary }]}>
           {state.players.length}{maxPlayers ? ` / ${maxPlayers}` : ''} joined
         </Text>
         {isHost && state.players.length >= 2 && (
@@ -198,17 +199,17 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
             accessibilityRole="button"
             style={{ opacity: isStarting ? 0.5 : 1 }}
           >
-            <Text style={[styles.startButtonText, { color: currentTheme.colors.accent }]}>
+            <Text style={[styles.startButtonText, { color: colors.accent }]}>
               {isStarting ? 'Starting…' : 'Start'}
             </Text>
           </Pressable>
         )}
-        {!isHost && <Text style={[styles.waitingHint, { color: currentTheme.colors.textSecondary }]}>Waiting on the host to start…</Text>}
+        {!isHost && <Text style={[styles.waitingHint, { color: colors.textSecondary }]}>Waiting on the host to start…</Text>}
         <Pressable onPress={handleCancelWaiting} accessibilityRole="button">
-          <Text style={[styles.cancelLink, { color: currentTheme.colors.text }]}>Cancel</Text>
+          <Text style={[styles.cancelLink, { color: colors.text }]}>Cancel</Text>
         </Pressable>
         <Pressable onPress={onExit} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Back">
-          <Text style={[styles.backButtonText, { color: currentTheme.colors.text }]}>←</Text>
+          <Text style={[styles.backButtonText, { color: colors.text }]}>←</Text>
         </Pressable>
       </SafeAreaView>
     );

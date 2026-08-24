@@ -23,7 +23,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { GameConfig, MoveAttempt, IGameStateManager } from '@wordplay/engine/interfaces';
 import { useGameState, useWordState } from '../hooks/useGameState';
 import { useMechanicsSettings } from '../contexts/MechanicsSettingsContext';
@@ -38,6 +38,8 @@ import { WordTrail } from '../components/WordTrail';
 import type { WordMove } from '../components/WordTrail';
 import { Menu } from '../components/Menu';
 import { TutorialOverlay } from '../components/TutorialOverlay';
+import { NamePromptOverlay } from '../components/NamePromptOverlay';
+import { getDisplayName as getVanityName, setDisplayName, markDisplayNameConfirmed } from '../adapters/nativeAuthAdapter';
 import { getBotDisplayName } from '@wordplay/engine/botRegistry';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { usePlayerStats } from '../hooks/usePlayerStats';
@@ -104,6 +106,15 @@ export interface InteractiveGameProps {
    * as web - the caller (App.tsx there, MainScreenRoute/GameScreenRoute
    * here) is responsible for that gating. */
   onBossTrigger?: (word: string) => void;
+  /** The in-game Menu's "bots" section - requests switching to a fresh
+   * game with a different (unlocked) bot. The caller owns navigation and
+   * confirmation (mirrors web's App.tsx `handleStartGame`'s bot case,
+   * which also confirms before discarding an in-progress game). */
+  onSwitchBot?: (botId: string) => void;
+  /** The in-game Menu's "the basics" entry - force-replays the tutorial
+   * on a fresh game with the given bot. Mirrors web's `beginTutorialGame`,
+   * which (unlike `onSwitchBot` above) never asks for confirmation. */
+  onReplayTutorial?: (botId: string) => void;
   /**
    * Use an already-constructed manager instead of the local bot-game
    * manager - e.g. a `RemoteGameStateManager` for vs-human multiplayer
@@ -136,12 +147,25 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   onTutorialComplete,
   onGameTimeout,
   onBossTrigger,
+  onSwitchBot,
+  onReplayTutorial,
   externalManager,
   localPlayerId,
   currentGameMode = 'bot'
 }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
+  // `SafeAreaView`'s own inset padding is applied to its border box, but
+  // `styles.header` below is `position: 'absolute'` - unlike CSS (which
+  // positions absolute children relative to the nearest ancestor's
+  // *padding* box), React Native's Yoga layout positions absolute
+  // children relative to the ancestor's *border* box, so it ignores
+  // SafeAreaView's inset padding entirely. That's invisible on web (this
+  // app's react-native-web preview doesn't reproduce the discrepancy)
+  // but on a real notch/Dynamic-Island device it puts the header right
+  // under the status bar. Reading the inset directly and folding it into
+  // `top` here sidesteps the mismatch regardless of platform.
+  const insets = useSafeAreaInsets();
   const { handleWordSubmission, handleGameCompletion, getUnlockedItems } = useUnlockSystem();
   const { isMechanicOn } = useMechanicsSettings();
 
@@ -188,9 +212,42 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const isTimePressureOn = !isBossBattle && currentGameMode !== 'multiplayer'
     && unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
 
+  // Type-to-clear mechanic: available by default (no unlock required, see
+  // Menu.tsx's ALWAYS_AVAILABLE_MECHANIC_IDS), off by default. When on,
+  // the first letter tap of a fresh turn clears the word in play instead
+  // of appending to it, so the player can just type the whole word they
+  // want from scratch instead of editing letter-by-letter.
+  const isTypeToClearOn = isMechanicOn('type-to-clear');
+
   const [pendingWord, setPendingWord] = useState('');
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
+  // Armed at the start of each turn (see the pendingWord-reset effect
+  // below) and disarmed the first time the player edits the word in
+  // play - used by handleLetterPress to know whether a letter tap
+  // should clear the word first (type-to-clear) or just append.
+  const hasEditedThisTurnRef = React.useRef(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // Double-tap-to-pass: the first tap on the submit button while the word
+  // is invalid just reveals the validation error/"tap to pass" hint; only
+  // a second tap (with the hint already showing) actually passes the
+  // turn. Matches web's InteractiveGame.tsx exactly.
+  const [showValidationError, setShowValidationError] = useState(false);
+  // Own-name rename overlay - reuses NamePromptOverlay (the same banner
+  // shown the first time a player picks a vanity name), opened when the
+  // player taps their own row in the ScoreBar. Matches web's
+  // InteractiveGame.tsx exactly.
+  const [isRenamingSelf, setIsRenamingSelf] = useState(false);
+  const handleOwnNameTap = useCallback(() => {
+    setIsRenamingSelf(true);
+  }, []);
+  const handleRenameSubmit = useCallback(async (name: string) => {
+    await setDisplayName(name);
+    await markDisplayNameConfirmed();
+    setIsRenamingSelf(false);
+  }, []);
+  const handleRenameCancel = useCallback(() => {
+    setIsRenamingSelf(false);
+  }, []);
 
   const tutorialProgress = useTutorialProgress(pendingWord, isTutorial ? gameState : null);
   const tutorialCompleteHandledRef = React.useRef(false);
@@ -212,6 +269,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   useEffect(() => {
     setPendingWord(wordState.currentWord);
     setPendingMoveAttempt(null);
+    hasEditedThisTurnRef.current = false;
   }, [wordState.currentWord]);
 
   // Auto-start the game when the component mounts (skip a welcome
@@ -344,7 +402,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   const handleWordChange = useCallback(
     (newWord: string) => {
+      hasEditedThisTurnRef.current = true;
       setPendingWord(newWord);
+      setShowValidationError(false); // Reset error/pass-hint display when word changes
       if (newWord !== wordState.currentWord) {
         setPendingMoveAttempt(actions.attemptMove(newWord));
       } else {
@@ -359,11 +419,22 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const handleLetterPress = useCallback(
     (letter: string) => {
       if (!canEdit) return;
+      // Type-to-clear: the first letter tap of a fresh turn clears the
+      // word in play and starts fresh with just that letter, instead of
+      // appending - lets the player type the whole word they want from
+      // scratch. Only fires once per turn (disarmed by any edit, or
+      // re-armed at the start of the next turn - see the pendingWord
+      // reset effect above).
+      if (isTypeToClearOn && !hasEditedThisTurnRef.current && pendingWord.length > 0) {
+        triggerHapticFeedback('add');
+        handleWordChange(letter);
+        return;
+      }
       if (pendingWord.length >= MAX_WORD_LENGTH) return;
       triggerHapticFeedback('add');
       handleWordChange(pendingWord + letter);
     },
-    [canEdit, pendingWord, handleWordChange]
+    [canEdit, pendingWord, handleWordChange, isTypeToClearOn]
   );
 
   // Dragging a letter tile from the grid and releasing it over the word
@@ -455,6 +526,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       if (!canEdit) return;
       if (action === '↻') {
         handleWordChange(wordState.currentWord);
+        hasEditedThisTurnRef.current = false;
       }
     },
     [canEdit, handleWordChange, wordState.currentWord, onNavigateHome, handleHelp]
@@ -530,6 +602,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       actions.passTurn();
       setPendingWord(wordState.currentWord);
       setPendingMoveAttempt(null);
+      hasEditedThisTurnRef.current = false;
+      setShowValidationError(false);
       setTurnTimeRemaining(null);
     }
   }, [turnTimeRemaining, isTimePressureOn, isPlayerTurn, isGameActive, actions, wordState.currentWord]);
@@ -538,7 +612,24 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const handleSubmit = useCallback(() => {
     if (!canEdit) return;
 
-    if (isValidSubmit && pendingMoveAttempt) {
+    // Invalid (or unchanged) word: requires a double tap to pass, matching
+    // web's InteractiveGame.tsx handleSubmit exactly. The first tap just
+    // reveals the validation error / "tap to pass" hint; only a second tap
+    // (with that hint already showing) actually passes the turn.
+    if (wordUnchanged || !isValidSubmit) {
+      if (!showValidationError) {
+        setShowValidationError(true);
+        return;
+      }
+      actions.passTurn();
+      setPendingWord(wordState.currentWord);
+      setPendingMoveAttempt(null);
+      hasEditedThisTurnRef.current = false;
+      setShowValidationError(false);
+      return;
+    }
+
+    if (pendingMoveAttempt) {
       triggerHapticFeedback('submit');
       const applied = actions.applyMove(pendingMoveAttempt);
       if (applied) {
@@ -558,16 +649,22 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         if (onBossTrigger && pendingMoveAttempt.newWord.toUpperCase() === 'GUS') {
           onBossTrigger(pendingMoveAttempt.newWord);
         }
+        setPendingWord(pendingMoveAttempt.newWord);
+        setPendingMoveAttempt(null);
+        setShowValidationError(false);
       }
-      return;
     }
-
-    // Invalid word (or unchanged) -> pass turn, matching web's ScoreDisplay
-    // behavior ("Word is invalid - tap to pass turn").
-    if (wordUnchanged || !isValidSubmit) {
-      actions.passTurn();
-    }
-  }, [canEdit, isValidSubmit, pendingMoveAttempt, wordUnchanged, actions, handleWordSubmission, onBossTrigger]);
+  }, [
+    canEdit,
+    isValidSubmit,
+    pendingMoveAttempt,
+    wordUnchanged,
+    showValidationError,
+    actions,
+    wordState.currentWord,
+    handleWordSubmission,
+    onBossTrigger
+  ]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -576,18 +673,31 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
           align-items: flex-start) - not centered, and not a separate
           "rounds left" indicator (web doesn't have one; the "round N"
           row inside ScoreBar itself is the only round indicator). */}
-      <View style={styles.header}>
+      <View style={[styles.header, { top: insets.top + 12 }]}>
         <ScoreBar
           players={gameState.players}
           botDisplayName={botDisplayName}
           currentRound={currentRound}
           isMultiplayer={currentGameMode === 'multiplayer'}
           localPlayerId={localPlayerId}
+          onOwnNameTap={handleOwnNameTap}
         />
         {isBossBattle && bossTimeRemaining !== null && (
           <Text style={[styles.bossTimer, { color: colors.text }]}>{bossTimeRemaining}s</Text>
         )}
       </View>
+
+      {/* Rename overlay - reuses the same banner used to pick a name the
+          first time, reopened here when the player taps their own name. */}
+      <NamePromptOverlay
+        isVisible={isRenamingSelf}
+        defaultName={getVanityName()}
+        onSubmit={handleRenameSubmit}
+        title="Change your name"
+        subtitle="Opponents will see this"
+        submitLabel="Save"
+        onCancel={handleRenameCancel}
+      />
 
       {/* Matches web's InteractiveGame.css exactly: the submit row (not
           the word) is the actual fixed center point of the whole board -
@@ -606,6 +716,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
             isValid={isValidSubmit}
             onPress={canEdit ? handleSubmit : undefined}
             disabled={!canEdit}
+            showValidationError={showValidationError}
             timerSeconds={isTimePressureOn && isPlayerTurn ? turnTimeRemaining : null}
           />
 
@@ -642,17 +753,19 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         </View>
       </View>
 
-      {/* onStartGame intentionally omitted: mid-game the Menu's "bots"
-          section is reachable (matching web) but tapping a bot is a no-op
-          here rather than switching bots - doing that for real needs
-          navigation-level access this screen doesn't have. Small,
-          documented gap for this slice. */}
       <Menu
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         isInGame
         onResign={onResign}
         onNavigateHome={onNavigateHome}
+        onStartGame={(gameType, id) => {
+          if (gameType === 'bot') {
+            onSwitchBot?.(id);
+          } else if (gameType === 'tutorial') {
+            onReplayTutorial?.(id);
+          }
+        }}
       />
 
       {isTutorial && !tutorialProgress.isComplete && (
@@ -671,8 +784,9 @@ const styles = StyleSheet.create({
     flex: 1
   },
   header: {
+    // `top` is set inline (SafeAreaView's inset + 12) - see the comment
+    // where this style is applied.
     position: 'absolute',
-    top: 12,
     left: 12,
     alignItems: 'flex-start',
     zIndex: 1

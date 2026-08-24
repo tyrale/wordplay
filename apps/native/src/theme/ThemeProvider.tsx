@@ -126,10 +126,22 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
  */
 export function getEffectiveColors(theme: GameTheme, isInverted: boolean): GameTheme['colors'] {
   if (!isInverted) return theme.colors;
+  const text = theme.colors.background;
+  const background = theme.colors.text;
   return {
     ...theme.colors,
-    background: theme.colors.text,
-    text: theme.colors.background
+    background,
+    text,
+    // `textSecondary`/`disabled` are derived from `text` with alpha
+    // transparency appended (see packages/theme/theme.ts's `createTheme`),
+    // not standalone colors - swapping just background/text above without
+    // recomputing these would leave them tinted with the *original*,
+    // non-inverted text color, which can render nearly invisible blended
+    // into the new, inverted background (e.g. a word trail score or round
+    // label going dark-on-dark once dark mode swaps the background to what
+    // used to be the text color).
+    textSecondary: `${text}80`,
+    disabled: `${text}40`
   };
 }
 
@@ -158,4 +170,26 @@ export function getPerceivedLuminance(hexColor: string): number {
  */
 export function isLightBackground(hexColor: string): boolean {
   return getPerceivedLuminance(hexColor) > 0.5;
+}
+
+/**
+ * Darkens a `#rgb`/`#rrggbb` hex color by blending it toward black by
+ * `amount` (0-1). Returns an opaque hex color - unlike appending an
+ * alpha suffix (e.g. `${accent}CC`), this renders reliably on iOS'
+ * `Switch`, whose "off" track is a fixed white fill with only a thin
+ * tinted ring, not a translucent-over-white composite - an alpha color
+ * there ends up barely visible. Used for a toggle's off-state track so
+ * it reads as a muted, but still clearly visible, shade of the accent
+ * color instead of near-invisible.
+ */
+export function darkenColor(hexColor: string, amount: number): string {
+  const hex = hexColor.replace('#', '');
+  const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+  const value = parseInt(full, 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  const scale = 1 - amount;
+  const toHex = (channel: number) => Math.round(channel * scale).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }

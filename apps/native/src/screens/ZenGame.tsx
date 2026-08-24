@@ -60,9 +60,22 @@ const TURN_TIME_LIMIT_SECONDS = 7;
 
 export interface ZenGameProps {
   onNavigateHome?: () => void;
+  /** Fired when the local player submits a word that should trigger the
+   * "GUS" boss battle encounter. Matches InteractiveGame's `onBossTrigger` -
+   * the caller decides whether to act, this component just reports the
+   * submitted word. */
+  onBossTrigger?: (word: string) => void;
+  /** The in-game Menu's "bots" section - requests exiting zen mode to
+   * start a fresh game with a different bot. Mirrors InteractiveGame's
+   * `onSwitchBot` (the caller owns navigation and confirmation). */
+  onSwitchBot?: (botId: string) => void;
+  /** The in-game Menu's "the basics" entry - force-replays the tutorial
+   * on a fresh game with the given bot. Mirrors InteractiveGame's
+   * `onReplayTutorial`. */
+  onReplayTutorial?: (botId: string) => void;
 }
 
-export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
+export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onBossTrigger, onSwitchBot, onReplayTutorial }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
   const { handleWordSubmission, getUnlockedItems } = useUnlockSystem();
@@ -83,6 +96,11 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
   const allowSeussCanonical = unlockedMechanics.includes('seuss-canonical-words');
   const isTimePressureOn = unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
   const ninjaWordTrailUnlocked = unlockedMechanics.includes('ninja-word-trail');
+  // Type-to-clear mechanic: available by default (no unlock required, see
+  // Menu.tsx's ALWAYS_AVAILABLE_MECHANIC_IDS), off by default. When on,
+  // the first letter tap of a fresh turn clears the word in play instead
+  // of appending to it - matches InteractiveGame.tsx exactly.
+  const isTypeToClearOn = isMechanicOn('type-to-clear');
 
   // No bot, no round limit, and skip the shared active-game save slot
   // entirely (matching web) so a zen session never collides with a real
@@ -125,10 +143,16 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
   const [pendingWord, setPendingWord] = useState('');
   const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // Armed at the start of each turn (see the pendingWord-reset effect
+  // below) and disarmed the first time the player edits the word in
+  // play - used by handleLetterPress to know whether a letter tap
+  // should clear the word first (type-to-clear) or just append.
+  const hasEditedThisTurnRef = React.useRef(false);
 
   useEffect(() => {
     setPendingWord(wordState.currentWord);
     setPendingMoveAttempt(null);
+    hasEditedThisTurnRef.current = false;
   }, [wordState.currentWord]);
 
   // Auto-start on mount (no bot to wait on, no win/lose to reach).
@@ -176,6 +200,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
 
   const handleWordChange = useCallback(
     (newWord: string) => {
+      hasEditedThisTurnRef.current = true;
       setPendingWord(newWord);
       if (newWord !== wordState.currentWord) {
         setPendingMoveAttempt(actions.attemptMove(newWord));
@@ -191,11 +216,19 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
   const handleLetterPress = useCallback(
     (letter: string) => {
       if (!canEdit) return;
+      // Type-to-clear: the first letter tap of a fresh turn clears the
+      // word in play and starts fresh with just that letter, instead of
+      // appending - matches InteractiveGame.tsx exactly.
+      if (isTypeToClearOn && !hasEditedThisTurnRef.current && pendingWord.length > 0) {
+        triggerHapticFeedback('add');
+        handleWordChange(letter);
+        return;
+      }
       if (pendingWord.length >= MAX_WORD_LENGTH) return;
       triggerHapticFeedback('add');
       handleWordChange(pendingWord + letter);
     },
-    [canEdit, pendingWord, handleWordChange]
+    [canEdit, pendingWord, handleWordChange, isTypeToClearOn]
   );
 
   const { wordRef, checkDrop } = useWordDropZone();
@@ -275,6 +308,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
         // A single tap always clears the pending edit here - web's
         // double-tap-for-a-brand-new-word gesture is deferred.
         handleWordChange(wordState.currentWord);
+        hasEditedThisTurnRef.current = false;
       }
     },
     [canEdit, handleWordChange, wordState.currentWord, onNavigateHome, handleHelp]
@@ -293,6 +327,13 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
         handleWordSubmission(pendingMoveAttempt.newWord, false).catch(err =>
           console.warn('Failed to check zen word submission unlock triggers:', err)
         );
+
+        // "GUS" boss trigger: report the submitted word to the caller so it
+        // can decide whether to start the boss encounter, same as
+        // InteractiveGame.
+        if (onBossTrigger && pendingMoveAttempt.newWord.toUpperCase() === 'GUS') {
+          onBossTrigger(pendingMoveAttempt.newWord);
+        }
       }
       return;
     }
@@ -302,7 +343,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
     if (wordUnchanged || !isValidSubmit) {
       actions.passTurn();
     }
-  }, [canEdit, isValidSubmit, pendingMoveAttempt, wordUnchanged, actions, handleWordSubmission]);
+  }, [canEdit, isValidSubmit, pendingMoveAttempt, wordUnchanged, actions, handleWordSubmission, onBossTrigger]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -350,7 +391,18 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome }) => {
         </View>
       </View>
 
-      <Menu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} onNavigateHome={onNavigateHome} />
+      <Menu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        onNavigateHome={onNavigateHome}
+        onStartGame={(gameType, id) => {
+          if (gameType === 'bot') {
+            onSwitchBot?.(id);
+          } else if (gameType === 'tutorial') {
+            onReplayTutorial?.(id);
+          }
+        }}
+      />
     </SafeAreaView>
   );
 };

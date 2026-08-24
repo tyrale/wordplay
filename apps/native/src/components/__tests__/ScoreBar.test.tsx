@@ -1,9 +1,11 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { ScoreBar } from '../ScoreBar';
 import type { Player } from '@wordplay/engine/interfaces';
 import { hasConfirmedDisplayName, getDisplayName } from '../../adapters/nativeAuthAdapter';
+import { defaultTheme } from '@wordplay/theme/theme';
 
 jest.mock('../../adapters/nativeAuthAdapter', () => ({
   hasConfirmedDisplayName: jest.fn().mockResolvedValue(false),
@@ -123,5 +125,25 @@ describe('native ScoreBar', () => {
     const score = await screen.findByText('12');
     const flattenedStyle = [score.props.style].flat();
     expect(flattenedStyle).toEqual(expect.arrayContaining([expect.objectContaining({ fontWeight: '900' })]));
+  });
+
+  it('flips player score, bot score, and round text color when dark mode (inverted) is on', async () => {
+    await AsyncStorage.setItem('wordplay-inverted', 'true');
+
+    renderScoreBar({
+      players: [player({ id: 'p1', name: 'p1', score: 5 }), player({ id: 'bot', name: 'bot', isBot: true, score: 12 })],
+      currentRound: 2
+    });
+
+    const score = await screen.findByText('12');
+    const round = await screen.findByText('round 2');
+
+    const invertedTextColor = defaultTheme.colors.background;
+    expect([score.props.style].flat()).toEqual(
+      expect.arrayContaining([expect.objectContaining({ color: invertedTextColor })])
+    );
+    expect([round.props.style].flat()).toEqual(
+      expect.arrayContaining([expect.objectContaining({ color: invertedTextColor })])
+    );
   });
 });

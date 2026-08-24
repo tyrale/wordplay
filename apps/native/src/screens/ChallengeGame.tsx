@@ -20,6 +20,7 @@ import type { MoveAttempt } from '@wordplay/engine/interfaces';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useChallenge } from '../hooks/useChallenge';
 import { useUnlockSystem } from '../providers/UnlockProvider';
+import { useMechanicsSettings } from '../contexts/MechanicsSettingsContext';
 import { usePlayerStats } from '../hooks/usePlayerStats';
 import { useDictionaryData } from '../hooks/useDictionaryData';
 import { useAlert } from '../providers/AlertProvider';
@@ -56,6 +57,14 @@ export interface ChallengeGameProps {
    * this fires so the caller can start the encounter - same contract as
    * InteractiveGame's onBossTrigger. */
   onBossTrigger?: (word: string) => void;
+  /** The in-game Menu's "bots" section - requests exiting the challenge to
+   * start a fresh game with a different bot. Mirrors InteractiveGame's
+   * `onSwitchBot` (the caller owns navigation and confirmation). */
+  onSwitchBot?: (botId: string) => void;
+  /** The in-game Menu's "the basics" entry - force-replays the tutorial
+   * on a fresh game with the given bot. Mirrors InteractiveGame's
+   * `onReplayTutorial`. */
+  onReplayTutorial?: (botId: string) => void;
 }
 
 interface CompletionOverlayState {
@@ -63,7 +72,7 @@ interface CompletionOverlayState {
   shareText: string;
 }
 
-export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, onBossTrigger }) => {
+export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, onBossTrigger, onSwitchBot, onReplayTutorial }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
 
@@ -82,6 +91,12 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
   const { recordMove, recordChallengeResult } = usePlayerStats();
   const { wordData } = useDictionaryData();
   const { showCustomAlert } = useAlert();
+  const { isMechanicOn } = useMechanicsSettings();
+  // Type-to-clear mechanic: available by default (no unlock required, see
+  // Menu.tsx's ALWAYS_AVAILABLE_MECHANIC_IDS), off by default. When on,
+  // the first letter tap after a move clears the word in play instead of
+  // appending to it - matches InteractiveGame.tsx exactly.
+  const isTypeToClearOn = isMechanicOn('type-to-clear');
 
   const [pendingWord, setPendingWord] = useState('');
   const [isValidSubmit, setIsValidSubmit] = useState(false);
@@ -96,6 +111,11 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [completionOverlay, setCompletionOverlay] = useState<CompletionOverlayState | null>(null);
   const hasHandledCompletionRef = React.useRef(false);
+  // Armed each time the current word changes (see the pendingWord-sync
+  // effect below) and disarmed the first time the player edits the word
+  // in play - used by handleLetterPress to know whether a letter tap
+  // should clear the word first (type-to-clear) or just append.
+  const hasEditedThisTurnRef = React.useRef(false);
 
   useEffect(() => {
     if (isInitialized && !challengeState && !isLoading) {
@@ -106,6 +126,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
   useEffect(() => {
     if (challengeState?.currentWord) {
       setPendingWord(challengeState.currentWord);
+      hasEditedThisTurnRef.current = false;
     }
   }, [challengeState?.currentWord]);
 
@@ -160,6 +181,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
   const canEdit = !isProcessingMove && !!challengeState && !challengeState.completed && !challengeState.failed;
 
   const handleWordChange = useCallback((newWord: string) => {
+    hasEditedThisTurnRef.current = true;
     setPendingWord(newWord);
     setShowValidationError(false);
   }, []);
@@ -167,11 +189,19 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
   const handleLetterPress = useCallback(
     (letter: string) => {
       if (!canEdit) return;
+      // Type-to-clear: the first letter tap after a move clears the word
+      // in play and starts fresh with just that letter, instead of
+      // appending - matches InteractiveGame.tsx exactly.
+      if (isTypeToClearOn && !hasEditedThisTurnRef.current && pendingWord.length > 0) {
+        triggerHapticFeedback('add');
+        handleWordChange(letter);
+        return;
+      }
       if (pendingWord.length >= MAX_WORD_LENGTH) return;
       triggerHapticFeedback('add');
       handleWordChange(pendingWord + letter);
     },
-    [canEdit, pendingWord, handleWordChange]
+    [canEdit, pendingWord, handleWordChange, isTypeToClearOn]
   );
 
   const { wordRef, checkDrop } = useWordDropZone();
@@ -248,6 +278,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
       if (!canEdit) return;
       if (action === '↻') {
         handleWordChange(challengeState?.currentWord || '');
+        hasEditedThisTurnRef.current = false;
       }
     },
     [canEdit, handleWordChange, challengeState?.currentWord, onNavigateHome, handleHelp]
@@ -436,6 +467,13 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
         isInGame
         onResign={handleResign}
         onNavigateHome={onNavigateHome}
+        onStartGame={(gameType, id) => {
+          if (gameType === 'bot') {
+            onSwitchBot?.(id);
+          } else if (gameType === 'tutorial') {
+            onReplayTutorial?.(id);
+          }
+        }}
       />
 
       {completionOverlay && completionCopy && (

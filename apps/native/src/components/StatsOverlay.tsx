@@ -5,7 +5,7 @@
  */
 import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { usePlayerStats } from '../hooks/usePlayerStats';
 import { getBotDisplayNamesMapping } from '@wordplay/engine/botRegistry';
 
@@ -41,7 +41,8 @@ function topEntry(counts: Record<string, number>): string {
 }
 
 export const StatsOverlay: React.FC<StatsOverlayProps> = ({ isVisible, onClose }) => {
-  const { currentTheme } = useTheme();
+  const { currentTheme, isInverted } = useTheme();
+  const colors = getEffectiveColors(currentTheme, isInverted);
   const { stats } = usePlayerStats();
 
   if (!isVisible) return null;
@@ -112,11 +113,11 @@ export const StatsOverlay: React.FC<StatsOverlayProps> = ({ isVisible, onClose }
     if (rows.length === 0) return null;
     return (
       <View style={styles.section} key={title}>
-        <Text style={[styles.sectionTitle, { color: currentTheme.colors.accent }]}>{title}</Text>
+        <Text style={[styles.sectionTitle, { color: colors.accent }]}>{title}</Text>
         {rows.map(row => (
           <View key={row.label} style={styles.row}>
-            <Text style={[styles.rowLabel, { color: currentTheme.colors.textSecondary }]}>{row.label}</Text>
-            <Text style={[styles.rowValue, { color: currentTheme.colors.text }]}>{row.value}</Text>
+            <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>{row.label}</Text>
+            <Text style={[styles.rowValue, { color: colors.text }]}>{row.value}</Text>
           </View>
         ))}
       </View>
@@ -124,9 +125,9 @@ export const StatsOverlay: React.FC<StatsOverlayProps> = ({ isVisible, onClose }
   };
 
   return (
-    <View style={[styles.overlay, { backgroundColor: currentTheme.colors.background }]} accessibilityRole="none">
+    <View style={[styles.overlay, { backgroundColor: colors.background }]} accessibilityRole="none">
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.title, { color: currentTheme.colors.accent }]}>stats</Text>
+        <Text style={[styles.title, { color: colors.accent }]}>stats</Text>
 
         {renderSection('Words', wordStats)}
         {renderSection('Games', gameStats)}
@@ -137,7 +138,7 @@ export const StatsOverlay: React.FC<StatsOverlayProps> = ({ isVisible, onClose }
       </ScrollView>
 
       <Pressable onPress={onClose} style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close">
-        <Text style={[styles.closeButtonText, { color: currentTheme.colors.text }]}>×</Text>
+        <Text style={[styles.closeButtonText, { color: colors.text }]}>×</Text>
       </Pressable>
     </View>
   );

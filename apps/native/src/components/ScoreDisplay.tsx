@@ -14,7 +14,7 @@
  */
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import type { MoveAttempt } from '@wordplay/engine/interfaces';
 
 export interface ScoreDisplayProps {
@@ -44,7 +44,8 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
   isChallengeMode = false,
   timerSeconds = null
 }) => {
-  const { currentTheme } = useTheme();
+  const { currentTheme, isInverted } = useTheme();
+  const colors = getEffectiveColors(currentTheme, isInverted);
 
   const actions = moveAttempt?.scoringResult?.actions ?? [];
   const actionIcons: string[] = [];
@@ -75,8 +76,8 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
     rightContent = `${timerSeconds}`;
   }
 
-  const color = isPassMode || (isValid && !isEmpty) ? currentTheme.colors.accent : currentTheme.colors.accent;
-  const centerColor = isEmpty && !showValidationError ? currentTheme.colors.text : currentTheme.colors.accent;
+  const color = isPassMode || (isValid && !isEmpty) ? colors.accent : colors.accent;
+  const centerColor = isEmpty && !showValidationError ? colors.text : colors.accent;
   const opacity = disabled ? 0.4 : isEmpty && !showValidationError ? 0.5 : 1;
 
   const isClickable = !!onPress && !disabled;
@@ -108,7 +109,10 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 4,
     paddingHorizontal: 8,
-    minWidth: 100
+    // Fills its parent (submitAnchor, itself full-width) rather than
+    // shrink-wrapping to content, so `side`'s `flex: 1` below has an
+    // actual bounded width to split evenly - see that comment for why.
+    width: '100%'
   },
   side: {
     // 50% larger than web's literal 28.8px mobile-breakpoint value, per
@@ -116,8 +120,19 @@ const styles = StyleSheet.create({
     // next to the checkmark once actually rendered on a phone).
     fontSize: 21,
     fontWeight: '900',
-    minWidth: 32,
-    textAlign: 'center'
+    // Equal-width flexible slots (mirrors web's ScoreDisplay.css
+    // `grid-template-columns: 1fr auto 1fr`: two equal 1fr side columns
+    // flanking a fixed-size center column) - NOT a content-driven width.
+    // The center ✓/✗ must never visibly shift when the left/right text
+    // changes (e.g. showing the "tap to pass" hint) - a content-sized
+    // width would cause exactly that, since a `justifyContent: 'center'`
+    // row re-centers the whole group whenever a sibling's rendered width
+    // changes. `flex: 1` instead gives both slots a width fully
+    // determined by the fixed-width row above (not by their own text),
+    // so it can't move the center - long text (the validation message/
+    // "tap to pass") simply wraps to a second line within that same
+    // fixed-width slot instead of being truncated or pushing anything.
+    flex: 1
   },
   left: {
     textAlign: 'right'

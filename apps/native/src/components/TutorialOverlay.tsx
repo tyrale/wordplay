@@ -13,7 +13,7 @@
  */
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { TUTORIAL_STEPS } from '../hooks/tutorialSteps';
 
 export interface TutorialOverlayProps {
@@ -23,17 +23,18 @@ export interface TutorialOverlayProps {
 }
 
 export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ currentStepIndex, banner, onSkip }) => {
-  const { currentTheme } = useTheme();
+  const { currentTheme, isInverted } = useTheme();
+  const colors = getEffectiveColors(currentTheme, isInverted);
 
   return (
-    <View style={[styles.container, { backgroundColor: currentTheme.colors.surface }]} pointerEvents="box-none">
+    <View style={[styles.container, { backgroundColor: colors.surface }]} pointerEvents="box-none">
       <View style={styles.progress}>
         {TUTORIAL_STEPS.map((step, index) => (
           <View
             key={step.id}
             style={[
               styles.dot,
-              { backgroundColor: index <= currentStepIndex ? currentTheme.colors.accent : currentTheme.colors.disabled }
+              { backgroundColor: index <= currentStepIndex ? colors.accent : colors.disabled }
             ]}
           />
         ))}
@@ -41,14 +42,14 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ currentStepInd
 
       <View style={styles.lines}>
         {banner.map((line, index) => (
-          <Text key={index} style={[styles.line, { color: currentTheme.colors.text }]}>
+          <Text key={index} style={[styles.line, { color: colors.text }]}>
             {line}
           </Text>
         ))}
       </View>
 
       <Pressable onPress={onSkip} accessibilityRole="button" accessibilityLabel="Skip tutorial">
-        <Text style={[styles.skip, { color: currentTheme.colors.textSecondary }]}>Skip tutorial</Text>
+        <Text style={[styles.skip, { color: colors.textSecondary }]}>Skip tutorial</Text>
       </Pressable>
     </View>
   );

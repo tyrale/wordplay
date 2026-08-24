@@ -98,6 +98,12 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const isDrunkOn = getUnlockedItems('mechanic').includes('drunk') && isMechanicOn('drunk');
   const interactiveGameClassName = `interactive-game${isDrunkOn ? ' interactive-game--drunk' : ''}`;
 
+  // Type-to-clear mechanic: available by default (no unlock required, see
+  // Menu.tsx's ALWAYS_AVAILABLE_MECHANIC_IDS), off by default. When on,
+  // the first letter click after a move clears the word in play instead
+  // of appending to it - matches InteractiveGame.tsx exactly.
+  const isTypeToClearOn = isMechanicOn('type-to-clear');
+
   // First-time "vs world" intro banner
   const [showIntro, setShowIntro] = useState(() => !hasSeenChallengeIntro());
   const dismissIntro = useCallback(() => {
@@ -151,10 +157,17 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     }
   }, [isInitialized, challengeState, isLoading, startChallenge]);
 
+  // Armed each time the current word changes (see the pendingWord-sync
+  // effect below) and disarmed the first time the player edits the word
+  // in play - used by handleLetterClick to know whether a letter click
+  // should clear the word first (type-to-clear) or just append.
+  const hasEditedThisTurnRef = useRef(false);
+
   // Update pending word when challenge state changes
   useEffect(() => {
     if (challengeState?.currentWord) {
       setPendingWord(challengeState.currentWord);
+      hasEditedThisTurnRef.current = false;
     }
   }, [challengeState?.currentWord]);
 
@@ -258,20 +271,31 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
 
   // Event handlers
   const handleWordChange = useCallback((newWord: string) => {
+    hasEditedThisTurnRef.current = true;
     setPendingWord(newWord.toUpperCase());
     setShowValidationError(false);
   }, []);
 
   const handleLetterClick = useCallback((letter: string) => {
     if (isProcessingMove || !challengeState) return;
-    
+
+    // Type-to-clear: the first letter click after a move clears the word
+    // in play and starts fresh with just that letter, instead of
+    // appending - matches InteractiveGame.tsx exactly.
+    if (isTypeToClearOn && !hasEditedThisTurnRef.current && pendingWord.length > 0) {
+      triggerHapticFeedback('add');
+      triggerSoundFeedback('add');
+      handleWordChange(letter);
+      return;
+    }
+
     const newWord = pendingWord + letter;
     if (newWord.length <= 10) {
       triggerHapticFeedback('add');
       triggerSoundFeedback('add');
       handleWordChange(newWord);
     }
-  }, [pendingWord, isProcessingMove, challengeState, handleWordChange]);
+  }, [pendingWord, isProcessingMove, challengeState, handleWordChange, isTypeToClearOn]);
 
   const handleLetterRemove = useCallback((info: { letter: string; index: number }) => {
     if (isProcessingMove) return;
@@ -361,6 +385,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         setPendingWord(challengeState?.currentWord || '');
         setValidationResult(null);
         setShowValidationError(false);
+        hasEditedThisTurnRef.current = false;
         break;
       case '?': // Help
         handleHelp();

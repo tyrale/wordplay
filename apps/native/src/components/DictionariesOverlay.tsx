@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 
 export interface DictionariesOverlayProps {
@@ -44,7 +44,8 @@ const SEUSS_DICTIONARY: DictionaryEntry = {
 };
 
 export const DictionariesOverlay: React.FC<DictionariesOverlayProps> = ({ isVisible, onClose }) => {
-  const { currentTheme } = useTheme();
+  const { currentTheme, isInverted } = useTheme();
+  const colors = getEffectiveColors(currentTheme, isInverted);
   const { getUnlockedItems } = useUnlockSystem();
   const seussUnlocked = getUnlockedItems('mechanic').includes('seuss-canonical-words');
 
@@ -53,24 +54,24 @@ export const DictionariesOverlay: React.FC<DictionariesOverlayProps> = ({ isVisi
   const dictionaries = seussUnlocked ? [...DICTIONARIES, SEUSS_DICTIONARY] : DICTIONARIES;
 
   return (
-    <View style={[styles.overlay, { backgroundColor: currentTheme.colors.background }]} accessibilityRole="none">
+    <View style={[styles.overlay, { backgroundColor: colors.background }]} accessibilityRole="none">
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.title, { color: currentTheme.colors.accent }]}>dictionaries</Text>
+        <Text style={[styles.title, { color: colors.accent }]}>dictionaries</Text>
 
         {dictionaries.map(entry => (
           <View key={entry.name} style={styles.item}>
-            <Text style={[styles.itemName, { color: currentTheme.colors.text }]}>{entry.name}</Text>
-            <Text style={[styles.itemDescription, { color: currentTheme.colors.textSecondary }]}>{entry.description}</Text>
+            <Text style={[styles.itemName, { color: colors.text }]}>{entry.name}</Text>
+            <Text style={[styles.itemDescription, { color: colors.textSecondary }]}>{entry.description}</Text>
           </View>
         ))}
 
-        <Text style={[styles.footnote, { color: currentTheme.colors.textSecondary }]}>
+        <Text style={[styles.footnote, { color: colors.textSecondary }]}>
           I allow for more words than other word games because ¯\_(ツ)_/¯.
         </Text>
       </ScrollView>
 
       <Pressable onPress={onClose} style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close">
-        <Text style={[styles.closeButtonText, { color: currentTheme.colors.text }]}>×</Text>
+        <Text style={[styles.closeButtonText, { color: colors.text }]}>×</Text>
       </Pressable>
     </View>
   );

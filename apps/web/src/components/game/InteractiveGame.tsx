@@ -191,6 +191,13 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // below, once `gameState` is available.
   const isTimePressureOnLocal = !isBossBattle && unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
 
+  // Type-to-clear mechanic: available by default (no unlock required, see
+  // Menu.tsx's ALWAYS_AVAILABLE_MECHANIC_IDS), off by default. When on,
+  // the first letter tap of a fresh turn clears the word in play instead
+  // of appending to it, so the player can just type the whole word they
+  // want from scratch instead of editing letter-by-letter.
+  const isTypeToClearOn = isMechanicOn('type-to-clear');
+
   // Gravity mechanic: unlocked via the "gravity" word and toggled on in the mechanics menu.
   // Makes the alphabet grid letters fall and roll freely around the viewport.
   const isGravityOn = unlockedMechanics.includes('gravity') && isMechanicOn('gravity');
@@ -361,6 +368,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   
   // Local UI state
   const [pendingWord, setPendingWord] = useState('');
+  // Armed at the start of each turn (see the pendingWord-reset effect
+  // below) and disarmed the first time the player edits the word in
+  // play - used by handleLetterClick to know whether a letter click
+  // should clear the word first (type-to-clear) or just append.
+  const hasEditedThisTurnRef = useRef(false);
   
   // Track pendingWord changes
   useEffect(() => {
@@ -383,6 +395,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // Initialize pending word with current word
   useEffect(() => {
     setPendingWord(wordState.currentWord);
+    hasEditedThisTurnRef.current = false;
   }, [wordState.currentWord]);
 
   // Notify parent of game state changes (for tutorial)
@@ -446,6 +459,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       actions.passTurn();
       setPendingWord(wordState.currentWord);
       setPendingMoveAttempt(null);
+      hasEditedThisTurnRef.current = false;
       setShowValidationError(false);
       setTurnTimeRemaining(null);
     }
@@ -649,6 +663,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       case '↻': // Reset word (reset to current word)
         setPendingWord(wordState.currentWord);
         setPendingMoveAttempt(null);
+        hasEditedThisTurnRef.current = false;
         break;
     }
   }, [isPlayerTurn, isProcessingMove, wordState.currentWord, handleHelp, handleSettings, onNavigateHome]);
@@ -658,6 +673,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       return;
     }
     
+    hasEditedThisTurnRef.current = true;
     setPendingWord(newWord);
     setShowValidationError(false); // Reset error display when word changes
     
@@ -672,7 +688,20 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   const handleLetterClick = useCallback((letter: string) => {
     if (!isPlayerTurn || isProcessingMove) return;
-    
+
+    // Type-to-clear: the first letter click of a fresh turn clears the
+    // word in play and starts fresh with just that letter, instead of
+    // appending - lets the player type the whole word they want from
+    // scratch. Only fires once per turn (disarmed by any edit, or
+    // re-armed at the start of the next turn - see the pendingWord reset
+    // effect above).
+    if (isTypeToClearOn && !hasEditedThisTurnRef.current && pendingWord.length > 0) {
+      triggerHapticFeedback('add');
+      triggerSoundFeedback('add');
+      handleWordChange(letter);
+      return;
+    }
+
     // Add letter to pending word
     if (pendingWord.length < 10) { // Max word length
       triggerHapticFeedback('add');
@@ -680,7 +709,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       const newWord = pendingWord + letter;
       handleWordChange(newWord);
     }
-  }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
+  }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange, isTypeToClearOn]);
 
   const handleLetterDragStart = useCallback((letter: string) => {
     if (!isPlayerTurn || isProcessingMove) return;
@@ -773,6 +802,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         actions.passTurn();
         setPendingWord(wordState.currentWord);
         setPendingMoveAttempt(null);
+        hasEditedThisTurnRef.current = false;
         setShowValidationError(false);
         return;
       }

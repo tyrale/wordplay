@@ -127,4 +127,38 @@ describe('native AlertOverlay', () => {
 
     expect(afterSecond).toBe(afterFirst);
   });
+
+  /**
+   * Regression test for a real-device bug: a short line (e.g. "THE")
+   * could hit the MAX_FONT_SIZE_VH_FRACTION cap on its very first,
+   * uncorrected render. If that render then wrapped or truncated
+   * (`numberOfLines={1}` + a too-narrow box), `onTextLayout` measured
+   * the wrapped/truncated width instead of the line's real width, which
+   * fed the correction formula a bogus, way-too-small number and made
+   * the "corrected" font size balloon even larger - rendering the line
+   * as an enormous, cut-off single letter that bled into neighboring
+   * lines. Guards both halves of the fix: no `numberOfLines` at all, and
+   * a layout box wide enough to hold even a short line's biggest
+   * possible (cap-hitting) initial guess without constraining it.
+   */
+  it('never truncates or wraps a headline line, even a short one whose initial guess hits the max font-size cap', () => {
+    renderOverlay({ lines: ['ALWAYS', 'THE', 'QUITTER'], variant: 'lose' });
+
+    const shortLine = screen.getByText('THE');
+    expect(shortLine.props.numberOfLines).toBeUndefined();
+
+    // The wrapping box (the line's parent) must be comfortably wider
+    // than the screen so a short, cap-hitting line's uncorrected first
+    // render - which can span multiple screen-widths - never gets
+    // force-wrapped/truncated before the real measurement/correction
+    // in `onTextLayout` gets a chance to run.
+    let box = shortLine.parent;
+    while (box && !(box.type === 'View' && [box.props.style].flat().some(s => s && typeof s === 'object' && 'width' in s))) {
+      box = box.parent;
+    }
+    const boxWidth = (
+      [box?.props.style].flat().find(s => s && typeof s === 'object' && 'width' in s) as { width: number } | undefined
+    )?.width;
+    expect(boxWidth).toBeGreaterThan(1000);
+  });
 });

@@ -7,7 +7,7 @@
  */
 import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useChallengeLeaderboard, getTodayChallengeDate } from '../hooks/useChallengeLeaderboard';
 
 export interface LeaderboardOverlayProps {
@@ -16,7 +16,8 @@ export interface LeaderboardOverlayProps {
 }
 
 export const LeaderboardOverlay: React.FC<LeaderboardOverlayProps> = ({ isVisible, onClose }) => {
-  const { currentTheme } = useTheme();
+  const { currentTheme, isInverted } = useTheme();
+  const colors = getEffectiveColors(currentTheme, isInverted);
   const today = getTodayChallengeDate();
   const { entries, isLoading, error, localResult } = useChallengeLeaderboard(isVisible ? today : null);
 
@@ -27,46 +28,46 @@ export const LeaderboardOverlay: React.FC<LeaderboardOverlayProps> = ({ isVisibl
   const emptyMessage = localResult?.completed ? "you're the first to complete today" : 'no completions yet';
 
   return (
-    <View style={[styles.overlay, { backgroundColor: currentTheme.colors.background }]} accessibilityRole="none">
+    <View style={[styles.overlay, { backgroundColor: colors.background }]} accessibilityRole="none">
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.title, { color: currentTheme.colors.accent }]}>leaderboard</Text>
+        <Text style={[styles.title, { color: colors.accent }]}>leaderboard</Text>
 
         {localResult ? (
           <View style={styles.words}>
-            <Text style={[styles.word, { color: currentTheme.colors.text }]}>{localResult.startWord}</Text>
-            <Text style={[styles.arrow, { color: currentTheme.colors.textSecondary }]}>→</Text>
-            <Text style={[styles.word, { color: currentTheme.colors.text }]}>{localResult.targetWord}</Text>
+            <Text style={[styles.word, { color: colors.text }]}>{localResult.startWord}</Text>
+            <Text style={[styles.arrow, { color: colors.textSecondary }]}>→</Text>
+            <Text style={[styles.word, { color: colors.text }]}>{localResult.targetWord}</Text>
           </View>
         ) : (
-          <Text style={[styles.emptyWords, { color: currentTheme.colors.textSecondary }]}>no challenge started today</Text>
+          <Text style={[styles.emptyWords, { color: colors.textSecondary }]}>no challenge started today</Text>
         )}
 
         {isLoading ? (
-          <Text style={[styles.empty, { color: currentTheme.colors.textSecondary }]}>loading…</Text>
+          <Text style={[styles.empty, { color: colors.textSecondary }]}>loading…</Text>
         ) : error ? (
-          <Text style={[styles.empty, { color: currentTheme.colors.textSecondary }]}>{error}</Text>
+          <Text style={[styles.empty, { color: colors.textSecondary }]}>{error}</Text>
         ) : hasEntries ? (
           <View style={styles.list}>
             {entries.map(entry => {
               const isYou = localStepCount !== null && entry.stepCount === localStepCount;
-              const stepColor = isYou ? currentTheme.colors.accent : currentTheme.colors.text;
+              const stepColor = isYou ? colors.accent : colors.text;
               return (
                 <View key={entry.stepCount} style={styles.row}>
                   <Text style={[styles.steps, { color: stepColor }]}>{entry.stepCount}</Text>
-                  <Text style={[styles.dash, { color: currentTheme.colors.textSecondary }]}>-</Text>
-                  <Text style={[styles.count, { color: currentTheme.colors.text }]}>{entry.playerCount}</Text>
-                  {isYou && <Text style={[styles.you, { color: currentTheme.colors.accent }]}>YOU</Text>}
+                  <Text style={[styles.dash, { color: colors.textSecondary }]}>-</Text>
+                  <Text style={[styles.count, { color: colors.text }]}>{entry.playerCount}</Text>
+                  {isYou && <Text style={[styles.you, { color: colors.accent }]}>YOU</Text>}
                 </View>
               );
             })}
           </View>
         ) : (
-          <Text style={[styles.empty, { color: currentTheme.colors.textSecondary }]}>{emptyMessage}</Text>
+          <Text style={[styles.empty, { color: colors.textSecondary }]}>{emptyMessage}</Text>
         )}
       </ScrollView>
 
       <Pressable onPress={onClose} style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close">
-        <Text style={[styles.closeButtonText, { color: currentTheme.colors.text }]}>×</Text>
+        <Text style={[styles.closeButtonText, { color: colors.text }]}>×</Text>
       </Pressable>
     </View>
   );

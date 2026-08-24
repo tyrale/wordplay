@@ -50,9 +50,14 @@ const DOUBLE_TAP_RESET_MS = 400;
 export interface ZenGameProps {
   onNavigateHome?: () => void;
   onStartGame?: (gameType: 'bot' | 'challenge', botId?: string) => void;
+  /** Fired when the local player submits a word that should trigger the
+   * "GUS" boss battle encounter. Matches InteractiveGame/ChallengeGame's
+   * `onBossTrigger` - the parent (App) decides whether to act, this
+   * component just reports the submitted word. */
+  onBossTrigger?: (word: string) => void;
 }
 
-export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame }) => {
+export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, onBossTrigger }) => {
   const { handleWordSubmission, handleWordPathChange, getUnlockedItems } = useUnlockSystem();
   const { recordMove } = usePlayerStats();
   const { recordTransition: recordWordPathTransition, syncToServer: syncWordPathGraph } = useWordPathGraph();
@@ -73,6 +78,11 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
   const isGravityOn = unlockedMechanics.includes('gravity') && isMechanicOn('gravity');
   const isDrunkOn = unlockedMechanics.includes('drunk') && isMechanicOn('drunk');
   const allowSeussCanonical = unlockedMechanics.includes('seuss-canonical-words');
+  // Type-to-clear mechanic: available by default (no unlock required, see
+  // Menu.tsx's ALWAYS_AVAILABLE_MECHANIC_IDS), off by default. When on,
+  // the first letter click of a fresh turn clears the word in play
+  // instead of appending to it - matches InteractiveGame.tsx exactly.
+  const isTypeToClearOn = isMechanicOn('type-to-clear');
 
   // Ninja word trail: unlocked permanently by beating the Ninjabot. No
   // toggle — once unlocked, every move (zen mode is opponent-free, so every
@@ -134,6 +144,11 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
   const [showValidationError, setShowValidationError] = useState(false);
   const [turnTimeRemaining, setTurnTimeRemaining] = useState<number | null>(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  // Armed at the start of each turn (see the pendingWord-reset effect
+  // below) and disarmed the first time the player edits the word in
+  // play - used by handleLetterClick to know whether a letter click
+  // should clear the word first (type-to-clear) or just append.
+  const hasEditedThisTurnRef = useRef(false);
 
   // First-time "vsnobody" intro banner
   const [showIntro, setShowIntro] = useState(() => !hasSeenZenIntro());
@@ -159,6 +174,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
   // every submitted move, and after an explicit reset (via resetGeneration).
   useEffect(() => {
     setPendingWord(wordState.currentWord);
+    hasEditedThisTurnRef.current = false;
   }, [wordState.currentWord, resetGeneration]);
 
   // Auto-start the game when the component mounts
@@ -198,6 +214,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
       actions.passTurn();
       setPendingWord(wordState.currentWord);
       setPendingMoveAttempt(null);
+      hasEditedThisTurnRef.current = false;
       setShowValidationError(false);
       setTurnTimeRemaining(null);
     }
@@ -357,6 +374,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
           lastResetTapRef.current = now;
           setPendingWord(wordState.currentWord);
           setPendingMoveAttempt(null);
+          hasEditedThisTurnRef.current = false;
         }
         break;
       }
@@ -368,6 +386,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
       return;
     }
 
+    hasEditedThisTurnRef.current = true;
     setPendingWord(newWord);
     setShowValidationError(false);
 
@@ -382,12 +401,22 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
   const handleLetterClick = useCallback((letter: string) => {
     if (!isPlayerTurn || isProcessingMove) return;
 
+    // Type-to-clear: the first letter click of a fresh turn clears the
+    // word in play and starts fresh with just that letter, instead of
+    // appending - matches InteractiveGame.tsx exactly.
+    if (isTypeToClearOn && !hasEditedThisTurnRef.current && pendingWord.length > 0) {
+      triggerHapticFeedback('add');
+      triggerSoundFeedback('add');
+      handleWordChange(letter);
+      return;
+    }
+
     if (pendingWord.length < 10) {
       triggerHapticFeedback('add');
       triggerSoundFeedback('add');
       handleWordChange(pendingWord + letter);
     }
-  }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
+  }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange, isTypeToClearOn]);
 
   const handleLetterDragStart = useCallback((letter: string) => {
     if (!isPlayerTurn || isProcessingMove) return;
@@ -454,6 +483,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
         actions.passTurn();
         setPendingWord(wordState.currentWord);
         setPendingMoveAttempt(null);
+        hasEditedThisTurnRef.current = false;
         setShowValidationError(false);
         return;
       }
@@ -469,6 +499,13 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
         const previousWord = wordState.currentWord;
         const isProfane = !!wordData?.profanityWords.has(newWord.toUpperCase());
         await handleWordSubmission(newWord, isProfane);
+
+        // "GUS" boss trigger: report the submitted word to the parent so it
+        // can decide whether to start the boss encounter, same as
+        // InteractiveGame/ChallengeGame.
+        if (onBossTrigger && newWord.toUpperCase() === 'GUS') {
+          onBossTrigger(newWord);
+        }
 
         recordWordPathTransition(previousWord, newWord)
           .then(() => syncWordPathGraph())
@@ -500,7 +537,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame })
         setShowValidationError(false);
       }
     }
-  }, [isPlayerTurn, isProcessingMove, pendingWord, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, wordData, handleWordChange, showAlert, recordWordPathTransition, syncWordPathGraph, recordMove, handleWordPathChange, gameState.turnHistory, isValidSubmit]);
+  }, [isPlayerTurn, isProcessingMove, pendingWord, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, wordData, handleWordChange, showAlert, recordWordPathTransition, syncWordPathGraph, recordMove, handleWordPathChange, gameState.turnHistory, isValidSubmit, onBossTrigger]);
 
   const handleMenuClose = useCallback(() => {
     setIsMenuOpen(false);

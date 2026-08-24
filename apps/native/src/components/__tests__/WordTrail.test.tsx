@@ -59,6 +59,22 @@ describe('native WordTrail (regular mode)', () => {
     expect(flattenedStyle).toEqual(expect.arrayContaining([expect.objectContaining({ fontWeight: '900' })]));
   });
 
+  it('positions the score with a numeric pixel `left` (the word\'s measured width), not a `\'100%\'` string', async () => {
+    // Regression test: a plain `left: '100%'` never resolves on-device
+    // (RN's Yoga layout engine only resolves percentage insets against an
+    // ancestor with an explicit dimension, which the word's shrink-wrapped
+    // container deliberately doesn't have) - the score rendered fine in
+    // the web preview (react-native-web maps straight to real CSS) but
+    // was completely invisible on a real iOS device. See WordTrail.tsx's
+    // `WordRow` doc comment.
+    renderTrail({ moves: [{ word: 'CAT', score: 3, turnNumber: 1 }], showScores: true });
+    const score = await screen.findByText('+3');
+    const flattenedStyle = [score.props.style].flat();
+    const leftValues = flattenedStyle.filter(s => s && 'left' in s).map(s => s.left);
+    expect(leftValues.length).toBeGreaterThan(0);
+    leftValues.forEach(value => expect(typeof value).toBe('number'));
+  });
+
   it('splits base and key-letter bonus points from the score breakdown', async () => {
     renderTrail({
       moves: [
@@ -163,11 +179,18 @@ describe('native WordTrail (challenge mode)', () => {
       moves: [{ word: 'CORD', score: 0, turnNumber: 1 }]
     });
 
+    // `right`/`left` are a measured *pixel* offset (the played word's own
+    // rendered width), not a plain `'100%'` - RN's native layout engine
+    // only resolves a percentage `left`/`right` on an absolutely-
+    // positioned child when the positioned ancestor's own dimension is
+    // explicitly set, which `rowContent` deliberately isn't (see
+    // WordTrail.tsx's `WordRow` doc comment) - so this asserts against a
+    // number instead.
     const startLabel = await screen.findByTestId('word-trail-start-label');
     expect(startLabel.props.style).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ position: 'absolute' }),
-        expect.objectContaining({ right: '100%' })
+        expect.objectContaining({ right: expect.any(Number) })
       ])
     );
 
@@ -175,7 +198,7 @@ describe('native WordTrail (challenge mode)', () => {
     expect(targetLabel.props.style).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ position: 'absolute' }),
-        expect.objectContaining({ left: '100%' })
+        expect.objectContaining({ left: expect.any(Number) })
       ])
     );
   });

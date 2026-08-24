@@ -26,7 +26,7 @@ import { NamePromptOverlay } from '../components/NamePromptOverlay';
 import { useMechanicsSettings } from '../contexts/MechanicsSettingsContext';
 import { useRoundLength } from '../contexts/RoundLengthContext';
 import { useUnlockSystem } from '../providers/UnlockProvider';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { shareInviteCode } from '../utils/shareUtils';
 
 // Starting-word-length mechanics a host might have unlocked/toggled on -
@@ -42,7 +42,8 @@ type LobbyView = 'menu' | 'create' | 'join' | 'matchmaking';
 type LobbyAction = 'create' | 'join' | 'random';
 
 export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady, onBack }) => {
-  const { currentTheme } = useTheme();
+  const { currentTheme, isInverted } = useTheme();
+  const colors = getEffectiveColors(currentTheme, isInverted);
   const [view, setView] = useState<LobbyView>('menu');
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [joinCodeInput, setJoinCodeInput] = useState('');
@@ -262,58 +263,62 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
   }, [view, menuStep, onBack, handleCancelMatchmaking, handleBackToMenu]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Pressable
         onPress={handleBack}
         style={styles.backButton}
         accessibilityRole="button"
         accessibilityLabel={view === 'create' ? 'Close' : 'Back'}
       >
-        <Text style={[styles.backButtonText, { color: currentTheme.colors.text }]}>{view === 'create' ? '×' : '←'}</Text>
+        <Text style={[styles.backButtonText, { color: colors.text }]}>{view === 'create' ? '×' : '←'}</Text>
       </Pressable>
 
       <View style={styles.content}>
         {view === 'menu' && (
-          <ScrollView contentContainerStyle={styles.menu}>
+          <ScrollView style={styles.menuScroll} contentContainerStyle={styles.menu}>
             {menuStep === 'mode' && (
-              <View style={styles.linkList}>
-                <Pressable onPress={() => handleSelectMode('vsone')} accessibilityRole="button">
-                  <Text style={styles.linkText}>
-                    <Text style={{ color: currentTheme.colors.accent }}>vs</Text>
-                    <Text style={{ color: currentTheme.colors.text }}>one</Text>
+              // Matches MainScreen.tsx's top-level game-mode selection
+              // (`gameSelection`/`gameOption`/`gameOptionText`) exactly.
+              <View style={styles.gameSelection}>
+                <Pressable onPress={() => handleSelectMode('vsone')} style={({ pressed }) => [styles.gameOption, { opacity: pressed ? 0.6 : 1 }]} accessibilityRole="button">
+                  <Text style={styles.gameOptionText}>
+                    <Text style={{ color: colors.accent }}>vs</Text>
+                    <Text style={{ color: colors.text }}>one</Text>
                   </Text>
                 </Pressable>
-                <Pressable onPress={() => handleSelectMode('vsmany')} accessibilityRole="button">
-                  <Text style={styles.linkText}>
-                    <Text style={{ color: currentTheme.colors.accent }}>vs</Text>
-                    <Text style={{ color: currentTheme.colors.text }}>many</Text>
+                <Pressable onPress={() => handleSelectMode('vsmany')} style={({ pressed }) => [styles.gameOption, { opacity: pressed ? 0.6 : 1 }]} accessibilityRole="button">
+                  <Text style={styles.gameOptionText}>
+                    <Text style={{ color: colors.accent }}>vs</Text>
+                    <Text style={{ color: colors.text }}>many</Text>
                   </Text>
                 </Pressable>
               </View>
             )}
 
             {menuStep === 'action' && (
-              <View style={styles.linkList}>
-                <Pressable onPress={() => handleActionSelect('create')} accessibilityRole="button">
-                  <Text style={[styles.linkText, { color: currentTheme.colors.text }]}>Create</Text>
+              // Matches MainScreen.tsx's bot-selection list
+              // (`botList`/`botOption`/`botOptionText`) exactly.
+              <View style={styles.botList}>
+                <Pressable onPress={() => handleActionSelect('create')} style={({ pressed }) => [styles.botOption, { opacity: pressed ? 0.6 : 1 }]} accessibilityRole="button">
+                  <Text style={[styles.botOptionText, { color: colors.text }]}>Create</Text>
                 </Pressable>
-                <Pressable onPress={() => handleActionSelect('join')} accessibilityRole="button">
-                  <Text style={[styles.linkText, { color: currentTheme.colors.text }]}>Join</Text>
+                <Pressable onPress={() => handleActionSelect('join')} style={({ pressed }) => [styles.botOption, { opacity: pressed ? 0.6 : 1 }]} accessibilityRole="button">
+                  <Text style={[styles.botOptionText, { color: colors.text }]}>Join</Text>
                 </Pressable>
-                <Pressable onPress={() => handleActionSelect('random')} accessibilityRole="button">
-                  <Text style={[styles.linkText, { color: currentTheme.colors.text }]}>Random</Text>
+                <Pressable onPress={() => handleActionSelect('random')} style={({ pressed }) => [styles.botOption, { opacity: pressed ? 0.6 : 1 }]} accessibilityRole="button">
+                  <Text style={[styles.botOptionText, { color: colors.text }]}>Random</Text>
                 </Pressable>
               </View>
             )}
 
             {activeGames.length > 0 && (
               <View style={styles.games}>
-                <Text style={[styles.gamesTitle, { color: currentTheme.colors.textSecondary }]}>Games in Progress</Text>
+                <Text style={[styles.gamesTitle, { color: colors.textSecondary }]}>Games in Progress</Text>
                 {activeGames.map(game => (
                   <View key={game.gameId} style={styles.gameRow}>
                     <Pressable onPress={() => onGameReady(game.gameId)} style={styles.gameLink} accessibilityRole="button">
-                      <Text style={[styles.gameLinkText, { color: currentTheme.colors.text }]}>{game.opponentName}</Text>
-                      <Text style={[styles.gameStatus, { color: currentTheme.colors.textSecondary }]}>
+                      <Text style={[styles.gameLinkText, { color: colors.text }]}>{game.opponentName}</Text>
+                      <Text style={[styles.gameStatus, { color: colors.textSecondary }]}>
                         {game.status === 'waiting' ? 'waiting' : game.isMyTurn ? 'your turn' : 'their turn'}
                       </Text>
                     </Pressable>
@@ -322,7 +327,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
                       accessibilityRole="button"
                       accessibilityLabel="Cancel game"
                     >
-                      <Text style={[styles.gameCancel, { color: currentTheme.colors.textSecondary }]}>×</Text>
+                      <Text style={[styles.gameCancel, { color: colors.textSecondary }]}>×</Text>
                     </Pressable>
                   </View>
                 ))}
@@ -333,47 +338,47 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
 
         {view === 'create' && (
           <View style={styles.panel}>
-            {isBusy && !inviteCode && <ActivityIndicator color={currentTheme.colors.accent} />}
+            {isBusy && !inviteCode && <ActivityIndicator color={colors.accent} />}
             {inviteCode && createMode === 'vsone' && !opponentName && (
               <>
-                <Text style={[styles.shareLabel, { color: currentTheme.colors.textSecondary }]}>Share this:</Text>
+                <Text style={[styles.shareLabel, { color: colors.textSecondary }]}>Share this:</Text>
                 <View style={styles.codeRow}>
-                  <Text style={[styles.code, { color: currentTheme.colors.accent }]}>{inviteCode}</Text>
+                  <Text style={[styles.code, { color: colors.accent }]}>{inviteCode}</Text>
                   <Pressable onPress={handleShareInvite} accessibilityRole="button" accessibilityLabel="Share invite code">
-                    <Text style={[styles.shareIcon, { color: currentTheme.colors.text }]}>↑</Text>
+                    <Text style={[styles.shareIcon, { color: colors.text }]}>↑</Text>
                   </Pressable>
                 </View>
-                <Text style={[styles.hint, { color: currentTheme.colors.textSecondary }]}>Waiting on player(s)…</Text>
+                <Text style={[styles.hint, { color: colors.textSecondary }]}>Waiting on player(s)…</Text>
               </>
             )}
             {opponentName && createMode === 'vsone' && (
               <>
-                <Text style={[styles.hint, { color: currentTheme.colors.textSecondary }]}>{opponentName} joined!</Text>
+                <Text style={[styles.hint, { color: colors.textSecondary }]}>{opponentName} joined!</Text>
                 <Pressable onPress={handleStartGame} accessibilityRole="button">
-                  <Text style={[styles.linkText, { color: currentTheme.colors.text }]}>Start</Text>
+                  <Text style={[styles.linkText, { color: colors.text }]}>Start</Text>
                 </Pressable>
               </>
             )}
             {inviteCode && createMode === 'vsmany' && (
               <>
-                <Text style={[styles.shareLabel, { color: currentTheme.colors.textSecondary }]}>Share this:</Text>
+                <Text style={[styles.shareLabel, { color: colors.textSecondary }]}>Share this:</Text>
                 <View style={styles.codeRow}>
-                  <Text style={[styles.code, { color: currentTheme.colors.accent }]}>{inviteCode}</Text>
+                  <Text style={[styles.code, { color: colors.accent }]}>{inviteCode}</Text>
                   <Pressable onPress={handleShareInvite} accessibilityRole="button" accessibilityLabel="Share invite code">
-                    <Text style={[styles.shareIcon, { color: currentTheme.colors.text }]}>↑</Text>
+                    <Text style={[styles.shareIcon, { color: colors.text }]}>↑</Text>
                   </Pressable>
                 </View>
                 {joinedPlayers.map(player => (
-                  <Text key={player.id} style={[styles.joinedPlayer, { color: currentTheme.colors.text }]}>{player.name}</Text>
+                  <Text key={player.id} style={[styles.joinedPlayer, { color: colors.text }]}>{player.name}</Text>
                 ))}
-                <Text style={[styles.hint, { color: currentTheme.colors.textSecondary }]}>{joinedPlayers.length} / 8 joined</Text>
+                <Text style={[styles.hint, { color: colors.textSecondary }]}>{joinedPlayers.length} / 8 joined</Text>
                 <Pressable
                   onPress={handleStartVsManyGame}
                   disabled={isBusy || joinedPlayers.length < 2}
                   accessibilityRole="button"
                   style={{ opacity: isBusy || joinedPlayers.length < 2 ? 0.4 : 1 }}
                 >
-                  <Text style={[styles.linkText, { color: currentTheme.colors.text }]}>{isBusy ? 'Starting…' : 'Start'}</Text>
+                  <Text style={[styles.linkText, { color: colors.text }]}>{isBusy ? 'Starting…' : 'Start'}</Text>
                 </Pressable>
               </>
             )}
@@ -382,13 +387,13 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
 
         {view === 'join' && (
           <View style={styles.panel}>
-            <Text style={[styles.panelTitle, { color: currentTheme.colors.text }]}>Join a Game</Text>
+            <Text style={[styles.panelTitle, { color: colors.text }]}>Join a Game</Text>
             <TextInput
-              style={[styles.input, { color: currentTheme.colors.text, borderColor: currentTheme.colors.text }]}
+              style={[styles.input, { color: colors.text, borderColor: colors.text }]}
               value={joinCodeInput}
               onChangeText={text => setJoinCodeInput(text.toUpperCase())}
               placeholder="Enter code"
-              placeholderTextColor={currentTheme.colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               maxLength={6}
               autoFocus
               autoCapitalize="characters"
@@ -399,21 +404,21 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
               accessibilityRole="button"
               style={{ opacity: isBusy || joinCodeInput.trim().length === 0 ? 0.4 : 1 }}
             >
-              <Text style={[styles.linkText, { color: currentTheme.colors.text }]}>{isBusy ? 'Joining…' : 'Join'}</Text>
+              <Text style={[styles.linkText, { color: colors.text }]}>{isBusy ? 'Joining…' : 'Join'}</Text>
             </Pressable>
             <Pressable onPress={handleBackToMenu} accessibilityRole="button">
-              <Text style={[styles.linkText, { color: currentTheme.colors.textSecondary }]}>Cancel</Text>
+              <Text style={[styles.linkText, { color: colors.textSecondary }]}>Cancel</Text>
             </Pressable>
           </View>
         )}
 
         {view === 'matchmaking' && (
           <View style={styles.panel}>
-            <Text style={[styles.panelTitle, { color: currentTheme.colors.text }]}>Finding a Match…</Text>
-            <ActivityIndicator color={currentTheme.colors.accent} />
-            <Text style={[styles.hint, { color: currentTheme.colors.textSecondary }]}>This may take a moment.</Text>
+            <Text style={[styles.panelTitle, { color: colors.text }]}>Finding a Match…</Text>
+            <ActivityIndicator color={colors.accent} />
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>This may take a moment.</Text>
             <Pressable onPress={handleCancelMatchmaking} accessibilityRole="button">
-              <Text style={[styles.linkText, { color: currentTheme.colors.text }]}>Cancel Search</Text>
+              <Text style={[styles.linkText, { color: colors.text }]}>Cancel Search</Text>
             </Pressable>
           </View>
         )}
@@ -436,13 +441,17 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 12,
-    left: 12,
+    bottom: 8,
+    left: 8,
     zIndex: 1,
-    padding: 8
+    width: 60,
+    height: 60,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   backButtonText: {
-    fontSize: 28,
+    // Matches MainScreen.tsx's backButtonText - same 60px button.
+    fontSize: 29,
     fontWeight: '900'
   },
   content: {
@@ -451,18 +460,48 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24
   },
+  menuScroll: {
+    flexGrow: 0,
+    width: '100%'
+  },
   menu: {
+    flexGrow: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 32,
     paddingVertical: 24
   },
-  linkList: {
-    alignItems: 'center',
-    gap: 24
+  // Matches MainScreen.tsx's gameSelection/gameOption/gameOptionText
+  // exactly (the vsone/vsmany mode step).
+  gameSelection: {
+    gap: 24,
+    alignItems: 'center'
+  },
+  gameOption: {
+    paddingVertical: 8
+  },
+  gameOptionText: {
+    fontSize: 28,
+    fontWeight: '900'
+  },
+  // Matches MainScreen.tsx's botList/botOption/botOptionText exactly
+  // (the Create/Join/Random action step).
+  botList: {
+    gap: 16,
+    alignItems: 'center'
+  },
+  botOption: {
+    paddingVertical: 8
+  },
+  botOptionText: {
+    fontSize: 26,
+    fontWeight: '900',
+    textTransform: 'uppercase'
   },
   linkText: {
     fontSize: 32,
-    fontWeight: '900'
+    fontWeight: '900',
+    textTransform: 'uppercase'
   },
   games: {
     alignItems: 'center',
