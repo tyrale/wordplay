@@ -29,6 +29,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
+import { useVanityFilter } from '../contexts/VanityFilterContext';
+
+type GetDisplayWord = (word: string, options?: { isEditing?: boolean }) => string;
 
 type EffectiveColors = ReturnType<typeof getEffectiveColors>;
 
@@ -92,8 +95,12 @@ interface DisplayItem {
 
 const maskWordAsDashes = (word: string): string => '-'.repeat(word.length);
 
-function renderWord(item: DisplayItem, colors: EffectiveColors) {
-  const displayWord = item.maskWord ? maskWordAsDashes(item.word) : item.word;
+function renderWord(item: DisplayItem, colors: EffectiveColors, getDisplayWord: GetDisplayWord) {
+  // Ninja mask (dashes) takes precedence over the vanity filter - a
+  // masked word is never shown at all, censored or not. Otherwise apply
+  // the normal vanity filtering - completed words in the trail are not
+  // being edited - matches web's WordTrail.tsx renderWordWithHighlights.
+  const displayWord = item.maskWord ? maskWordAsDashes(item.word) : getDisplayWord(item.word, { isEditing: false });
   const letters = displayWord.toUpperCase().split('');
   return (
     <View style={styles.wordContainer}>
@@ -118,6 +125,7 @@ interface WordRowProps {
   startWord?: string;
   targetWord?: string;
   effectiveShowScores: boolean;
+  getDisplayWord: GetDisplayWord;
 }
 
 /** One played-word row, floating its score (and, in challenge mode, its
@@ -146,7 +154,8 @@ const WordRow: React.FC<WordRowProps> = ({
   showTarget,
   startWord,
   targetWord,
-  effectiveShowScores
+  effectiveShowScores,
+  getDisplayWord
 }) => {
   const [measuredWordWidth, setMeasuredWordWidth] = useState<number | null>(null);
   const handleWordLayout = (e: LayoutChangeEvent) => setMeasuredWordWidth(e.nativeEvent.layout.width);
@@ -170,18 +179,18 @@ const WordRow: React.FC<WordRowProps> = ({
           absolutely-positioned overlays they can never re-shift the
           word's own centering the way a normal flex sibling would. */}
       <View style={styles.rowContent}>
-        <View onLayout={handleWordLayout}>{renderWord(item, colors)}</View>
+        <View onLayout={handleWordLayout}>{renderWord(item, colors, getDisplayWord)}</View>
         {showStart && startWord && (
           <View testID="word-trail-start-label" style={[styles.floatingLabel, styles.floatingLabelLeft, { right: wordWidth }]}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>START</Text>
-            {renderWord({ word: startWord, score: 0, keyLetters: [], maskWord: false }, colors)}
+            {renderWord({ word: startWord, score: 0, keyLetters: [], maskWord: false }, colors, getDisplayWord)}
             <Text style={[styles.arrow, { color: colors.textSecondary }]}>→</Text>
           </View>
         )}
         {showTarget && targetWord && (
           <View testID="word-trail-target-label" style={[styles.floatingLabel, styles.floatingLabelRight, { left: wordWidth }]}>
             <Text style={[styles.arrow, { color: colors.textSecondary }]}>←</Text>
-            {renderWord({ word: targetWord, score: 0, keyLetters: [], maskWord: false }, colors)}
+            {renderWord({ word: targetWord, score: 0, keyLetters: [], maskWord: false }, colors, getDisplayWord)}
             <Text style={[styles.label, { color: colors.textSecondary }]}>TARGET</Text>
           </View>
         )}
@@ -220,6 +229,7 @@ export const WordTrail: React.FC<WordTrailProps> = ({
 }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
+  const { getDisplayWord } = useVanityFilter();
   const { height: windowHeight } = useWindowDimensions();
   const effectiveMaxHeight = maxHeight ?? Math.round(windowHeight * DEFAULT_MAX_HEIGHT_RATIO);
   const scrollRef = useRef<ScrollView>(null);
@@ -262,6 +272,7 @@ export const WordTrail: React.FC<WordTrailProps> = ({
       startWord={startWord}
       targetWord={targetWord}
       effectiveShowScores={effectiveShowScores}
+      getDisplayWord={getDisplayWord}
     />
   );
 
@@ -271,10 +282,10 @@ export const WordTrail: React.FC<WordTrailProps> = ({
         <View style={styles.container} accessibilityRole="text" accessibilityLabel="Challenge word trail">
           <View style={styles.emptyRow}>
             <Text style={[styles.label, { color: colors.textSecondary }]}>START</Text>
-            {renderWord({ word: startWord, score: 0, keyLetters: [], maskWord: false }, colors)}
+            {renderWord({ word: startWord, score: 0, keyLetters: [], maskWord: false }, colors, getDisplayWord)}
             <Text style={[styles.arrow, { color: colors.textSecondary }]}>→</Text>
             <Text style={[styles.arrow, { color: colors.textSecondary }]}>←</Text>
-            {renderWord({ word: targetWord, score: 0, keyLetters: [], maskWord: false }, colors)}
+            {renderWord({ word: targetWord, score: 0, keyLetters: [], maskWord: false }, colors, getDisplayWord)}
             <Text style={[styles.label, { color: colors.textSecondary }]}>TARGET</Text>
           </View>
         </View>

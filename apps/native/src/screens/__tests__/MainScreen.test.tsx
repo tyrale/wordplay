@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider, useUnlockSystem } from '../../providers/UnlockProvider';
+import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
 import { MainScreen } from '../MainScreen';
@@ -16,11 +17,13 @@ function renderMainScreen(props: Partial<React.ComponentProps<typeof MainScreen>
       <ThemeProvider>
         <AlertProvider>
           <UnlockProvider>
+            <VanityFilterProvider>
             <MechanicsSettingsProvider>
               <RoundLengthProvider>
                 <MainScreen onStartGame={onStartGame} onStartMultiplayer={props.onStartMultiplayer} />
               </RoundLengthProvider>
             </MechanicsSettingsProvider>
+            </VanityFilterProvider>
           </UnlockProvider>
         </AlertProvider>
       </ThemeProvider>
@@ -87,12 +90,14 @@ describe('native MainScreen', () => {
       <ThemeProvider>
         <AlertProvider>
           <UnlockProvider>
+            <VanityFilterProvider>
             <MechanicsSettingsProvider>
               <RoundLengthProvider>
                 <ZenUnlocker />
                 <MainScreen onStartGame={jest.fn()} />
               </RoundLengthProvider>
             </MechanicsSettingsProvider>
+            </VanityFilterProvider>
           </UnlockProvider>
         </AlertProvider>
       </ThemeProvider>

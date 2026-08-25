@@ -11,6 +11,7 @@ import { AlertOverlay } from './src/components/AlertOverlay';
 import type { AlertOverlayVariant } from './src/components/AlertOverlay';
 import { alertCopy, pickAlertVariant } from './src/content/alertCopy';
 import { UnlockProvider } from './src/providers/UnlockProvider';
+import { VanityFilterProvider } from './src/contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from './src/contexts/MechanicsSettingsContext';
 import { RoundLengthProvider, useRoundLength } from './src/contexts/RoundLengthContext';
 import { DrunkModeOverlay } from './src/components/DrunkModeOverlay';
@@ -398,14 +399,16 @@ export default function App() {
       <ThemeProvider>
         <AlertProvider>
           <UnlockProvider>
-            <MechanicsSettingsProvider>
-              <RoundLengthProvider>
-                <DrunkModeOverlay>
-                  <AppNavigator />
-                </DrunkModeOverlay>
-                <ThemedStatusBar />
-              </RoundLengthProvider>
-            </MechanicsSettingsProvider>
+            <VanityFilterProvider>
+              <MechanicsSettingsProvider>
+                <RoundLengthProvider>
+                  <DrunkModeOverlay>
+                    <AppNavigator />
+                  </DrunkModeOverlay>
+                  <ThemedStatusBar />
+                </RoundLengthProvider>
+              </MechanicsSettingsProvider>
+            </VanityFilterProvider>
           </UnlockProvider>
         </AlertProvider>
       </ThemeProvider>

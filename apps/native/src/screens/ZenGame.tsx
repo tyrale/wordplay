@@ -324,7 +324,8 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onBossTrigger,
       triggerHapticFeedback('submit');
       const applied = actions.applyMove(pendingMoveAttempt);
       if (applied) {
-        handleWordSubmission(pendingMoveAttempt.newWord, false).catch(err =>
+        const isProfane = !!wordData?.profanityWords.has(pendingMoveAttempt.newWord.toUpperCase());
+        handleWordSubmission(pendingMoveAttempt.newWord, isProfane).catch(err =>
           console.warn('Failed to check zen word submission unlock triggers:', err)
         );
 
@@ -343,7 +344,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onBossTrigger,
     if (wordUnchanged || !isValidSubmit) {
       actions.passTurn();
     }
-  }, [canEdit, isValidSubmit, pendingMoveAttempt, wordUnchanged, actions, handleWordSubmission, onBossTrigger]);
+  }, [canEdit, isValidSubmit, pendingMoveAttempt, wordUnchanged, actions, handleWordSubmission, wordData, onBossTrigger]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>

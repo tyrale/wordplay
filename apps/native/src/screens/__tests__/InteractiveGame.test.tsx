@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider, useUnlockSystem } from '../../providers/UnlockProvider';
+import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
 import { InteractiveGame } from '../InteractiveGame';
@@ -27,12 +28,14 @@ function renderGame(props: React.ComponentProps<typeof InteractiveGame> = {}, un
     <ThemeProvider>
       <AlertProvider>
         <UnlockProvider>
-          <MechanicsSettingsProvider>
-            <RoundLengthProvider>
-              <Unlocker words={unlockWords} />
-              <InteractiveGame {...props} />
-            </RoundLengthProvider>
-          </MechanicsSettingsProvider>
+          <VanityFilterProvider>
+            <MechanicsSettingsProvider>
+              <RoundLengthProvider>
+                <Unlocker words={unlockWords} />
+                <InteractiveGame {...props} />
+              </RoundLengthProvider>
+            </MechanicsSettingsProvider>
+          </VanityFilterProvider>
         </UnlockProvider>
       </AlertProvider>
     </ThemeProvider>

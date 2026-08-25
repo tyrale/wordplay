@@ -8,30 +8,33 @@
  * progress line.
  *
  * This slice ports: themes (+ dark mode toggle, previewed per-theme via
- * `ThemeSwatch` below), mechanics toggles + round length selection,
- * unlocked bots (tap to start a game with that bot), all four "about"
- * entries ("the basics"/"the game"/"dictionaries"/"thoughts"), the
- * "player-stats" permanent mechanic (opens the real StatsOverlay), the
- * "unlock-counter" permanent mechanic (shows "N/N unlocked" next to the
- * themes/mechanics/bots section headers once unlocked by playing
- * "unlock" - matches web's `showUnlockCounts` exactly), masked "????"
- * locked-item previews (once a category is "revealed" by playing its
- * own name - "themes"/"mechanics"/"bots" - see `lockedThemeItems`/
- * `lockedMechanicItems`/`lockedBotItems` below), reset-unlocks (debug),
- * and home/resign. Daily challenge + its leaderboard are reachable
- * directly from `MainScreen`'s "vs world" option, not from this Menu
- * (matches web's own MainScreen-level entry point, not a Menu one).
- * Deliberately deferred, not silently dropped: the vanity (bad word)
- * filter system, the "word-paths" permanent mechanic (WordPathExplorer),
- * and community stats - each depends on a system not yet ported (the
- * vanity filter hook/context, word path graph tracking) or was cut for
- * scope in this pass.
+ * `ThemeSwatch` below), mechanics toggles + round length selection, the
+ * "bad word filter" toggle (backed by `VanityFilterContext`, not the
+ * generic `MechanicsSettingsContext` - see its own comment on the
+ * toggle row below for why), unlocked bots (tap to start a game with
+ * that bot), all four "about" entries ("the basics"/"the game"/
+ * "dictionaries"/"thoughts"), the "player-stats" permanent mechanic
+ * (opens the real StatsOverlay), the "unlock-counter" permanent
+ * mechanic (shows "N/N unlocked" next to the themes/mechanics/bots
+ * section headers once unlocked by playing "unlock" - matches web's
+ * `showUnlockCounts` exactly), masked "????" locked-item previews (once
+ * a category is "revealed" by playing its own name - "themes"/
+ * "mechanics"/"bots" - see `lockedThemeItems`/`lockedMechanicItems`/
+ * `lockedBotItems` below), reset-unlocks (debug), and home/resign.
+ * Daily challenge + its leaderboard are reachable directly from
+ * `MainScreen`'s "vs world" option, not from this Menu (matches web's
+ * own MainScreen-level entry point, not a Menu one).
+ * Deliberately deferred, not silently dropped: the "word-paths"
+ * permanent mechanic (WordPathExplorer) and community stats - each
+ * depends on a system not yet ported (word path graph tracking) or was
+ * cut for scope in this pass.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Animated } from 'react-native';
 import { useTheme, getEffectiveColors, darkenColor } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { useMechanicsSettings } from '../contexts/MechanicsSettingsContext';
+import { useVanityFilter } from '../contexts/VanityFilterContext';
 import { useRoundLength, DEFAULT_ROUND_LENGTH } from '../contexts/RoundLengthContext';
 import { useUnlockedThemes } from '../hooks/useUnlockedThemes';
 import { getBotDisplayNamesMapping, getVisibleBots } from '@wordplay/engine/botRegistry';
@@ -42,7 +45,7 @@ import { ThoughtsOverlay } from './ThoughtsOverlay';
 import { TheGameOverlay } from './TheGameOverlay';
 import { StatsOverlay } from './StatsOverlay';
 
-const ALL_MECHANIC_IDS = ['3-letter-start', '5-letter-start', '6-letter-start', '7-letter-start', '8-letter-start', '9-letter-start', '10-letter-start', 'time-pressure', 'gravity', 'drunk', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
+const ALL_MECHANIC_IDS = ['vanity-filter', '3-letter-start', '5-letter-start', '6-letter-start', '7-letter-start', '8-letter-start', '9-letter-start', '10-letter-start', 'time-pressure', 'gravity', 'drunk', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
 const ROUND_LENGTH_MECHANIC_IDS = new Set(['round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100']);
 const PERMANENT_MECHANIC_IDS = ['player-stats', 'word-paths', 'zen-mode', 'unlock-counter', 'community-stats'];
 const DARK_MODE_MECHANIC_ID = 'dark-mode';
@@ -53,6 +56,7 @@ const DARK_MODE_MECHANIC_ID = 'dark-mode';
 const ALWAYS_AVAILABLE_MECHANIC_IDS = ['type-to-clear'];
 
 const MECHANIC_DISPLAY_NAMES: Record<string, string> = {
+  'vanity-filter': 'bad word filter',
   '3-letter-start': '3 letters start',
   '5-letter-start': '5 letters start',
   '6-letter-start': '6 letters start',
@@ -117,6 +121,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
   const colors = getEffectiveColors(currentTheme, isInverted);
   const { getUnlockedItems, resetUnlocksToFresh, isLoading } = useUnlockSystem();
   const { isMechanicOn, toggleMechanic } = useMechanicsSettings();
+  const { isVanityFilterOn, toggleVanityFilter } = useVanityFilter();
   const { roundLength, setRoundLength } = useRoundLength();
 
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
@@ -291,16 +296,35 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                     ))}
                     {toggleableMechanics
                       .sort((a, b) => ALL_MECHANIC_IDS.indexOf(a) - ALL_MECHANIC_IDS.indexOf(b))
-                      .map(id => (
-                        <ToggleRow
-                          key={id}
-                          label={MECHANIC_DISPLAY_NAMES[id] || id}
-                          value={isMechanicOn(id)}
-                          onToggle={() => toggleMechanic(id)}
-                          textColor={colors.text}
-                          accentColor={colors.accent}
-                        />
-                      ))}
+                      .map(id =>
+                        // "bad word filter" is backed by VanityFilterContext,
+                        // not MechanicsSettingsContext - it's the only
+                        // mechanic whose on/off state needs to be read by
+                        // non-Menu game components too (CurrentWord/
+                        // WordTrail's word masking), so it lives in its own
+                        // context rather than the generic mechanics one -
+                        // matches web's Menu.tsx exactly (`isVanityFilterOn`/
+                        // `toggleVanityFilter`, not `isMechanicOn`).
+                        id === 'vanity-filter' ? (
+                          <ToggleRow
+                            key={id}
+                            label={MECHANIC_DISPLAY_NAMES[id]}
+                            value={isVanityFilterOn}
+                            onToggle={toggleVanityFilter}
+                            textColor={colors.text}
+                            accentColor={colors.accent}
+                          />
+                        ) : (
+                          <ToggleRow
+                            key={id}
+                            label={MECHANIC_DISPLAY_NAMES[id] || id}
+                            value={isMechanicOn(id)}
+                            onToggle={() => toggleMechanic(id)}
+                            textColor={colors.text}
+                            accentColor={colors.accent}
+                          />
+                        )
+                      )}
                     {unlockedRoundLengths.map(id => (
                       <ToggleRow
                         key={id}

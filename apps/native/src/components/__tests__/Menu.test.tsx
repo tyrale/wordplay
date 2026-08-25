@@ -4,24 +4,31 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider, useUnlockSystem } from '../../providers/UnlockProvider';
+import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
 import { Menu } from '../Menu';
 import type { MenuProps } from '../Menu';
 
-function Unlocker({ words }: { words: string[] }) {
-  const { checkWordTriggers, isLoading } = useUnlockSystem();
+function Unlocker({ words, profaneWords = [] }: { words: string[]; profaneWords?: string[] }) {
+  const { checkWordTriggers, handleWordSubmission, isLoading } = useUnlockSystem();
   const ranRef = React.useRef(false);
   React.useEffect(() => {
     if (!isLoading && !ranRef.current) {
       ranRef.current = true;
       words.forEach(word => checkWordTriggers(word));
+      // `isProfane=true` mirrors what InteractiveGame/ZenGame/ChallengeGame
+      // actually pass (a real `wordData.profanityWords.has(...)` check) -
+      // this test double just skips needing a real profane word from the
+      // bundled dictionary, since the achievement trigger only cares about
+      // the boolean, not which word it was.
+      profaneWords.forEach(word => handleWordSubmission(word, true));
     }
-  }, [isLoading, checkWordTriggers, words]);
+  }, [isLoading, checkWordTriggers, handleWordSubmission, words, profaneWords]);
   return null;
 }
 
-function renderMenu(props: Partial<MenuProps> = {}, unlockWords: string[] = []) {
+function renderMenu(props: Partial<MenuProps> = {}, unlockWords: string[] = [], profaneWords: string[] = []) {
   const onClose = props.onClose ?? jest.fn();
   return {
     onClose,
@@ -29,12 +36,14 @@ function renderMenu(props: Partial<MenuProps> = {}, unlockWords: string[] = []) 
       <ThemeProvider>
         <AlertProvider>
           <UnlockProvider>
-            <MechanicsSettingsProvider>
-              <RoundLengthProvider>
-                <Unlocker words={unlockWords} />
-                <Menu isOpen onClose={onClose} {...props} />
-              </RoundLengthProvider>
-            </MechanicsSettingsProvider>
+            <VanityFilterProvider>
+              <MechanicsSettingsProvider>
+                <RoundLengthProvider>
+                  <Unlocker words={unlockWords} profaneWords={profaneWords} />
+                  <Menu isOpen onClose={onClose} {...props} />
+                </RoundLengthProvider>
+              </MechanicsSettingsProvider>
+            </VanityFilterProvider>
           </UnlockProvider>
         </AlertProvider>
       </ThemeProvider>
@@ -119,6 +128,25 @@ describe('native Menu', () => {
 
     fireEvent.press(screen.getByText('mechanics'));
     await waitFor(() => expect(screen.getByText('gravity')).toBeTruthy());
+  });
+
+  it('shows the "bad word filter" toggle once a profane word is submitted, backed by VanityFilterContext (not the generic mechanics toggle state)', async () => {
+    renderMenu({}, [], ['some-profane-word']);
+    await waitFor(() => expect(screen.getByText('mechanics')).toBeTruthy());
+
+    fireEvent.press(screen.getByText('mechanics'));
+    await waitFor(() => expect(screen.getByText('bad word filter')).toBeTruthy());
+
+    // Defaults to on (matches web's VanityFilterContext default).
+    let toggle = await screen.findByLabelText('bad word filter');
+    expect(toggle.props.accessibilityRole).toBe('switch');
+    expect(toggle.props.accessibilityState).toEqual(expect.objectContaining({ checked: true }));
+
+    fireEvent.press(toggle);
+    await waitFor(() => {
+      toggle = screen.getByLabelText('bad word filter');
+      expect(toggle.props.accessibilityState).toEqual(expect.objectContaining({ checked: false }));
+    });
   });
 
   it('opens the stats overlay from the mechanics section once player-stats is unlocked', async () => {

@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider, useTheme } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider } from '../../providers/UnlockProvider';
+import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
 import { BossBattleScreen } from '../BossBattleScreen';
@@ -16,11 +17,13 @@ function renderBoss(props: Partial<React.ComponentProps<typeof BossBattleScreen>
       <ThemeProvider>
         <AlertProvider>
           <UnlockProvider>
+            <VanityFilterProvider>
             <MechanicsSettingsProvider>
               <RoundLengthProvider>
                 <BossBattleScreen onExit={onExit} {...props} />
               </RoundLengthProvider>
             </MechanicsSettingsProvider>
+            </VanityFilterProvider>
           </UnlockProvider>
         </AlertProvider>
       </ThemeProvider>
@@ -45,12 +48,14 @@ describe('native BossBattleScreen', () => {
       <ThemeProvider>
         <AlertProvider>
           <UnlockProvider>
+            <VanityFilterProvider>
             <MechanicsSettingsProvider>
               <RoundLengthProvider>
                 <ThemeSpy />
                 <BossBattleScreen onExit={jest.fn()} />
               </RoundLengthProvider>
             </MechanicsSettingsProvider>
+            </VanityFilterProvider>
           </UnlockProvider>
         </AlertProvider>
       </ThemeProvider>

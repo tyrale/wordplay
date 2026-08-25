@@ -634,11 +634,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       const applied = actions.applyMove(pendingMoveAttempt);
       if (applied) {
         // Check for unlock triggers on the local player's own submitted
-        // word (e.g. playing "ten" unlocks 10-letter-start/10 rounds).
-        // Profanity detection is skipped here since the vanity filter
-        // system itself is deferred in this port (always passes `false`).
-        // Matches web's InteractiveGame.tsx handleSubmit.
-        handleWordSubmission(pendingMoveAttempt.newWord, false).catch(err =>
+        // word (e.g. playing "ten" unlocks 10-letter-start/10 rounds, or
+        // a profanity word unlocks the "bad word filter" mechanic).
+        // Matches web's InteractiveGame.tsx handleSubmit exactly.
+        const isProfane = !!wordData?.profanityWords.has(pendingMoveAttempt.newWord.toUpperCase());
+        handleWordSubmission(pendingMoveAttempt.newWord, isProfane).catch(err =>
           console.warn('Failed to check word submission unlock triggers:', err)
         );
 
@@ -663,6 +663,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     actions,
     wordState.currentWord,
     handleWordSubmission,
+    wordData,
     onBossTrigger
   ]);
 

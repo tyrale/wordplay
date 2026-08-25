@@ -317,7 +317,8 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
       if (result.success) {
         triggerHapticFeedback('submit');
         setShowValidationError(false);
-        handleWordSubmission(pendingWord, false).catch(err =>
+        const isProfane = !!wordData?.profanityWords.has(pendingWord.toUpperCase());
+        handleWordSubmission(pendingWord, isProfane).catch(err =>
           console.warn('Failed to check challenge word submission unlock triggers:', err)
         );
         if (challengeState) {
@@ -357,7 +358,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
     } finally {
       setIsProcessingMove(false);
     }
-  }, [canEdit, isValidSubmit, wordUnchanged, showValidationError, forfeitChallenge, submitWord, pendingWord, handleWordChange, handleWordSubmission, challengeState, recordMove, onBossTrigger]);
+  }, [canEdit, isValidSubmit, wordUnchanged, showValidationError, forfeitChallenge, submitWord, pendingWord, handleWordChange, handleWordSubmission, wordData, challengeState, recordMove, onBossTrigger]);
 
   const handleResign = useCallback(async () => {
     try {

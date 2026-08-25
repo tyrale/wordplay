@@ -71,14 +71,19 @@
  * and append the letter itself (this component doesn't know about the
  * grid at all, keeping the coupling one-directional).
  *
- * Vanity filter integration (censoring profane words) is deferred along
- * with the rest of that system for this slice - always displays the raw
- * word.
+ * Vanity filter integration: only the *rendered text* per letter is
+ * censored (via `getDisplayWord`, matching web's WordBuilder.tsx exactly
+ * - the actual game/reorder logic below (`letters`, `lettersRef`,
+ * `onWordChange`) always operates on the real, uncensored `word` prop,
+ * same as web's WordBuilder.tsx keeps `currentWord` as its source of
+ * truth for splicing/reordering and only swaps in `getDisplayWord`'s
+ * output for what's shown on screen.
  */
 import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Animated, PanResponder, Text, View, StyleSheet } from 'react-native';
 import { LockIcon } from './LockIcon';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
+import { useVanityFilter } from '../contexts/VanityFilterContext';
 import { triggerHapticFeedback } from '../utils/haptics';
 
 export interface LetterHighlight {
@@ -269,7 +274,12 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
   ({ word, highlights = [], onLetterPress, onWordChange }, ref) => {
     const { currentTheme, isInverted } = useTheme();
     const colors = getEffectiveColors(currentTheme, isInverted);
+    const { getDisplayWord } = useVanityFilter();
     const letters = word.toUpperCase().split('');
+    // Censored display text only - same length as `letters` (the vanity
+    // filter's symbol substitution is always one-for-one), so every
+    // index-based lookup below (highlights, drag layout) still lines up.
+    const displayLetters = getDisplayWord(word, { isEditing: true }).toUpperCase().split('');
 
     const containerRef = useRef<View>(null);
     // Keyed by letter index - stable for the duration of a drag, since
@@ -387,9 +397,10 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
         ref={containerRef}
         style={styles.container}
         accessibilityRole="text"
-        accessibilityLabel={`Current word: ${word}`}
+        accessibilityLabel={`Current word: ${displayLetters.join('')}`}
       >
         {letters.map((letter, index) => {
+          const displayLetter = displayLetters[index] ?? letter;
           const highlightType = highlightMap[index];
           const isLocked = highlightType === 'locked' || highlightType === 'lockedKey';
           const color = highlightType === 'key' || highlightType === 'lockedKey' ? colors.accent : colors.text;
@@ -409,7 +420,7 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
 
           const letterContent = (
             <>
-              <Text style={[styles.letter, { color }]}>{letter}</Text>
+              <Text style={[styles.letter, { color }]}>{displayLetter}</Text>
               {isLocked && (
                 <View style={styles.lock} pointerEvents="none">
                   <LockIcon size={LOCK_ICON_SIZE} color={colors.accent} />

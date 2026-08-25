@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider, useUnlockSystem } from '../../providers/UnlockProvider';
+import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
 import { ZenGame } from '../ZenGame';
@@ -25,12 +26,14 @@ function renderZen(props: React.ComponentProps<typeof ZenGame> = {}, unlockWords
     <ThemeProvider>
       <AlertProvider>
         <UnlockProvider>
-          <MechanicsSettingsProvider>
-            <RoundLengthProvider>
-              <Unlocker words={unlockWords} />
-              <ZenGame {...props} />
-            </RoundLengthProvider>
-          </MechanicsSettingsProvider>
+          <VanityFilterProvider>
+            <MechanicsSettingsProvider>
+              <RoundLengthProvider>
+                <Unlocker words={unlockWords} />
+                <ZenGame {...props} />
+              </RoundLengthProvider>
+            </MechanicsSettingsProvider>
+          </VanityFilterProvider>
         </UnlockProvider>
       </AlertProvider>
     </ThemeProvider>

@@ -1,8 +1,30 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { ThemeProvider } from '../../theme/ThemeProvider';
+import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
+import { createNativeAdapter } from '../../adapters/nativeAdapter';
 import { CurrentWord, computeDropIndex } from '../CurrentWord';
 import type { CurrentWordHandle } from '../CurrentWord';
+
+jest.mock('../../adapters/nativeAdapter', () => ({
+  createNativeAdapter: jest.fn()
+}));
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  (createNativeAdapter as jest.Mock).mockResolvedValue({
+    getWordData: () => ({
+      enableWords: new Set(['CAT', 'SHIT']),
+      slangWords: new Set(),
+      profanityWords: new Set(['SHIT']),
+      properNounWords: new Set(),
+      seussCanonicalWords: new Set(),
+      seussInventedWords: new Set(),
+      wordCount: 2,
+      waitForLoad: jest.fn().mockResolvedValue(undefined)
+    })
+  });
+});
 
 // "CATS" laid out left-to-right, each letter 20px wide with no gaps -
 // C:[0,20) A:[20,40) T:[40,60) S:[60,80). Centers: C=10, A=30, T=50, S=70.
@@ -74,9 +96,9 @@ describe('native computeDropIndex (within-word drag hit-testing)', () => {
 describe('native CurrentWord', () => {
   it('renders each letter and exposes an accessible label for the whole word', async () => {
     render(
-      <ThemeProvider>
+      <ThemeProvider><VanityFilterProvider>
         <CurrentWord word="CAT" />
-      </ThemeProvider>
+      </VanityFilterProvider></ThemeProvider>
     );
     expect(await screen.findByLabelText('Current word: CAT')).toBeTruthy();
   });
@@ -84,9 +106,9 @@ describe('native CurrentWord', () => {
   it('tapping a letter calls onLetterPress with its index (removal)', async () => {
     const onLetterPress = jest.fn();
     render(
-      <ThemeProvider>
+      <ThemeProvider><VanityFilterProvider>
         <CurrentWord word="CAT" onLetterPress={onLetterPress} />
-      </ThemeProvider>
+      </VanityFilterProvider></ThemeProvider>
     );
     await screen.findByLabelText('Current word: CAT');
 
@@ -96,9 +118,9 @@ describe('native CurrentWord', () => {
 
   it('does not make a locked letter tappable, even with onLetterPress provided', async () => {
     render(
-      <ThemeProvider>
+      <ThemeProvider><VanityFilterProvider>
         <CurrentWord word="CAT" onLetterPress={jest.fn()} highlights={[{ index: 0, type: 'locked' }]} />
-      </ThemeProvider>
+      </VanityFilterProvider></ThemeProvider>
     );
     await screen.findByLabelText('Current word: CAT');
     expect(screen.queryByLabelText('Remove letter C')).toBeNull();
@@ -107,9 +129,9 @@ describe('native CurrentWord', () => {
   it('exposes measureInWindow via ref for the caller to use as a drop-zone check', async () => {
     const ref = React.createRef<CurrentWordHandle>();
     render(
-      <ThemeProvider>
+      <ThemeProvider><VanityFilterProvider>
         <CurrentWord ref={ref} word="CAT" />
-      </ThemeProvider>
+      </VanityFilterProvider></ThemeProvider>
     );
     await screen.findByLabelText('Current word: CAT');
 
@@ -137,9 +159,9 @@ describe('native CurrentWord', () => {
    */
   it('regression: measures a draggable letter relative to the row, not its own inner wrapper', async () => {
     render(
-      <ThemeProvider>
+      <ThemeProvider><VanityFilterProvider>
         <CurrentWord word="CAT" onLetterPress={jest.fn()} />
-      </ThemeProvider>
+      </VanityFilterProvider></ThemeProvider>
     );
     await screen.findByLabelText('Current word: CAT');
 
@@ -173,9 +195,9 @@ describe('native CurrentWord', () => {
   it('regression: tolerates rapid re-renders (the pattern an active drag produces) without breaking tap-to-remove', async () => {
     const onLetterPress = jest.fn();
     const { rerender } = render(
-      <ThemeProvider>
+      <ThemeProvider><VanityFilterProvider>
         <CurrentWord word="CATS" onLetterPress={onLetterPress} />
-      </ThemeProvider>
+      </VanityFilterProvider></ThemeProvider>
     );
     await screen.findByLabelText('Current word: CATS');
 
@@ -184,13 +206,41 @@ describe('native CurrentWord', () => {
     // every touch-move) would trigger on the real component.
     for (let i = 0; i < 10; i++) {
       rerender(
-        <ThemeProvider>
+        <ThemeProvider><VanityFilterProvider>
           <CurrentWord word="CATS" onLetterPress={onLetterPress} />
-        </ThemeProvider>
+        </VanityFilterProvider></ThemeProvider>
       );
     }
 
     fireEvent.press(screen.getByLabelText('Remove letter T'));
     expect(onLetterPress).toHaveBeenCalledWith(2);
+  });
+
+  it('censors a profane word into symbols (vanity filter, on by default), while the real word still drives removal/reorder logic', async () => {
+    const onLetterPress = jest.fn();
+    render(
+      <ThemeProvider><VanityFilterProvider>
+        <CurrentWord word="SHIT" onLetterPress={onLetterPress} />
+      </VanityFilterProvider></ThemeProvider>
+    );
+
+    // The container's own accessible label reflects the censored word,
+    // not the real one - the dictionary load is async, so wait for it.
+    await waitFor(() => expect(screen.queryByLabelText(/^Current word: SHIT$/)).toBeNull());
+    const container = await screen.findByLabelText(/^Current word: /);
+    expect(container.props.accessibilityLabel).not.toContain('SHIT');
+
+    // No real letter renders as text - every letter is a symbol.
+    expect(screen.queryByText('S')).toBeNull();
+    expect(screen.queryByText('H')).toBeNull();
+    expect(screen.queryByText('I')).toBeNull();
+    expect(screen.queryByText('T')).toBeNull();
+
+    // Removal still operates on the real, uncensored word underneath -
+    // tapping the (censored) first letter still reports index 0, and the
+    // aria-label for the interactive letter is functional (names the
+    // real letter), not the censored one.
+    fireEvent.press(screen.getByLabelText('Remove letter S'));
+    expect(onLetterPress).toHaveBeenCalledWith(0);
   });
 });

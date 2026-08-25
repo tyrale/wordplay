@@ -1,16 +1,40 @@
 import React from 'react';
 import { ScrollView, Dimensions } from 'react-native';
-import { render, screen, fireEvent } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import { ThemeProvider } from '../../theme/ThemeProvider';
+import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
+import { createNativeAdapter } from '../../adapters/nativeAdapter';
 import { WordTrail } from '../WordTrail';
 import type { WordMove } from '../WordTrail';
+
+jest.mock('../../adapters/nativeAdapter', () => ({
+  createNativeAdapter: jest.fn()
+}));
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  (createNativeAdapter as jest.Mock).mockResolvedValue({
+    getWordData: () => ({
+      enableWords: new Set(['CAT', 'SHIT']),
+      slangWords: new Set(),
+      profanityWords: new Set(['SHIT']),
+      properNounWords: new Set(),
+      seussCanonicalWords: new Set(),
+      seussInventedWords: new Set(),
+      wordCount: 2,
+      waitForLoad: jest.fn().mockResolvedValue(undefined)
+    })
+  });
+});
 
 const DEFAULT_MAX_HEIGHT_RATIO = 0.35;
 
 function renderTrail(props: Partial<React.ComponentProps<typeof WordTrail>> = {}) {
   return render(
     <ThemeProvider>
-      <WordTrail {...props} />
+      <VanityFilterProvider>
+        <WordTrail {...props} />
+      </VanityFilterProvider>
     </ThemeProvider>
   );
 }
@@ -110,6 +134,18 @@ describe('native WordTrail (regular mode)', () => {
     const dashes = await screen.findAllByText('-');
     expect(dashes).toHaveLength(3);
     expect(screen.queryByText('C')).toBeNull();
+  });
+
+  it('censors a profane played word into symbols (vanity filter, on by default) instead of its real letters', async () => {
+    renderTrail({ moves: [{ word: 'SHIT', score: 1, turnNumber: 1 }] });
+
+    // Dictionary load is async - wait for the censored render to appear
+    // (any of the real letters disappearing confirms it, since the
+    // initial pre-load render shows the real word as-is).
+    await waitFor(() => expect(screen.queryByText('S')).toBeNull());
+    expect(screen.queryByText('H')).toBeNull();
+    expect(screen.queryByText('I')).toBeNull();
+    expect(screen.queryByText('T')).toBeNull();
   });
 
   it('fires onWordPress with the word and index when a row is tapped', async () => {
