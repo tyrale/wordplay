@@ -187,6 +187,22 @@ describe('native Menu', () => {
     await waitFor(() => expect(screen.getByText('type a word to see its path')).toBeTruthy());
   });
 
+  it('does not show the community progress line before "world" is played', async () => {
+    renderMenu();
+    await waitFor(() => expect(screen.getByText('home')).toBeTruthy());
+    expect(screen.queryByText(/found worldwide/)).toBeNull();
+  });
+
+  it('shows the "x/x found worldwide" community progress line under home once "world" is played', async () => {
+    renderMenu({}, ['world']);
+    await waitFor(() => expect(screen.getByText('home')).toBeTruthy());
+
+    // Supabase isn't configured in the test environment, so
+    // fetchCommunityUnlockStats resolves immediately with zero counts -
+    // deterministically "0/<total unlock definitions>".
+    await waitFor(() => expect(screen.getByText(/\d+\/\d+ found worldwide/)).toBeTruthy());
+  });
+
   it('"the basics" (about section) calls onStartGame with tutorial + basicBot, and closes the menu', async () => {
     const onStartGame = jest.fn();
     const { onClose } = renderMenu({ onStartGame });

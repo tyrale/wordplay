@@ -18,15 +18,17 @@
  * (opens the real WordPathExplorer), the "unlock-counter" permanent
  * mechanic (shows "N/N unlocked" next to the themes/mechanics/bots
  * section headers once unlocked by playing "unlock" - matches web's
- * `showUnlockCounts` exactly), masked "????" locked-item previews (once
- * a category is "revealed" by playing its own name - "themes"/
+ * `showUnlockCounts` exactly), the community "X/X found worldwide"
+ * progress line under home (unlocked by playing "world" - the
+ * `nativeCommunityUnlocksAdapter.ts`/`recordCommunityUnlock` plumbing it
+ * reads from already existed since Phase 1, just never had a UI
+ * consumer until now), masked "????" locked-item previews (once a
+ * category is "revealed" by playing its own name - "themes"/
  * "mechanics"/"bots" - see `lockedThemeItems`/`lockedMechanicItems`/
  * `lockedBotItems` below), reset-unlocks (debug), and home/resign.
  * Daily challenge + its leaderboard are reachable directly from
  * `MainScreen`'s "vs world" option, not from this Menu (matches web's
  * own MainScreen-level entry point, not a Menu one).
- * Deliberately deferred, not silently dropped: community stats - it
- * depends on a system not yet ported.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Animated } from 'react-native';
@@ -36,6 +38,7 @@ import { useMechanicsSettings } from '../contexts/MechanicsSettingsContext';
 import { useVanityFilter } from '../contexts/VanityFilterContext';
 import { useRoundLength, DEFAULT_ROUND_LENGTH } from '../contexts/RoundLengthContext';
 import { useUnlockedThemes } from '../hooks/useUnlockedThemes';
+import { useCommunityUnlockStats } from '../hooks/useCommunityUnlockStats';
 import { getBotDisplayNamesMapping, getVisibleBots } from '@wordplay/engine/botRegistry';
 import { availableThemes as ALL_THEMES } from '@wordplay/theme/theme';
 import type { GameTheme } from '@wordplay/theme/theme';
@@ -119,7 +122,7 @@ export interface MenuProps {
 export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavigateHome, onResign, isInGame = false }) => {
   const { currentTheme, setTheme, isInverted, toggleInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
-  const { getUnlockedItems, resetUnlocksToFresh, isLoading } = useUnlockSystem();
+  const { getUnlockedItems, resetUnlocksToFresh, isLoading, isUnlocked } = useUnlockSystem();
   const { isMechanicOn, toggleMechanic } = useMechanicsSettings();
   const { isVanityFilterOn, toggleVanityFilter } = useVanityFilter();
   const { roundLength, setRoundLength } = useRoundLength();
@@ -137,6 +140,11 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
   const availableBots = isLoading ? ['basicBot'] : (unlockedBots.length > 0 ? unlockedBots : ['basicBot']);
   const unlockedThemes = useUnlockedThemes({ unlockedThemes: unlockedThemeIds });
   const botDisplayNames = getBotDisplayNamesMapping();
+
+  // "world" mechanic - shows a "x/x found worldwide" progress indicator
+  // under home, matching web's Menu.tsx exactly.
+  const isCommunityStatsOn = isUnlocked('mechanic', 'community-stats');
+  const communityProgress = useCommunityUnlockStats(isCommunityStatsOn);
 
   const isDarkModeUnlocked = unlockedMechanics.includes(DARK_MODE_MECHANIC_ID);
   const toggleableMechanics = unlockedMechanics.filter(
@@ -407,6 +415,11 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
             )}
 
             <SectionHeader label="home" color={colors.text} onPress={handleHome} />
+            {isCommunityStatsOn && !communityProgress.isLoading && (
+              <Text style={[styles.communityProgress, { color: colors.textSecondary }]}>
+                {communityProgress.unlocked}/{communityProgress.total} found worldwide
+              </Text>
+            )}
           </ScrollView>
         </Pressable>
       </Pressable>
@@ -581,6 +594,14 @@ const styles = StyleSheet.create({
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'baseline'
+  },
+  // "x/x found worldwide" line under home - matches web's Menu.css
+  // `.menu-unlock-progress` (small, muted, right-aligned like every
+  // other row in this sheet).
+  communityProgress: {
+    fontSize: 12,
+    fontWeight: '900',
+    marginTop: -8
   },
   sectionHeaderText: {
     fontSize: 20,
