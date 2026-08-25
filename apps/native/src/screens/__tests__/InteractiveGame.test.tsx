@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
+import { render, renderHook, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
@@ -9,6 +9,7 @@ import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsConte
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
 import { InteractiveGame } from '../InteractiveGame';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
+import { useWordPathGraph } from '../../hooks/useWordPathGraph';
 import { StatsOverlay } from '../../components/StatsOverlay';
 
 function Unlocker({ words }: { words: string[] }) {
@@ -202,6 +203,26 @@ describe('native InteractiveGame screen', () => {
     // queued one at a time; the first should already be visible.
     await waitFor(() => expect(screen.getByText('NEW')).toBeTruthy());
     expect(screen.getByText('FEATURE')).toBeTruthy();
+  });
+
+  it('records the local player\'s submitted move into the word path graph (AsyncStorage-backed, feeds the "paths" WordPathExplorer)', async () => {
+    renderGame({ config: { initialWord: 'CAT' } });
+    await waitFor(() => expect(screen.getByLabelText('Current word: CAT')).toBeTruthy());
+
+    fireEvent.press(screen.getByLabelText('Letter S'));
+    const submit = await screen.findByLabelText('Submit word');
+    await act(async () => {
+      fireEvent.press(submit);
+    });
+
+    // Mount a fresh consumer of the same AsyncStorage-backed graph (same
+    // pattern as the player-stats regression test above - proves this
+    // screen actually persisted the transition, not just that the hook
+    // itself works in isolation).
+    const { result } = renderHook(() => useWordPathGraph());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.hasSeenWord('CAT')).toBe(true);
+    expect(result.current.getConnectedWords('CAT')).toContain('CATS');
   });
 
   it('regression: the displayed round count never exceeds maxTurns, even right as the game finishes', async () => {

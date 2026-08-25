@@ -10,8 +10,16 @@ import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
 import { Menu } from '../Menu';
 import type { MenuProps } from '../Menu';
 
-function Unlocker({ words, profaneWords = [] }: { words: string[]; profaneWords?: string[] }) {
-  const { checkWordTriggers, handleWordSubmission, isLoading } = useUnlockSystem();
+function Unlocker({
+  words,
+  profaneWords = [],
+  achievements = []
+}: {
+  words: string[];
+  profaneWords?: string[];
+  achievements?: string[];
+}) {
+  const { checkWordTriggers, checkAchievementTriggers, handleWordSubmission, isLoading } = useUnlockSystem();
   const ranRef = React.useRef(false);
   React.useEffect(() => {
     if (!isLoading && !ranRef.current) {
@@ -23,12 +31,18 @@ function Unlocker({ words, profaneWords = [] }: { words: string[]; profaneWords?
       // bundled dictionary, since the achievement trigger only cares about
       // the boolean, not which word it was.
       profaneWords.forEach(word => handleWordSubmission(word, true));
+      achievements.forEach(achievement => checkAchievementTriggers(achievement));
     }
-  }, [isLoading, checkWordTriggers, handleWordSubmission, words, profaneWords]);
+  }, [isLoading, checkWordTriggers, checkAchievementTriggers, handleWordSubmission, words, profaneWords, achievements]);
   return null;
 }
 
-function renderMenu(props: Partial<MenuProps> = {}, unlockWords: string[] = [], profaneWords: string[] = []) {
+function renderMenu(
+  props: Partial<MenuProps> = {},
+  unlockWords: string[] = [],
+  profaneWords: string[] = [],
+  achievements: string[] = []
+) {
   const onClose = props.onClose ?? jest.fn();
   return {
     onClose,
@@ -39,7 +53,7 @@ function renderMenu(props: Partial<MenuProps> = {}, unlockWords: string[] = [], 
             <VanityFilterProvider>
               <MechanicsSettingsProvider>
                 <RoundLengthProvider>
-                  <Unlocker words={unlockWords} profaneWords={profaneWords} />
+                  <Unlocker words={unlockWords} profaneWords={profaneWords} achievements={achievements} />
                   <Menu isOpen onClose={onClose} {...props} />
                 </RoundLengthProvider>
               </MechanicsSettingsProvider>
@@ -159,6 +173,18 @@ describe('native Menu', () => {
     fireEvent.press(screen.getByText('stats'));
 
     await waitFor(() => expect(screen.getByText('Words played')).toBeTruthy());
+  });
+
+  it('opens the word path explorer from the mechanics section once word-paths is unlocked', async () => {
+    // "beat_expert_bot" achievement trigger per unlock-definitions.ts (unlock_word_paths).
+    renderMenu({}, [], [], ['beat_expert_bot']);
+    await waitFor(() => expect(screen.getByText('mechanics')).toBeTruthy());
+
+    fireEvent.press(screen.getByText('mechanics'));
+    await waitFor(() => expect(screen.getByText('paths')).toBeTruthy());
+    fireEvent.press(screen.getByText('paths'));
+
+    await waitFor(() => expect(screen.getByText('type a word to see its path')).toBeTruthy());
   });
 
   it('"the basics" (about section) calls onStartGame with tutorial + basicBot, and closes the menu', async () => {

@@ -4,7 +4,10 @@
  * lines). Deliberately deferred, not silently dropped (each needs
  * infrastructure this port doesn't have yet, shared with
  * InteractiveGame.tsx/ZenGame.tsx's existing documented gaps):
- * word-path graph syncing. The challenge's actual daily-word logic,
+ * feeding the local word path graph (WordPathExplorer's own data) -
+ * matches web's own ChallengeGame.tsx scope exactly, which also only
+ * ever checks the word-*sequence* unlock trigger here, not the graph
+ * itself. The challenge's actual daily-word logic,
  * validation, unlock checking, player-stats recording, the server-side
  * leaderboard, the "GUS" boss-battle trigger, and (see docs/project/
  * REACT_NATIVE_PORT_PLAN.md's "Phase 3.6" section) the dictionary/help
@@ -87,7 +90,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
     isValidMove,
     calculateScore
   } = useChallenge();
-  const { handleWordSubmission, getUnlockedItems } = useUnlockSystem();
+  const { handleWordSubmission, handleWordPathChange, getUnlockedItems } = useUnlockSystem();
   const { recordMove, recordChallengeResult } = usePlayerStats();
   const { wordData } = useDictionaryData();
   const { showCustomAlert } = useAlert();
@@ -129,6 +132,26 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
       hasEditedThisTurnRef.current = false;
     }
   }, [challengeState?.currentWord]);
+
+  // Check for word-sequence unlocks (e.g. STINK -> STANK -> STUNK)
+  // whenever the challenge word path grows. challengeState.wordSequence
+  // is the full chain: [startWord, word1, word2, ...]. Matches web's
+  // ChallengeGame.tsx exactly - note this only checks the sequence-
+  // unlock trigger, it does not feed the local word path graph itself
+  // (WordPathExplorer's data) - web doesn't do that here either (see
+  // docs/project/REACT_NATIVE_PORT_PLAN.md's Phase 3 notes on this
+  // screen's own deferred scope).
+  const lastCheckedSeqLenRef = React.useRef(0);
+  useEffect(() => {
+    const seq = challengeState?.wordSequence;
+    if (!seq || seq.length <= lastCheckedSeqLenRef.current) return;
+    lastCheckedSeqLenRef.current = seq.length;
+    if (seq.length >= 3) {
+      handleWordPathChange(seq).catch(err =>
+        console.warn('Failed to check challenge word sequence unlock triggers:', err)
+      );
+    }
+  }, [challengeState?.wordSequence, handleWordPathChange]);
 
   // Re-validate whenever the pending word changes, mirroring web's
   // validatePendingWord effect - including computing a real scoring

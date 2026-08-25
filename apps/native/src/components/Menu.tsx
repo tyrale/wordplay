@@ -14,7 +14,8 @@
  * toggle row below for why), unlocked bots (tap to start a game with
  * that bot), all four "about" entries ("the basics"/"the game"/
  * "dictionaries"/"thoughts"), the "player-stats" permanent mechanic
- * (opens the real StatsOverlay), the "unlock-counter" permanent
+ * (opens the real StatsOverlay), the "word-paths" permanent mechanic
+ * (opens the real WordPathExplorer), the "unlock-counter" permanent
  * mechanic (shows "N/N unlocked" next to the themes/mechanics/bots
  * section headers once unlocked by playing "unlock" - matches web's
  * `showUnlockCounts` exactly), masked "????" locked-item previews (once
@@ -24,10 +25,8 @@
  * Daily challenge + its leaderboard are reachable directly from
  * `MainScreen`'s "vs world" option, not from this Menu (matches web's
  * own MainScreen-level entry point, not a Menu one).
- * Deliberately deferred, not silently dropped: the "word-paths"
- * permanent mechanic (WordPathExplorer) and community stats - each
- * depends on a system not yet ported (word path graph tracking) or was
- * cut for scope in this pass.
+ * Deliberately deferred, not silently dropped: community stats - it
+ * depends on a system not yet ported.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Animated } from 'react-native';
@@ -44,6 +43,7 @@ import { DictionariesOverlay } from './DictionariesOverlay';
 import { ThoughtsOverlay } from './ThoughtsOverlay';
 import { TheGameOverlay } from './TheGameOverlay';
 import { StatsOverlay } from './StatsOverlay';
+import { WordPathExplorer } from './WordPathExplorer';
 
 const ALL_MECHANIC_IDS = ['vanity-filter', '3-letter-start', '5-letter-start', '6-letter-start', '7-letter-start', '8-letter-start', '9-letter-start', '10-letter-start', 'time-pressure', 'gravity', 'drunk', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
 const ROUND_LENGTH_MECHANIC_IDS = new Set(['round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100']);
@@ -128,6 +128,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
   const [isDictionariesOpen, setIsDictionariesOpen] = useState(false);
   const [isThoughtsOpen, setIsThoughtsOpen] = useState(false);
   const [isTheGameOpen, setIsTheGameOpen] = useState(false);
+  const [isWordPathsOpen, setIsWordPathsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   const unlockedThemeIds = getUnlockedItems('theme');
@@ -266,14 +267,22 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                 {expandedSection === 'mechanics' && (
                   <View style={styles.sectionBody}>
                     {unlockedPermanentMechanics.map(id => {
-                      // "player-stats" opens the real StatsOverlay (see
-                      // below); the rest (word-paths, zen-mode,
-                      // unlock-counter, community-stats) have no on/off
-                      // state and no wired action yet - see this file's
-                      // header doc comment for what's still deferred.
+                      // "player-stats" opens the real StatsOverlay,
+                      // "word-paths" opens the real WordPathExplorer (see
+                      // below); the rest (zen-mode, unlock-counter,
+                      // community-stats) have no on/off state and no
+                      // wired action yet - see this file's header doc
+                      // comment for what's still deferred.
                       if (id === 'player-stats') {
                         return (
                           <Pressable key={id} onPress={() => setIsStatsOpen(true)} style={styles.row} accessibilityRole="button">
+                            <Text style={{ color: colors.text, fontWeight: '900' }}>{MECHANIC_DISPLAY_NAMES[id]}</Text>
+                          </Pressable>
+                        );
+                      }
+                      if (id === 'word-paths') {
+                        return (
+                          <Pressable key={id} onPress={() => setIsWordPathsOpen(true)} style={styles.row} accessibilityRole="button">
                             <Text style={{ color: colors.text, fontWeight: '900' }}>{MECHANIC_DISPLAY_NAMES[id]}</Text>
                           </Pressable>
                         );
@@ -409,6 +418,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
       <ThoughtsOverlay isVisible={isThoughtsOpen} onClose={() => setIsThoughtsOpen(false)} />
       <TheGameOverlay isVisible={isTheGameOpen} onClose={() => setIsTheGameOpen(false)} />
       <StatsOverlay isVisible={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
+      <WordPathExplorer isVisible={isWordPathsOpen} onClose={() => setIsWordPathsOpen(false)} />
     </Modal>
   );
 };

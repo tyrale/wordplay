@@ -32,6 +32,7 @@ import { useGameState, useWordState } from '../hooks/useGameState';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { useMechanicsSettings } from '../contexts/MechanicsSettingsContext';
+import { useWordPathGraph } from '../hooks/useWordPathGraph';
 import { useDictionaryData } from '../hooks/useDictionaryData';
 import { useAlert } from '../providers/AlertProvider';
 import {
@@ -78,8 +79,9 @@ export interface ZenGameProps {
 export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onBossTrigger, onSwitchBot, onReplayTutorial }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
-  const { handleWordSubmission, getUnlockedItems } = useUnlockSystem();
+  const { handleWordSubmission, handleWordPathChange, getUnlockedItems } = useUnlockSystem();
   const { isMechanicOn } = useMechanicsSettings();
+  const { recordTransition: recordWordPathTransition, syncToServer: syncWordPathGraph } = useWordPathGraph();
   const { wordData } = useDictionaryData();
   const { showCustomAlert } = useAlert();
 
@@ -322,18 +324,32 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onBossTrigger,
 
     if (isValidSubmit && pendingMoveAttempt) {
       triggerHapticFeedback('submit');
+      const previousWord = wordState.currentWord;
       const applied = actions.applyMove(pendingMoveAttempt);
       if (applied) {
-        const isProfane = !!wordData?.profanityWords.has(pendingMoveAttempt.newWord.toUpperCase());
-        handleWordSubmission(pendingMoveAttempt.newWord, isProfane).catch(err =>
+        const newWord = pendingMoveAttempt.newWord;
+        const isProfane = !!wordData?.profanityWords.has(newWord.toUpperCase());
+        handleWordSubmission(newWord, isProfane).catch(err =>
           console.warn('Failed to check zen word submission unlock triggers:', err)
         );
 
         // "GUS" boss trigger: report the submitted word to the caller so it
         // can decide whether to start the boss encounter, same as
         // InteractiveGame.
-        if (onBossTrigger && pendingMoveAttempt.newWord.toUpperCase() === 'GUS') {
-          onBossTrigger(pendingMoveAttempt.newWord);
+        if (onBossTrigger && newWord.toUpperCase() === 'GUS') {
+          onBossTrigger(newWord);
+        }
+
+        recordWordPathTransition(previousWord, newWord)
+          .then(() => syncWordPathGraph())
+          .catch(err => console.warn('Failed to record/sync zen word path transition:', err));
+
+        // Word-sequence unlocks (e.g. STINK -> STANK -> STUNK), same as vs-bot.
+        const wordPath = [previousWord, ...gameState.turnHistory.map(t => t.newWord), newWord];
+        if (wordPath.length >= 3) {
+          handleWordPathChange(wordPath).catch(err =>
+            console.warn('Failed to check zen word sequence unlock triggers:', err)
+          );
         }
       }
       return;
@@ -344,7 +360,21 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onBossTrigger,
     if (wordUnchanged || !isValidSubmit) {
       actions.passTurn();
     }
-  }, [canEdit, isValidSubmit, pendingMoveAttempt, wordUnchanged, actions, handleWordSubmission, wordData, onBossTrigger]);
+  }, [
+    canEdit,
+    isValidSubmit,
+    pendingMoveAttempt,
+    wordUnchanged,
+    actions,
+    handleWordSubmission,
+    wordData,
+    onBossTrigger,
+    wordState.currentWord,
+    recordWordPathTransition,
+    syncWordPathGraph,
+    gameState.turnHistory,
+    handleWordPathChange
+  ]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>

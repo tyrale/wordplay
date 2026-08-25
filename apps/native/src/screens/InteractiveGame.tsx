@@ -6,8 +6,7 @@
  * The first-time tutorial, the "GUS" boss battle's whole-game countdown,
  * and (Phase 4) vs-human multiplayer are all wired via the same board -
  * see `isTutorial`/`onGameTimeout`/`onBossTrigger` and
- * `externalManager`/`localPlayerId`/`currentGameMode` below. The vanity
- * (bad word) filter is still not part of this port.
+ * `externalManager`/`localPlayerId`/`currentGameMode` below.
  *
  * Multiplayer note: `externalManager`/`localPlayerId` let a caller
  * (MultiplayerGame.tsx) supply an already-constructed
@@ -43,6 +42,7 @@ import { getDisplayName as getVanityName, setDisplayName, markDisplayNameConfirm
 import { getBotDisplayName } from '@wordplay/engine/botRegistry';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { usePlayerStats } from '../hooks/usePlayerStats';
+import { useWordPathGraph } from '../hooks/useWordPathGraph';
 import { useTutorialProgress } from '../hooks/useTutorialProgress';
 import { useWordDropZone } from '../hooks/useWordDropZone';
 import { useDictionaryData } from '../hooks/useDictionaryData';
@@ -166,8 +166,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // under the status bar. Reading the inset directly and folding it into
   // `top` here sidesteps the mismatch regardless of platform.
   const insets = useSafeAreaInsets();
-  const { handleWordSubmission, handleGameCompletion, getUnlockedItems } = useUnlockSystem();
+  const { handleWordSubmission, handleGameCompletion, handleWordPathChange, getUnlockedItems } = useUnlockSystem();
   const { isMechanicOn } = useMechanicsSettings();
+  const { recordTransition: recordWordPathTransition, syncToServer: syncWordPathGraph } = useWordPathGraph();
 
   // Mechanics-gated config, resolved before the game manager is ever
   // created (useGameState only reads `config` once, at manager-creation
@@ -308,11 +309,38 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
     const localId = localPlayerId ?? 'human';
     for (const entry of newEntries) {
+      // Word path graph tracks every word seen - both the local player's
+      // and any bot/opponent's moves - so it's recorded unconditionally,
+      // unlike recordMove (player stats) which only tracks the local
+      // player. Matches web's InteractiveGame.tsx exactly.
+      recordWordPathTransition(entry.previousWord, entry.newWord)
+        .then(() => syncWordPathGraph())
+        .catch(err => console.warn('Failed to record/sync word path transition:', err));
+
       if (entry.playerId === localId) {
         recordMove(entry).catch(err => console.warn('Failed to record move stats:', err));
       }
     }
-  }, [gameState, recordMove, localPlayerId]);
+
+    // Check for word-sequence unlocks (e.g. STINK -> STANK -> STUNK). The
+    // word path is the full chain of words played in the game, in order,
+    // regardless of who played them - reconstructed from turnHistory: the
+    // first entry's previousWord is the starting word, and each entry's
+    // newWord is the word played that turn. Matches web's
+    // InteractiveGame.tsx exactly.
+    const wordPath: string[] = [];
+    if (gameState.turnHistory.length > 0) {
+      wordPath.push(gameState.turnHistory[0].previousWord.toUpperCase());
+    }
+    for (const entry of gameState.turnHistory) {
+      wordPath.push(entry.newWord.toUpperCase());
+    }
+    if (wordPath.length >= 3) {
+      handleWordPathChange(wordPath).catch(err =>
+        console.warn('Failed to check word sequence unlock triggers:', err)
+      );
+    }
+  }, [gameState, recordMove, localPlayerId, recordWordPathTransition, syncWordPathGraph, handleWordPathChange]);
 
   // Report game end to the caller, and check for beat-this-bot unlock
   // achievements (e.g. beating basicBot unlocks easy-bot). Matches web's
