@@ -146,6 +146,26 @@ describe('native Menu', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('opens "the game" overlay from the about section, and closing it returns to the menu', async () => {
+    const onClose = jest.fn();
+    renderMenu({ onClose });
+    await waitFor(() => expect(screen.getByText('about')).toBeTruthy());
+
+    fireEvent.press(screen.getByText('about'));
+    await waitFor(() => expect(screen.getByText('the game')).toBeTruthy());
+    fireEvent.press(screen.getByText('the game'));
+
+    await waitFor(() => expect(screen.getByText(/word game about finding as many words/)).toBeTruthy());
+    // The Menu itself must not have closed - it's still behind the overlay.
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByLabelText('Close'));
+    await waitFor(() => expect(screen.queryByText(/word game about finding as many words/)).toBeNull());
+    // Back at the menu (not closed to the caller) - "about" is still reachable.
+    expect(screen.getByText('reset unlocks (debug)')).toBeTruthy();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('opens the dictionaries overlay from the about section, and closing it returns to the menu', async () => {
     const onClose = jest.fn();
     renderMenu({ onClose });

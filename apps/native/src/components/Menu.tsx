@@ -9,22 +9,23 @@
  *
  * This slice ports: themes (+ dark mode toggle, previewed per-theme via
  * `ThemeSwatch` below), mechanics toggles + round length selection,
- * unlocked bots (tap to start a game with that bot), the "the basics"/
- * "dictionaries"/"thoughts" about entries, the "player-stats" permanent
- * mechanic (opens the real StatsOverlay), the "unlock-counter" permanent
- * mechanic (shows "N/N unlocked" next to the themes/mechanics/bots
- * section headers once unlocked by playing "unlock" - matches web's
- * `showUnlockCounts` exactly), masked "????" locked-item previews (once
- * a category is "revealed" by playing its own name - "themes"/
- * "mechanics"/"bots" - see `lockedThemeItems`/`lockedMechanicItems`/
- * `lockedBotItems` below), reset-unlocks (debug), and home/resign.
- * Deliberately deferred, not silently dropped:
- * the vanity filter system, "vs world"/leaderboard/challenge entries, one
- * of the four "about" sub-overlays ("the-game"), the "word-paths"
- * permanent mechanic (WordPathExplorer), and community stats - each
- * depends on a system not yet ported (challenge mode, the vanity filter
- * hook/context, the leaderboard overlay, word path graph tracking) or
- * was cut for scope in this pass.
+ * unlocked bots (tap to start a game with that bot), all four "about"
+ * entries ("the basics"/"the game"/"dictionaries"/"thoughts"), the
+ * "player-stats" permanent mechanic (opens the real StatsOverlay), the
+ * "unlock-counter" permanent mechanic (shows "N/N unlocked" next to the
+ * themes/mechanics/bots section headers once unlocked by playing
+ * "unlock" - matches web's `showUnlockCounts` exactly), masked "????"
+ * locked-item previews (once a category is "revealed" by playing its
+ * own name - "themes"/"mechanics"/"bots" - see `lockedThemeItems`/
+ * `lockedMechanicItems`/`lockedBotItems` below), reset-unlocks (debug),
+ * and home/resign. Daily challenge + its leaderboard are reachable
+ * directly from `MainScreen`'s "vs world" option, not from this Menu
+ * (matches web's own MainScreen-level entry point, not a Menu one).
+ * Deliberately deferred, not silently dropped: the vanity (bad word)
+ * filter system, the "word-paths" permanent mechanic (WordPathExplorer),
+ * and community stats - each depends on a system not yet ported (the
+ * vanity filter hook/context, word path graph tracking) or was cut for
+ * scope in this pass.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Animated } from 'react-native';
@@ -38,6 +39,7 @@ import { availableThemes as ALL_THEMES } from '@wordplay/theme/theme';
 import type { GameTheme } from '@wordplay/theme/theme';
 import { DictionariesOverlay } from './DictionariesOverlay';
 import { ThoughtsOverlay } from './ThoughtsOverlay';
+import { TheGameOverlay } from './TheGameOverlay';
 import { StatsOverlay } from './StatsOverlay';
 
 const ALL_MECHANIC_IDS = ['3-letter-start', '5-letter-start', '6-letter-start', '7-letter-start', '8-letter-start', '9-letter-start', '10-letter-start', 'time-pressure', 'gravity', 'drunk', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
@@ -120,6 +122,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [isDictionariesOpen, setIsDictionariesOpen] = useState(false);
   const [isThoughtsOpen, setIsThoughtsOpen] = useState(false);
+  const [isTheGameOpen, setIsTheGameOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   const unlockedThemeIds = getUnlockedItems('theme');
@@ -355,6 +358,9 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                 >
                   <Text style={{ color: colors.text, fontWeight: '900' }}>the basics</Text>
                 </Pressable>
+                <Pressable onPress={() => setIsTheGameOpen(true)} style={styles.row} accessibilityRole="button">
+                  <Text style={{ color: colors.text, fontWeight: '900' }}>the game</Text>
+                </Pressable>
                 <Pressable onPress={() => setIsDictionariesOpen(true)} style={styles.row} accessibilityRole="button">
                   <Text style={{ color: colors.text, fontWeight: '900' }}>dictionaries</Text>
                 </Pressable>
@@ -377,6 +383,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
           usage exactly. */}
       <DictionariesOverlay isVisible={isDictionariesOpen} onClose={() => setIsDictionariesOpen(false)} />
       <ThoughtsOverlay isVisible={isThoughtsOpen} onClose={() => setIsThoughtsOpen(false)} />
+      <TheGameOverlay isVisible={isTheGameOpen} onClose={() => setIsTheGameOpen(false)} />
       <StatsOverlay isVisible={isStatsOpen} onClose={() => setIsStatsOpen(false)} />
     </Modal>
   );
