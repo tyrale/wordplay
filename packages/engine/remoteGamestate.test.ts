@@ -76,6 +76,10 @@ class FakeRemoteGameStore {
       this.listeners = this.listeners.filter(l => l !== listener);
     };
   }
+
+  get listenerCount(): number {
+    return this.listeners.length;
+  }
 }
 
 function createFakeDependencies(store: FakeRemoteGameStore, localPlayerId: string): RemoteGameDependencies {
@@ -273,6 +277,57 @@ describe('RemoteGameStateManager', () => {
     expect(manager.getState().turnHistory.length).toBe(1);
 
     manager.dispose();
+  });
+
+  it('reconnect() re-subscribes and immediately picks up any change missed while the old subscription was dead', async () => {
+    const deps = createFakeDependencies(store, PLAYER_A);
+    const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+    await manager.initialize();
+
+    // Simulate a realtime subscription that silently died while
+    // backgrounded (e.g. the OS suspended the websocket) - the opponent's
+    // move landed on the server, but nothing fired the local `onChange`
+    // listener registered in initialize(), so the manager never refreshed.
+    store.snapshot.turnHistory.push({
+      turnNumber: 1,
+      playerId: PLAYER_B,
+      previousWord: 'CAT',
+      newWord: 'BAT',
+      scoreEarned: 1,
+      keyLetterUsed: null,
+      timestamp: Date.now()
+    });
+    store.snapshot.currentWord = 'BAT';
+    store.snapshot.usedWords = ['CAT', 'BAT'];
+    store.snapshot.currentTurn = 2;
+    store.snapshot.currentPlayerIndex = 0;
+    // (Deliberately not calling a method that notifies listeners - this
+    // stands in for the dead-subscription scenario.)
+
+    expect(manager.getState().currentWord).toBe('CAT');
+
+    await manager.reconnect();
+
+    expect(manager.getState().currentWord).toBe('BAT');
+    expect(manager.getState().turnHistory.length).toBe(1);
+
+    manager.dispose();
+  });
+
+  it('reconnect() replaces the old subscription rather than leaving a duplicate registered', async () => {
+    const deps = createFakeDependencies(store, PLAYER_A);
+    const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+    await manager.initialize();
+    expect(store.listenerCount).toBe(1);
+
+    await manager.reconnect();
+    // Still exactly one - the old subscription was torn down, not left
+    // registered alongside the new one (which would double-apply every
+    // future opponent move's reconciliation).
+    expect(store.listenerCount).toBe(1);
+
+    manager.dispose();
+    expect(store.listenerCount).toBe(0);
   });
 
   it('resign() marks the game abandoned', async () => {

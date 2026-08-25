@@ -198,6 +198,18 @@ Steps:
 
 Testing: 19 new tests across InteractiveGame/ZenGame/ChallengeGame/Menu (time-pressure countdown appearing/not appearing, drunk wobble transform present/absent, locked previews appearing only once revealed, font-weight assertions). Full workspace suite: 726 tests (94 web + 347 engine + 285 native, up from 707 before this pass), `tsc --noEmit` clean, verified via real Metro bundle fetches for both iOS and Android.
 
+### Phase 4.5 — Multiplayer reconnect-after-backgrounding hardening (gap closure)
+
+**Goal**: Close Phase 4's own explicitly-deferred item - the realtime subscription backing an active multiplayer game (and the invite-waiting lobby screen) had no defense against a native app fully suspending its websocket while backgrounded, beyond `RemoteGameStateManager`'s existing 3-second poll (which itself only resumes ticking once the JS runtime resumes, and still leaves up to ~3+ seconds of staleness right when a player is most likely to be looking at the screen again).
+
+✅ **Done**:
+- `RemoteGameStateManager.reconnect()` (packages/engine/remoteGamestate.ts, shared with web): tears down and re-establishes the realtime subscription, then immediately fetches the latest remote state - for any caller that detects its own app returning to the foreground. Engine-level and platform-agnostic like the rest of this file; only native actually calls it (a browser tab doesn't suspend its websocket on backgrounding the same way - see critical item 4), but the method itself isn't native-specific.
+- New native-only `hooks/useAppForeground.ts`: wraps RN's `AppState` into a single "the app just came back from background/inactive to active" callback (not just any 'active' report - RN can redundantly report 'active' more than once in a row). Documented as deliberately native-only, not something web needs.
+- `useMultiplayerManager.ts` now calls `manager.reconnect()` via `useAppForeground` - an in-progress game catches up immediately on foreground instead of waiting for the next poll tick.
+- `MultiplayerLobby.tsx`'s invite-creation "waiting for opponent(s)" screen had no poll fallback at all (unlike `findMatch`'s matchmaking flow, which already polled) - a backgrounded host could be left on a "waiting…" screen that would never update again once its realtime channel died. Extracted the channel handlers' logic into a shared `checkInviteStatus`, now also run on a 4-second poll (matching `findMatch`'s own existing interval) and immediately again via `useAppForeground`.
+- Test coverage: 2 new `RemoteGameStateManager` tests (reconnect() picks up a change the dead subscription missed; re-subscribing doesn't leave a duplicate listener registered), 7 for `useAppForeground` (transition detection, redundant-report/inactive-only no-ops, stable callback ref across re-renders, unmount cleanup), 2 for `useMultiplayerManager`'s new wiring, and 3 for `MultiplayerLobby.tsx` (real poll tick, foreground re-check, no-op when nothing is pending).
+- Full workspace suite verified green: 786 tests (94 web + 349 engine + 343 native), `tsc --noEmit` clean for native.
+
 ### Phase 5 — Platform polish, store readiness, and release
 **Goal**: Everything needed to actually ship to the App Store and Google Play.
 

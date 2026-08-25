@@ -4,12 +4,20 @@
  * nativeMultiplayerAdapter instead of the browser equivalents).
  * `RemoteGameStateManager`/`createRemoteGameStateManager` live in
  * `@wordplay/engine/remoteGamestate`, shared as-is with web.
+ *
+ * One native-specific addition beyond the direct port: reconnects the
+ * manager (see `RemoteGameStateManager.reconnect()`'s own doc comment)
+ * whenever the app returns to the foreground after being backgrounded -
+ * a real condition a browser tab doesn't have in the same way, flagged
+ * as deferred hardening in docs/project/REACT_NATIVE_PORT_PLAN.md's
+ * Phase 4 notes.
  */
 import { useEffect, useRef, useState } from 'react';
 import { RemoteGameStateManager, createRemoteGameStateManager } from '@wordplay/engine/remoteGamestate';
 import { createNativeAdapter } from '../adapters/nativeAdapter';
 import { createNativeMultiplayerDependencies } from '../adapters/nativeMultiplayerAdapter';
 import { ensureAnonymousSession } from '../adapters/nativeAuthAdapter';
+import { useAppForeground } from './useAppForeground';
 
 export interface UseMultiplayerManagerReturn {
   /** The manager instance, once ready. Feed this into `InteractiveGame`'s `externalManager` prop. */
@@ -83,6 +91,12 @@ export function useMultiplayerManager(gameId: string): UseMultiplayerManagerRetu
       managerRef.current = null;
     };
   }, [gameId]);
+
+  useAppForeground(() => {
+    managerRef.current?.reconnect().catch(err =>
+      console.warn('Failed to reconnect multiplayer game on foreground:', err)
+    );
+  });
 
   return { manager, localPlayerId, isLoading, error };
 }

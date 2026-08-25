@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { AppState } from 'react-native';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider } from '../../providers/UnlockProvider';
@@ -12,7 +13,8 @@ import {
   findMatch,
   listMyActiveGames,
   cancelGame,
-  getGameJoinInfo
+  getGameJoinInfo,
+  getOpponentName
 } from '../../adapters/nativeMultiplayerAdapter';
 import { hasConfirmedDisplayName } from '../../adapters/nativeAuthAdapter';
 import { supabase } from '../../lib/supabase';
@@ -27,6 +29,11 @@ jest.mock('../../adapters/nativeMultiplayerAdapter', () => ({
   getGameJoinInfo: jest.fn().mockResolvedValue({ status: 'waiting', maxPlayers: 2, players: [] }),
   cancelGame: jest.fn().mockResolvedValue(undefined)
 }));
+
+function getRegisteredAppStateListener(): (state: string) => void {
+  const call = (AppState.addEventListener as jest.Mock).mock.calls.find(([event]) => event === 'change');
+  return call?.[1];
+}
 
 jest.mock('../../adapters/nativeAuthAdapter', () => ({
   getDisplayName: jest.fn().mockReturnValue('Player1234'),
@@ -77,6 +84,7 @@ describe('native MultiplayerLobby', () => {
       on: jest.fn().mockReturnThis(),
       subscribe: jest.fn().mockReturnThis()
     });
+    (AppState as unknown as { currentState: string }).currentState = 'active';
   });
 
   it('shows the vsone/vsmany mode menu first', async () => {
@@ -123,6 +131,58 @@ describe('native MultiplayerLobby', () => {
 
     expect(await screen.findByText('ABC123')).toBeTruthy();
     expect(createInviteGame).toHaveBeenCalledWith(expect.objectContaining({ maxPlayers: 2 }));
+  });
+
+  it('picks up the opponent joining via a poll tick, not just the realtime channel (backgrounding resilience)', async () => {
+    (createInviteGame as jest.Mock).mockResolvedValue({ gameId: 'game-1', inviteCode: 'ABC123' });
+    (getGameJoinInfo as jest.Mock).mockResolvedValue({ status: 'waiting', maxPlayers: 2, players: [] });
+    renderLobby();
+
+    fireEvent.press(await screen.findByText('one'));
+    fireEvent.press(await screen.findByText('Create'));
+    await waitFor(() => expect(screen.getByText('ABC123')).toBeTruthy());
+
+    // The realtime channel never fires (simulating a dead/suspended
+    // websocket) - only the poll fallback (a real 4-second interval, per
+    // this screen's own `checkInviteStatus` wiring) should notice the
+    // opponent, so this waits for a real tick rather than faking timers.
+    (getGameJoinInfo as jest.Mock).mockResolvedValue({ status: 'active', maxPlayers: 2, players: [] });
+    (getOpponentName as jest.Mock).mockResolvedValue('Bob');
+
+    await waitFor(() => expect(screen.getByText(/Bob joined/)).toBeTruthy(), { timeout: 6000 });
+  }, 8000);
+
+  it('immediately re-checks a pending invite when the app returns to the foreground', async () => {
+    (AppState as unknown as { currentState: string }).currentState = 'background';
+    (createInviteGame as jest.Mock).mockResolvedValue({ gameId: 'game-1', inviteCode: 'ABC123' });
+    (getGameJoinInfo as jest.Mock).mockResolvedValue({ status: 'waiting', maxPlayers: 2, players: [] });
+    renderLobby();
+
+    fireEvent.press(await screen.findByText('one'));
+    fireEvent.press(await screen.findByText('Create'));
+    await waitFor(() => expect(screen.getByText('ABC123')).toBeTruthy());
+
+    (getGameJoinInfo as jest.Mock).mockResolvedValue({ status: 'active', maxPlayers: 2, players: [] });
+    (getOpponentName as jest.Mock).mockResolvedValue('Alice');
+
+    await act(async () => {
+      getRegisteredAppStateListener()('active');
+    });
+
+    await waitFor(() => expect(screen.getByText(/Alice joined/)).toBeTruthy());
+  });
+
+  it('does not re-check anything on foreground once no invite is pending', async () => {
+    (AppState as unknown as { currentState: string }).currentState = 'background';
+    renderLobby();
+    await screen.findByText('one');
+
+    const callCountBefore = (getGameJoinInfo as jest.Mock).mock.calls.length;
+    await act(async () => {
+      getRegisteredAppStateListener()('active');
+    });
+
+    expect((getGameJoinInfo as jest.Mock).mock.calls.length).toBe(callCountBefore);
   });
 
   it('creating a vsmany invite requests 8 max players', async () => {

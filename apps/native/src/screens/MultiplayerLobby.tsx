@@ -5,6 +5,20 @@
  * port; only the presentation is rebuilt for RN (no CSS slide
  * animations - `menuStep` still switches which action list renders, just
  * without the timed exit/enter transition web does via CSS classes).
+ *
+ * One native-specific hardening beyond the direct port: the "waiting for
+ * opponent(s) to join" invite screen (`handleCreateInvite`) originally
+ * relied *only* on a realtime channel to notice a join/game-start - web's
+ * equivalent has the same gap, but a backgrounded native app routinely
+ * suspends that channel's websocket entirely (a real condition a browser
+ * tab doesn't have in the same way - see
+ * docs/project/REACT_NATIVE_PORT_PLAN.md's Phase 4 notes), which could
+ * leave a host staring at a "waiting…" screen that will never update on
+ * its own again. `checkInviteStatus` now also runs on a short poll
+ * (matching `findMatch`'s own existing poll-as-a-fallback-alongside-
+ * realtime pattern in nativeMultiplayerAdapter.ts) and immediately again
+ * whenever the app returns to the foreground, instead of trusting the
+ * channel alone.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
@@ -28,6 +42,7 @@ import { useRoundLength } from '../contexts/RoundLengthContext';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { shareInviteCode } from '../utils/shareUtils';
+import { useAppForeground } from '../hooks/useAppForeground';
 
 // Starting-word-length mechanics a host might have unlocked/toggled on -
 // mirrors the same pick logic InteractiveGame.tsx uses for vs-bot games.
@@ -61,6 +76,11 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
   const [joinedPlayers, setJoinedPlayers] = useState<GameJoinInfo['players']>([]);
   const createCleanupRef = useRef<(() => void) | null>(null);
   const [displayName, setDisplayNameState] = useState('');
+  // Tracks the in-flight invite-waiting screen's identity/settled state
+  // for `checkInviteStatus`'s poll/foreground callers below, which run
+  // outside `handleCreateInvite`'s own closure and must always see the
+  // *current* game rather than a stale one captured at creation time.
+  const createInviteStateRef = useRef<{ gameId: string; mode: MatchmakingMode; settled: boolean } | null>(null);
 
   const { isMechanicOn } = useMechanicsSettings();
   const { roundLength } = useRoundLength();
@@ -93,6 +113,40 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     setShowNamePrompt(false);
   }, []);
 
+  // Shared by the realtime channel's event handlers, the poll fallback,
+  // and the reconnect-on-foreground check below - all three just need to
+  // "notice" the same two possible changes (a game going active, or a
+  // new player joining), so this is the one place that actually decides
+  // what to do about either. Safe to call redundantly/concurrently
+  // (idempotent: re-fetches and re-applies the same info if nothing
+  // changed) since a real change could be observed by more than one of
+  // those three sources at nearly the same time.
+  const checkInviteStatus = useCallback(async (gameId: string, mode: MatchmakingMode) => {
+    // Guards against a stale poll/channel closure from a *previous*
+    // `handleCreateInvite` call (e.g. the player backed out and created
+    // a fresh invite) still firing for a game that's no longer the one
+    // being waited on, and against redundant work once this exact invite
+    // has already settled.
+    const current = createInviteStateRef.current;
+    if (!current || current.gameId !== gameId || current.settled) return;
+
+    const info = await getGameJoinInfo(gameId);
+    if (!info || current.settled) return;
+
+    setJoinedPlayers(info.players);
+
+    if (info.status === 'active') {
+      current.settled = true;
+      if (mode === 'vsone') {
+        const name = await getOpponentName(gameId);
+        setOpponentName(name || 'Your opponent');
+        setReadyGameId(gameId);
+      } else {
+        onGameReady(gameId);
+      }
+    }
+  }, [onGameReady]);
+
   const handleCreateInvite = useCallback(async (mode: MatchmakingMode) => {
     setView('create');
     setError(null);
@@ -111,46 +165,55 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
       });
       setInviteCode(code);
       setCreateGameId(gameId);
-      getGameJoinInfo(gameId).then((info) => {
-        if (info) setJoinedPlayers(info.players);
-      });
+      createInviteStateRef.current = { gameId, mode, settled: false };
+      checkInviteStatus(gameId, mode);
 
       const channel = supabase
         .channel(`lobby-${gameId}`)
         .on(
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
-          (payload: { new?: { status?: string } }) => {
-            if (payload.new?.status === 'active') {
-              supabase.removeChannel(channel);
-              if (mode === 'vsone') {
-                getOpponentName(gameId).then((name) => {
-                  setOpponentName(name || 'Your opponent');
-                  setReadyGameId(gameId);
-                });
-              } else {
-                onGameReady(gameId);
-              }
-            }
-          }
+          () => checkInviteStatus(gameId, mode)
         )
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'game_players', filter: `game_id=eq.${gameId}` },
-          () => {
-            getGameJoinInfo(gameId).then((info) => {
-              if (info) setJoinedPlayers(info.players);
-            });
-          }
+          () => checkInviteStatus(gameId, mode)
         )
         .subscribe();
-      createCleanupRef.current = () => supabase.removeChannel(channel);
+
+      // Poll as a fallback alongside the realtime channel above - mirrors
+      // nativeMultiplayerAdapter.ts's `findMatch`/`joinVsManyGame`'s own
+      // existing poll-alongside-realtime pattern (and, once the game is
+      // active, `RemoteGameStateManager`'s), for the same reason: realtime
+      // delivery isn't guaranteed, and a native app backgrounding can
+      // suspend the channel's websocket outright with no automatic
+      // reconnect (see this file's own header comment).
+      const pollInterval = setInterval(() => checkInviteStatus(gameId, mode), 4000);
+
+      createCleanupRef.current = () => {
+        supabase.removeChannel(channel);
+        clearInterval(pollInterval);
+      };
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create game');
     } finally {
       setIsBusy(false);
     }
-  }, [onGameReady, roundLength, startingWordLength, isTimePressureOn]);
+  }, [roundLength, startingWordLength, isTimePressureOn, checkInviteStatus]);
+
+  // Immediately re-checks the pending invite (rather than waiting for the
+  // next poll tick, or a realtime event that may never arrive if the
+  // channel died while backgrounded) whenever the app returns to the
+  // foreground - see this file's own header comment.
+  useAppForeground(() => {
+    const pending = createInviteStateRef.current;
+    if (pending && !pending.settled) {
+      checkInviteStatus(pending.gameId, pending.mode).catch(err =>
+        console.warn('Failed to re-check invite status on foreground:', err)
+      );
+    }
+  });
 
   const handleStartGame = useCallback(() => {
     if (readyGameId) onGameReady(readyGameId);

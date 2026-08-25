@@ -163,6 +163,38 @@ export class RemoteGameStateManager implements IGameStateManager {
     }
   }
 
+  /**
+   * Tears down and re-establishes the realtime subscription, then
+   * immediately fetches the latest remote state - for callers that
+   * detect their own app coming back to the foreground after being
+   * backgrounded (e.g. RN's `AppState`, or a browser tab regaining
+   * visibility). Native platforms (unlike a normal desktop browser tab)
+   * routinely suspend a realtime WebSocket entirely while backgrounded
+   * without the client necessarily noticing it needs to reconnect once
+   * the app resumes - the existing 3-second poll (see `initialize()`)
+   * already provides a resilience *floor* even if this is never called
+   * (an opponent's move is never silently lost forever), but relying on
+   * it alone means up to a 3-second-plus-however-long-the-JS-timer-was-
+   * suspended delay before the board catches up right when a player
+   * returns to the app - the single moment they're most likely to
+   * actually be looking at it. Calling this makes that catch-up
+   * immediate instead of waiting for the next poll tick, and gives the
+   * realtime channel itself a fresh, known-good connection rather than
+   * leaving a possibly-dead one in place indefinitely.
+   */
+  public async reconnect(): Promise<void> {
+    if (this.unsubscribeRemote) {
+      this.unsubscribeRemote();
+      this.unsubscribeRemote = null;
+    }
+    this.unsubscribeRemote = this.remote.subscribeToGame(this.gameId, () => {
+      this.refreshFromRemote().catch(error => {
+        console.error('Failed to refresh remote game state:', error);
+      });
+    });
+    await this.refreshFromRemote();
+  }
+
   private async refreshFromRemote(): Promise<void> {
     if (this.syncing) return; // avoid overlapping fetches
     this.syncing = true;

@@ -1,9 +1,15 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
+import { AppState } from 'react-native';
 import { useMultiplayerManager } from '../useMultiplayerManager';
 import { ensureAnonymousSession } from '../../adapters/nativeAuthAdapter';
 import { createNativeAdapter } from '../../adapters/nativeAdapter';
 import { createNativeMultiplayerDependencies } from '../../adapters/nativeMultiplayerAdapter';
 import { createRemoteGameStateManager } from '@wordplay/engine/remoteGamestate';
+
+function getRegisteredAppStateListener(): (state: string) => void {
+  const call = (AppState.addEventListener as jest.Mock).mock.calls.find(([event]) => event === 'change');
+  return call?.[1];
+}
 
 jest.mock('../../adapters/nativeAuthAdapter', () => ({
   ensureAnonymousSession: jest.fn()
@@ -24,6 +30,7 @@ jest.mock('@wordplay/engine/remoteGamestate', () => ({
 describe('native useMultiplayerManager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (AppState as unknown as { currentState: string }).currentState = 'active';
   });
 
   it('reports an error without ever creating a manager if authentication fails', async () => {
@@ -83,5 +90,40 @@ describe('native useMultiplayerManager', () => {
 
     unmount();
     expect(fakeManager.dispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('reconnects the manager when the app returns to the foreground after being backgrounded', async () => {
+    (ensureAnonymousSession as jest.Mock).mockResolvedValue('user-1');
+    (createNativeAdapter as jest.Mock).mockResolvedValue({
+      getWordData: () => ({ waitForLoad: jest.fn().mockResolvedValue(undefined) }),
+      getGameDependencies: () => ({})
+    });
+    const fakeManager = { dispose: jest.fn(), reconnect: jest.fn().mockResolvedValue(undefined) };
+    (createRemoteGameStateManager as jest.Mock).mockResolvedValue(fakeManager);
+
+    (AppState as unknown as { currentState: string }).currentState = 'background';
+    const { result } = renderHook(() => useMultiplayerManager('game-1'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    getRegisteredAppStateListener()('active');
+
+    expect(fakeManager.reconnect).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not reconnect on a redundant active report (no actual background/foreground transition)', async () => {
+    (ensureAnonymousSession as jest.Mock).mockResolvedValue('user-1');
+    (createNativeAdapter as jest.Mock).mockResolvedValue({
+      getWordData: () => ({ waitForLoad: jest.fn().mockResolvedValue(undefined) }),
+      getGameDependencies: () => ({})
+    });
+    const fakeManager = { dispose: jest.fn(), reconnect: jest.fn().mockResolvedValue(undefined) };
+    (createRemoteGameStateManager as jest.Mock).mockResolvedValue(fakeManager);
+
+    const { result } = renderHook(() => useMultiplayerManager('game-1'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    getRegisteredAppStateListener()('active');
+
+    expect(fakeManager.reconnect).not.toHaveBeenCalled();
   });
 });
