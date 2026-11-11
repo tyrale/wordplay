@@ -1,6 +1,6 @@
 /**
  * Unlock System Integration Tests
- * 
+ *
  * Tests the integration between the unlock system and React components.
  */
 
@@ -25,8 +25,12 @@ function TestUnlockComponent() {
     <div data-testid="unlock-test">
       <div data-testid="unlocked-themes">{unlockState.themes.join(', ')}</div>
       <div data-testid="unlocked-bots">{unlockState.bots.join(', ')}</div>
-      <div data-testid="unlocked-mechanics">{unlockState.mechanics.join(', ')}</div>
-      <div data-testid="red-theme-unlocked">{isUnlocked('theme', 'red') ? 'yes' : 'no'}</div>
+      <div data-testid="unlocked-mechanics">
+        {unlockState.mechanics.join(', ')}
+      </div>
+      <div data-testid="red-theme-unlocked">
+        {isUnlocked('theme', 'red') ? 'yes' : 'no'}
+      </div>
     </div>
   );
 }
@@ -36,9 +40,7 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
       <AlertProvider>
-        <UnlockProvider>
-          {children}
-        </UnlockProvider>
+        <UnlockProvider>{children}</UnlockProvider>
       </AlertProvider>
     </ThemeProvider>
   );
@@ -58,7 +60,9 @@ describe('Unlock System Integration', () => {
     });
 
     // Check initial state
-    expect(screen.getByTestId('unlocked-themes')).toHaveTextContent('classic blue');
+    expect(screen.getByTestId('unlocked-themes')).toHaveTextContent(
+      'classic blue'
+    );
     expect(screen.getByTestId('unlocked-bots')).toHaveTextContent('basicBot');
     expect(screen.getByTestId('unlocked-mechanics')).toHaveTextContent('');
     expect(screen.getByTestId('red-theme-unlocked')).toHaveTextContent('no');
@@ -89,9 +93,12 @@ describe('Unlock System Integration', () => {
     );
 
     // Should eventually load even if there are initial errors
-    await waitFor(() => {
-      expect(screen.queryByTestId('loading')).not.toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.queryByTestId('loading')).not.toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     expect(screen.getByTestId('unlock-test')).toBeInTheDocument();
   });
@@ -114,7 +121,11 @@ describe('Unlock System Integration', () => {
 // Hands the ready (and freshly-reset) unlock API to the test so it can drive
 // submissions deterministically. resetUnlocksToFresh guarantees a clean slate
 // even if a previous test left state in the shared fake-indexeddb database.
-function UnlockApiProbe({ onReady }: { onReady: (api: UnlockContextType) => void }) {
+function UnlockApiProbe({
+  onReady,
+}: {
+  onReady: (api: UnlockContextType) => void;
+}) {
   const api = useUnlockSystem();
   useEffect(() => {
     if (api.isLoading) return;
@@ -122,7 +133,9 @@ function UnlockApiProbe({ onReady }: { onReady: (api: UnlockContextType) => void
     api.resetUnlocksToFresh().then(() => {
       if (!cancelled) onReady(api);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [api.isLoading, onReady]);
   return null;
 }
@@ -132,7 +145,11 @@ describe('Non-local move unlock behavior', () => {
     let api: UnlockContextType | null = null;
     render(
       <TestWrapper>
-        <UnlockApiProbe onReady={(a) => { api = a; }} />
+        <UnlockApiProbe
+          onReady={(a) => {
+            api = a;
+          }}
+        />
       </TestWrapper>
     );
 
@@ -143,7 +160,9 @@ describe('Non-local move unlock behavior', () => {
 
     // Simulate a bot or remote opponent playing "MIDNIGHT"
     await act(async () => {
-      await api!.handleWordSubmission('midnight', false, { isLocalMove: false });
+      await api!.handleWordSubmission('midnight', false, {
+        isLocalMove: false,
+      });
     });
 
     expect(api!.isUnlocked('theme', 'midnight')).toBe(true);
@@ -153,7 +172,11 @@ describe('Non-local move unlock behavior', () => {
     let api: UnlockContextType | null = null;
     render(
       <TestWrapper>
-        <UnlockApiProbe onReady={(a) => { api = a; }} />
+        <UnlockApiProbe
+          onReady={(a) => {
+            api = a;
+          }}
+        />
       </TestWrapper>
     );
 
@@ -177,7 +200,11 @@ describe('Non-local move unlock behavior', () => {
     let api: UnlockContextType | null = null;
     render(
       <TestWrapper>
-        <UnlockApiProbe onReady={(a) => { api = a; }} />
+        <UnlockApiProbe
+          onReady={(a) => {
+            api = a;
+          }}
+        />
       </TestWrapper>
     );
 
@@ -200,7 +227,11 @@ describe('Non-local move unlock behavior', () => {
     let api: UnlockContextType | null = null;
     render(
       <TestWrapper>
-        <UnlockApiProbe onReady={(a) => { api = a; }} />
+        <UnlockApiProbe
+          onReady={(a) => {
+            api = a;
+          }}
+        />
       </TestWrapper>
     );
 
@@ -229,4 +260,4 @@ describe('Non-local move unlock behavior', () => {
     });
     expect(api!.isUnlocked('theme', 'red')).toBe(true);
   });
-}); 
+});

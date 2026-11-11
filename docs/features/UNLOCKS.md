@@ -9,6 +9,7 @@ The WordPlay unlock system is a comprehensive feature progression system that al
 ### ✅ Fully Implemented
 
 **Themes (53 unlocks)**
+
 - Complete implementation with immediate application
 - Triggers: Playing color/theme names (e.g., "red", "blue", "midnight")
 - Immediately applies theme when unlocked and persists across sessions
@@ -17,6 +18,7 @@ The WordPlay unlock system is a comprehensive feature progression system that al
 ### 🟧 Unlock Triggers Only
 
 **Bots (11+ unlocks)**
+
 - ✅ Unlock tracking works (achievement and word triggers)
 - ✅ Toast notifications and menu display work
 - ✅ Persistence across sessions works
@@ -25,6 +27,7 @@ The WordPlay unlock system is a comprehensive feature progression system that al
 - ❌ No themed behaviors for pirate/chaos/puzzle/etc bots
 
 **Mechanics (7 defined)**
+
 - ✅ Unlock tracking works (playing trigger words unlocks mechanics)
 - ✅ Toast notifications and menu display work
 - ✅ Persistence across sessions works
@@ -35,18 +38,22 @@ The WordPlay unlock system is a comprehensive feature progression system that al
 ## Technical Architecture
 
 ### Core Components
+
 1. **Core Engine** (`packages/engine/unlocks.ts`) - Platform-agnostic unlock logic
 2. **Unlock Definitions** (`packages/engine/unlock-definitions.ts`) - All unlock rules and triggers
 3. **Platform Adapters** - Browser (IndexedDB), Node.js (file system), Test (in-memory)
 4. **React Integration** - useUnlocks hook, UnlockProvider, Toast system
 
 ### Data Flow
+
 ```
 Player Action → Unlock Engine → State Update → UI Update → Toast Notification
 ```
 
 ### GameConfig Interface (Current vs Needed)
+
 **Current:**
+
 ```typescript
 export interface GameConfig {
   maxTurns?: number;
@@ -60,6 +67,7 @@ export interface GameConfig {
 ```
 
 **Needed for Mechanics:**
+
 ```typescript
 export interface GameConfig {
   // ... existing properties ...
@@ -74,11 +82,13 @@ export interface GameConfig {
 ## User Experience
 
 ### Fresh User Experience
+
 - **Themes**: Only "Classic Blue" available
 - **Bots**: Only "basicBot" bot available
 - **Mechanics**: None available (empty section)
 
 ### Progressive Disclosure
+
 - Menu sections appear as items are unlocked
 - Toast notifications provide immediate feedback
 - Persistent state across browser sessions
@@ -87,6 +97,7 @@ export interface GameConfig {
 ## Testing Status
 
 ### Comprehensive Test Coverage
+
 - ✅ Core engine unit tests: `packages/engine/__tests__/unlocks.test.ts` (26 tests)
 - ✅ Core engine integration tests: `packages/engine/__tests__/unlocks-integration.test.ts` (7 tests)
 - ✅ Additional React/component-level coverage exists under `src/components/unlock/__tests__/` and `src/hooks/`
@@ -94,6 +105,7 @@ export interface GameConfig {
 (Exact React/component test counts were not individually re-verified; see the test files above for current numbers rather than trusting a static count here.)
 
 ### Cross-Platform Verification
+
 - ✅ Browser: IndexedDB persistence working
 - ✅ Test Environment: Fallback to initial state working
 - ✅ Error Handling: Graceful fallbacks implemented
@@ -109,6 +121,7 @@ export interface GameConfig {
 ### Adding New Unlocks
 
 1. **Add to unlock-definitions.ts:**
+
 ```typescript
 {
   id: 'unlock_new_feature',
@@ -119,19 +132,22 @@ export interface GameConfig {
 ```
 
 2. **Add display name (if mechanic/bot):**
+
 ```typescript
 // In Menu.tsx
 const mechanicDisplayNames: Record<string, string> = {
-  'feature-id': 'Feature Display Name'
+  'feature-id': 'Feature Display Name',
 };
 ```
 
 3. **Implement full functionality:**
+
 - **For themes**: Add theme data to availableThemes array
 - **For mechanics**: Update GameConfig interface, add UI controls, implement game logic
 - **For bots**: Create unique AI behaviors in bot engine
 
 ### File Locations
+
 - **Unlock Definitions**: `packages/engine/unlock-definitions.ts`
 - **Unlock Engine**: `packages/engine/unlocks.ts`
 - **React Integration**: `src/hooks/useUnlocks.ts`, `src/components/unlock/UnlockProvider.tsx`
@@ -144,6 +160,7 @@ const mechanicDisplayNames: Record<string, string> = {
 ## Theme Unlocks Checklist
 
 ### Basic Colors
+
 - [x] red - Red theme
 - [x] blue - Blue theme
 - [x] green - Green theme
@@ -156,6 +173,7 @@ const mechanicDisplayNames: Record<string, string> = {
 - [x] gray - Gray theme
 
 ### Specific Shades
+
 - [x] crimson - Crimson theme
 - [x] indigo - Indigo theme
 - [x] teal - Teal theme
@@ -168,6 +186,7 @@ const mechanicDisplayNames: Record<string, string> = {
 - [x] denim - Denim theme
 
 ### Named Themes
+
 - [x] grandma - Grandma theme
 - [x] grandpa - Grandpa theme
 - [x] contrast - Contrast theme
@@ -203,6 +222,7 @@ const mechanicDisplayNames: Record<string, string> = {
 - [x] touch - Touch theme
 
 ### Future Theme Ideas
+
 - [ ] random - Random theme selector (trigger: "random")
 - [ ] champion - Gold theme (achievement: beat_all_bots)
 - [ ] perfectionist - Special theme (achievement: perfect_game)
@@ -213,12 +233,14 @@ const mechanicDisplayNames: Record<string, string> = {
 ## Bot Unlocks Checklist
 
 ### Achievement-Based Progression
+
 - 🟧 beat_basicBot - Easy Bot
 - 🟧 beat_easy_bot - Medium Bot
 - 🟧 beat_medium_bot - Hard Bot
 - 🟧 beat_hard_bot - Expert Bot
 
 ### Word-Based Themed Bots
+
 - 🟧 pirate - Pirate Bot
 - 🟧 chaos - Chaos Bot
 - 🟧 puzzle - Puzzle Bot
@@ -228,6 +250,7 @@ const mechanicDisplayNames: Record<string, string> = {
 - 🟧 rhyme - Rhyme Bot
 
 ### Future Themed Bots
+
 - [ ] ninja - Ninja Bot (silent, strategic moves)
 - [ ] wizard - Wizard Bot (magic-themed words)
 - [ ] robot - Robot Bot (tech-themed words)
@@ -237,6 +260,7 @@ const mechanicDisplayNames: Record<string, string> = {
 - [ ] sports - Sports Bot (sports words only)
 
 ### Future Behavior Bots
+
 - [ ] mirror - Mirror Bot (copies player strategies)
 - [ ] opposite - Opposite Bot (does opposite of player)
 - [ ] random - Random Bot (completely random moves)
@@ -244,6 +268,7 @@ const mechanicDisplayNames: Record<string, string> = {
 - [ ] aggressive - Aggressive Bot (high-risk, high-reward)
 
 ### Future Difficulty Progression
+
 - [ ] beat_expert_bot - Master Bot
 - [ ] beat_master_bot - Grandmaster Bot
 - [ ] beat_grandmaster_bot - Legendary Bot
@@ -253,6 +278,7 @@ const mechanicDisplayNames: Record<string, string> = {
 ## Mechanic Unlocks Checklist
 
 ### Currently Defined (Unlocks Work, Game Logic Missing)
+
 - 🟧 three - 3 Letter Start
 - 🟧 five - 5 Letter Start
 - 🟧 six - 6 Letter Start
@@ -262,18 +288,22 @@ const mechanicDisplayNames: Record<string, string> = {
 - 🟧 ten - 10 Letter Start (also unlocks the `round-length-10` mechanic via the same word)
 
 ### Currently Defined and Fully Working
+
 - ✅ shit - Vanity Filter (`vanity-filter`) — unlike the other mechanics above, this one is fully implemented as a working toggle in `Menu.tsx`; see `VANITY_FILTER_SYSTEM.md`
 - ✅ time - Time Pressure Mode (`time-pressure`) — 7 second per-turn countdown shown next to the submit/pass control; auto-passes the player's turn when it hits zero
 
 ### Future Word Length Mechanics
+
 - [ ] starts - Random Length Start
 
 ### Future Turn Mechanics
+
 - [ ] extra - Extra Turns (15 instead of 10)
 - [ ] quick - Quick Game (5 turns only)
 - [ ] endless - Endless Mode (no turn limit)
 
 ### Future Unlock Mechanics
+
 - [ ] reset - Reset Unlocks (disable all progress)
 - [ ] unlock - Display Unlocks (show redacted unlock list)
 - [ ] revelation - Full Unlock (unlock everything)
@@ -283,6 +313,7 @@ const mechanicDisplayNames: Record<string, string> = {
 ## Future Achievement Ideas
 
 ### Performance Achievements
+
 - [ ] perfect_game - Win without losing any turns
 - [ ] quick_victory - Win in under 2 minutes
 - [ ] comeback_king - Win after being 20+ points behind
@@ -290,6 +321,7 @@ const mechanicDisplayNames: Record<string, string> = {
 - [ ] high_scorer - Score 100+ points in a game
 
 ### Word Achievements
+
 - [ ] long_word_master - Play a 10+ letter word
 - [ ] vowel_master - Play 5 words with all vowels
 - [ ] consonant_king - Play word with no vowels
@@ -297,6 +329,7 @@ const mechanicDisplayNames: Record<string, string> = {
 - [ ] alphabet_soup - Use every letter A-Z in one game
 
 ### Progression Achievements
+
 - [ ] theme_collector - Unlock 50 themes
 - [ ] bot_master - Beat all bots
 - [ ] mechanic_explorer - Try all mechanics
@@ -307,24 +340,28 @@ const mechanicDisplayNames: Record<string, string> = {
 ## Implementation Priority
 
 ### Phase 1: Complete Mechanics Implementation
+
 1. Extend GameConfig interface to support mechanics
 2. Add UI controls for mechanic selection
 3. Implement core mechanics (5-letter-start, 6-letter-start)
 4. Update game initialization logic
 
 ### Phase 2: Enhanced Mechanics
+
 1. Double key letters implementation
 2. Reverse scoring mode
 3. Longer words validation changes
 4. Advanced mechanics from ideas list
 
 ### Phase 3: Extended Content
+
 1. New themed bots with unique behaviors
 2. Seasonal/holiday themes
 3. Achievement-based unlocks
 4. Advanced progression systems
 
 ### Phase 4: Polish & Balance
+
 1. Difficulty balancing for new bots
 2. UI/UX improvements for mechanic selection
 3. Performance optimization for complex mechanics
@@ -332,4 +369,4 @@ const mechanicDisplayNames: Record<string, string> = {
 
 ---
 
-*Last Updated: Current implementation status as of unlock system completion* 
+_Last Updated: Current implementation status as of unlock system completion_

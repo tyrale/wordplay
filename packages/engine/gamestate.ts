@@ -1,14 +1,14 @@
 /**
  * Local GameState Manager - Platform-Agnostic
- * 
+ *
  * This module provides comprehensive game state management for the WordPlay game,
  * using dependency injection to avoid platform-specific imports.
  * Platform adapters provide word validation, scoring, and bot AI functions.
- * 
+ *
  * DEPENDENCY INJECTION: All functions now accept dependencies as parameters
  * for platform-agnostic operation. Platform adapters provide dictionary,
  * scoring, and bot functions.
- * 
+ *
  * Key Features:
  * - Complete game state management (word, key letters, locked letters)
  * - Word validation and scoring integration via dependency injection
@@ -30,7 +30,7 @@ import { KeyLetterLogger } from './keyLetterLogger';
 import type { ScoringResult } from './scoring';
 
 // Import consolidated interfaces from main interfaces file
-import type { 
+import type {
   GameStateDependencies,
   GameStateDictionaryDependencies,
   GameStateScoringDependencies,
@@ -45,14 +45,14 @@ import type {
   BotResult,
   IGameStateManager,
   GameStateListener,
-  MoveAttempt
+  MoveAttempt,
 } from './interfaces';
 
 // Re-export imported types for compatibility
 export type { ValidationResult, ScoringResult };
 
 // Re-export consolidated interfaces for external usage
-export type { 
+export type {
   GameStateDependencies,
   GameStateDictionaryDependencies,
   GameStateScoringDependencies,
@@ -64,7 +64,7 @@ export type {
   GameStateUpdate,
   BotMove,
   BotResult,
-  IGameStateManager
+  IGameStateManager,
 };
 
 // =============================================================================
@@ -75,7 +75,9 @@ export type {
  * Local GameState Manager Class with Dependency Injection
  * Manages all game state and integrates with validation, scoring, and bot AI via dependencies
  */
-export class LocalGameStateManagerWithDependencies implements IGameStateManager {
+export class LocalGameStateManagerWithDependencies
+  implements IGameStateManager
+{
   private state: GameState;
   private listeners: GameStateListener[] = [];
   private dependencies: GameStateDependencies;
@@ -94,7 +96,10 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     let initialWord = config.initialWord;
     if (!initialWord) {
       // Grinchbot games always start on a 5-letter canonical Dr. Seuss word
-      if (config.botId === 'grinch-bot' && this.dependencies.getRandomSeussCanonicalWord) {
+      if (
+        config.botId === 'grinch-bot' &&
+        this.dependencies.getRandomSeussCanonicalWord
+      ) {
         const seussWord = this.dependencies.getRandomSeussCanonicalWord(5);
         initialWord = seussWord || undefined; // fall through to normal random if no Seuss words loaded
       }
@@ -111,7 +116,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       enableKeyLetters: true,
       enableLockedLetters: true,
       ...config,
-      initialWord: initialWord
+      initialWord: initialWord,
     };
 
     const humanPlayer: Player = {
@@ -119,7 +124,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       name: 'Player',
       isBot: false,
       score: 0,
-      isCurrentPlayer: true
+      isCurrentPlayer: true,
     };
 
     const players = [humanPlayer];
@@ -131,7 +136,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
         name: 'Bot AI',
         isBot: true,
         score: 0,
-        isCurrentPlayer: false
+        isCurrentPlayer: false,
       };
       players.push(botPlayer);
     }
@@ -155,7 +160,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       lastMoveTime: now,
       usedWords: [],
       usedKeyLetters: [],
-      lockedKeyLetters: []
+      lockedKeyLetters: [],
     };
   }
 
@@ -175,10 +180,10 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       keyLetters: [...this.state.keyLetters],
       lockedLetters: [...this.state.lockedLetters],
       lockedKeyLetters: [...this.state.lockedKeyLetters],
-      players: this.state.players.map(player => ({ ...player })),
+      players: this.state.players.map((player) => ({ ...player })),
       usedWords: [...this.state.usedWords],
       usedKeyLetters: [...this.state.usedKeyLetters],
-      turnHistory: this.state.turnHistory.map(turn => ({ ...turn }))
+      turnHistory: this.state.turnHistory.map((turn) => ({ ...turn })),
     };
   }
 
@@ -186,38 +191,38 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * Get the current player
    */
   public getCurrentPlayer(): Player | null {
-    return this.state.players.find(p => p.isCurrentPlayer) || null;
+    return this.state.players.find((p) => p.isCurrentPlayer) || null;
   }
 
   /**
    * Get the other (non-current) player
    */
   public getOtherPlayer(): Player | null {
-    return this.state.players.find(p => !p.isCurrentPlayer) || null;
+    return this.state.players.find((p) => !p.isCurrentPlayer) || null;
   }
 
   /**
    * Start the game
    */
   public startGame(): void {
-        if (this.state.gameStatus === 'waiting') {
-            this.state.gameStatus = 'playing';
+    if (this.state.gameStatus === 'waiting') {
+      this.state.gameStatus = 'playing';
       this.state.gameStartTime = Date.now();
-      
+
       // Add initial word to used words list
       if (!this.state.usedWords.includes(this.state.currentWord)) {
         this.state.usedWords.push(this.state.currentWord);
       }
-      
+
       // Generate initial key letter so first player can use it for bonus points
       if (this.state.config.enableKeyLetters) {
-      this.generateRandomKeyLetter();
+        this.generateRandomKeyLetter();
       }
-      
-            this.notifyListeners({
+
+      this.notifyListeners({
         type: 'game_finished',
         data: { gameStatus: this.state.gameStatus },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
   }
@@ -228,7 +233,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
   public attemptMove(newWord: string): MoveAttempt {
     const normalizedNewWord = newWord.trim().toUpperCase();
     const currentPlayer = this.getCurrentPlayer();
-    
+
     if (!currentPlayer) {
       return {
         newWord: normalizedNewWord,
@@ -237,11 +242,11 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
           isValid: false,
           reason: 'No current player',
           word: normalizedNewWord,
-          userMessage: 'no player found'
+          userMessage: 'no player found',
         },
         scoringResult: null,
         canApply: false,
-        reason: 'No current player found'
+        reason: 'No current player found',
       };
     }
 
@@ -254,11 +259,11 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
           isValid: false,
           reason: 'Game is not in playing state',
           word: normalizedNewWord,
-          userMessage: 'game not active'
+          userMessage: 'game not active',
         },
         scoringResult: null,
         canApply: false,
-        reason: 'Game is not in playing state'
+        reason: 'Game is not in playing state',
       };
     }
 
@@ -271,11 +276,11 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
           isValid: false,
           reason: 'Word has already been used in this game',
           word: normalizedNewWord,
-          userMessage: 'was played'
+          userMessage: 'was played',
         },
         scoringResult: null,
         canApply: false,
-        reason: 'Word repetition not allowed'
+        reason: 'Word repetition not allowed',
       };
     }
 
@@ -283,7 +288,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     const validationResult = this.dependencies.validateWord(normalizedNewWord, {
       isBot: currentPlayer.isBot,
       allowSeussCanonical: this.state.config.allowSeussCanonical,
-      previousWord: this.state.currentWord
+      previousWord: this.state.currentWord,
     });
 
     if (!validationResult.isValid) {
@@ -293,12 +298,15 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
         validationResult,
         scoringResult: null,
         canApply: false,
-        reason: validationResult.reason || validationResult.userMessage
+        reason: validationResult.reason || validationResult.userMessage,
       };
     }
 
     // Use agnostic engine move validation for consistency across all game modes
-    const isMoveValid = this.dependencies.isValidMove(this.state.currentWord, normalizedNewWord);
+    const isMoveValid = this.dependencies.isValidMove(
+      this.state.currentWord,
+      normalizedNewWord
+    );
     if (!isMoveValid) {
       return {
         newWord: normalizedNewWord,
@@ -307,11 +315,11 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
           isValid: false,
           reason: 'INVALID_MOVE',
           word: normalizedNewWord,
-          userMessage: 'illegal action'
+          userMessage: 'illegal action',
         },
         scoringResult: null,
         canApply: false,
-        reason: 'illegal action'
+        reason: 'illegal action',
       };
     }
 
@@ -327,7 +335,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       isValid: true,
       validationResult,
       scoringResult,
-      canApply: true
+      canApply: true,
     };
   }
 
@@ -355,22 +363,22 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * Apply a move attempt to the game state
    */
   private applyMoveAttempt(moveAttempt: MoveAttempt): boolean {
-        if (!moveAttempt.canApply || !moveAttempt.scoringResult) {
-            return false;
+    if (!moveAttempt.canApply || !moveAttempt.scoringResult) {
+      return false;
     }
 
     const currentPlayer = this.getCurrentPlayer();
     if (!currentPlayer) {
-            return false;
+      return false;
     }
 
-        const previousWord = this.state.currentWord;
+    const previousWord = this.state.currentWord;
 
     // Update game state
     this.state.currentWord = moveAttempt.newWord;
     this.state.lastMoveTime = Date.now();
     this.state.totalMoves++;
-    
+
     // Track this word as used
     if (!this.state.usedWords.includes(moveAttempt.newWord)) {
       this.state.usedWords.push(moveAttempt.newWord);
@@ -388,44 +396,51 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       score: moveAttempt.scoringResult.totalScore,
       keyLettersUsed: moveAttempt.scoringResult.keyLettersUsed || [],
       scoringBreakdown: moveAttempt.scoringResult,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     this.state.turnHistory.push(turnRecord);
-            // KEY LETTER LOCKING FEATURE
+    // KEY LETTER LOCKING FEATURE
     // Clear any existing locked key letters since this player has now completed their turn with them
     this.state.lockedKeyLetters = [];
-    
+
     // If this player used key letters, lock them for the next player
     if (moveAttempt.scoringResult.keyLettersUsed.length > 0) {
       // Find which key letters were used and are now in the new word
-      const usedKeyLetters = moveAttempt.scoringResult.keyLettersUsed.filter(letter => 
-        moveAttempt.newWord.toUpperCase().includes(letter.toUpperCase())
+      const usedKeyLetters = moveAttempt.scoringResult.keyLettersUsed.filter(
+        (letter) =>
+          moveAttempt.newWord.toUpperCase().includes(letter.toUpperCase())
       );
-      
+
       // These letters will be locked for the next player's turn
-      this.state.lockedKeyLetters = usedKeyLetters.map(letter => letter.toUpperCase());
+      this.state.lockedKeyLetters = usedKeyLetters.map((letter) =>
+        letter.toUpperCase()
+      );
     }
 
     // Automatic key letter generation - maintain exactly 1 key letter per turn
     if (this.state.config.enableKeyLetters) {
-                  // Track the current key letter as used (since it was active for this turn)
-      this.state.keyLetters.forEach(letter => {
+      // Track the current key letter as used (since it was active for this turn)
+      this.state.keyLetters.forEach((letter) => {
         if (!this.state.usedKeyLetters.includes(letter)) {
           this.state.usedKeyLetters.push(letter);
         }
       });
-      
+
       // Clear current key letters and generate exactly 1 new key letter
-            this.state.keyLetters = [];
-            this.generateRandomKeyLetter();
-          }
+      this.state.keyLetters = [];
+      this.generateRandomKeyLetter();
+    }
 
     // Notify listeners of word change
     this.notifyListeners({
       type: 'word_changed',
-      data: { previousWord, newWord: moveAttempt.newWord, score: moveAttempt.scoringResult.totalScore },
-      timestamp: Date.now()
+      data: {
+        previousWord,
+        newWord: moveAttempt.newWord,
+        score: moveAttempt.scoringResult.totalScore,
+      },
+      timestamp: Date.now(),
     });
 
     // Switch to next player
@@ -436,42 +451,48 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       this.finishGame();
     }
 
-        return true;
+    return true;
   }
 
   /**
    * Make a bot move (if current player is bot)
    */
   public async makeBotMove(): Promise<BotMove | null> {
-        // Prevent concurrent bot moves
+    // Prevent concurrent bot moves
     if (this.botMoveInProgress) {
-            return null;
+      return null;
     }
-    
+
     const currentPlayer = this.getCurrentPlayer();
-    
+
     if (!currentPlayer || !currentPlayer.isBot) {
-            return null;
+      return null;
     }
 
     if (this.state.gameStatus !== 'playing') {
-            return null;
+      return null;
     }
 
     try {
-            this.botMoveInProgress = true;
-      
-      // Combine all locked letters for bot constraints
-      const allLockedLetters = [...this.state.lockedLetters, ...this.state.lockedKeyLetters];
-                                    // Generate bot move
-      const botResult: BotResult = await this.dependencies.generateBotMove(this.state.currentWord, {
-        keyLetters: this.state.keyLetters,
-        lockedLetters: allLockedLetters,
-        maxCandidates: 500, // Reasonable limit for responsive gameplay
-        botId: this.state.config.botId // Selects the bot's strategy in bot.ts (e.g. filterPirateBotCandidates)
-      });
+      this.botMoveInProgress = true;
 
-            if (!botResult.move) {
+      // Combine all locked letters for bot constraints
+      const allLockedLetters = [
+        ...this.state.lockedLetters,
+        ...this.state.lockedKeyLetters,
+      ];
+      // Generate bot move
+      const botResult: BotResult = await this.dependencies.generateBotMove(
+        this.state.currentWord,
+        {
+          keyLetters: this.state.keyLetters,
+          lockedLetters: allLockedLetters,
+          maxCandidates: 500, // Reasonable limit for responsive gameplay
+          botId: this.state.config.botId, // Selects the bot's strategy in bot.ts (e.g. filterPirateBotCandidates)
+        }
+      );
+
+      if (!botResult.move) {
         console.warn('Bot could not generate a valid move, passing turn');
         // Automatically pass when bot can't find a valid move
         this.passTurn();
@@ -479,17 +500,17 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
           word: this.state.currentWord,
           score: 0,
           confidence: 0,
-          reasoning: ['PASS - No valid moves available']
+          reasoning: ['PASS - No valid moves available'],
         };
       }
 
       // Attempt and apply the bot's move
-            const moveAttempt = this.attemptMove(botResult.move.word);
-      
+      const moveAttempt = this.attemptMove(botResult.move.word);
+
       if (moveAttempt.canApply) {
-                const success = this.applyMoveAttempt(moveAttempt);
-                if (success) {
-                    return botResult.move;
+        const success = this.applyMoveAttempt(moveAttempt);
+        if (success) {
+          return botResult.move;
         }
       }
 
@@ -499,9 +520,8 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
         word: this.state.currentWord,
         score: 0,
         confidence: 0,
-        reasoning: ['PASS - Move validation failed']
+        reasoning: ['PASS - Move validation failed'],
       };
-
     } catch (error) {
       console.error('Bot move generation failed:', error);
       // Pass on error
@@ -510,10 +530,10 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
         word: this.state.currentWord,
         score: 0,
         confidence: 0,
-        reasoning: ['PASS - Error in move generation']
+        reasoning: ['PASS - Error in move generation'],
       };
     } finally {
-            this.botMoveInProgress = false;
+      this.botMoveInProgress = false;
     }
   }
 
@@ -534,27 +554,30 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    */
   private switchToNextPlayer(): void {
     // Find current player before switching
-    const currentPlayerIndex = this.state.players.findIndex(p => p.isCurrentPlayer);
-    
+    const currentPlayerIndex = this.state.players.findIndex(
+      (p) => p.isCurrentPlayer
+    );
+
     // Mark all players as not current
-    this.state.players.forEach(player => {
+    this.state.players.forEach((player) => {
       player.isCurrentPlayer = false;
     });
 
     // Calculate next player index
-    const nextPlayerIndex = (currentPlayerIndex + 1) % this.state.players.length;
-    
+    const nextPlayerIndex =
+      (currentPlayerIndex + 1) % this.state.players.length;
+
     this.state.players[nextPlayerIndex].isCurrentPlayer = true;
     this.state.currentPlayerIndex = nextPlayerIndex;
     this.state.currentTurn++;
 
     this.notifyListeners({
       type: 'turn_completed',
-      data: { 
+      data: {
         currentTurn: this.state.currentTurn,
-        currentPlayer: this.state.players[nextPlayerIndex]
+        currentPlayer: this.state.players[nextPlayerIndex],
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -565,16 +588,22 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     this.state.gameStatus = 'finished';
 
     // Determine winner by highest score
-    const sortedPlayers = [...this.state.players].sort((a, b) => b.score - a.score);
+    const sortedPlayers = [...this.state.players].sort(
+      (a, b) => b.score - a.score
+    );
     this.state.winner = sortedPlayers[0];
 
     this.notifyListeners({
       type: 'game_finished',
-      data: { 
+      data: {
         winner: this.state.winner,
-        finalScores: this.state.players.map(p => ({ id: p.id, name: p.name, score: p.score }))
+        finalScores: this.state.players.map((p) => ({
+          id: p.id,
+          name: p.name,
+          score: p.score,
+        })),
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -583,18 +612,22 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    */
   public addKeyLetter(letter: string): void {
     const normalizedLetter = letter.toUpperCase();
-    
+
     if (!this.state.config.enableKeyLetters) {
       return;
     }
 
     if (!this.state.keyLetters.includes(normalizedLetter)) {
       this.state.keyLetters.push(normalizedLetter);
-      
+
       this.notifyListeners({
         type: 'letters_updated',
-        data: { type: 'key_added', letter: normalizedLetter, keyLetters: [...this.state.keyLetters] },
-        timestamp: Date.now()
+        data: {
+          type: 'key_added',
+          letter: normalizedLetter,
+          keyLetters: [...this.state.keyLetters],
+        },
+        timestamp: Date.now(),
       });
     }
   }
@@ -602,14 +635,18 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
   public removeKeyLetter(letter: string): void {
     const normalizedLetter = letter.toUpperCase();
     const index = this.state.keyLetters.indexOf(normalizedLetter);
-    
+
     if (index > -1) {
       this.state.keyLetters.splice(index, 1);
-      
+
       this.notifyListeners({
         type: 'letters_updated',
-        data: { type: 'key_removed', letter: normalizedLetter, keyLetters: [...this.state.keyLetters] },
-        timestamp: Date.now()
+        data: {
+          type: 'key_removed',
+          letter: normalizedLetter,
+          keyLetters: [...this.state.keyLetters],
+        },
+        timestamp: Date.now(),
       });
     }
   }
@@ -619,18 +656,22 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    */
   public addLockedLetter(letter: string): void {
     const normalizedLetter = letter.toUpperCase();
-    
+
     if (!this.state.config.enableLockedLetters) {
       return;
     }
 
     if (!this.state.lockedLetters.includes(normalizedLetter)) {
       this.state.lockedLetters.push(normalizedLetter);
-      
+
       this.notifyListeners({
         type: 'letters_updated',
-        data: { type: 'locked_added', letter: normalizedLetter, lockedLetters: [...this.state.lockedLetters] },
-        timestamp: Date.now()
+        data: {
+          type: 'locked_added',
+          letter: normalizedLetter,
+          lockedLetters: [...this.state.lockedLetters],
+        },
+        timestamp: Date.now(),
       });
     }
   }
@@ -638,14 +679,18 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
   public removeLockedLetter(letter: string): void {
     const normalizedLetter = letter.toUpperCase();
     const index = this.state.lockedLetters.indexOf(normalizedLetter);
-    
+
     if (index > -1) {
       this.state.lockedLetters.splice(index, 1);
-      
+
       this.notifyListeners({
         type: 'letters_updated',
-        data: { type: 'locked_removed', letter: normalizedLetter, lockedLetters: [...this.state.lockedLetters] },
-        timestamp: Date.now()
+        data: {
+          type: 'locked_removed',
+          letter: normalizedLetter,
+          lockedLetters: [...this.state.lockedLetters],
+        },
+        timestamp: Date.now(),
       });
     }
   }
@@ -655,18 +700,18 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    */
   public setWord(word: string): boolean {
     const normalizedWord = word.trim().toUpperCase();
-    
+
     // Basic validation
     if (!normalizedWord || !/^[A-Z]+$/.test(normalizedWord)) {
       return false;
     }
 
     this.state.currentWord = normalizedWord;
-    
+
     this.notifyListeners({
       type: 'word_changed',
       data: { newWord: normalizedWord, source: 'manual' },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     return true;
@@ -684,7 +729,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     this.notifyListeners({
       type: 'state_restored',
       data: { gameStatus: this.state.gameStatus },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -702,14 +747,16 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     // passing it explicitly via newConfig (see gamestate.test.ts), which is
     // applied after this clear and therefore takes precedence.
     const baseConfig = { ...this.state.config, initialWord: undefined };
-    const configToUse = newConfig ? { ...baseConfig, ...newConfig } : baseConfig;
+    const configToUse = newConfig
+      ? { ...baseConfig, ...newConfig }
+      : baseConfig;
     this.state = this.initializeGameState(configToUse);
     this.botMoveInProgress = false; // Reset bot move flag
 
     this.notifyListeners({
       type: 'game_finished', // Use existing event type for simplicity
       data: { type: 'reset' },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -728,12 +775,20 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       averageScorePerMove: number;
     }>;
   } {
-    const duration = this.state.gameStartTime ? Date.now() - this.state.gameStartTime : 0;
-    const totalScore = this.state.players.reduce((sum, player) => sum + player.score, 0);
-    const averageScore = this.state.totalMoves > 0 ? totalScore / this.state.totalMoves : 0;
+    const duration = this.state.gameStartTime
+      ? Date.now() - this.state.gameStartTime
+      : 0;
+    const totalScore = this.state.players.reduce(
+      (sum, player) => sum + player.score,
+      0
+    );
+    const averageScore =
+      this.state.totalMoves > 0 ? totalScore / this.state.totalMoves : 0;
 
-    const playerStats = this.state.players.map(player => {
-      const playerMoves = this.state.turnHistory.filter(turn => turn.playerId === player.id);
+    const playerStats = this.state.players.map((player) => {
+      const playerMoves = this.state.turnHistory.filter(
+        (turn) => turn.playerId === player.id
+      );
       const moveCount = playerMoves.length;
       const averageScorePerMove = moveCount > 0 ? player.score / moveCount : 0;
 
@@ -742,7 +797,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
         name: player.name,
         score: player.score,
         moveCount,
-        averageScorePerMove
+        averageScorePerMove,
       };
     });
 
@@ -750,7 +805,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
       duration,
       totalMoves: this.state.totalMoves,
       averageScore,
-      playerStats
+      playerStats,
     };
   }
 
@@ -759,7 +814,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    */
   public subscribe(listener: GameStateListener): () => void {
     this.listeners.push(listener);
-    
+
     // Return unsubscribe function
     return () => {
       const index = this.listeners.indexOf(listener);
@@ -770,7 +825,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
   }
 
   private notifyListeners(update: GameStateUpdate): void {
-    this.listeners.forEach(listener => {
+    this.listeners.forEach((listener) => {
       try {
         listener(update);
       } catch (error) {
@@ -782,25 +837,28 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
   /**
    * Performance test helper
    */
-  public performanceTest(operations = 1000): { averageTime: number; totalTime: number } {
+  public performanceTest(operations = 1000): {
+    averageTime: number;
+    totalTime: number;
+  } {
     const startTime = performance.now();
-    
+
     for (let i = 0; i < operations; i++) {
       // Simulate common operations
       this.getState();
       this.getCurrentPlayer();
       this.attemptMove(`TEST${i % 100}`);
-      
+
       if (i % 100 === 0) {
         this.addKeyLetter('A');
         this.removeKeyLetter('A');
       }
     }
-    
+
     const endTime = performance.now();
     const totalTime = endTime - startTime;
     const averageTime = totalTime / operations;
-    
+
     return { averageTime, totalTime };
   }
 
@@ -817,39 +875,40 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
    * and is not already present in the current word
    */
   private generateRandomKeyLetter(): void {
-        // Ensure we don't have any existing key letters before generating
+    // Ensure we don't have any existing key letters before generating
     if (this.state.keyLetters.length > 0) {
-            return; // Silent return, no warning needed
+      return; // Silent return, no warning needed
     }
-    
+
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const currentWordLetters = new Set(this.state.currentWord.split(''));
-    
-    const availableLetters = alphabet.split('').filter(letter => 
-      !this.state.usedKeyLetters.includes(letter) && 
-      !this.state.keyLetters.includes(letter) &&
-      !currentWordLetters.has(letter) // NEW: Don't use letters already in the current word
+
+    const availableLetters = alphabet.split('').filter(
+      (letter) =>
+        !this.state.usedKeyLetters.includes(letter) &&
+        !this.state.keyLetters.includes(letter) &&
+        !currentWordLetters.has(letter) // NEW: Don't use letters already in the current word
     );
-    
-        if (availableLetters.length > 0) {
+
+    if (availableLetters.length > 0) {
       const randomIndex = Math.floor(Math.random() * availableLetters.length);
       const newKeyLetter = availableLetters[randomIndex];
-            this.state.keyLetters.push(newKeyLetter);
+      this.state.keyLetters.push(newKeyLetter);
       // Note: We'll track this letter as used when the next move is made
-      
-              // Log key letter statistics across all games
-        this.logKeyLetterStats(newKeyLetter).catch(error => {
-          console.warn('Failed to log key letter statistics:', error);
-        });
-      
+
+      // Log key letter statistics across all games
+      this.logKeyLetterStats(newKeyLetter).catch((error) => {
+        console.warn('Failed to log key letter statistics:', error);
+      });
+
       this.notifyListeners({
         type: 'letters_updated',
-        data: { 
+        data: {
           action: 'key_letter_added',
           letter: newKeyLetter,
-          keyLetters: [...this.state.keyLetters]
+          keyLetters: [...this.state.keyLetters],
         },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
   }
@@ -890,9 +949,9 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
         actions: [],
         keyLetterScore: 0,
         baseScore: 0,
-        keyLettersUsed: []
+        keyLettersUsed: [],
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     this.state.turnHistory.push(turnRecord);
@@ -903,12 +962,12 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
     // Notify listeners of the pass
     this.notifyListeners({
       type: 'turn_completed',
-      data: { 
+      data: {
         type: 'pass',
         playerId: currentPlayer.id,
-        playerName: currentPlayer.name
+        playerName: currentPlayer.name,
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     // Switch to next player
@@ -932,7 +991,7 @@ export class LocalGameStateManagerWithDependencies implements IGameStateManager 
  * This is the recommended way to create game state managers.
  */
 export function createGameStateManagerWithDependencies(
-  dependencies: GameStateDependencies, 
+  dependencies: GameStateDependencies,
   config?: GameConfig
 ): LocalGameStateManagerWithDependencies {
   return new LocalGameStateManagerWithDependencies(dependencies, config);
@@ -943,8 +1002,8 @@ export function createGameStateManagerWithDependencies(
  * Use this instead of the deprecated quickScoreMove function.
  */
 export function quickScoreMoveWithDependencies(
-  fromWord: string, 
-  toWord: string, 
+  fromWord: string,
+  toWord: string,
   scoring: GameStateScoringDependencies,
   keyLetters: string[] = []
 ): number {
@@ -956,11 +1015,11 @@ export function quickScoreMoveWithDependencies(
  * Use this instead of the deprecated quickValidateMove function.
  */
 export function quickValidateMoveWithDependencies(
-  word: string, 
+  word: string,
   dictionary: GameStateDictionaryDependencies,
-  isBot = false, 
+  isBot = false,
   previousWord?: string
 ): boolean {
   const result = dictionary.validateWord(word, { isBot, previousWord });
   return result.isValid;
-} 
+}

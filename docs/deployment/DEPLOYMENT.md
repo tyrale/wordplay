@@ -1,80 +1,57 @@
 # Deployment Guide
 
-## ✅ **CURRENT DEPLOYMENT STATUS** (Updated 2025-01-22)
+> **Vercel is the only production host** (decided 2026-11-11). The Cloudflare Workers (`wrangler.toml`) and Netlify (`netlify.toml`) configs, and the old Render migration guide, were removed.
 
-**Live Application**: The WordPlay game is deployed and accessible.
+## Current setup
 
-**Verification**: Deployment instructions below are accurate and current for the existing Vercel setup.
+| Item              | Value                                                                  |
+| ----------------- | ---------------------------------------------------------------------- |
+| Live URL          | https://wordplay-blond.vercel.app (no custom domain yet)               |
+| Vercel project    | `wordplay` under _Tyrale's projects_                                   |
+| Production branch | `master`. Every push deploys; PRs get preview deployments              |
+| Config            | [`vercel.json`](../../vercel.json): build, SPA rewrites, asset caching |
+| Node.js           | Set in Vercel project settings (Node 22+); CI uses `.nvmrc`            |
 
-> **Known issue**: `npm run build` (`tsc -b && vite build`) currently **fails** at the `tsc -b` step due to the `ScoringResult.breakdown` shape inconsistency tracked in [PROJECT_STATUS_AUDIT.md](../project/PROJECT_STATUS_AUDIT.md) step 7a. If Vercel's build step also runs `tsc -b` (per `vercel.json`/`package.json`), new deployments will fail until that's fixed — verify before relying on the checklist below.
+`vercel.json` sets:
 
-## Vercel Deployment Setup
+- **Build command**: `npm run build` (`tsc -b && vite build`)
+- **Output directory**: `dist`
+- **Install command**: `npm install --include=dev`. Dev dependencies (TypeScript, Vite) must be installed even if `NODE_ENV=production` is set in the dashboard, or the build fails with `tsc: command not found`.
+- **SPA rewrites**: all routes serve `/index.html`
+- **Asset caching**: `/assets/*` cached for 1 year (filenames are content-hashed)
 
-### Prerequisites
-- GitHub repository with the code
-- Vercel account (free tier available)
+## Environment variables
 
-### Step 1: Vercel Account Setup
-1. Go to [https://vercel.com/dashboard](https://vercel.com/dashboard)
-2. Click "Continue with GitHub" to sign up/login
-3. Authorize Vercel to access your GitHub repositories
+Set in Vercel → Project Settings → Environment Variables, for **Production** and **Preview**:
 
-### Step 2: Import Project
-1. Click "Add New..." → "Project"
-2. Find your `wordplay` repository
-3. Click "Import"
+| Name                     | Value                               |
+| ------------------------ | ----------------------------------- |
+| `VITE_SUPABASE_URL`      | `https://<project-ref>.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | the project's anon (public) key     |
 
-### Step 3: Configure Build Settings
-Vercel should automatically detect the Vite framework. The project includes a `vercel.json` configuration file with optimized settings:
-- **Framework Preset**: Vite (auto-detected)
-- **Build Command**: `npm run build`
-- **Output Directory**: `dist`
-- **Install Command**: `npm install`
-- **Node.js Runtime**: 18.x
-- **SPA Rewrites**: All routes redirect to `/index.html`
-- **Asset Caching**: 1 year cache for static assets
+Without these, the build falls back to `https://placeholder.supabase.co` (see `src/lib/supabase.ts`). Single-player still works, but **multiplayer, the daily challenge leaderboard and community unlock counts don't**.
 
-### Step 4: Environment Variables
-In Vercel Dashboard → Project Settings → Environment Variables, add:
+`VITE_` variables are baked into the bundle at build time, so **redeploy after changing them**.
 
-For now (development phase):
-- `NODE_ENV` = `production`
+To check which Supabase project a live build points at:
 
-Later (when connecting to production Supabase):
-- `VITE_SUPABASE_URL` = `https://your-project-id.supabase.co`
-- `VITE_SUPABASE_ANON_KEY` = `your-production-anon-key`
+```bash
+curl -s https://wordplay-blond.vercel.app/ | grep -o '/assets/index-[^"]*\.js'
+```
 
-### Step 5: Deploy
-1. Click "Deploy"
-2. Wait for build to complete (~1-2 minutes)
-3. Get the live URL (e.g., `https://wordplay-xyz.vercel.app`)
+Then fetch that asset and search it for `supabase.co`.
 
-### Step 6: Automatic Deployments
-- Every push to `main` branch will trigger automatic deployment
-- Preview deployments for other branches
-- Deployment status in GitHub PRs
+`NODE_ENV` does not need to be set; Vite builds in production mode on its own.
 
-### Verification Checklist
-- [x] Live URL accessible
-- [x] App loads without errors
-- [ ] Build completes successfully — currently **failing** locally via `npm run build`, see known issue above; re-check before trusting this line
-- [x] Automatic deployment from main branch working
-- [x] Single-player game functional
-- [x] Challenge mode functional
-- [x] Theme system working
-- [x] Mobile responsive design
+## Setting up from scratch
+
+1. Vercel dashboard → **Add New… → Project** → import the `wordplay` GitHub repo.
+2. Vercel detects Vite; `vercel.json` supplies the rest.
+3. Add the environment variables above.
+4. Deploy, then confirm the live URL loads and multiplayer can create a game.
 
 ## Troubleshooting
 
-### Build Failures
-- Check build logs in Vercel dashboard
-- Verify all dependencies in package.json
-- Ensure TypeScript compilation succeeds locally
-
-### Environment Variables
-- Variables must be prefixed with `VITE_` for client-side access
-- Restart deployment after adding environment variables
-
-### Domain Issues
-- Check DNS propagation (can take up to 24 hours)
-- Verify domain configuration in Vercel settings 
+- **Build fails**: open the deployment's logs (dashboard, or `npx vercel inspect <deployment-url> --logs`). Reproduce locally with `npm ci && npm run build`.
+- **Multiplayer/leaderboard silently empty in production**: the Supabase variables are missing or wrong. See the check above.
+- **Env var change not reflected**: trigger a redeploy; `VITE_` values are build-time.

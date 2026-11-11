@@ -7,48 +7,62 @@ import { triggerSoundFeedback } from '../../utils/sound';
 import './MainScreen.css';
 
 interface MainScreenProps {
-  onStartGame: (gameType: 'bot' | 'challenge' | 'tutorial' | 'zen', botId?: string) => void;
+  onStartGame: (
+    gameType: 'bot' | 'challenge' | 'tutorial' | 'zen',
+    botId?: string
+  ) => void;
   onStartMultiplayer?: () => void;
 }
 
-export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMultiplayer }) => {
+export const MainScreen: React.FC<MainScreenProps> = ({
+  onStartGame,
+  onStartMultiplayer,
+}) => {
   const [currentView, setCurrentView] = useState<'main' | 'bots'>('main');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVsHumanLockedOpen, setIsVsHumanLockedOpen] = useState(false);
-  
+
   // Get unlock state
   const { getUnlockedItems, isUnlocked } = useUnlockSystem();
   const unlockedBotIds = getUnlockedItems('bot');
-  
+
   // Filter bots based on unlock state
-  const availableBots = getAllBots().filter(bot => unlockedBotIds.includes(bot.id));
+  const availableBots = getAllBots().filter((bot) =>
+    unlockedBotIds.includes(bot.id)
+  );
 
   // Zen mode ("vsnobody"): a free-play, score-free, opponent-free mode.
   // Unlocked by playing the word "zen" (see unlock-definitions.ts).
   const isZenModeUnlocked = isUnlocked('mechanic', 'zen-mode');
 
-  const handleGameTypeSelect = useCallback((gameType: string) => {
-    triggerSoundFeedback('click');
-    if (gameType === 'vs-bot') {
-      setCurrentView('bots');
-    } else if (gameType === 'challenge') {
-      onStartGame('challenge');
-    } else if (gameType === 'zen') {
-      onStartGame('zen');
-    } else if (gameType === 'vs-human') {
-      if (onStartMultiplayer) {
-        onStartMultiplayer();
-      } else {
-        // Fallback if no handler was wired up - show requirement overlay
-        setIsVsHumanLockedOpen(true);
+  const handleGameTypeSelect = useCallback(
+    (gameType: string) => {
+      triggerSoundFeedback('click');
+      if (gameType === 'vs-bot') {
+        setCurrentView('bots');
+      } else if (gameType === 'challenge') {
+        onStartGame('challenge');
+      } else if (gameType === 'zen') {
+        onStartGame('zen');
+      } else if (gameType === 'vs-human') {
+        if (onStartMultiplayer) {
+          onStartMultiplayer();
+        } else {
+          // Fallback if no handler was wired up - show requirement overlay
+          setIsVsHumanLockedOpen(true);
+        }
       }
-    }
-  }, [onStartGame, onStartMultiplayer]);
+    },
+    [onStartGame, onStartMultiplayer]
+  );
 
-  const handleBotSelect = useCallback((botId: string) => {
-    triggerSoundFeedback('click');
-    onStartGame('bot', botId);
-  }, [onStartGame]);
+  const handleBotSelect = useCallback(
+    (botId: string) => {
+      triggerSoundFeedback('click');
+      onStartGame('bot', botId);
+    },
+    [onStartGame]
+  );
 
   const handleMenuOpen = useCallback(() => {
     triggerSoundFeedback('click');
@@ -78,7 +92,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
       )}
 
       {/* Menu icon - positioned to match alphabet grid menu icon */}
-      <button 
+      <button
         className="main-screen-menu-button"
         onClick={handleMenuOpen}
         aria-label="Open menu"
@@ -90,19 +104,19 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
       <div className="main-screen__content">
         {currentView === 'main' && (
           <div className="main-screen__game-selection">
-            <button 
+            <button
               className="main-screen__game-option"
               onClick={() => handleGameTypeSelect('challenge')}
             >
               <span className="main-screen__vs-text">vs</span> world
             </button>
-            <button 
+            <button
               className="main-screen__game-option"
               onClick={() => handleGameTypeSelect('vs-human')}
             >
               <span className="main-screen__vs-text">vs</span>human
             </button>
-            <button 
+            <button
               className="main-screen__game-option"
               onClick={() => handleGameTypeSelect('vs-bot')}
             >
@@ -157,4 +171,4 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
       />
     </div>
   );
-}; 
+};

@@ -1,16 +1,16 @@
 /**
  * Scoring Module
- * 
+ *
  * This module provides comprehensive scoring functionality for the WordPlay game,
  * including scoring for letter additions, removals, moves, and key letter bonuses.
- * 
+ *
  * Core Rules:
  * - Add letter: +1 point
- * - Remove letter: +1 point  
+ * - Remove letter: +1 point
  * - Move letters: +1 point (only when stayed letters change their relative sequence)
  * - Substitution = Add + Remove = +2 points
  * - Complex combinations: Each action type scores independently
- * 
+ *
  * Examples:
  * - CAT→CATS: +1 point (add letter, natural shift)
  * - CAT→COAT: +1 point (add letter, natural shift)
@@ -48,11 +48,15 @@ export interface LegacyScoringResult {
 /**
  * Analyzes the difference between two words to determine what actions were performed
  */
-export function analyzeWordChange(previousWord: string, currentWord: string, keyLetters: string[] = []): WordAnalysis {
+export function analyzeWordChange(
+  previousWord: string,
+  currentWord: string,
+  keyLetters: string[] = []
+): WordAnalysis {
   // Normalize inputs
   const prev = previousWord.toUpperCase().trim();
   const curr = currentWord.toUpperCase().trim();
-  const keys = keyLetters.map(k => k.toUpperCase());
+  const keys = keyLetters.map((k) => k.toUpperCase());
 
   // Convert words to character arrays for analysis
   const prevChars = prev.split('');
@@ -66,18 +70,18 @@ export function analyzeWordChange(previousWord: string, currentWord: string, key
   const prevFreq = new Map<string, number>();
   const currFreq = new Map<string, number>();
 
-  prevChars.forEach(char => {
+  prevChars.forEach((char) => {
     prevFreq.set(char, (prevFreq.get(char) || 0) + 1);
   });
 
-  currChars.forEach(char => {
+  currChars.forEach((char) => {
     currFreq.set(char, (currFreq.get(char) || 0) + 1);
   });
 
   // Find differences in character frequencies
   const allChars = new Set([...prevFreq.keys(), ...currFreq.keys()]);
-  
-  allChars.forEach(char => {
+
+  allChars.forEach((char) => {
     const prevCount = prevFreq.get(char) || 0;
     const currCount = currFreq.get(char) || 0;
     const diff = currCount - prevCount;
@@ -98,12 +102,12 @@ export function analyzeWordChange(previousWord: string, currentWord: string, key
   // Check if letters were moved (stayed letters changed their relative sequence)
   // This applies to any case where letters that exist in both words have changed order
   let isMoved = false;
-  
+
   if (prev !== curr) {
     // For natural shift detection, check if one word is a subsequence of the other
     // If so, it's a natural shift and not a move
     let isNaturalShift = false;
-    
+
     // Case 1: Only additions - is the old word a subsequence of the new?
     if (addedLetters.length > 0 && removedLetters.length === 0) {
       isNaturalShift = isSubsequence(prev, curr);
@@ -116,35 +120,36 @@ export function analyzeWordChange(previousWord: string, currentWord: string, key
     else if (addedLetters.length > 0 && removedLetters.length > 0) {
       // Find the longest common subsequence
       const lcs = findLongestCommonSubsequence(prev, curr);
-      
+
       // Natural shift occurs when the LCS is contiguous in both words
       // and represents the majority of both words
-      if (lcs.length >= 3) { // Need at least 3 letters for meaningful sequence
+      if (lcs.length >= 3) {
+        // Need at least 3 letters for meaningful sequence
         // Check if the LCS appears as a contiguous substring in both words
         const prevContainsLcsContiguous = prev.includes(lcs);
         const currContainsLcsContiguous = curr.includes(lcs);
-        
+
         if (prevContainsLcsContiguous && currContainsLcsContiguous) {
           // Additional check: the LCS should represent most of the word content
           const minWordLength = Math.min(prev.length, curr.length);
           const lcsRatio = lcs.length / minWordLength;
-          
+
           // If the LCS represents 75% or more of the shorter word, it's likely a natural shift
           isNaturalShift = lcsRatio >= 0.75;
         }
       }
     }
-    
+
     // If it's not a natural shift, check for actual moves
     if (!isNaturalShift) {
       // Find letters that stayed (exist in both words)
       const stayedLetters = findLettersThatStayed(prev, curr);
-      
+
       if (stayedLetters.length >= 2) {
         // Extract the sequence of stayed letters from both words
         const prevStayedSeq = extractStayedSequence(prev, stayedLetters);
         const currStayedSeq = extractStayedSequence(curr, stayedLetters);
-        
+
         // If the sequences are different, letters were moved
         isMoved = prevStayedSeq !== currStayedSeq;
       }
@@ -152,7 +157,7 @@ export function analyzeWordChange(previousWord: string, currentWord: string, key
   }
 
   // Find key letters used in the current word
-  const keyLettersUsed = currChars.filter(char => keys.includes(char));
+  const keyLettersUsed = currChars.filter((char) => keys.includes(char));
 
   return {
     addedLetters,
@@ -166,8 +171,8 @@ export function analyzeWordChange(previousWord: string, currentWord: string, key
  * Calculates the score for a word change based on game rules
  */
 export function calculateScore(
-  previousWord: string, 
-  currentWord: string, 
+  previousWord: string,
+  currentWord: string,
   options: ScoringOptions = {}
 ): ScoringResult {
   const { keyLetters = [] } = options;
@@ -186,13 +191,13 @@ export function calculateScore(
       actions: [],
       keyLetterScore: 0,
       baseScore: 0,
-      keyLettersUsed: []
+      keyLettersUsed: [],
     };
   }
 
   // Analyze the word change
   const analysis = analyzeWordChange(previousWord, currentWord, keyLetters);
-  
+
   // Score calculation based on core rules
   let addLetterPoints = 0;
   let removeLetterPoints = 0;
@@ -203,7 +208,7 @@ export function calculateScore(
     addLetterPoints = 1;
   }
 
-  // Score remove operations  
+  // Score remove operations
   if (analysis.removedLetters.length > 0) {
     removeLetterPoints = 1;
   }
@@ -212,13 +217,13 @@ export function calculateScore(
   if (analysis.isMoved) {
     movePoints = 1;
   }
-  
+
   // Key letter usage: +1 if any key letter is used
   const keyLetterUsagePoints = analysis.keyLettersUsed.length > 0 ? 1 : 0;
 
   // Build actions list for transparency
   const actions: string[] = [];
-  
+
   if (addLetterPoints > 0) {
     actions.push(`Added letter(s): ${analysis.addedLetters.join(', ')}`);
   }
@@ -232,7 +237,8 @@ export function calculateScore(
     actions.push(`Used key letter(s): ${analysis.keyLettersUsed.join(', ')}`);
   }
 
-  const totalScore = addLetterPoints + removeLetterPoints + movePoints + keyLetterUsagePoints;
+  const totalScore =
+    addLetterPoints + removeLetterPoints + movePoints + keyLetterUsagePoints;
 
   return {
     score: totalScore,
@@ -243,16 +249,21 @@ export function calculateScore(
       movePoints,
       keyLetterUsagePoints,
     },
-    actions: actions.map(action => ({
-      type: action.includes('Added') ? 'add' : 
-            action.includes('Removed') ? 'remove' :
-            action.includes('Moved') ? 'rearrange' :
-            action.includes('key letter') ? 'key-letter' : 'substitute',
-      score: 1
+    actions: actions.map((action) => ({
+      type: action.includes('Added')
+        ? 'add'
+        : action.includes('Removed')
+          ? 'remove'
+          : action.includes('Moved')
+            ? 'rearrange'
+            : action.includes('key letter')
+              ? 'key-letter'
+              : 'substitute',
+      score: 1,
     })),
     keyLetterScore: keyLetterUsagePoints,
     baseScore: addLetterPoints + removeLetterPoints + movePoints,
-    keyLettersUsed: analysis.keyLettersUsed
+    keyLettersUsed: analysis.keyLettersUsed,
   };
 }
 
@@ -305,7 +316,9 @@ function findLettersThatStayed(word1: string, word2: string): string[] {
  */
 function extractStayedSequence(word: string, stayedLetters: string[]): string {
   const stayedFreq = new Map<string, number>();
-  stayedLetters.forEach(char => stayedFreq.set(char, (stayedFreq.get(char) || 0) + 1));
+  stayedLetters.forEach((char) =>
+    stayedFreq.set(char, (stayedFreq.get(char) || 0) + 1)
+  );
 
   const sequence: string[] = [];
   const usedCount = new Map<string, number>();
@@ -330,10 +343,12 @@ function extractStayedSequence(word: string, stayedLetters: string[]): string {
 function findLongestCommonSubsequence(str1: string, str2: string): string {
   const m = str1.length;
   const n = str2.length;
-  
+
   // Create a 2D array to store lengths of common subsequences
-  const dp: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
-  
+  const dp: number[][] = Array(m + 1)
+    .fill(null)
+    .map(() => Array(n + 1).fill(0));
+
   // Fill the dp table
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
@@ -344,10 +359,11 @@ function findLongestCommonSubsequence(str1: string, str2: string): string {
       }
     }
   }
-  
+
   // Reconstruct the LCS
   let lcs = '';
-  let i = m, j = n;
+  let i = m,
+    j = n;
   while (i > 0 && j > 0) {
     if (str1[i - 1] === str2[j - 1]) {
       lcs = str1[i - 1] + lcs;
@@ -359,7 +375,7 @@ function findLongestCommonSubsequence(str1: string, str2: string): string {
       j--;
     }
   }
-  
+
   return lcs;
 }
 
@@ -380,8 +396,11 @@ export function getScoreForMove(
  */
 export function validateScoringResult(result: ScoringResult): boolean {
   // Basic validation: total should equal sum of breakdown
-  const expectedTotal = Object.values(result.breakdown).reduce((sum, points) => sum + points, 0);
-  
+  const expectedTotal = Object.values(result.breakdown).reduce(
+    (sum, points) => sum + points,
+    0
+  );
+
   if (result.totalScore !== expectedTotal) {
     return false;
   }
@@ -404,29 +423,32 @@ export function validateScoringResult(result: ScoringResult): boolean {
 /**
  * Performance test helper for scoring operations
  */
-export function performanceTestScoring(iterations = 1000): { averageTime: number; totalTime: number } {
+export function performanceTestScoring(iterations = 1000): {
+  averageTime: number;
+  totalTime: number;
+} {
   const testMoves = [
     { prev: 'CAT', curr: 'CATS', keys: [] },
     { prev: 'CAT', curr: 'COAT', keys: [] },
     { prev: 'CAT', curr: 'BAT', keys: ['B'] },
     { prev: 'HELLO', curr: 'WORLD', keys: ['W', 'R'] },
-    { prev: 'GAME', curr: 'GAMES', keys: ['S'] }
+    { prev: 'GAME', curr: 'GAMES', keys: ['S'] },
   ];
-  
+
   const startTime = performance.now();
-  
+
   for (let i = 0; i < iterations; i++) {
     const move = testMoves[i % testMoves.length];
     calculateScore(move.prev, move.curr, { keyLetters: move.keys });
   }
-  
+
   const endTime = performance.now();
   const totalTime = endTime - startTime;
   const averageTime = totalTime / iterations;
-  
+
   return {
     averageTime,
-    totalTime
+    totalTime,
   };
 }
 
@@ -435,7 +457,7 @@ export function performanceTestScoring(iterations = 1000): { averageTime: number
  */
 export function formatScoreBreakdown(result: ScoringResult): string {
   const parts: string[] = [];
-  
+
   if (result.breakdown.addLetterPoints > 0) {
     parts.push(`Add: +${result.breakdown.addLetterPoints}`);
   }
@@ -448,35 +470,38 @@ export function formatScoreBreakdown(result: ScoringResult): string {
   if (result.breakdown.keyLetterUsagePoints > 0) {
     parts.push(`Key Usage: +${result.breakdown.keyLetterUsagePoints}`);
   }
-  
+
   return parts.length > 0 ? parts.join(', ') : 'No score';
 }
 
 /**
  * Validates that a word change follows the game rules:
  * - Can only add ONE letter per turn
- * - Can only remove ONE letter per turn  
+ * - Can only remove ONE letter per turn
  * - Can move letters (no limit)
  * - Each action type can only be used once per turn
  */
-export function isValidMove(previousWord: string, currentWord: string): boolean {
+export function isValidMove(
+  previousWord: string,
+  currentWord: string
+): boolean {
   const analysis = analyzeWordChange(previousWord, currentWord);
-  
+
   // Rule: Can only add ONE letter maximum per turn
   if (analysis.addedLetters.length > 1) {
     return false;
   }
-  
+
   // Rule: Can only remove ONE letter maximum per turn
   if (analysis.removedLetters.length > 1) {
     return false;
   }
-  
+
   // Moving letters is always allowed (no limits)
   // Combination of one add + one remove + move is allowed
-  
+
   return true;
-} 
+}
 
 // =============================================================================
 // DEPENDENCY INJECTION WRAPPER FUNCTIONS
@@ -515,4 +540,4 @@ export function getScoreForMoveWithDependencies(
 
 // =============================================================================
 // CORE SCORING IMPLEMENTATION
-// ============================================================================= 
+// =============================================================================

@@ -42,19 +42,21 @@ export async function recordChallengeCompletion(
 
     const { data, error } = await supabase.rpc('record_challenge_result', {
       p_challenge_date: challengeDate,
-      p_step_count: stepCount
+      p_step_count: stepCount,
     });
     if (error) {
       console.warn('Failed to record challenge completion:', error);
       return null;
     }
 
-    const rows = Array.isArray(data) ? data : (data ? [data] : []);
+    const rows = Array.isArray(data) ? data : data ? [data] : [];
     return {
-      entries: rows.map((row: { step_count: number; player_count: number }) => ({
-        stepCount: row.step_count as number,
-        playerCount: row.player_count as number
-      }))
+      entries: rows.map(
+        (row: { step_count: number; player_count: number }) => ({
+          stepCount: row.step_count as number,
+          playerCount: row.player_count as number,
+        })
+      ),
     };
   } catch (error) {
     console.warn('Failed to record challenge completion:', error);
@@ -68,7 +70,9 @@ export async function recordChallengeCompletion(
  * anonymous). Returns an empty histogram if Supabase isn't configured or
  * unreachable, so the overlay degrades gracefully offline.
  */
-export async function fetchChallengeLeaderboard(challengeDate: string): Promise<LeaderboardData> {
+export async function fetchChallengeLeaderboard(
+  challengeDate: string
+): Promise<LeaderboardData> {
   if (!isSupabaseConfigured()) return { entries: [] };
 
   try {
@@ -84,10 +88,12 @@ export async function fetchChallengeLeaderboard(challengeDate: string): Promise<
     }
 
     return {
-      entries: (data ?? []).map((row: { step_count: number; player_count: number }) => ({
-        stepCount: row.step_count as number,
-        playerCount: row.player_count as number
-      }))
+      entries: (data ?? []).map(
+        (row: { step_count: number; player_count: number }) => ({
+          stepCount: row.step_count as number,
+          playerCount: row.player_count as number,
+        })
+      ),
     };
   } catch (error) {
     console.warn('Failed to fetch challenge leaderboard:', error);

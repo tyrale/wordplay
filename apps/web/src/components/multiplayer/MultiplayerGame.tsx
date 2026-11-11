@@ -2,7 +2,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { InteractiveGame } from '../game/InteractiveGame';
 import { SubmitButton } from '../game/SubmitButton';
 import { useMultiplayerManager } from '../../hooks/useMultiplayerManager';
-import { getGameJoinInfo, startWaitingGame } from '../../adapters/supabaseMultiplayerAdapter';
+import {
+  getGameJoinInfo,
+  startWaitingGame,
+} from '../../adapters/supabaseMultiplayerAdapter';
 import { useAlert } from '../ui/AlertProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import './MultiplayerGame.css';
@@ -44,8 +47,14 @@ export interface MultiplayerGameProps {
  * `InteractiveGame`'s `externalManager`/`localPlayerId` props. This keeps
  * the board layout/behavior identical between game modes.
  */
-export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit, onGameEnd, onBossTrigger }) => {
-  const { manager, localPlayerId, isLoading, error } = useMultiplayerManager(gameId);
+export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
+  gameId,
+  onExit,
+  onGameEnd,
+  onBossTrigger,
+}) => {
+  const { manager, localPlayerId, isLoading, error } =
+    useMultiplayerManager(gameId);
   const [maxPlayers, setMaxPlayers] = useState<number | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   // Bumped on every manager update so the waiting-room view (below) re-renders
@@ -61,7 +70,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
 
   useEffect(() => {
     if (!manager) return;
-    const unsubscribe = manager.subscribe(() => forceRerender(n => n + 1));
+    const unsubscribe = manager.subscribe(() => forceRerender((n) => n + 1));
     return unsubscribe;
   }, [manager]);
 
@@ -74,7 +83,8 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
   useEffect(() => {
     if (!manager) return;
     const state = manager.getState();
-    if (state.gameStatus !== 'playing' || !state.config.timePressureEnabled) return;
+    if (state.gameStatus !== 'playing' || !state.config.timePressureEnabled)
+      return;
     if (hasShownTimePressureAlertRef.current) return;
     if (getUnlockedItems('mechanic').includes('time-pressure')) return;
     hasShownTimePressureAlertRef.current = true;
@@ -86,7 +96,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
 
   useEffect(() => {
     let cancelled = false;
-    getGameJoinInfo(gameId).then(info => {
+    getGameJoinInfo(gameId).then((info) => {
       if (!cancelled && info) setMaxPlayers(info.maxPlayers);
     });
     return () => {
@@ -142,13 +152,23 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
   // from this view to the boss battle. We don't await the resign because the
   // parent tears down this component immediately on the trigger - awaiting
   // would never resolve from the unmounted component.
-  const handleBossTrigger = useCallback((word: string) => {
-    if (word.toUpperCase() !== 'GUS') return;
-    if (manager) {
-      manager.resign().catch(err => console.warn('Failed to resign multiplayer game on boss trigger:', err));
-    }
-    onBossTrigger?.(word);
-  }, [manager, onBossTrigger]);
+  const handleBossTrigger = useCallback(
+    (word: string) => {
+      if (word.toUpperCase() !== 'GUS') return;
+      if (manager) {
+        manager
+          .resign()
+          .catch((err) =>
+            console.warn(
+              'Failed to resign multiplayer game on boss trigger:',
+              err
+            )
+          );
+      }
+      onBossTrigger?.(word);
+    },
+    [manager, onBossTrigger]
+  );
 
   if (isLoading) {
     return (
@@ -162,26 +182,14 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
     return (
       <div className="multiplayer-game multiplayer-game__loading">
         <p>{error ?? 'Failed to load game'}</p>
-        <button onClick={onExit} type="button">Back to Menu</button>
+        <button onClick={onExit} type="button">
+          Back to Menu
+        </button>
       </div>
     );
   }
 
   const state = manager.getState();
-
-  // If the host enabled time-pressure for this game, it applies to every
-  // player once the game is actually underway - but a player who hasn't
-  // unlocked it themselves gets a heads-up first (once), since they'd
-  // otherwise be surprised by a 7s turn timer they never opted into. This
-  // doesn't unlock the mechanic for them; they still need to trigger it
-  // themselves to get the permanent toggle.
-  useEffect(() => {
-    if (state.gameStatus !== 'playing' || !state.config.timePressureEnabled) return;
-    if (hasShownTimePressureAlertRef.current) return;
-    if (getUnlockedItems('mechanic').includes('time-pressure')) return;
-    hasShownTimePressureAlertRef.current = true;
-    showAlert('multiplayer', 'hostToggledTime');
-  }, [state.gameStatus, state.config.timePressureEnabled, getUnlockedItems, showAlert]);
 
   // vsmany "Create" games stay 'waiting' until either the host manually
   // starts (once >= 2 players have joined) or the game fills up to
@@ -192,12 +200,17 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
       <div className="multiplayer-game multiplayer-game__waiting">
         <p className="multiplayer-game__waiting-title">Waiting for players…</p>
         <ul className="multiplayer-game__waiting-list">
-          {state.players.map(player => (
-            <li key={player.id}>{player.id === localPlayerId ? `${player.name} (you)` : player.name}</li>
+          {state.players.map((player) => (
+            <li key={player.id}>
+              {player.id === localPlayerId
+                ? `${player.name} (you)`
+                : player.name}
+            </li>
           ))}
         </ul>
         <p className="multiplayer-game__waiting-count">
-          {state.players.length}{maxPlayers ? ` / ${maxPlayers}` : ''} joined
+          {state.players.length}
+          {maxPlayers ? ` / ${maxPlayers}` : ''} joined
         </p>
         {isHost && state.players.length >= 2 && (
           <SubmitButton
@@ -209,7 +222,11 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
             className="multiplayer-game__start-button"
           />
         )}
-        {!isHost && <p className="multiplayer-game__waiting-hint">Waiting on the host to start…</p>}
+        {!isHost && (
+          <p className="multiplayer-game__waiting-hint">
+            Waiting on the host to start…
+          </p>
+        )}
         <button
           className="multiplayer-game__cancel"
           onClick={handleCancelWaiting}
@@ -236,14 +253,15 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
       currentGameMode="multiplayer"
       onGameEnd={(winnerId, finalScores) => {
         const allPlayers = manager.getState().players;
-        const others = allPlayers.filter(p => p.id !== localPlayerId);
+        const others = allPlayers.filter((p) => p.id !== localPlayerId);
         // "Opponent" for the end-of-game meta text: the winner if the local
         // player lost, otherwise the highest-scoring other player - works
         // the same as before for 2-player games, and picks the most
         // relevant reference point for N-player games.
         const opponent =
-          (winnerId && winnerId !== localPlayerId ? others.find(p => p.id === winnerId) : null) ||
-          [...others].sort((a, b) => b.score - a.score)[0];
+          (winnerId && winnerId !== localPlayerId
+            ? others.find((p) => p.id === winnerId)
+            : null) || [...others].sort((a, b) => b.score - a.score)[0];
         onGameEnd?.({
           winnerId,
           localPlayerId,
@@ -251,12 +269,12 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
           opponentScore: finalScores.bot,
           opponentName: opponent?.name || 'Opponent',
           resigned: manager.wasAbandoned(),
-          allPlayers: allPlayers.map(p => ({
+          allPlayers: allPlayers.map((p) => ({
             id: p.id,
             name: p.name,
             score: p.score,
-            isLocal: p.id === localPlayerId
-          }))
+            isLocal: p.id === localPlayerId,
+          })),
         });
       }}
       onResign={handleResign}

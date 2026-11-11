@@ -9,19 +9,19 @@
   min-height: 100vh;
   margin: 0;
   padding: var(--spacing-md, 20px);
-  
+
   /* Typography from theme */
   font-family: var(--theme-font-family, 'Inter', system-ui, sans-serif);
   font-weight: var(--theme-font-weight, 900);
   color: var(--theme-text);
   background-color: var(--theme-background);
-  
+
   /* Layout */
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  
+
   /* Performance optimizations */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -29,7 +29,8 @@
 }
 
 /* Ensure no horizontal scrolling on any device */
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
@@ -37,7 +38,9 @@ html, body {
   box-sizing: border-box;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -59,21 +62,23 @@ html, body {
 }
 
 /* Touch and interaction improvements */
-button, [role="button"], .grid-cell {
+button,
+[role='button'],
+.grid-cell {
   /* Ensure minimum touch target size (44px x 44px) */
   min-height: 44px;
   min-width: 44px;
-  
+
   /* Prevent text selection on buttons */
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  
+
   /* Improve touch responsiveness */
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
-  
+
   /* No focus outline since design is mouse/touch only */
   outline: none;
 }
@@ -85,7 +90,7 @@ button, [role="button"], .grid-cell {
   #root {
     padding: var(--spacing-sm, 8px);
   }
-  
+
   .app {
     gap: var(--spacing-md, 20px);
   }
@@ -114,7 +119,9 @@ button, [role="button"], .grid-cell {
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -131,7 +138,7 @@ button, [role="button"], .grid-cell {
   #root {
     padding: var(--spacing-sm, 8px) var(--spacing-md, 20px);
   }
-  
+
   .app {
     gap: var(--spacing-md, 20px);
   }
@@ -144,7 +151,7 @@ button, [role="button"], .grid-cell {
     color: black;
     padding: 20px;
   }
-  
+
   .app {
     gap: 20px;
   }
@@ -152,7 +159,9 @@ button, [role="button"], .grid-cell {
 
 /* Remove any potential iOS Safari zoom on input focus */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
-  select, input, textarea {
+  select,
+  input,
+  textarea {
     font-size: 16px !important;
   }
 }

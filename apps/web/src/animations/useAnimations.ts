@@ -1,6 +1,6 @@
 /**
  * useAnimations Hook
- * 
+ *
  * Provides component-specific animation methods with easy-to-use API.
  * Handles the complexity of animation system while providing simple
  * trigger functions for components.
@@ -10,15 +10,20 @@ import { useCallback } from 'react';
 import { useAnimationContext } from './AnimationProvider';
 import type { AnimationHookReturn, AnimationComponent } from './types';
 
-export const useAnimations = (component: AnimationComponent): AnimationHookReturn => {
+export const useAnimations = (
+  component: AnimationComponent
+): AnimationHookReturn => {
   const { animate, currentTheme, isReducedMotion } = useAnimationContext();
 
   // Helper to create animation trigger functions
-  const createAnimationTrigger = useCallback((animationName: string) => {
-    return async (element: HTMLElement): Promise<void> => {
-      return animate(element, animationName, component);
-    };
-  }, [animate, component]);
+  const createAnimationTrigger = useCallback(
+    (animationName: string) => {
+      return async (element: HTMLElement): Promise<void> => {
+        return animate(element, animationName, component);
+      };
+    },
+    [animate, component]
+  );
 
   // Letter animations
   const animateLetterEntry = useCallback(
@@ -85,7 +90,8 @@ export const useAnimations = (component: AnimationComponent): AnimationHookRetur
   );
 
   const animateBackgroundTransition = useCallback(
-    (element: HTMLElement) => createAnimationTrigger('backgroundTransition')(element),
+    (element: HTMLElement) =>
+      createAnimationTrigger('backgroundTransition')(element),
     [createAnimationTrigger]
   );
 
@@ -105,7 +111,7 @@ export const useAnimations = (component: AnimationComponent): AnimationHookRetur
     animateBackgroundTransition,
     isAnimating: false, // TODO: Track individual component animation state
     currentTheme: currentTheme.name,
-    isReducedMotion
+    isReducedMotion,
   };
 };
 
@@ -115,4 +121,4 @@ export const useWordBuilderAnimations = () => useAnimations('wordBuilder');
 export const useScoreDisplayAnimations = () => useAnimations('scoreDisplay');
 export const useWordTrailAnimations = () => useAnimations('wordTrail');
 export const useAlphabetGridAnimations = () => useAnimations('alphabetGrid');
-export const useBackgroundAnimations = () => useAnimations('background'); 
+export const useBackgroundAnimations = () => useAnimations('background');

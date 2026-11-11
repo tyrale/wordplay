@@ -12,7 +12,7 @@ import type {
   RemoteGameDependencies,
   RemoteGameSnapshot,
   RemoteGameTurnRecord,
-  RemoteGameUpdatedFields
+  RemoteGameUpdatedFields,
 } from './interfaces';
 
 /**
@@ -36,12 +36,15 @@ class FakeRemoteGameStore {
       keyLetters: [...this.snapshot.keyLetters],
       lockedLetters: [...this.snapshot.lockedLetters],
       lockedKeyLetters: [...this.snapshot.lockedKeyLetters],
-      players: this.snapshot.players.map(p => ({ ...p })),
-      turnHistory: this.snapshot.turnHistory.map(t => ({ ...t }))
+      players: this.snapshot.players.map((p) => ({ ...p })),
+      turnHistory: this.snapshot.turnHistory.map((t) => ({ ...t })),
     };
   }
 
-  persistMove(turn: RemoteGameTurnRecord, updatedFields: RemoteGameUpdatedFields): void {
+  persistMove(
+    turn: RemoteGameTurnRecord,
+    updatedFields: RemoteGameUpdatedFields
+  ): void {
     this.snapshot.turnHistory.push(turn);
     this.snapshot.currentWord = updatedFields.currentWord;
     this.snapshot.keyLetters = updatedFields.keyLetters;
@@ -53,27 +56,27 @@ class FakeRemoteGameStore {
     this.snapshot.status = updatedFields.status;
     this.snapshot.winnerId = updatedFields.winnerId;
 
-    const player = this.snapshot.players.find(p => p.id === turn.playerId);
+    const player = this.snapshot.players.find((p) => p.id === turn.playerId);
     if (player) player.score += turn.scoreEarned;
 
-    this.listeners.forEach(l => l());
+    this.listeners.forEach((l) => l());
   }
 
   abandon(): void {
     this.snapshot.status = 'abandoned';
-    this.listeners.forEach(l => l());
+    this.listeners.forEach((l) => l());
   }
 
   /** Simulate another player joining a still-'waiting' vsmany game. */
   addPlayer(id: string, name: string, playerIndex: number): void {
     this.snapshot.players.push({ id, name, playerIndex, score: 0 });
-    this.listeners.forEach(l => l());
+    this.listeners.forEach((l) => l());
   }
 
   onChange(listener: () => void): () => void {
     this.listeners.push(listener);
     return () => {
-      this.listeners = this.listeners.filter(l => l !== listener);
+      this.listeners = this.listeners.filter((l) => l !== listener);
     };
   }
 
@@ -82,7 +85,10 @@ class FakeRemoteGameStore {
   }
 }
 
-function createFakeDependencies(store: FakeRemoteGameStore, localPlayerId: string): RemoteGameDependencies {
+function createFakeDependencies(
+  store: FakeRemoteGameStore,
+  localPlayerId: string
+): RemoteGameDependencies {
   return {
     getLocalPlayerId: () => localPlayerId,
     fetchGame: async () => store.fetchGame(),
@@ -92,7 +98,7 @@ function createFakeDependencies(store: FakeRemoteGameStore, localPlayerId: strin
     subscribeToGame: (_gameId, onChange) => store.onChange(onChange),
     abandonGame: async () => {
       store.abandon();
-    }
+    },
   };
 }
 
@@ -105,7 +111,9 @@ describe('RemoteGameStateManager', () => {
 
   beforeEach(() => {
     testAdapter = createTestAdapter();
-    ['CAT', 'CATS', 'CART', 'BATS', 'BAT'].forEach(word => testAdapter.addWord(word));
+    ['CAT', 'CATS', 'CART', 'BATS', 'BAT'].forEach((word) =>
+      testAdapter.addWord(word)
+    );
 
     store = new FakeRemoteGameStore({
       gameId: 'game-1',
@@ -121,22 +129,26 @@ describe('RemoteGameStateManager', () => {
       timePressureEnabled: false,
       players: [
         { id: PLAYER_A, name: 'Alice', playerIndex: 0, score: 0 },
-        { id: PLAYER_B, name: 'Bob', playerIndex: 1, score: 0 }
+        { id: PLAYER_B, name: 'Bob', playerIndex: 1, score: 0 },
       ],
       turnHistory: [],
-      winnerId: null
+      winnerId: null,
     });
   });
 
   it('hydrates local state from the remote snapshot on initialize()', async () => {
     const deps = createFakeDependencies(store, PLAYER_A);
-    const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+    const manager = new RemoteGameStateManager(
+      testAdapter.getGameDependencies(),
+      deps,
+      'game-1'
+    );
     await manager.initialize();
 
     const state = manager.getState();
     expect(state.currentWord).toBe('CAT');
     expect(state.gameStatus).toBe('playing');
-    expect(state.players.map(p => p.id)).toEqual([PLAYER_A, PLAYER_B]);
+    expect(state.players.map((p) => p.id)).toEqual([PLAYER_A, PLAYER_B]);
     expect(state.players[0].isCurrentPlayer).toBe(true);
 
     manager.dispose();
@@ -145,7 +157,11 @@ describe('RemoteGameStateManager', () => {
   it('carries the host-configured time-pressure setting through into GameState.config', async () => {
     store.snapshot.timePressureEnabled = true;
     const deps = createFakeDependencies(store, PLAYER_A);
-    const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+    const manager = new RemoteGameStateManager(
+      testAdapter.getGameDependencies(),
+      deps,
+      'game-1'
+    );
     await manager.initialize();
 
     // Every player - not just whoever created the game - should see it as
@@ -157,7 +173,11 @@ describe('RemoteGameStateManager', () => {
 
   it('applies a valid move locally and persists it to the remote store', async () => {
     const deps = createFakeDependencies(store, PLAYER_A);
-    const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+    const manager = new RemoteGameStateManager(
+      testAdapter.getGameDependencies(),
+      deps,
+      'game-1'
+    );
     await manager.initialize();
 
     const success = manager.applyMove('CATS');
@@ -165,7 +185,7 @@ describe('RemoteGameStateManager', () => {
     expect(manager.getState().currentWord).toBe('CATS');
 
     // Allow the fire-and-forget persistMove() promise to resolve.
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(store.snapshot.currentWord).toBe('CATS');
     expect(store.snapshot.turnHistory.length).toBe(1);
@@ -176,7 +196,11 @@ describe('RemoteGameStateManager', () => {
 
   it('reconciles local state when the remote store changes (opponent move)', async () => {
     const deps = createFakeDependencies(store, PLAYER_A);
-    const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+    const manager = new RemoteGameStateManager(
+      testAdapter.getGameDependencies(),
+      deps,
+      'game-1'
+    );
     await manager.initialize();
 
     // Simulate the opponent (player B) making a move directly on the store.
@@ -188,7 +212,7 @@ describe('RemoteGameStateManager', () => {
         newWord: 'BAT',
         scoreEarned: 1,
         keyLetterUsed: null,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       },
       {
         currentWord: 'BAT',
@@ -199,13 +223,13 @@ describe('RemoteGameStateManager', () => {
         currentTurn: 2,
         currentPlayerIndex: 0,
         status: 'active',
-        winnerId: null
+        winnerId: null,
       }
     );
 
     // The store's onChange listeners (registered via subscribeToGame) fire
     // synchronously, but the manager's refresh is async - flush microtasks.
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(manager.getState().currentWord).toBe('BAT');
     expect(manager.getState().turnHistory.length).toBe(1);
@@ -230,29 +254,40 @@ describe('RemoteGameStateManager', () => {
       timePressureEnabled: false,
       players: [{ id: PLAYER_A, name: 'Alice', playerIndex: 0, score: 0 }],
       turnHistory: [],
-      winnerId: null
+      winnerId: null,
     });
 
     const deps = createFakeDependencies(store, PLAYER_A);
-    const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-2');
+    const manager = new RemoteGameStateManager(
+      testAdapter.getGameDependencies(),
+      deps,
+      'game-2'
+    );
     await manager.initialize();
 
-    expect(manager.getState().players.map(p => p.id)).toEqual([PLAYER_A]);
+    expect(manager.getState().players.map((p) => p.id)).toEqual([PLAYER_A]);
 
     // A second player joins - status, currentWord and turn count all stay
     // the same, so this should still be picked up.
     store.addPlayer(PLAYER_B, 'Bob', 1);
 
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(manager.getState().players.map(p => p.id)).toEqual([PLAYER_A, PLAYER_B]);
+    expect(manager.getState().players.map((p) => p.id)).toEqual([
+      PLAYER_A,
+      PLAYER_B,
+    ]);
 
     manager.dispose();
   });
 
   it('does not revert to the previous word on a stale read racing our own optimistic move', async () => {
     const deps = createFakeDependencies(store, PLAYER_A);
-    const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+    const manager = new RemoteGameStateManager(
+      testAdapter.getGameDependencies(),
+      deps,
+      'game-1'
+    );
     await manager.initialize();
 
     // Capture what the remote would've returned right before the move (as
@@ -265,11 +300,13 @@ describe('RemoteGameStateManager', () => {
     expect(manager.getState().currentWord).toBe('CATS');
 
     // Let the real persistMove() settle.
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     // Simulate that stale read landing after our optimistic update.
     deps.fetchGame = async () => staleSnapshot;
-    await (manager as unknown as { refreshFromRemote(): Promise<void> }).refreshFromRemote();
+    await (
+      manager as unknown as { refreshFromRemote(): Promise<void> }
+    ).refreshFromRemote();
 
     // The board should not have flashed back to 'CAT' - the stale,
     // fewer-turns snapshot must be ignored.
@@ -332,7 +369,11 @@ describe('RemoteGameStateManager', () => {
 
   it('resign() marks the game abandoned', async () => {
     const deps = createFakeDependencies(store, PLAYER_A);
-    const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+    const manager = new RemoteGameStateManager(
+      testAdapter.getGameDependencies(),
+      deps,
+      'game-1'
+    );
     await manager.initialize();
 
     await manager.resign();
@@ -345,7 +386,11 @@ describe('RemoteGameStateManager', () => {
 
   it('has no bot behavior (makeBotMove is a no-op)', async () => {
     const deps = createFakeDependencies(store, PLAYER_A);
-    const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+    const manager = new RemoteGameStateManager(
+      testAdapter.getGameDependencies(),
+      deps,
+      'game-1'
+    );
     await manager.initialize();
 
     const result = await manager.makeBotMove();

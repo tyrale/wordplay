@@ -68,6 +68,6 @@ export function getInitialPlayerStats(): PlayerStats {
     firstPlayedAt: null,
     lastPlayedAt: null,
     currentDailyStreak: 0,
-    longestDailyStreak: 0
+    longestDailyStreak: 0,
   };
 }

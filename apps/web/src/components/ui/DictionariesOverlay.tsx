@@ -24,34 +24,43 @@ interface DictionaryEntry {
 const DICTIONARIES: DictionaryEntry[] = [
   {
     name: 'ENABLE Word List',
-    description: 'The core English dictionary — about 172,819 words.'
+    description: 'The core English dictionary — about 172,819 words.',
   },
   {
     name: 'Slang',
-    description: 'Modern informal words and internet slang accepted in casual play.'
+    description:
+      'Modern informal words and internet slang accepted in casual play.',
   },
   {
     name: 'Common Proper Nouns',
-    description: 'Months, days of the week, and common first names.'
+    description: 'Months, days of the week, and common first names.',
   },
   {
     name: 'Profanity List',
-    description: 'Used to catch and mask bad words with the vanity filter.'
-  }
+    description: 'Used to catch and mask bad words with the vanity filter.',
+  },
 ];
 
 const SEUSS_DICTIONARY: DictionaryEntry = {
   name: 'Dr. Seuss Words',
-  description: 'Canonical Dr. Seuss words (LORAX, GRINCH, WOCKET, etc.) accepted as valid plays. Unlocked by beating the Grinchbot.'
+  description:
+    'Canonical Dr. Seuss words (LORAX, GRINCH, WOCKET, etc.) accepted as valid plays. Unlocked by beating the Grinchbot.',
 };
 
-export const DictionariesOverlay: React.FC<DictionariesOverlayProps> = ({ isVisible, onClose }) => {
+export const DictionariesOverlay: React.FC<DictionariesOverlayProps> = ({
+  isVisible,
+  onClose,
+}) => {
   const { getUnlockedItems } = useUnlockSystem();
-  const seussUnlocked = getUnlockedItems('mechanic').includes('seuss-canonical-words');
+  const seussUnlocked = getUnlockedItems('mechanic').includes(
+    'seuss-canonical-words'
+  );
 
   if (!isVisible) return null;
 
-  const dictionaries = seussUnlocked ? [...DICTIONARIES, SEUSS_DICTIONARY] : DICTIONARIES;
+  const dictionaries = seussUnlocked
+    ? [...DICTIONARIES, SEUSS_DICTIONARY]
+    : DICTIONARIES;
 
   return (
     <div
@@ -61,15 +70,22 @@ export const DictionariesOverlay: React.FC<DictionariesOverlayProps> = ({ isVisi
       aria-labelledby="dictionaries-overlay-title"
     >
       <div className="dictionaries-overlay__content">
-        <h2 id="dictionaries-overlay-title" className="dictionaries-overlay__title">
+        <h2
+          id="dictionaries-overlay-title"
+          className="dictionaries-overlay__title"
+        >
           dictionaries
         </h2>
 
         <ul className="dictionaries-overlay__list">
-          {dictionaries.map(entry => (
+          {dictionaries.map((entry) => (
             <li key={entry.name} className="dictionaries-overlay__item">
-              <div className="dictionaries-overlay__item-name">{entry.name}</div>
-              <div className="dictionaries-overlay__item-description">{entry.description}</div>
+              <div className="dictionaries-overlay__item-name">
+                {entry.name}
+              </div>
+              <div className="dictionaries-overlay__item-description">
+                {entry.description}
+              </div>
             </li>
           ))}
         </ul>

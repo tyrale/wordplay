@@ -4,7 +4,7 @@
   /* Position in bottom-right corner to match where menu icon appears in game */
   bottom: var(--spacing-md, 20px);
   right: var(--spacing-md, 20px);
-  
+
   /* Match GridCell action button styling exactly */
   width: 112px;
   height: 112px;
@@ -12,22 +12,22 @@
   border: 2px solid transparent;
   border-radius: 8px;
   cursor: pointer;
-  
+
   /* Typography - match GridCell action button */
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
   font-size: calc(var(--theme-font-size-lg) * 2.4);
   color: var(--theme-accent); /* Accent color like alphabet grid */
-  
+
   /* Layout */
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   /* Transitions */
   transition: all 0.2s ease;
   z-index: 100;
-  
+
   /* Touch target and accessibility */
   -webkit-tap-highlight-color: transparent;
   outline: none;
@@ -102,19 +102,19 @@
   border: none;
   padding: var(--spacing-md, 20px);
   cursor: pointer;
-  
+
   /* Typography */
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
   font-size: 48px;
   color: var(--theme-text);
   text-align: center;
-  
+
   /* Interaction */
   transition: opacity 0.2s ease;
   -webkit-tap-highlight-color: transparent;
   outline: none;
-  
+
   /* Touch target */
   min-height: 44px;
   display: flex;
@@ -143,8 +143,6 @@
   max-width: 400px;
 }
 
-
-
 .main-screen__bot-list {
   display: flex;
   flex-direction: column;
@@ -159,7 +157,7 @@
   padding: 0; /* Updated to 0 padding */
   cursor: pointer;
   width: 100%;
-  
+
   /* Typography - updated font size */
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
@@ -167,12 +165,12 @@
   color: var(--theme-text);
   text-align: center;
   text-transform: uppercase; /* Force bot names to all caps */
-  
+
   /* Interaction */
   transition: opacity 0.2s ease;
   -webkit-tap-highlight-color: transparent;
   outline: none;
-  
+
   /* Touch target */
   min-height: 44px;
   display: flex;
@@ -203,16 +201,14 @@
     bottom: var(--spacing-sm, 8px);
     left: var(--spacing-sm, 8px);
   }
-  
+
   .main-screen__game-option {
     font-size: 36px;
   }
-  
+
   .main-screen__bot-option {
     font-size: 18px; /* Smaller on tablet */
   }
-  
-
 }
 
 @container app (max-width: 480px) {
@@ -231,16 +227,16 @@
     bottom: var(--spacing-sm, 8px);
     left: var(--spacing-sm, 8px);
   }
-  
+
   .main-screen__content {
     padding: var(--spacing-md, 20px);
   }
-  
+
   .main-screen__game-option {
     font-size: 28px;
   }
-  
+
   .main-screen__bot-option {
     font-size: 26px;
   }
-} 
+}

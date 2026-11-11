@@ -27,7 +27,7 @@ import type {
   TurnHistory,
   ValidationResult,
   MoveAttempt,
-  BotMove
+  BotMove,
 } from './interfaces';
 
 /**
@@ -43,15 +43,15 @@ function snapshotToGameState(snapshot: RemoteGameSnapshot): GameState {
   const players: Player[] = snapshot.players
     .slice()
     .sort((a, b) => a.playerIndex - b.playerIndex)
-    .map(p => ({
+    .map((p) => ({
       id: p.id,
       name: p.name,
       isBot: false,
       score: p.score,
-      isCurrentPlayer: p.playerIndex === snapshot.currentPlayerIndex
+      isCurrentPlayer: p.playerIndex === snapshot.currentPlayerIndex,
     }));
 
-  const turnHistory: TurnHistory[] = snapshot.turnHistory.map(t => ({
+  const turnHistory: TurnHistory[] = snapshot.turnHistory.map((t) => ({
     turnNumber: t.turnNumber,
     playerId: t.playerId,
     previousWord: t.previousWord,
@@ -61,13 +61,18 @@ function snapshotToGameState(snapshot: RemoteGameSnapshot): GameState {
     scoringBreakdown: {
       score: t.scoreEarned,
       totalScore: t.scoreEarned,
-      breakdown: { addLetterPoints: 0, removeLetterPoints: 0, movePoints: 0, keyLetterUsagePoints: 0 },
+      breakdown: {
+        addLetterPoints: 0,
+        removeLetterPoints: 0,
+        movePoints: 0,
+        keyLetterUsagePoints: 0,
+      },
       actions: [],
       keyLetterScore: 0,
       baseScore: t.scoreEarned,
-      keyLettersUsed: t.keyLetterUsed ? [t.keyLetterUsed] : []
+      keyLettersUsed: t.keyLetterUsed ? [t.keyLetterUsed] : [],
     },
-    timestamp: t.timestamp
+    timestamp: t.timestamp,
   }));
 
   const gameStatus: GameState['gameStatus'] =
@@ -77,14 +82,16 @@ function snapshotToGameState(snapshot: RemoteGameSnapshot): GameState {
         ? 'waiting'
         : 'playing';
 
-  const winner = snapshot.winnerId ? players.find(p => p.id === snapshot.winnerId) || null : null;
+  const winner = snapshot.winnerId
+    ? players.find((p) => p.id === snapshot.winnerId) || null
+    : null;
 
   const config: GameConfig = {
     maxTurns: snapshot.maxTurns,
     allowBotPlayer: false,
     enableKeyLetters: true,
     enableLockedLetters: true,
-    timePressureEnabled: snapshot.timePressureEnabled
+    timePressureEnabled: snapshot.timePressureEnabled,
   };
 
   return {
@@ -100,11 +107,15 @@ function snapshotToGameState(snapshot: RemoteGameSnapshot): GameState {
     usedWords: snapshot.usedWords,
     usedKeyLetters: [],
     turnHistory,
-    gameStartTime: turnHistory.length > 0 ? turnHistory[0].timestamp : Date.now(),
-    lastMoveTime: turnHistory.length > 0 ? turnHistory[turnHistory.length - 1].timestamp : null,
+    gameStartTime:
+      turnHistory.length > 0 ? turnHistory[0].timestamp : Date.now(),
+    lastMoveTime:
+      turnHistory.length > 0
+        ? turnHistory[turnHistory.length - 1].timestamp
+        : null,
     winner,
     totalMoves: turnHistory.length,
-    config
+    config,
   };
 }
 
@@ -120,11 +131,17 @@ export class RemoteGameStateManager implements IGameStateManager {
    * ('abandoned') - `GameState.gameStatus` collapses both into 'finished'. */
   private lastRemoteStatus: RemoteGameStatus | null = null;
 
-  constructor(dependencies: GameStateDependencies, remote: RemoteGameDependencies, gameId: string) {
+  constructor(
+    dependencies: GameStateDependencies,
+    remote: RemoteGameDependencies,
+    gameId: string
+  ) {
     this.remote = remote;
     this.gameId = gameId;
     // Placeholder local config until initialize() hydrates real state.
-    this.local = new LocalGameStateManagerWithDependencies(dependencies, { allowBotPlayer: false });
+    this.local = new LocalGameStateManagerWithDependencies(dependencies, {
+      allowBotPlayer: false,
+    });
   }
 
   /**
@@ -134,7 +151,7 @@ export class RemoteGameStateManager implements IGameStateManager {
   public async initialize(): Promise<void> {
     await this.refreshFromRemote();
     this.unsubscribeRemote = this.remote.subscribeToGame(this.gameId, () => {
-      this.refreshFromRemote().catch(error => {
+      this.refreshFromRemote().catch((error) => {
         console.error('Failed to refresh remote game state:', error);
       });
     });
@@ -145,7 +162,7 @@ export class RemoteGameStateManager implements IGameStateManager {
     // player leaves and re-opens the game. Short interval keeps vs-human play
     // feeling as responsive as vs-bot.
     this.pollInterval = setInterval(() => {
-      this.refreshFromRemote().catch(error => {
+      this.refreshFromRemote().catch((error) => {
         console.error('Failed to poll remote game state:', error);
       });
     }, 3000);
@@ -224,7 +241,9 @@ export class RemoteGameStateManager implements IGameStateManager {
       // like the host manually starting the game, would trigger it).
       const playersChanged =
         snapshot.players.length !== currentState.players.length ||
-        snapshot.players.some(p => !currentState.players.some(existing => existing.id === p.id));
+        snapshot.players.some(
+          (p) => !currentState.players.some((existing) => existing.id === p.id)
+        );
       if (changed || statusChanged || playersChanged) {
         this.local.loadState(snapshotToGameState(snapshot));
       }
@@ -316,7 +335,7 @@ export class RemoteGameStateManager implements IGameStateManager {
       newWord: lastTurn.newWord,
       scoreEarned: lastTurn.score,
       keyLetterUsed: lastTurn.keyLettersUsed[0] ?? null,
-      timestamp: lastTurn.timestamp
+      timestamp: lastTurn.timestamp,
     };
 
     this.remote
@@ -329,14 +348,20 @@ export class RemoteGameStateManager implements IGameStateManager {
         currentTurn: stateAfter.currentTurn,
         currentPlayerIndex: stateAfter.currentPlayerIndex,
         status: stateAfter.gameStatus === 'finished' ? 'completed' : 'active',
-        winnerId: stateAfter.winner?.id ?? null
+        winnerId: stateAfter.winner?.id ?? null,
       })
-      .catch(error => {
-        console.error('Failed to persist multiplayer move, reverting to remote state:', error);
+      .catch((error) => {
+        console.error(
+          'Failed to persist multiplayer move, reverting to remote state:',
+          error
+        );
         // Reconcile with whatever the server actually has, since our
         // optimistic local write may not have landed.
-        this.refreshFromRemote().catch(refreshError => {
-          console.error('Failed to reconcile after persist failure:', refreshError);
+        this.refreshFromRemote().catch((refreshError) => {
+          console.error(
+            'Failed to reconcile after persist failure:',
+            refreshError
+          );
         });
       });
 
@@ -359,7 +384,7 @@ export class RemoteGameStateManager implements IGameStateManager {
       newWord: lastTurn.newWord,
       scoreEarned: 0,
       keyLetterUsed: null,
-      timestamp: lastTurn.timestamp
+      timestamp: lastTurn.timestamp,
     };
 
     this.remote
@@ -372,12 +397,15 @@ export class RemoteGameStateManager implements IGameStateManager {
         currentTurn: stateAfter.currentTurn,
         currentPlayerIndex: stateAfter.currentPlayerIndex,
         status: stateAfter.gameStatus === 'finished' ? 'completed' : 'active',
-        winnerId: stateAfter.winner?.id ?? null
+        winnerId: stateAfter.winner?.id ?? null,
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Failed to persist pass turn:', error);
-        this.refreshFromRemote().catch(refreshError => {
-          console.error('Failed to reconcile after persist failure:', refreshError);
+        this.refreshFromRemote().catch((refreshError) => {
+          console.error(
+            'Failed to reconcile after persist failure:',
+            refreshError
+          );
         });
       });
 

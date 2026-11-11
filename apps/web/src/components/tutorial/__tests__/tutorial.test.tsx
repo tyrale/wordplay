@@ -11,7 +11,7 @@ const baseGameState: GameState = {
   lockedKeyLetters: [],
   players: [
     { id: 'human', name: 'You', score: 0 },
-    { id: 'bot', name: 'Bot', score: 0 }
+    { id: 'bot', name: 'Bot', score: 0 },
   ],
   turnHistory: [],
   currentPlayerIndex: 0,
@@ -21,7 +21,7 @@ const baseGameState: GameState = {
   lastMoveTime: null,
   winner: null,
   totalMoves: 0,
-  config: {}
+  config: {},
 } as unknown as GameState;
 
 describe('tutorialSteps', () => {

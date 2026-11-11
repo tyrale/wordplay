@@ -2,7 +2,12 @@ import React from 'react';
 import './GridCell.css';
 import { LockIcon } from './LockIcon';
 
-export type GridCellState = 'normal' | 'key' | 'locked' | 'lockedKey' | 'disabled';
+export type GridCellState =
+  | 'normal'
+  | 'key'
+  | 'locked'
+  | 'lockedKey'
+  | 'disabled';
 export type GridCellType = 'letter' | 'action';
 
 export interface GridCellProps {
@@ -71,8 +76,10 @@ export const GridCell: React.FC<GridCellProps> = ({
     `grid-cell--${type}`,
     disabled && 'grid-cell--disabled',
     onClick && !disabled && 'grid-cell--interactive',
-    draggable && !disabled && 'grid-cell--draggable'
-  ].filter(Boolean).join(' ');
+    draggable && !disabled && 'grid-cell--draggable',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div
@@ -89,7 +96,9 @@ export const GridCell: React.FC<GridCellProps> = ({
       data-letter={type === 'letter' ? content : undefined}
       data-type={type}
     >
-      <span className={`grid-cell__content${contentHidden && type === 'letter' ? ' grid-cell__content--hidden' : ''}`}>
+      <span
+        className={`grid-cell__content${contentHidden && type === 'letter' ? ' grid-cell__content--hidden' : ''}`}
+      >
         {content}
       </span>
       {(state === 'locked' || state === 'lockedKey') && (
@@ -99,4 +108,4 @@ export const GridCell: React.FC<GridCellProps> = ({
       )}
     </div>
   );
-}; 
+};

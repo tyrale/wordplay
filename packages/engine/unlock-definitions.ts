@@ -1,6 +1,6 @@
 /**
  * Unlock Definitions
- * 
+ *
  * Configurable unlock rules that define how themes, mechanics, and bots
  * are unlocked through word play and achievements. This data-driven approach
  * allows for easy updates and A/B testing without code changes.
@@ -12,12 +12,12 @@ import type { UnlockDefinition, UnlockState } from './interfaces';
  * Initial unlock state for fresh users (immutable definition)
  */
 const _INITIAL_UNLOCK_STATE = {
-  themes: ['classic blue'],  // Only default theme unlocked initially
-  mechanics: [],             // No special mechanics unlocked
-  bots: ['basicBot'],         // Only basic test bot unlocked
-  achievements: [],         // No achievements earned
-  reveals: [],              // No menu-preview reveals unlocked
-  hasUsedReset: false        // The "RESET" word cheat hasn't been used yet
+  themes: ['classic blue'], // Only default theme unlocked initially
+  mechanics: [], // No special mechanics unlocked
+  bots: ['basicBot'], // Only basic test bot unlocked
+  achievements: [], // No achievements earned
+  reveals: [], // No menu-preview reveals unlocked
+  hasUsedReset: false, // The "RESET" word cheat hasn't been used yet
 } as const;
 
 /**
@@ -30,7 +30,7 @@ export function getInitialUnlockState(): UnlockState {
     bots: [..._INITIAL_UNLOCK_STATE.bots],
     achievements: [..._INITIAL_UNLOCK_STATE.achievements],
     reveals: [..._INITIAL_UNLOCK_STATE.reveals],
-    hasUsedReset: _INITIAL_UNLOCK_STATE.hasUsedReset
+    hasUsedReset: _INITIAL_UNLOCK_STATE.hasUsedReset,
   };
 }
 
@@ -53,133 +53,133 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     description: 'Unlock the red color theme by playing the word "red"',
     trigger: { type: 'word', value: 'red', timing: 'word_submission' },
     target: 'red',
-    immediate_effect: { type: 'apply_theme', value: 'red' }
+    immediate_effect: { type: 'apply_theme', value: 'red' },
   },
   {
     id: 'unlock_pink_theme',
-    category: 'theme', 
+    category: 'theme',
     trigger: { type: 'word', value: 'pink', timing: 'word_submission' },
     target: 'pink',
-    immediate_effect: { type: 'apply_theme', value: 'pink' }
+    immediate_effect: { type: 'apply_theme', value: 'pink' },
   },
   {
     id: 'unlock_purple_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'purple', timing: 'word_submission' },
     target: 'purple',
-    immediate_effect: { type: 'apply_theme', value: 'purple' }
+    immediate_effect: { type: 'apply_theme', value: 'purple' },
   },
   {
     id: 'unlock_plum_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'plum', timing: 'word_submission' },
     target: 'plum',
-    immediate_effect: { type: 'apply_theme', value: 'plum' }
+    immediate_effect: { type: 'apply_theme', value: 'plum' },
   },
   {
     id: 'unlock_indigo_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'indigo', timing: 'word_submission' },
     target: 'indigo',
-    immediate_effect: { type: 'apply_theme', value: 'indigo' }
+    immediate_effect: { type: 'apply_theme', value: 'indigo' },
   },
   {
     id: 'unlock_blue_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'blue', timing: 'word_submission' },
     target: 'blue',
-    immediate_effect: { type: 'apply_theme', value: 'blue' }
+    immediate_effect: { type: 'apply_theme', value: 'blue' },
   },
   {
     id: 'unlock_denim_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'denim', timing: 'word_submission' },
     target: 'denim',
-    immediate_effect: { type: 'apply_theme', value: 'denim' }
+    immediate_effect: { type: 'apply_theme', value: 'denim' },
   },
   {
     id: 'unlock_cyan_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'cyan', timing: 'word_submission' },
     target: 'cyan',
-    immediate_effect: { type: 'apply_theme', value: 'cyan' }
+    immediate_effect: { type: 'apply_theme', value: 'cyan' },
   },
   {
     id: 'unlock_teal_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'teal', timing: 'word_submission' },
     target: 'teal',
-    immediate_effect: { type: 'apply_theme', value: 'teal' }
+    immediate_effect: { type: 'apply_theme', value: 'teal' },
   },
   {
     id: 'unlock_green_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'green', timing: 'word_submission' },
     target: 'green',
-    immediate_effect: { type: 'apply_theme', value: 'green' }
+    immediate_effect: { type: 'apply_theme', value: 'green' },
   },
   {
     id: 'unlock_mint_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'mint', timing: 'word_submission' },
     target: 'mint',
-    immediate_effect: { type: 'apply_theme', value: 'mint' }
+    immediate_effect: { type: 'apply_theme', value: 'mint' },
   },
   {
     id: 'unlock_lime_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'lime', timing: 'word_submission' },
     target: 'lime',
-    immediate_effect: { type: 'apply_theme', value: 'lime' }
+    immediate_effect: { type: 'apply_theme', value: 'lime' },
   },
   {
     id: 'unlock_yellow_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'yellow', timing: 'word_submission' },
     target: 'yellow',
-    immediate_effect: { type: 'apply_theme', value: 'yellow' }
+    immediate_effect: { type: 'apply_theme', value: 'yellow' },
   },
   {
     id: 'unlock_amber_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'amber', timing: 'word_submission' },
     target: 'amber',
-    immediate_effect: { type: 'apply_theme', value: 'amber' }
+    immediate_effect: { type: 'apply_theme', value: 'amber' },
   },
   {
     id: 'unlock_orange_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'orange', timing: 'word_submission' },
     target: 'orange',
-    immediate_effect: { type: 'apply_theme', value: 'orange' }
+    immediate_effect: { type: 'apply_theme', value: 'orange' },
   },
   {
     id: 'unlock_coral_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'coral', timing: 'word_submission' },
     target: 'coral',
-    immediate_effect: { type: 'apply_theme', value: 'coral' }
+    immediate_effect: { type: 'apply_theme', value: 'coral' },
   },
   {
     id: 'unlock_brown_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'brown', timing: 'word_submission' },
     target: 'brown',
-    immediate_effect: { type: 'apply_theme', value: 'brown' }
+    immediate_effect: { type: 'apply_theme', value: 'brown' },
   },
   {
     id: 'unlock_gray_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'gray', timing: 'word_submission' },
     target: 'gray',
-    immediate_effect: { type: 'apply_theme', value: 'gray' }
+    immediate_effect: { type: 'apply_theme', value: 'gray' },
   },
   {
     id: 'unlock_black_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'black', timing: 'word_submission' },
     target: 'black',
-    immediate_effect: { type: 'apply_theme', value: 'black' }
+    immediate_effect: { type: 'apply_theme', value: 'black' },
   },
 
   // Special named themes
@@ -188,385 +188,385 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     category: 'theme',
     trigger: { type: 'word', value: 'grandma', timing: 'word_submission' },
     target: 'grandma',
-    immediate_effect: { type: 'apply_theme', value: 'grandma' }
+    immediate_effect: { type: 'apply_theme', value: 'grandma' },
   },
   {
     id: 'unlock_grandpa_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'grandpa', timing: 'word_submission' },
     target: 'grandpa',
-    immediate_effect: { type: 'apply_theme', value: 'grandpa' }
+    immediate_effect: { type: 'apply_theme', value: 'grandpa' },
   },
   {
     id: 'unlock_contrast_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'contrast', timing: 'word_submission' },
     target: 'contrast',
-    immediate_effect: { type: 'apply_theme', value: 'contrast' }
+    immediate_effect: { type: 'apply_theme', value: 'contrast' },
   },
   {
     id: 'unlock_july_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'july', timing: 'word_submission' },
     target: 'july',
-    immediate_effect: { type: 'apply_theme', value: 'july' }
+    immediate_effect: { type: 'apply_theme', value: 'july' },
   },
   {
     id: 'unlock_brand_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'brand', timing: 'word_submission' },
     target: 'brand',
-    immediate_effect: { type: 'apply_theme', value: 'brand' }
+    immediate_effect: { type: 'apply_theme', value: 'brand' },
   },
   {
     id: 'unlock_nasa_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'nasa', timing: 'word_submission' },
     target: 'nasa',
-    immediate_effect: { type: 'apply_theme', value: 'nasa' }
+    immediate_effect: { type: 'apply_theme', value: 'nasa' },
   },
   {
     id: 'unlock_salmon_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'salmon', timing: 'word_submission' },
     target: 'salmon',
-    immediate_effect: { type: 'apply_theme', value: 'salmon' }
+    immediate_effect: { type: 'apply_theme', value: 'salmon' },
   },
   {
     id: 'unlock_blues_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'blues', timing: 'word_submission' },
     target: 'blues',
-    immediate_effect: { type: 'apply_theme', value: 'blues' }
+    immediate_effect: { type: 'apply_theme', value: 'blues' },
   },
   {
     id: 'unlock_squash_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'squash', timing: 'word_submission' },
     target: 'squash',
-    immediate_effect: { type: 'apply_theme', value: 'squash' }
+    immediate_effect: { type: 'apply_theme', value: 'squash' },
   },
   {
     id: 'unlock_crimson_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'crimson', timing: 'word_submission' },
     target: 'crimson',
-    immediate_effect: { type: 'apply_theme', value: 'crimson' }
+    immediate_effect: { type: 'apply_theme', value: 'crimson' },
   },
   {
     id: 'unlock_touch_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'touch', timing: 'word_submission' },
     target: 'touch',
-    immediate_effect: { type: 'apply_theme', value: 'touch' }
+    immediate_effect: { type: 'apply_theme', value: 'touch' },
   },
   {
     id: 'unlock_citrus_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'citrus', timing: 'word_submission' },
     target: 'citrus',
-    immediate_effect: { type: 'apply_theme', value: 'citrus' }
+    immediate_effect: { type: 'apply_theme', value: 'citrus' },
   },
   {
     id: 'unlock_lagoon_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'lagoon', timing: 'word_submission' },
     target: 'lagoon',
-    immediate_effect: { type: 'apply_theme', value: 'lagoon' }
+    immediate_effect: { type: 'apply_theme', value: 'lagoon' },
   },
   {
     id: 'unlock_intense_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'intense', timing: 'word_submission' },
     target: 'intense',
-    immediate_effect: { type: 'apply_theme', value: 'intense' }
+    immediate_effect: { type: 'apply_theme', value: 'intense' },
   },
   {
     id: 'unlock_sky_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'sky', timing: 'word_submission' },
     target: 'sky',
-    immediate_effect: { type: 'apply_theme', value: 'sky' }
+    immediate_effect: { type: 'apply_theme', value: 'sky' },
   },
   {
     id: 'unlock_winter_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'winter', timing: 'word_submission' },
     target: 'winter',
-    immediate_effect: { type: 'apply_theme', value: 'winter' }
+    immediate_effect: { type: 'apply_theme', value: 'winter' },
   },
   {
     id: 'unlock_autumn_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'autumn', timing: 'word_submission' },
     target: 'autumn',
-    immediate_effect: { type: 'apply_theme', value: 'autumn' }
+    immediate_effect: { type: 'apply_theme', value: 'autumn' },
   },
   {
     id: 'unlock_lavender_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'lavender', timing: 'word_submission' },
     target: 'lavender',
-    immediate_effect: { type: 'apply_theme', value: 'lavender' }
+    immediate_effect: { type: 'apply_theme', value: 'lavender' },
   },
   {
     id: 'unlock_camping_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'camping', timing: 'word_submission' },
     target: 'camping',
-    immediate_effect: { type: 'apply_theme', value: 'camping' }
+    immediate_effect: { type: 'apply_theme', value: 'camping' },
   },
   {
     id: 'unlock_craft_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'craft', timing: 'word_submission' },
     target: 'craft',
-    immediate_effect: { type: 'apply_theme', value: 'craft' }
+    immediate_effect: { type: 'apply_theme', value: 'craft' },
   },
   {
     id: 'unlock_tomato_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'tomato', timing: 'word_submission' },
     target: 'tomato',
-    immediate_effect: { type: 'apply_theme', value: 'tomato' }
+    immediate_effect: { type: 'apply_theme', value: 'tomato' },
   },
   {
     id: 'unlock_grass_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'grass', timing: 'word_submission' },
     target: 'grass',
-    immediate_effect: { type: 'apply_theme', value: 'grass' }
+    immediate_effect: { type: 'apply_theme', value: 'grass' },
   },
   {
     id: 'unlock_gear_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'gear', timing: 'word_submission' },
     target: 'gear',
-    immediate_effect: { type: 'apply_theme', value: 'gear' }
+    immediate_effect: { type: 'apply_theme', value: 'gear' },
   },
   {
     id: 'unlock_boots_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'boots', timing: 'word_submission' },
     target: 'boots',
-    immediate_effect: { type: 'apply_theme', value: 'boots' }
+    immediate_effect: { type: 'apply_theme', value: 'boots' },
   },
   {
     id: 'unlock_storm_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'storm', timing: 'word_submission' },
     target: 'storm',
-    immediate_effect: { type: 'apply_theme', value: 'storm' }
+    immediate_effect: { type: 'apply_theme', value: 'storm' },
   },
   {
     id: 'unlock_vibrant_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'vibrant', timing: 'word_submission' },
     target: 'vibrant',
-    immediate_effect: { type: 'apply_theme', value: 'vibrant' }
+    immediate_effect: { type: 'apply_theme', value: 'vibrant' },
   },
   {
     id: 'unlock_gentle_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'gentle', timing: 'word_submission' },
     target: 'gentle',
-    immediate_effect: { type: 'apply_theme', value: 'gentle' }
+    immediate_effect: { type: 'apply_theme', value: 'gentle' },
   },
   {
     id: 'unlock_peaceful_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'peaceful', timing: 'word_submission' },
     target: 'peaceful',
-    immediate_effect: { type: 'apply_theme', value: 'peaceful' }
+    immediate_effect: { type: 'apply_theme', value: 'peaceful' },
   },
   {
     id: 'unlock_market_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'market', timing: 'word_submission' },
     target: 'market',
-    immediate_effect: { type: 'apply_theme', value: 'market' }
+    immediate_effect: { type: 'apply_theme', value: 'market' },
   },
   {
     id: 'unlock_racing_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'racing', timing: 'word_submission' },
     target: 'racing',
-    immediate_effect: { type: 'apply_theme', value: 'racing' }
+    immediate_effect: { type: 'apply_theme', value: 'racing' },
   },
   {
     id: 'unlock_berry_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'berry', timing: 'word_submission' },
     target: 'berry',
-    immediate_effect: { type: 'apply_theme', value: 'berry' }
+    immediate_effect: { type: 'apply_theme', value: 'berry' },
   },
   {
     id: 'unlock_brick_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'brick', timing: 'word_submission' },
     target: 'brick',
-    immediate_effect: { type: 'apply_theme', value: 'brick' }
+    immediate_effect: { type: 'apply_theme', value: 'brick' },
   },
   {
     id: 'unlock_vintage_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'vintage', timing: 'word_submission' },
     target: 'vintage',
-    immediate_effect: { type: 'apply_theme', value: 'vintage' }
+    immediate_effect: { type: 'apply_theme', value: 'vintage' },
   },
   {
     id: 'unlock_midnight_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'midnight', timing: 'word_submission' },
     target: 'midnight',
-    immediate_effect: { type: 'apply_theme', value: 'midnight' }
+    immediate_effect: { type: 'apply_theme', value: 'midnight' },
   },
   {
     id: 'unlock_softness_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'softness', timing: 'word_submission' },
     target: 'softness',
-    immediate_effect: { type: 'apply_theme', value: 'softness' }
+    immediate_effect: { type: 'apply_theme', value: 'softness' },
   },
   {
     id: 'unlock_smog_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'smog', timing: 'word_submission' },
     target: 'smog',
-    immediate_effect: { type: 'apply_theme', value: 'smog' }
+    immediate_effect: { type: 'apply_theme', value: 'smog' },
   },
   {
     id: 'unlock_foggy_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'foggy', timing: 'word_submission' },
     target: 'foggy',
-    immediate_effect: { type: 'apply_theme', value: 'foggy' }
+    immediate_effect: { type: 'apply_theme', value: 'foggy' },
   },
   {
     id: 'unlock_dew_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'dew', timing: 'word_submission' },
     target: 'dew',
-    immediate_effect: { type: 'apply_theme', value: 'dew' }
+    immediate_effect: { type: 'apply_theme', value: 'dew' },
   },
   {
     id: 'unlock_reds_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'reds', timing: 'word_submission' },
     target: 'reds',
-    immediate_effect: { type: 'apply_theme', value: 'reds' }
+    immediate_effect: { type: 'apply_theme', value: 'reds' },
   },
   {
     id: 'unlock_female_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'female', timing: 'word_submission' },
     target: 'female',
-    immediate_effect: { type: 'apply_theme', value: 'female' }
+    immediate_effect: { type: 'apply_theme', value: 'female' },
   },
   {
     id: 'unlock_seaglass_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'seaglass', timing: 'word_submission' },
     target: 'seaglass',
-    immediate_effect: { type: 'apply_theme', value: 'seaglass' }
+    immediate_effect: { type: 'apply_theme', value: 'seaglass' },
   },
   {
     id: 'unlock_skins_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'skins', timing: 'word_submission' },
     target: 'skins',
-    immediate_effect: { type: 'apply_theme', value: 'skins' }
+    immediate_effect: { type: 'apply_theme', value: 'skins' },
   },
   {
     id: 'unlock_bougie_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'bougie', timing: 'word_submission' },
     target: 'bougie',
-    immediate_effect: { type: 'apply_theme', value: 'bougie' }
+    immediate_effect: { type: 'apply_theme', value: 'bougie' },
   },
   {
     id: 'unlock_moles_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'moles', timing: 'word_submission' },
     target: 'moles',
-    immediate_effect: { type: 'apply_theme', value: 'moles' }
+    immediate_effect: { type: 'apply_theme', value: 'moles' },
   },
   {
     id: 'unlock_pinks_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'pinks', timing: 'word_submission' },
     target: 'pinks',
-    immediate_effect: { type: 'apply_theme', value: 'pinks' }
+    immediate_effect: { type: 'apply_theme', value: 'pinks' },
   },
   {
     id: 'unlock_roots_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'roots', timing: 'word_submission' },
     target: 'roots',
-    immediate_effect: { type: 'apply_theme', value: 'roots' }
+    immediate_effect: { type: 'apply_theme', value: 'roots' },
   },
   {
     id: 'unlock_purples_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'purples', timing: 'word_submission' },
     target: 'purples',
-    immediate_effect: { type: 'apply_theme', value: 'purples' }
+    immediate_effect: { type: 'apply_theme', value: 'purples' },
   },
   {
     id: 'unlock_american_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'american', timing: 'word_submission' },
     target: 'american',
-    immediate_effect: { type: 'apply_theme', value: 'american' }
+    immediate_effect: { type: 'apply_theme', value: 'american' },
   },
   {
     id: 'unlock_serene_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'serene', timing: 'word_submission' },
     target: 'serene',
-    immediate_effect: { type: 'apply_theme', value: 'serene' }
+    immediate_effect: { type: 'apply_theme', value: 'serene' },
   },
   {
     id: 'unlock_playful_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'playful', timing: 'word_submission' },
     target: 'playful',
-    immediate_effect: { type: 'apply_theme', value: 'playful' }
+    immediate_effect: { type: 'apply_theme', value: 'playful' },
   },
   {
     id: 'unlock_warmer_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'warmer', timing: 'word_submission' },
     target: 'warmer',
-    immediate_effect: { type: 'apply_theme', value: 'warmer' }
+    immediate_effect: { type: 'apply_theme', value: 'warmer' },
   },
   {
     id: 'unlock_delicate_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'delicate', timing: 'word_submission' },
     target: 'delicate',
-    immediate_effect: { type: 'apply_theme', value: 'delicate' }
+    immediate_effect: { type: 'apply_theme', value: 'delicate' },
   },
   {
     id: 'unlock_robust_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'robust', timing: 'word_submission' },
     target: 'robust',
-    immediate_effect: { type: 'apply_theme', value: 'robust' }
+    immediate_effect: { type: 'apply_theme', value: 'robust' },
   },
   {
     id: 'unlock_tile_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'tile', timing: 'word_submission' },
     target: 'tile',
-    immediate_effect: { type: 'apply_theme', value: 'tile' }
+    immediate_effect: { type: 'apply_theme', value: 'tile' },
   },
   {
     id: 'unlock_tweed_theme',
     category: 'theme',
     trigger: { type: 'word', value: 'tweed', timing: 'word_submission' },
     target: 'tweed',
-    immediate_effect: { type: 'apply_theme', value: 'tweed' }
+    immediate_effect: { type: 'apply_theme', value: 'tweed' },
   },
   // Reveal unlocks - playing the category name previews all its (still-locked) options in the menu
   {
@@ -576,7 +576,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     name: 'Bots Preview',
     description: 'Reveals all bots as previews in the menu',
     trigger: { type: 'word', value: 'bots', timing: 'word_submission' },
-    target: 'bots'
+    target: 'bots',
   },
   {
     id: 'reveal_themes',
@@ -585,7 +585,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     name: 'Themes Preview',
     description: 'Reveals all themes as previews in the menu',
     trigger: { type: 'word', value: 'themes', timing: 'word_submission' },
-    target: 'themes'
+    target: 'themes',
   },
   {
     id: 'reveal_mechanics',
@@ -594,7 +594,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     name: 'Mechanics Preview',
     description: 'Reveals all mechanics as previews in the menu',
     trigger: { type: 'word', value: 'mechanics', timing: 'word_submission' },
-    target: 'mechanics'
+    target: 'mechanics',
   },
 
   // Mechanic unlocks - triggered by playing specific words
@@ -605,70 +605,71 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     name: 'Vanity Filter',
     description: 'Unlock the vanity filter by playing a profanity word',
     trigger: { type: 'achievement', value: 'played_profanity' },
-    target: 'vanity-filter'
+    target: 'vanity-filter',
   },
   {
     id: 'unlock_three_letter_start',
     category: 'mechanic',
     trigger: { type: 'word', value: 'three', timing: 'word_submission' },
-    target: '3-letter-start'
+    target: '3-letter-start',
   },
   {
     id: 'unlock_five_letter_start',
     category: 'mechanic',
     trigger: { type: 'word', value: 'five', timing: 'word_submission' },
-    target: '5-letter-start'
+    target: '5-letter-start',
   },
   {
     id: 'unlock_six_letter_start',
     category: 'mechanic',
     trigger: { type: 'word', value: 'six', timing: 'word_submission' },
-    target: '6-letter-start'
+    target: '6-letter-start',
   },
   {
     id: 'unlock_seven_letter_start',
     category: 'mechanic',
     trigger: { type: 'word', value: 'seven', timing: 'word_submission' },
-    target: '7-letter-start'
+    target: '7-letter-start',
   },
   {
     id: 'unlock_eight_letter_start',
     category: 'mechanic',
     trigger: { type: 'word', value: 'eight', timing: 'word_submission' },
-    target: '8-letter-start'
+    target: '8-letter-start',
   },
   {
     id: 'unlock_nine_letter_start',
     category: 'mechanic',
     trigger: { type: 'word', value: 'nine', timing: 'word_submission' },
-    target: '9-letter-start'
+    target: '9-letter-start',
   },
   {
     id: 'unlock_ten_letter_start',
     category: 'mechanic',
     trigger: { type: 'word', value: 'ten', timing: 'word_submission' },
-    target: '10-letter-start'
+    target: '10-letter-start',
   },
   {
     id: 'unlock_time_pressure',
     category: 'mechanic',
     trigger: { type: 'word', value: 'time', timing: 'word_submission' },
-    target: 'time-pressure'
+    target: 'time-pressure',
   },
   {
     id: 'unlock_gravity',
     category: 'mechanic',
     trigger: { type: 'word', value: 'gravity', timing: 'word_submission' },
-    target: 'gravity'
+    target: 'gravity',
   },
   {
     id: 'unlock_drunk',
     category: 'mechanic',
     itemId: 'drunk',
     name: 'Drunk Mode',
-    description: 'Unlock drunk mode by playing the word "drunk" - the whole screen gets hazy and wobbly',
+    description:
+      'Unlock drunk mode by playing the word "drunk" - the whole screen gets hazy and wobbly',
     trigger: { type: 'word', value: 'drunk', timing: 'word_submission' },
-    target: 'drunk'
+    target: 'drunk',
   },
 
   // Round length unlocks - playing a number word unlocks setting the round
@@ -680,7 +681,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     name: '10 Rounds',
     description: 'Unlock 10 rounds by playing the word "ten"',
     trigger: { type: 'word', value: 'ten', timing: 'word_submission' },
-    target: 'round-length-10'
+    target: 'round-length-10',
   },
   {
     id: 'unlock_round_length_15',
@@ -689,7 +690,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     name: '15 Rounds',
     description: 'Unlock 15 rounds by playing the word "fifteen"',
     trigger: { type: 'word', value: 'fifteen', timing: 'word_submission' },
-    target: 'round-length-15'
+    target: 'round-length-15',
   },
   {
     id: 'unlock_round_length_30',
@@ -698,7 +699,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     name: '30 Rounds',
     description: 'Unlock 30 rounds by playing the word "thirty"',
     trigger: { type: 'word', value: 'thirty', timing: 'word_submission' },
-    target: 'round-length-30'
+    target: 'round-length-30',
   },
   {
     id: 'unlock_round_length_40',
@@ -707,7 +708,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     name: '40 Rounds',
     description: 'Unlock 40 rounds by playing the word "forty"',
     trigger: { type: 'word', value: 'forty', timing: 'word_submission' },
-    target: 'round-length-40'
+    target: 'round-length-40',
   },
   {
     id: 'unlock_round_length_50',
@@ -716,7 +717,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     name: '50 Rounds',
     description: 'Unlock 50 rounds by playing the word "fifty"',
     trigger: { type: 'word', value: 'fifty', timing: 'word_submission' },
-    target: 'round-length-50'
+    target: 'round-length-50',
   },
   {
     id: 'unlock_round_length_100',
@@ -725,102 +726,127 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     name: '100 Rounds',
     description: 'Unlock 100 rounds by playing the word "hundred"',
     trigger: { type: 'word', value: 'hundred', timing: 'word_submission' },
-    target: 'round-length-100'
+    target: 'round-length-100',
   },
   {
     id: 'unlock_counter',
     category: 'mechanic',
     itemId: 'unlock-counter',
     name: 'Unlock Counter',
-    description: 'Unlock a small "x/x unlocked" progress indicator under home in the menu by playing "unlock"',
+    description:
+      'Unlock a small "x/x unlocked" progress indicator under home in the menu by playing "unlock"',
     trigger: { type: 'word', value: 'unlock', timing: 'word_submission' },
-    target: 'unlock-counter'
+    target: 'unlock-counter',
   },
   {
     id: 'unlock_community_stats',
     category: 'mechanic',
     itemId: 'community-stats',
     name: 'Community Stats',
-    description: 'Unlock a community-wide "x/x found worldwide" progress indicator under home in the menu by playing "world"',
+    description:
+      'Unlock a community-wide "x/x found worldwide" progress indicator under home in the menu by playing "world"',
     trigger: { type: 'word', value: 'world', timing: 'word_submission' },
-    target: 'community-stats'
+    target: 'community-stats',
   },
   {
     id: 'unlock_player_stats',
     category: 'mechanic',
     itemId: 'player-stats',
     name: 'Stats',
-    description: 'Unlock a "stats" menu item under "about" listing your lifetime player stats by playing "stats"',
+    description:
+      'Unlock a "stats" menu item under "about" listing your lifetime player stats by playing "stats"',
     trigger: { type: 'word', value: 'stats', timing: 'word_submission' },
-    target: 'player-stats'
+    target: 'player-stats',
   },
   {
     id: 'unlock_word_paths',
     category: 'mechanic',
     itemId: 'word-paths',
     name: 'Paths',
-    description: 'Reveals the "paths" menu item, letting you explore your local word path graph, by beating the Expert Bot',
-    trigger: { type: 'achievement', value: 'beat_expert_bot', timing: 'game_completion' },
-    target: 'word-paths'
+    description:
+      'Reveals the "paths" menu item, letting you explore your local word path graph, by beating the Expert Bot',
+    trigger: {
+      type: 'achievement',
+      value: 'beat_expert_bot',
+      timing: 'game_completion',
+    },
+    target: 'word-paths',
   },
   {
     id: 'unlock_zen_mode',
     category: 'mechanic',
     itemId: 'zen-mode',
     name: 'Zen Mode',
-    description: 'Reveals "vsnobody" on the main menu - a quiet, score-free, opponent-free way to play - by playing the word "zen"',
+    description:
+      'Reveals "vsnobody" on the main menu - a quiet, score-free, opponent-free way to play - by playing the word "zen"',
     trigger: { type: 'word', value: 'zen', timing: 'word_submission' },
-    target: 'zen-mode'
+    target: 'zen-mode',
   },
 
   // Bot unlocks - mixed triggers (achievements and words)
   {
     id: 'unlock_easy_bot',
     category: 'bot',
-    trigger: { type: 'achievement', value: 'beat_basicBot', timing: 'game_completion' },
-    target: 'easy-bot'
+    trigger: {
+      type: 'achievement',
+      value: 'beat_basicBot',
+      timing: 'game_completion',
+    },
+    target: 'easy-bot',
   },
   {
     id: 'unlock_pirate_bot',
     category: 'bot',
     trigger: { type: 'word', value: 'pirate', timing: 'word_submission' },
-    target: 'pirate-bot'
+    target: 'pirate-bot',
   },
   {
     id: 'unlock_medium_bot',
     category: 'bot',
-    trigger: { type: 'achievement', value: 'beat_easy_bot', timing: 'game_completion' },
-    target: 'medium-bot'
+    trigger: {
+      type: 'achievement',
+      value: 'beat_easy_bot',
+      timing: 'game_completion',
+    },
+    target: 'medium-bot',
   },
   {
     id: 'unlock_hard_bot',
     category: 'bot',
-    trigger: { type: 'achievement', value: 'beat_medium_bot', timing: 'game_completion' },
-    target: 'hard-bot'
+    trigger: {
+      type: 'achievement',
+      value: 'beat_medium_bot',
+      timing: 'game_completion',
+    },
+    target: 'hard-bot',
   },
   {
     id: 'unlock_expert_bot',
     category: 'bot',
-    trigger: { type: 'achievement', value: 'beat_hard_bot', timing: 'game_completion' },
-    target: 'expert-bot'
+    trigger: {
+      type: 'achievement',
+      value: 'beat_hard_bot',
+      timing: 'game_completion',
+    },
+    target: 'expert-bot',
   },
   {
     id: 'unlock_noob_bot',
     category: 'bot',
     trigger: { type: 'word', value: 'noob', timing: 'word_submission' },
-    target: 'noob-bot'
+    target: 'noob-bot',
   },
   {
     id: 'unlock_bruh_bot',
     category: 'bot',
     trigger: { type: 'word', value: 'bruh', timing: 'word_submission' },
-    target: 'bruh-bot'
+    target: 'bruh-bot',
   },
   {
     id: 'unlock_ninja_bot',
     category: 'bot',
     trigger: { type: 'word', value: 'ninja', timing: 'word_submission' },
-    target: 'ninja-bot'
+    target: 'ninja-bot',
   },
 
   // Beat the Ninjabot -> permanently unlock the "ninja word trail" mechanic:
@@ -832,8 +858,12 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     itemId: 'ninja-word-trail',
     name: 'Ninja Word Trail',
     description: 'Unlock the ninja word trail by beating the Ninjabot',
-    trigger: { type: 'achievement', value: 'beat_ninja_bot', timing: 'game_completion' },
-    target: 'ninja-word-trail'
+    trigger: {
+      type: 'achievement',
+      value: 'beat_ninja_bot',
+      timing: 'game_completion',
+    },
+    target: 'ninja-word-trail',
   },
 
   // Easter egg - playing the founder's name unlocks dark mode
@@ -844,7 +874,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     name: 'Dark Mode',
     description: 'Unlock dark mode by playing "tyrale"',
     trigger: { type: 'word', value: 'tyrale', timing: 'word_submission' },
-    target: 'dark-mode'
+    target: 'dark-mode',
   },
 
   // Dr. Seuss unlock - playing STINK → STANK → STUNK in consecutive order
@@ -855,10 +885,11 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     id: 'unlock_grinch_theme',
     category: 'theme',
     name: 'Grinch Theme',
-    description: 'Unlock the Grinch theme by playing STINK, STANK, STUNK in order',
+    description:
+      'Unlock the Grinch theme by playing STINK, STANK, STUNK in order',
     trigger: { type: 'word_sequence', sequence: ['STINK', 'STANK', 'STUNK'] },
     target: 'grinch',
-    immediate_effect: { type: 'apply_theme', value: 'grinch' }
+    immediate_effect: { type: 'apply_theme', value: 'grinch' },
   },
   {
     id: 'unlock_grinch_bot',
@@ -866,7 +897,7 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     name: 'Grinch Bot',
     description: 'Unlock the Grinchbot by playing STINK, STANK, STUNK in order',
     trigger: { type: 'word_sequence', sequence: ['STINK', 'STANK', 'STUNK'] },
-    target: 'grinch-bot'
+    target: 'grinch-bot',
   },
 
   // Beat the Grinchbot → unlock canonical Dr. Seuss words as playable
@@ -876,8 +907,12 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     category: 'mechanic',
     name: 'Dr. Seuss Words',
     description: 'Unlock canonical Dr. Seuss words by beating the Grinchbot',
-    trigger: { type: 'achievement', value: 'beat_grinch_bot', timing: 'game_completion' },
-    target: 'seuss-canonical-words'
+    trigger: {
+      type: 'achievement',
+      value: 'beat_grinch_bot',
+      timing: 'game_completion',
+    },
+    target: 'seuss-canonical-words',
   },
 
   // "GUS" boss battle chain - encounter-only (not permanently unlocked by
@@ -890,57 +925,84 @@ export const UNLOCK_DEFINITIONS: UnlockDefinition[] = [
     id: 'unlock_boss_bot_playable',
     category: 'bot',
     name: 'Boss Bot',
-    description: 'Unlocked by beating gigabossbot - the final boss of the GUS chain',
-    trigger: { type: 'achievement', value: 'beat_giga_boss_bot', timing: 'game_completion' },
-    target: 'boss-bot'
+    description:
+      'Unlocked by beating gigabossbot - the final boss of the GUS chain',
+    trigger: {
+      type: 'achievement',
+      value: 'beat_giga_boss_bot',
+      timing: 'game_completion',
+    },
+    target: 'boss-bot',
   },
   {
     id: 'unlock_boss_theme',
     category: 'theme',
     name: 'Boss Theme',
     description: 'Unlocked by beating gigabossbot',
-    trigger: { type: 'achievement', value: 'beat_giga_boss_bot', timing: 'game_completion' },
-    target: 'boss'
+    trigger: {
+      type: 'achievement',
+      value: 'beat_giga_boss_bot',
+      timing: 'game_completion',
+    },
+    target: 'boss',
   },
   {
     id: 'unlock_megaboss_theme',
     category: 'theme',
     name: 'Megaboss Theme',
     description: 'Unlocked by beating gigabossbot',
-    trigger: { type: 'achievement', value: 'beat_giga_boss_bot', timing: 'game_completion' },
-    target: 'megaboss'
+    trigger: {
+      type: 'achievement',
+      value: 'beat_giga_boss_bot',
+      timing: 'game_completion',
+    },
+    target: 'megaboss',
   },
   {
     id: 'unlock_gigaboss_theme',
     category: 'theme',
     name: 'Gigaboss Theme',
     description: 'Unlocked by beating gigabossbot',
-    trigger: { type: 'achievement', value: 'beat_giga_boss_bot', timing: 'game_completion' },
-    target: 'gigaboss'
-  }
+    trigger: {
+      type: 'achievement',
+      value: 'beat_giga_boss_bot',
+      timing: 'game_completion',
+    },
+    target: 'gigaboss',
+  },
 ];
 
 /**
  * Helper function to get unlock definitions by trigger type
  */
-export function getUnlocksByTriggerType(triggerType: 'word' | 'achievement' | 'word_sequence'): UnlockDefinition[] {
-  return UNLOCK_DEFINITIONS.filter(unlock => unlock.trigger.type === triggerType);
+export function getUnlocksByTriggerType(
+  triggerType: 'word' | 'achievement' | 'word_sequence'
+): UnlockDefinition[] {
+  return UNLOCK_DEFINITIONS.filter(
+    (unlock) => unlock.trigger.type === triggerType
+  );
 }
 
 /**
  * Helper function to get unlock definitions by category
  */
-export function getUnlocksByCategory(category: 'theme' | 'mechanic' | 'bot'): UnlockDefinition[] {
-  return UNLOCK_DEFINITIONS.filter(unlock => unlock.category === category);
+export function getUnlocksByCategory(
+  category: 'theme' | 'mechanic' | 'bot'
+): UnlockDefinition[] {
+  return UNLOCK_DEFINITIONS.filter((unlock) => unlock.category === category);
 }
 
 /**
  * Helper function to find unlock definition by trigger value
  */
-export function findUnlockByTrigger(triggerType: 'word' | 'achievement', value: string): UnlockDefinition[] {
-  return UNLOCK_DEFINITIONS.filter(unlock =>
-    unlock.trigger.type === triggerType &&
-    unlock.trigger.value?.toLowerCase() === value.toLowerCase()
+export function findUnlockByTrigger(
+  triggerType: 'word' | 'achievement',
+  value: string
+): UnlockDefinition[] {
+  return UNLOCK_DEFINITIONS.filter(
+    (unlock) =>
+      unlock.trigger.type === triggerType &&
+      unlock.trigger.value?.toLowerCase() === value.toLowerCase()
   );
 }
 
@@ -949,8 +1011,10 @@ export function findUnlockByTrigger(triggerType: 'word' | 'achievement', value: 
  * the given word path. A sequence of length N matches when the last N words
  * in the path (case-insensitive) equal the sequence entries in order.
  */
-export function findUnlockBySequenceTrigger(wordPath: string[]): UnlockDefinition[] {
-  return UNLOCK_DEFINITIONS.filter(unlock => {
+export function findUnlockBySequenceTrigger(
+  wordPath: string[]
+): UnlockDefinition[] {
+  return UNLOCK_DEFINITIONS.filter((unlock) => {
     if (unlock.trigger.type !== 'word_sequence' || !unlock.trigger.sequence) {
       return false;
     }
@@ -959,4 +1023,4 @@ export function findUnlockBySequenceTrigger(wordPath: string[]): UnlockDefinitio
     const tail = wordPath.slice(-seq.length);
     return tail.every((word, i) => word.toUpperCase() === seq[i].toUpperCase());
   });
-} 
+}

@@ -14,7 +14,7 @@
 import React from 'react';
 import {
   useChallengeLeaderboard,
-  getTodayChallengeDate
+  getTodayChallengeDate,
 } from '../../hooks/useChallengeLeaderboard';
 import './LeaderboardOverlay.css';
 
@@ -23,9 +23,14 @@ export interface LeaderboardOverlayProps {
   onClose: () => void;
 }
 
-export const LeaderboardOverlay: React.FC<LeaderboardOverlayProps> = ({ isVisible, onClose }) => {
+export const LeaderboardOverlay: React.FC<LeaderboardOverlayProps> = ({
+  isVisible,
+  onClose,
+}) => {
   const today = getTodayChallengeDate();
-  const { entries, isLoading, error, localResult } = useChallengeLeaderboard(isVisible ? today : null);
+  const { entries, isLoading, error, localResult } = useChallengeLeaderboard(
+    isVisible ? today : null
+  );
 
   if (!isVisible) return null;
 
@@ -46,15 +51,22 @@ export const LeaderboardOverlay: React.FC<LeaderboardOverlayProps> = ({ isVisibl
       aria-labelledby="leaderboard-overlay-title"
     >
       <div className="leaderboard-overlay__content">
-        <h2 id="leaderboard-overlay-title" className="leaderboard-overlay__title">
+        <h2
+          id="leaderboard-overlay-title"
+          className="leaderboard-overlay__title"
+        >
           leaderboard
         </h2>
 
         {localResult ? (
           <div className="leaderboard-overlay__words">
-            <span className="leaderboard-overlay__word">{localResult.startWord}</span>
+            <span className="leaderboard-overlay__word">
+              {localResult.startWord}
+            </span>
             <span className="leaderboard-overlay__arrow">→</span>
-            <span className="leaderboard-overlay__word">{localResult.targetWord}</span>
+            <span className="leaderboard-overlay__word">
+              {localResult.targetWord}
+            </span>
           </div>
         ) : (
           <div className="leaderboard-overlay__words leaderboard-overlay__words--empty">
@@ -68,8 +80,9 @@ export const LeaderboardOverlay: React.FC<LeaderboardOverlayProps> = ({ isVisibl
           <div className="leaderboard-overlay__empty">{error}</div>
         ) : hasEntries ? (
           <ul className="leaderboard-overlay__list">
-            {entries.map(entry => {
-              const isYou = localStepCount !== null && entry.stepCount === localStepCount;
+            {entries.map((entry) => {
+              const isYou =
+                localStepCount !== null && entry.stepCount === localStepCount;
               return (
                 <li key={entry.stepCount} className="leaderboard-overlay__item">
                   <span
@@ -78,8 +91,12 @@ export const LeaderboardOverlay: React.FC<LeaderboardOverlayProps> = ({ isVisibl
                     {entry.stepCount}
                   </span>
                   <span className="leaderboard-overlay__dash">-</span>
-                  <span className="leaderboard-overlay__count">{entry.playerCount}</span>
-                  {isYou && <span className="leaderboard-overlay__you">YOU</span>}
+                  <span className="leaderboard-overlay__count">
+                    {entry.playerCount}
+                  </span>
+                  {isYou && (
+                    <span className="leaderboard-overlay__you">YOU</span>
+                  )}
                 </li>
               );
             })}

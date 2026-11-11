@@ -1,6 +1,6 @@
 /**
  * Unit tests for Centralized Profanity Management
- * 
+ *
  * Tests the platform-agnostic profanity detection system that provides
  * a single source of truth for profanity words across all platforms.
  */
@@ -12,28 +12,65 @@ import {
   getProfanityStats,
   getBasicProfanityWords,
   getComprehensiveProfanityWords,
-  type ProfanityConfig
+  type ProfanityConfig,
 } from './profanity';
 
 // Mock profanity words for testing (simulating what would be loaded from JSON)
 const mockProfanityWords = [
-  'SHIT', 'FUCK', 'BITCH', 'DAMN', 'HELL', 'CRAP', 'PISS', 'FART', 'POOP',
-  'ASSHOLE', 'BASTARD', 'DICKHEAD', 'MOTHERFUCKER', 'BULLSHIT', 'GODDAMN',
-  'WHORE', 'SLUT', 'TITS', 'COCK', 'PUSSY', 'ASS', 'DICK', 'PENIS', 'VAGINA',
+  'SHIT',
+  'FUCK',
+  'BITCH',
+  'DAMN',
+  'HELL',
+  'CRAP',
+  'PISS',
+  'FART',
+  'POOP',
+  'ASSHOLE',
+  'BASTARD',
+  'DICKHEAD',
+  'MOTHERFUCKER',
+  'BULLSHIT',
+  'GODDAMN',
+  'WHORE',
+  'SLUT',
+  'TITS',
+  'COCK',
+  'PUSSY',
+  'ASS',
+  'DICK',
+  'PENIS',
+  'VAGINA',
   // Additional words to ensure we have enough for comprehensive testing
-  'TESTICLES', 'BREASTS', 'INTERCOURSE', 'MASTURBATE', 'PROSTITUTE',
-  'ABORTION', 'CONTRACEPTION', 'ORGASM', 'ERECTION', 'MENSTRUATION',
+  'TESTICLES',
+  'BREASTS',
+  'INTERCOURSE',
+  'MASTURBATE',
+  'PROSTITUTE',
+  'ABORTION',
+  'CONTRACEPTION',
+  'ORGASM',
+  'ERECTION',
+  'MENSTRUATION',
   // Some longer words to test filtering
-  'EXTREMELY-LONG-PROFANITY', 'WORD WITH SPACES', 'NUMBER123WORD',
+  'EXTREMELY-LONG-PROFANITY',
+  'WORD WITH SPACES',
+  'NUMBER123WORD',
   // Some 3-5 letter words for basic testing
-  'SEX', 'GAY', 'FAG', 'HOE', 'HO'
+  'SEX',
+  'GAY',
+  'FAG',
+  'HOE',
+  'HO',
 ];
 
 describe('Centralized Profanity Management', () => {
   describe('Basic Profanity Detection', () => {
     it('should detect profanity words from comprehensive dictionary', () => {
-      const basicWords = getProfanityWords(mockProfanityWords, { level: 'basic' });
-      
+      const basicWords = getProfanityWords(mockProfanityWords, {
+        level: 'basic',
+      });
+
       // Test with words that are actually in the comprehensive dictionary
       expect(basicWords.has('SHIT')).toBe(true);
       expect(basicWords.has('FUCK')).toBe(true);
@@ -45,7 +82,7 @@ describe('Centralized Profanity Management', () => {
       const basicWords = getBasicProfanityWords(mockProfanityWords);
       expect(Array.isArray(basicWords)).toBe(true);
       expect(basicWords.length).toBeGreaterThan(0);
-      
+
       // All basic words should be 3-5 letters (our filtering criteria)
       for (const word of basicWords) {
         expect(word.length).toBeGreaterThanOrEqual(3);
@@ -54,7 +91,9 @@ describe('Centralized Profanity Management', () => {
     });
 
     it('should have consistent basic word count', () => {
-      const basicSet = getProfanityWords(mockProfanityWords, { level: 'basic' });
+      const basicSet = getProfanityWords(mockProfanityWords, {
+        level: 'basic',
+      });
       const basicArray = getBasicProfanityWords(mockProfanityWords);
       expect(basicSet.size).toBe(basicArray.length);
     });
@@ -62,11 +101,13 @@ describe('Centralized Profanity Management', () => {
 
   describe('Comprehensive Profanity Detection', () => {
     it('should load comprehensive word list', () => {
-      const comprehensiveWords = getProfanityWords(mockProfanityWords, { level: 'comprehensive' });
-      
+      const comprehensiveWords = getProfanityWords(mockProfanityWords, {
+        level: 'comprehensive',
+      });
+
       // Should contain significantly more words than basic
       expect(comprehensiveWords.size).toBeGreaterThan(10);
-      
+
       // Should include words that are actually in the comprehensive dictionary
       expect(comprehensiveWords.has('SHIT')).toBe(true);
       expect(comprehensiveWords.has('FUCK')).toBe(true);
@@ -74,39 +115,59 @@ describe('Centralized Profanity Management', () => {
     });
 
     it('should return array from getComprehensiveProfanityWords', () => {
-      const comprehensiveWords = getComprehensiveProfanityWords(mockProfanityWords);
+      const comprehensiveWords =
+        getComprehensiveProfanityWords(mockProfanityWords);
       expect(Array.isArray(Array.from(comprehensiveWords))).toBe(true);
       expect(comprehensiveWords.size).toBeGreaterThan(10);
     });
 
     it('should filter out words with spaces and numbers', () => {
-      const comprehensiveWords = getComprehensiveProfanityWords(mockProfanityWords);
+      const comprehensiveWords =
+        getComprehensiveProfanityWords(mockProfanityWords);
       const comprehensiveArray = Array.from(comprehensiveWords);
-      
+
       // Check that no words contain spaces or numbers
-      const hasSpaceOrNumber = comprehensiveArray.some(word => /[\s\d]/.test(word));
+      const hasSpaceOrNumber = comprehensiveArray.some((word) =>
+        /[\s\d]/.test(word)
+      );
       expect(hasSpaceOrNumber).toBe(false);
     });
 
     it('should have more comprehensive than basic words', () => {
-      const basicWords = getProfanityWords(mockProfanityWords, { level: 'basic' });
-      const comprehensiveWords = getProfanityWords(mockProfanityWords, { level: 'comprehensive' });
-      
+      const basicWords = getProfanityWords(mockProfanityWords, {
+        level: 'basic',
+      });
+      const comprehensiveWords = getProfanityWords(mockProfanityWords, {
+        level: 'comprehensive',
+      });
+
       expect(comprehensiveWords.size).toBeGreaterThan(basicWords.size);
     });
   });
 
   describe('isProfanity Function', () => {
     it('should detect profanity in basic mode', () => {
-      expect(isProfanity('SHIT', mockProfanityWords, { level: 'basic' })).toBe(true);
-      expect(isProfanity('FUCK', mockProfanityWords, { level: 'basic' })).toBe(true);
-      expect(isProfanity('INNOCENT', mockProfanityWords, { level: 'basic' })).toBe(false);
+      expect(isProfanity('SHIT', mockProfanityWords, { level: 'basic' })).toBe(
+        true
+      );
+      expect(isProfanity('FUCK', mockProfanityWords, { level: 'basic' })).toBe(
+        true
+      );
+      expect(
+        isProfanity('INNOCENT', mockProfanityWords, { level: 'basic' })
+      ).toBe(false);
     });
 
     it('should detect profanity in comprehensive mode', () => {
-      expect(isProfanity('SHIT', mockProfanityWords, { level: 'comprehensive' })).toBe(true);
-      expect(isProfanity('FUCK', mockProfanityWords, { level: 'comprehensive' })).toBe(true);
-      expect(isProfanity('INNOCENT', mockProfanityWords, { level: 'comprehensive' })).toBe(false);
+      expect(
+        isProfanity('SHIT', mockProfanityWords, { level: 'comprehensive' })
+      ).toBe(true);
+      expect(
+        isProfanity('FUCK', mockProfanityWords, { level: 'comprehensive' })
+      ).toBe(true);
+      expect(
+        isProfanity('INNOCENT', mockProfanityWords, { level: 'comprehensive' })
+      ).toBe(false);
     });
 
     it('should be case insensitive', () => {
@@ -132,9 +193,9 @@ describe('Centralized Profanity Management', () => {
     it('should support custom words', () => {
       const config: ProfanityConfig = {
         level: 'basic',
-        customWords: ['CUSTOM', 'BADWORD']
+        customWords: ['CUSTOM', 'BADWORD'],
       };
-      
+
       const words = getProfanityWords(mockProfanityWords, config);
       expect(words.has('CUSTOM')).toBe(true);
       expect(words.has('BADWORD')).toBe(true);
@@ -144,9 +205,9 @@ describe('Centralized Profanity Management', () => {
     it('should support excluded words', () => {
       const config: ProfanityConfig = {
         level: 'basic',
-        excludeWords: ['SHIT', 'FUCK']
+        excludeWords: ['SHIT', 'FUCK'],
       };
-      
+
       const words = getProfanityWords(mockProfanityWords, config);
       expect(words.has('SHIT')).toBe(false);
       expect(words.has('FUCK')).toBe(false);
@@ -156,14 +217,14 @@ describe('Centralized Profanity Management', () => {
     it('should handle case sensitivity in custom and excluded words', () => {
       const config1: ProfanityConfig = {
         level: 'basic',
-        customWords: ['custom']
+        customWords: ['custom'],
       };
-      
+
       const config2: ProfanityConfig = {
         level: 'basic',
-        excludeWords: ['shit']
+        excludeWords: ['shit'],
       };
-      
+
       expect(isProfanity('CUSTOM', mockProfanityWords, config1)).toBe(true);
       expect(isProfanity('SHIT', mockProfanityWords, config2)).toBe(false);
     });
@@ -171,9 +232,9 @@ describe('Centralized Profanity Management', () => {
     it('should allow adding back filtered words', () => {
       const config: ProfanityConfig = {
         level: 'comprehensive',
-        customWords: ['NEWWORD', 'ANOTHERWORD'] // Add words not in our mock data
+        customWords: ['NEWWORD', 'ANOTHERWORD'], // Add words not in our mock data
       };
-      
+
       expect(isProfanity('NEWWORD', mockProfanityWords, config)).toBe(true);
       expect(isProfanity('ANOTHERWORD', mockProfanityWords, config)).toBe(true);
     });
@@ -182,7 +243,7 @@ describe('Centralized Profanity Management', () => {
   describe('Statistics and Performance', () => {
     it('should provide accurate statistics', () => {
       const stats = getProfanityStats(mockProfanityWords);
-      
+
       expect(stats.basic).toBeGreaterThan(0);
       expect(stats.comprehensive).toBeGreaterThan(stats.basic);
       expect(stats.total).toBe(stats.comprehensive);
@@ -191,10 +252,10 @@ describe('Centralized Profanity Management', () => {
 
     it('should show memory savings from filtering', () => {
       const stats = getProfanityStats(mockProfanityWords);
-      
+
       // We should have filtered out some words (spaces/numbers)
       expect(stats.comprehensive).toBeLessThan(mockProfanityWords.length);
-      
+
       // Basic should be a subset of comprehensive
       expect(stats.basic).toBeLessThanOrEqual(stats.comprehensive);
     });
@@ -209,24 +270,28 @@ describe('Centralized Profanity Management', () => {
     });
 
     it('should maintain performance with Set-based lookups', () => {
-      const comprehensiveWords = getProfanityWords(mockProfanityWords, { level: 'comprehensive' });
-      
+      const comprehensiveWords = getProfanityWords(mockProfanityWords, {
+        level: 'comprehensive',
+      });
+
       // Performance test - should complete quickly
       const start = Date.now();
       for (let i = 0; i < 1000; i++) {
         comprehensiveWords.has('TESTWORD');
       }
       const end = Date.now();
-      
+
       // Should complete 1000 lookups in under 10ms
       expect(end - start).toBeLessThan(10);
     });
 
     it('should maintain dynamic word generation', () => {
       // Basic words should be a subset of comprehensive
-      const comprehensiveWords = getProfanityWords(mockProfanityWords, { level: 'comprehensive' });
+      const comprehensiveWords = getProfanityWords(mockProfanityWords, {
+        level: 'comprehensive',
+      });
       const basicWords = getBasicProfanityWords(mockProfanityWords);
-      
+
       for (const word of basicWords) {
         expect(comprehensiveWords.has(word)).toBe(true);
       }
@@ -244,4 +309,4 @@ describe('Centralized Profanity Management', () => {
       expect(stats.total).toBe(0);
     });
   });
-}); 
+});

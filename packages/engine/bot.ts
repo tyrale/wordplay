@@ -1,14 +1,14 @@
 /**
  * Bot AI v0 (Greedy Strategy) - Platform-Agnostic
- * 
+ *
  * This module provides a greedy bot AI for the WordPlay game that chooses
  * the highest scoring legal moves by generating and evaluating all possible
  * word transformations (add/remove/rearrange letters).
- * 
+ *
  * DEPENDENCY INJECTION: All functions now accept dependencies as parameters
  * for platform-agnostic operation. Platform adapters provide scoring and
  * dictionary functions.
- * 
+ *
  * Key Features:
  * - Greedy strategy (chooses highest scoring moves)
  * - Move generation for add/remove/rearrange operations
@@ -16,7 +16,7 @@
  * - Fair play (follows same validation rules as human players)
  * - Performance optimized for <50ms average latency
  * - Integration with scoring module and word validation
- * 
+ *
  * Note: This bot plays fairly for balanced gameplay. The validation system
  * supports rule-breaking bots (isBot: true) for advanced difficulty modes,
  * but this v0 Greedy bot uses standard validation (isBot: false).
@@ -33,7 +33,10 @@
  * Dictionary validation interface for agnostic usage
  */
 export interface DictionaryValidation {
-  validateWord: (word: string, options?: { isBot?: boolean; allowSeuss?: boolean }) => { isValid: boolean; reason?: string; word: string };
+  validateWord: (
+    word: string,
+    options?: { isBot?: boolean; allowSeuss?: boolean }
+  ) => { isValid: boolean; reason?: string; word: string };
   isValidDictionaryWord: (word: string) => boolean;
 }
 
@@ -57,7 +60,13 @@ export interface BotOptions {
 import type { BotMove, BotResult, MoveCandidate } from './interfaces';
 
 // Re-export imported types for compatibility
-export type { BotMove, BotResult, MoveCandidate, ScoringDependencies, BotDependencies };
+export type {
+  BotMove,
+  BotResult,
+  MoveCandidate,
+  ScoringDependencies,
+  BotDependencies,
+};
 
 // Common letter frequencies for move generation priority
 const COMMON_LETTERS = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'.split('');
@@ -72,31 +81,34 @@ const COMMON_LETTERS = 'ETAOINSHRDLCUMWFGYPBVKJXQZ'.split('');
 export function generateAddMoves(currentWord: string): MoveCandidate[] {
   const candidates: MoveCandidate[] = [];
   const word = currentWord.toUpperCase();
-  
+
   // Try adding each letter at each position
   for (let pos = 0; pos <= word.length; pos++) {
     for (const letter of COMMON_LETTERS) {
       const newWord = word.slice(0, pos) + letter + word.slice(pos);
-      
+
       candidates.push({
         word: newWord,
         type: 'add',
-        operations: [`Add ${letter} at position ${pos}`]
+        operations: [`Add ${letter} at position ${pos}`],
       });
     }
   }
-  
+
   return candidates;
 }
 
 /**
  * Generates all possible single letter removals from a word
  */
-export function generateRemoveMoves(currentWord: string, protectedLetters: string[] = []): MoveCandidate[] {
+export function generateRemoveMoves(
+  currentWord: string,
+  protectedLetters: string[] = []
+): MoveCandidate[] {
   const candidates: MoveCandidate[] = [];
   const word = currentWord.toUpperCase();
-  const protectedSet = new Set(protectedLetters.map(l => l.toUpperCase()));
-  
+  const protectedSet = new Set(protectedLetters.map((l) => l.toUpperCase()));
+
   // Try removing each letter
   for (let pos = 0; pos < word.length; pos++) {
     const removedLetter = word[pos];
@@ -107,31 +119,38 @@ export function generateRemoveMoves(currentWord: string, protectedLetters: strin
     }
 
     const newWord = word.slice(0, pos) + word.slice(pos + 1);
-    
+
     candidates.push({
       word: newWord,
       type: 'remove',
-      operations: [`Remove ${removedLetter} from position ${pos}`]
+      operations: [`Remove ${removedLetter} from position ${pos}`],
     });
   }
-  
+
   return candidates;
 }
 
 /**
  * Generates rearrangement moves by shuffling letters
  */
-export function generateRearrangeMoves(currentWord: string, maxVariations = 50): MoveCandidate[] {
+export function generateRearrangeMoves(
+  currentWord: string,
+  maxVariations = 50
+): MoveCandidate[] {
   const candidates: MoveCandidate[] = [];
   const word = currentWord.toUpperCase();
   const letters = word.split('');
   const generated = new Set<string>();
   generated.add(word); // Don't include original word
-  
+
   // Generate permutations using various strategies
-  for (let i = 0; i < maxVariations && generated.size < maxVariations + 1; i++) {
+  for (
+    let i = 0;
+    i < maxVariations && generated.size < maxVariations + 1;
+    i++
+  ) {
     const shuffled = [...letters];
-    
+
     // Different shuffling strategies
     if (i < 10) {
       // Simple adjacent swaps
@@ -150,28 +169,31 @@ export function generateRearrangeMoves(currentWord: string, maxVariations = 50):
         [shuffled[j], shuffled[k]] = [shuffled[k], shuffled[j]];
       }
     }
-    
+
     const newWord = shuffled.join('');
     if (!generated.has(newWord)) {
       generated.add(newWord);
       candidates.push({
         word: newWord,
         type: 'rearrange',
-        operations: [`Rearrange letters: ${word} → ${newWord}`]
+        operations: [`Rearrange letters: ${word} → ${newWord}`],
       });
     }
   }
-  
+
   return candidates;
 }
 
 /**
  * Generates substitution moves (remove one letter, add another)
  */
-export function generateSubstituteMoves(currentWord: string, protectedLetters: string[] = []): MoveCandidate[] {
+export function generateSubstituteMoves(
+  currentWord: string,
+  protectedLetters: string[] = []
+): MoveCandidate[] {
   const candidates: MoveCandidate[] = [];
   const word = currentWord.toUpperCase();
-  const protectedSet = new Set(protectedLetters.map(l => l.toUpperCase()));
+  const protectedSet = new Set(protectedLetters.map((l) => l.toUpperCase()));
 
   // Try substituting each position with each letter
   for (let pos = 0; pos < word.length; pos++) {
@@ -181,20 +203,22 @@ export function generateSubstituteMoves(currentWord: string, protectedLetters: s
     if (protectedSet.has(originalLetter)) {
       continue;
     }
-    
+
     for (const newLetter of COMMON_LETTERS) {
       if (newLetter !== originalLetter) {
         const newWord = word.slice(0, pos) + newLetter + word.slice(pos + 1);
-        
+
         candidates.push({
           word: newWord,
           type: 'substitute',
-          operations: [`Substitute ${originalLetter} → ${newLetter} at position ${pos}`]
+          operations: [
+            `Substitute ${originalLetter} → ${newLetter} at position ${pos}`,
+          ],
         });
       }
     }
   }
-  
+
   return candidates;
 }
 
@@ -210,8 +234,11 @@ export function filterValidCandidatesWithDependencies(
   dictionaryValidation: DictionaryValidation,
   options?: { allowSeuss?: boolean }
 ): MoveCandidate[] {
-  return candidates.filter(candidate => {
-    const validation = dictionaryValidation.validateWord(candidate.word, { isBot: false, allowSeuss: options?.allowSeuss });
+  return candidates.filter((candidate) => {
+    const validation = dictionaryValidation.validateWord(candidate.word, {
+      isBot: false,
+      allowSeuss: options?.allowSeuss,
+    });
     return validation.isValid;
   });
 }
@@ -220,64 +247,94 @@ export function filterValidCandidatesWithDependencies(
  * Scores candidates using dependency-injected scoring functions
  */
 export function scoreCandidatesWithDependencies(
-  candidates: MoveCandidate[], 
-  currentWord: string, 
+  candidates: MoveCandidate[],
+  currentWord: string,
   scoringDeps: ScoringDependencies,
   keyLetters: string[] = []
 ): BotMove[] {
-  return candidates.map(candidate => {
-    // Calculate base score using dependency-injected scoring
-    const score = scoringDeps.getScoreForMove(currentWord, candidate.word, keyLetters);
-    
-    // Calculate confidence based on score and move type
-    let confidence = score * 0.2; // Base confidence from score
-    
-    // Boost confidence for key letter usage
-    const usedKeyLetters = keyLetters.filter(keyLetter => 
-      candidate.word.includes(keyLetter) && !currentWord.includes(keyLetter)
-    );
-    confidence += usedKeyLetters.length * 0.3;
-    
-    // Normalize confidence to 0-1 range
-    confidence = Math.min(1, Math.max(0, confidence));
-    
-    return {
-      word: candidate.word,
-      score,
-      confidence,
-      reasoning: [
-        ...candidate.operations,
-        `Score: ${score}`,
-        usedKeyLetters.length > 0 ? `Used key letters: ${usedKeyLetters.join(', ')}` : 'No key letters used'
-      ]
-    };
-  }).sort((a, b) => b.score - a.score);
+  return candidates
+    .map((candidate) => {
+      // Calculate base score using dependency-injected scoring
+      const score = scoringDeps.getScoreForMove(
+        currentWord,
+        candidate.word,
+        keyLetters
+      );
+
+      // Calculate confidence based on score and move type
+      let confidence = score * 0.2; // Base confidence from score
+
+      // Boost confidence for key letter usage
+      const usedKeyLetters = keyLetters.filter(
+        (keyLetter) =>
+          candidate.word.includes(keyLetter) && !currentWord.includes(keyLetter)
+      );
+      confidence += usedKeyLetters.length * 0.3;
+
+      // Normalize confidence to 0-1 range
+      confidence = Math.min(1, Math.max(0, confidence));
+
+      return {
+        word: candidate.word,
+        score,
+        confidence,
+        reasoning: [
+          ...candidate.operations,
+          `Score: ${score}`,
+          usedKeyLetters.length > 0
+            ? `Used key letters: ${usedKeyLetters.join(', ')}`
+            : 'No key letters used',
+        ],
+      };
+    })
+    .sort((a, b) => b.score - a.score);
 }
 
 // Basic bot strategy - never plays a word that uses a key letter
-function filterBasicBotCandidates(candidates: MoveCandidate[], keyLetters: string[]): MoveCandidate[] {
-  return candidates.filter(candidate => !keyLetters.some(letter => candidate.word.includes(letter)));
+function filterBasicBotCandidates(
+  candidates: MoveCandidate[],
+  keyLetters: string[]
+): MoveCandidate[] {
+  return candidates.filter(
+    (candidate) => !keyLetters.some((letter) => candidate.word.includes(letter))
+  );
 }
 
 // Add a new strategy for easy bot
-function filterEasyBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string, keyLetters: string[]): MoveCandidate[] {
-  return candidates.filter(candidate => {
+function filterEasyBotCandidates(
+  candidates: MoveCandidate[],
+  dependencies: BotDependencies,
+  currentWord: string,
+  keyLetters: string[]
+): MoveCandidate[] {
+  return candidates.filter((candidate) => {
     const score = dependencies.getScoreForMove(currentWord, candidate.word);
-    return score <= 2 && !keyLetters.some(letter => candidate.word.includes(letter));
+    return (
+      score <= 2 &&
+      !keyLetters.some((letter) => candidate.word.includes(letter))
+    );
   });
 }
 
 // Add a new strategy for medium bot
-function filterMediumBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string): MoveCandidate[] {
-  return candidates.filter(candidate => {
+function filterMediumBotCandidates(
+  candidates: MoveCandidate[],
+  dependencies: BotDependencies,
+  currentWord: string
+): MoveCandidate[] {
+  return candidates.filter((candidate) => {
     const score = dependencies.getScoreForMove(currentWord, candidate.word);
     return score <= 3;
   });
 }
 
 // Add a new strategy for hard bot
-function filterHardBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string): MoveCandidate[] {
-  return candidates.filter(candidate => {
+function filterHardBotCandidates(
+  candidates: MoveCandidate[],
+  dependencies: BotDependencies,
+  currentWord: string
+): MoveCandidate[] {
+  return candidates.filter((candidate) => {
     const score = dependencies.getScoreForMove(currentWord, candidate.word);
     return score <= 4;
   });
@@ -288,7 +345,11 @@ function filterHardBotCandidates(candidates: MoveCandidate[], dependencies: BotD
 // game rule; the resulting word may not even be legal. Bots bypass
 // word validation entirely (see validateWordWithDependencies), so this
 // move is guaranteed to be applied as-is.
-function generateNoobBotMove(currentWord: string, dependencies: BotDependencies, keyLetters: string[]): BotMove {
+function generateNoobBotMove(
+  currentWord: string,
+  dependencies: BotDependencies,
+  keyLetters: string[]
+): BotMove {
   const word = `${currentWord.toUpperCase()}S`;
   const score = dependencies.getScoreForMove(currentWord, word, keyLetters);
 
@@ -296,7 +357,7 @@ function generateNoobBotMove(currentWord: string, dependencies: BotDependencies,
     word,
     score,
     confidence: 1,
-    reasoning: ['NOOB MOVE - always adds an S, rules do not apply']
+    reasoning: ['NOOB MOVE - always adds an S, rules do not apply'],
   };
 }
 
@@ -305,7 +366,7 @@ const UNCOMMON_LETTERS = new Set(COMMON_LETTERS.slice(-10)); // G, Y, P, B, V, K
 
 // Counts how many letters in the word are considered "uncommon" (e.g. B, J, P, Q, ...)
 function countUncommonLetters(word: string): number {
-  return word.split('').filter(letter => UNCOMMON_LETTERS.has(letter)).length;
+  return word.split('').filter((letter) => UNCOMMON_LETTERS.has(letter)).length;
 }
 
 // Counts how many distinct letters appear 2+ times in the word (e.g. TREES has 2 E's -> 1 doubled letter)
@@ -314,7 +375,7 @@ function countDoubledLetters(word: string): number {
   for (const letter of word) {
     counts.set(letter, (counts.get(letter) || 0) + 1);
   }
-  return [...counts.values()].filter(count => count >= 2).length;
+  return [...counts.values()].filter((count) => count >= 2).length;
 }
 
 // Expert bot - among valid candidate moves, prioritizes uncommon letters (B, J, P, Q, etc.)
@@ -323,11 +384,12 @@ function selectExpertBotMove(scoredMoves: BotMove[]): BotMove | null {
   if (scoredMoves.length === 0) return null;
 
   const ranked = scoredMoves
-    .map(move => ({
+    .map((move) => ({
       move,
-      priority: move.score
-        + countUncommonLetters(move.word) * 0.5
-        + countDoubledLetters(move.word) * 0.3
+      priority:
+        move.score +
+        countUncommonLetters(move.word) * 0.5 +
+        countDoubledLetters(move.word) * 0.3,
     }))
     .sort((a, b) => b.priority - a.priority);
 
@@ -339,7 +401,7 @@ function selectExpertBotMove(scoredMoves: BotMove[]): BotMove | null {
     best.reasoning = [
       ...best.reasoning,
       uncommonCount > 0 ? `Uses ${uncommonCount} uncommon letter(s)` : '',
-      doubledCount > 0 ? `Uses ${doubledCount} doubled letter(s)` : ''
+      doubledCount > 0 ? `Uses ${doubledCount} doubled letter(s)` : '',
     ].filter(Boolean);
   }
 
@@ -356,11 +418,12 @@ function selectGigaBossMove(scoredMoves: BotMove[]): BotMove | null {
   if (scoredMoves.length === 0) return null;
 
   const ranked = scoredMoves
-    .map(move => ({
+    .map((move) => ({
       move,
-      priority: move.score
-        + countUncommonLetters(move.word) * 1.2   // stronger obscure bias than expert (0.5)
-        + countDoubledLetters(move.word) * 0.4
+      priority:
+        move.score +
+        countUncommonLetters(move.word) * 1.2 + // stronger obscure bias than expert (0.5)
+        countDoubledLetters(move.word) * 0.4,
     }))
     .sort((a, b) => b.priority - a.priority);
 
@@ -372,18 +435,24 @@ function selectGigaBossMove(scoredMoves: BotMove[]): BotMove | null {
     ...best.reasoning,
     'GIGA BOSS - obscure-letter specialist',
     uncommonCount > 0 ? `Uses ${uncommonCount} uncommon letter(s)` : '',
-    doubledCount > 0 ? `Uses ${doubledCount} doubled letter(s)` : ''
+    doubledCount > 0 ? `Uses ${doubledCount} doubled letter(s)` : '',
   ].filter(Boolean);
 
   return best;
 }
 
 // Add a new strategy for pirate bot - prioritizes profanity/bad words
-function filterPirateBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies, currentWord: string): MoveCandidate[] {
+function filterPirateBotCandidates(
+  candidates: MoveCandidate[],
+  dependencies: BotDependencies,
+  currentWord: string
+): MoveCandidate[] {
   // First, look for candidates that result in profanity words
-  const profanityCandidates = candidates.filter(candidate => {
+  const profanityCandidates = candidates.filter((candidate) => {
     // Check if the candidate word is profanity using dependency injection
-    return dependencies.isProfanity ? dependencies.isProfanity(candidate.word) : false;
+    return dependencies.isProfanity
+      ? dependencies.isProfanity(candidate.word)
+      : false;
   });
 
   // If we found profanity words, prioritize them regardless of score
@@ -392,7 +461,7 @@ function filterPirateBotCandidates(candidates: MoveCandidate[], dependencies: Bo
   }
 
   // Fallback: If no profanity words available, use medium bot strategy (score <= 3)
-  return candidates.filter(candidate => {
+  return candidates.filter((candidate) => {
     const score = dependencies.getScoreForMove(currentWord, candidate.word);
     return score <= 3;
   });
@@ -404,10 +473,15 @@ function filterPirateBotCandidates(candidates: MoveCandidate[], dependencies: Bo
  * over normal dictionary words. Falls back to all valid candidates if no
  * Seuss words are available.
  */
-function filterGrinchBotCandidates(candidates: MoveCandidate[], dependencies: BotDependencies): MoveCandidate[] {
+function filterGrinchBotCandidates(
+  candidates: MoveCandidate[],
+  dependencies: BotDependencies
+): MoveCandidate[] {
   // First, look for candidates that are canonical Seuss words
-  const canonicalSeussCandidates = candidates.filter(candidate => {
-    return dependencies.isSeussCanonicalWord ? dependencies.isSeussCanonicalWord(candidate.word) : false;
+  const canonicalSeussCandidates = candidates.filter((candidate) => {
+    return dependencies.isSeussCanonicalWord
+      ? dependencies.isSeussCanonicalWord(candidate.word)
+      : false;
   });
 
   if (canonicalSeussCandidates.length > 0) {
@@ -415,8 +489,10 @@ function filterGrinchBotCandidates(candidates: MoveCandidate[], dependencies: Bo
   }
 
   // Second, look for invented Seuss words
-  const inventedSeussCandidates = candidates.filter(candidate => {
-    return dependencies.isSeussWord ? dependencies.isSeussWord(candidate.word) : false;
+  const inventedSeussCandidates = candidates.filter((candidate) => {
+    return dependencies.isSeussWord
+      ? dependencies.isSeussWord(candidate.word)
+      : false;
   });
 
   if (inventedSeussCandidates.length > 0) {
@@ -440,12 +516,13 @@ export function generateBotMoveWithDependencies(
     keyLetters = [],
     lockedLetters = [],
     maxCandidates = 200,
-    botId
+    botId,
   } = options;
 
   // Giga boss considers a wider candidate pool so it can dig up more obscure,
   // harder-to-follow words than the standard 200-candidate cap allows.
-  const effectiveMaxCandidates = botId === 'giga-boss-bot' ? 600 : maxCandidates;
+  const effectiveMaxCandidates =
+    botId === 'giga-boss-bot' ? 600 : maxCandidates;
 
   // Noob bot bypasses normal move generation/validation entirely - it
   // always adds an S, whether or not that's a legal move or a real word.
@@ -455,7 +532,7 @@ export function generateBotMoveWithDependencies(
       move,
       candidates: [move],
       processingTime: performance.now() - startTime,
-      totalCandidatesGenerated: 1
+      totalCandidatesGenerated: 1,
     };
   }
 
@@ -467,7 +544,7 @@ export function generateBotMoveWithDependencies(
       move: null,
       candidates: [],
       processingTime: performance.now() - startTime,
-      totalCandidatesGenerated: 0
+      totalCandidatesGenerated: 0,
     };
   }
 
@@ -478,55 +555,94 @@ export function generateBotMoveWithDependencies(
   const addMoves = generateAddMoves(currentWord);
   const removeMoves = generateRemoveMoves(currentWord, protectedLetters);
   const rearrangeMoves = generateRearrangeMoves(currentWord);
-  const substituteMoves = generateSubstituteMoves(currentWord, protectedLetters);
+  const substituteMoves = generateSubstituteMoves(
+    currentWord,
+    protectedLetters
+  );
 
   const allCandidates = [
-    ...addMoves, 
-    ...removeMoves, 
-    ...rearrangeMoves, 
-    ...substituteMoves
+    ...addMoves,
+    ...removeMoves,
+    ...rearrangeMoves,
+    ...substituteMoves,
   ];
   const totalCandidatesGenerated = allCandidates.length;
-  
+
   // Limit candidates for performance
   const candidatesToCheck = allCandidates.slice(0, effectiveMaxCandidates);
 
   // Filter valid candidates using dependency injection
   // Grinchbot gets allowSeuss so Seuss words pass validation during candidate filtering
-  const validCandidates = filterValidCandidatesWithDependencies(candidatesToCheck, dependencies, {
-    allowSeuss: botId === 'grinch-bot'
-  });
+  const validCandidates = filterValidCandidatesWithDependencies(
+    candidatesToCheck,
+    dependencies,
+    {
+      allowSeuss: botId === 'grinch-bot',
+    }
+  );
 
   // Apply bot strategy if applicable
   let filteredCandidates = validCandidates;
   if (botId === 'basicBot') {
     filteredCandidates = filterBasicBotCandidates(validCandidates, keyLetters);
   } else if (botId === 'easy-bot') {
-    filteredCandidates = filterEasyBotCandidates(validCandidates, dependencies, currentWord, keyLetters);
+    filteredCandidates = filterEasyBotCandidates(
+      validCandidates,
+      dependencies,
+      currentWord,
+      keyLetters
+    );
   } else if (botId === 'medium-bot' || botId === 'boss-bot') {
     // Boss bot fights like the medium bot.
-    filteredCandidates = filterMediumBotCandidates(validCandidates, dependencies, currentWord);
-  } else if (botId === 'hard-bot' || botId === 'mega-boss-bot' || botId === 'ninja-bot') {
+    filteredCandidates = filterMediumBotCandidates(
+      validCandidates,
+      dependencies,
+      currentWord
+    );
+  } else if (
+    botId === 'hard-bot' ||
+    botId === 'mega-boss-bot' ||
+    botId === 'ninja-bot'
+  ) {
     // Mega boss and Ninjabot both fight like the hard bot.
-    filteredCandidates = filterHardBotCandidates(validCandidates, dependencies, currentWord);
+    filteredCandidates = filterHardBotCandidates(
+      validCandidates,
+      dependencies,
+      currentWord
+    );
   } else if (botId === 'pirate-bot') {
-    filteredCandidates = filterPirateBotCandidates(validCandidates, dependencies, currentWord);
+    filteredCandidates = filterPirateBotCandidates(
+      validCandidates,
+      dependencies,
+      currentWord
+    );
   } else if (botId === 'grinch-bot') {
-    filteredCandidates = filterGrinchBotCandidates(validCandidates, dependencies);
+    filteredCandidates = filterGrinchBotCandidates(
+      validCandidates,
+      dependencies
+    );
   }
 
   // Score valid candidates using dependency injection
-  const scoredCandidates = scoreCandidatesWithDependencies(filteredCandidates, currentWord, dependencies, keyLetters);
+  const scoredCandidates = scoreCandidatesWithDependencies(
+    filteredCandidates,
+    currentWord,
+    dependencies,
+    keyLetters
+  );
 
   // Choose best move:
   //  - expert bot re-ranks by uncommon/doubled letter usage on top of score
   //  - giga boss uses the same expert re-rank but with a stronger obscure-letter
   //    bias, so it deliberately gravitates toward harder-to-track words
-  const bestMove = botId === 'expert-bot'
-    ? selectExpertBotMove(scoredCandidates)
-    : botId === 'giga-boss-bot'
-      ? selectGigaBossMove(scoredCandidates)
-      : (scoredCandidates.length > 0 ? scoredCandidates[0] : null);
+  const bestMove =
+    botId === 'expert-bot'
+      ? selectExpertBotMove(scoredCandidates)
+      : botId === 'giga-boss-bot'
+        ? selectGigaBossMove(scoredCandidates)
+        : scoredCandidates.length > 0
+          ? scoredCandidates[0]
+          : null;
 
   const processingTime = performance.now() - startTime;
 
@@ -534,7 +650,7 @@ export function generateBotMoveWithDependencies(
     move: bestMove,
     candidates: scoredCandidates.slice(0, 10), // Top 10 candidates
     processingTime,
-    totalCandidatesGenerated
+    totalCandidatesGenerated,
   };
 }
 
@@ -546,22 +662,29 @@ export function generateBotMoveWithDependencies(
  * Agnostic version that accepts dictionary validation functions (LEGACY)
  */
 export function filterValidCandidatesAgnostic(
-  candidates: MoveCandidate[], 
+  candidates: MoveCandidate[],
   dictionaryValidation: DictionaryValidation
 ): MoveCandidate[] {
-  return filterValidCandidatesWithDependencies(candidates, dictionaryValidation);
+  return filterValidCandidatesWithDependencies(
+    candidates,
+    dictionaryValidation
+  );
 }
 
 /**
  * Node.js version using dynamic imports (LEGACY)
  */
-export async function filterValidCandidates(candidates: MoveCandidate[]): Promise<MoveCandidate[]> {
-  console.warn('filterValidCandidates: Legacy function called. Use filterValidCandidatesWithDependencies instead.');
-  
+export async function filterValidCandidates(
+  candidates: MoveCandidate[]
+): Promise<MoveCandidate[]> {
+  console.warn(
+    'filterValidCandidates: Legacy function called. Use filterValidCandidatesWithDependencies instead.'
+  );
+
   // Return all candidates as potentially valid since we can't validate without dependencies
-  return candidates.map(candidate => ({
+  return candidates.map((candidate) => ({
     ...candidate,
-    isValid: true // Assume valid in legacy mode
+    isValid: true, // Assume valid in legacy mode
   }));
 }
 
@@ -569,19 +692,21 @@ export async function filterValidCandidates(candidates: MoveCandidate[]): Promis
  * Scores candidates using legacy approach (LEGACY)
  */
 export function scoreCandidates(
-  candidates: MoveCandidate[], 
-  _currentWord: string, 
+  candidates: MoveCandidate[],
+  _currentWord: string,
   _keyLetters: string[] = []
 ): BotMove[] {
   // Legacy implementation that doesn't use dependency injection
   // Note: This won't work without direct imports, but kept for API compatibility
-  console.warn('scoreCandidates: Legacy function called without dependencies. Use scoreCandidatesWithDependencies instead.');
-  
-  return candidates.map(candidate => ({
+  console.warn(
+    'scoreCandidates: Legacy function called without dependencies. Use scoreCandidatesWithDependencies instead.'
+  );
+
+  return candidates.map((candidate) => ({
     word: candidate.word,
     score: 1, // Default score when no scoring dependency available
     confidence: 0.5,
-    reasoning: ['Legacy mode - limited scoring']
+    reasoning: ['Legacy mode - limited scoring'],
   }));
 }
 
@@ -607,14 +732,19 @@ export function generateBotMoveAgnostic(
     calculateScore: () => ({
       score: 1,
       totalScore: 1,
-      breakdown: { addLetterPoints: 1, removeLetterPoints: 0, movePoints: 0, keyLetterUsagePoints: 0 },
+      breakdown: {
+        addLetterPoints: 1,
+        removeLetterPoints: 0,
+        movePoints: 0,
+        keyLetterUsagePoints: 0,
+      },
       actions: [],
       keyLetterScore: 0,
       baseScore: 1,
-      keyLettersUsed: []
-    })
+      keyLettersUsed: [],
+    }),
   };
-  
+
   return generateBotMoveWithDependencies(currentWord, dependencies, options);
 }
 
@@ -622,22 +752,24 @@ export function generateBotMoveAgnostic(
  * Node.js version using dynamic imports (LEGACY)
  */
 export async function generateBotMove(
-  currentWord: string, 
+  currentWord: string,
   _options: BotOptions = {}
 ): Promise<BotResult> {
-  console.warn('generateBotMove: Legacy function called. Use generateBotMoveWithDependencies instead.');
-  
+  console.warn(
+    'generateBotMove: Legacy function called. Use generateBotMoveWithDependencies instead.'
+  );
+
   // Return a minimal bot result since we can't use removed dictionary functions
   return {
     move: {
       word: currentWord, // No move possible without dependencies
       score: 0,
       confidence: 0,
-      reasoning: ['Legacy function called - no dependencies available']
+      reasoning: ['Legacy function called - no dependencies available'],
     },
     candidates: [],
     processingTime: 0,
-    totalCandidatesGenerated: 0
+    totalCandidatesGenerated: 0,
   };
 }
 
@@ -647,8 +779,8 @@ export async function generateBotMove(
  * Use simulateBotGameWithDependencies for new code.
  */
 export function simulateBotGame(
-  _initialWord: string, 
-  _turns: number = 100, 
+  _initialWord: string,
+  _turns: number = 100,
   _keyLetters: string[] = []
 ): {
   success: boolean;
@@ -658,8 +790,10 @@ export function simulateBotGame(
   moves: BotMove[];
   errors: string[];
 } {
-  console.warn('simulateBotGame: Legacy function called. This function is deprecated due to async dependencies.');
-  
+  console.warn(
+    'simulateBotGame: Legacy function called. This function is deprecated due to async dependencies.'
+  );
+
   // Return a minimal result since we can't handle async in this sync function
   return {
     success: false,
@@ -667,7 +801,9 @@ export function simulateBotGame(
     totalTime: 0,
     averageTimePerTurn: 0,
     moves: [],
-    errors: ['Legacy function called - use simulateBotGameWithDependencies instead']
+    errors: [
+      'Legacy function called - use simulateBotGameWithDependencies instead',
+    ],
   };
 }
 
@@ -681,13 +817,15 @@ export function performanceTestBot(_iterations = 100): {
   totalTime: number;
   successRate: number;
 } {
-  console.warn('performanceTestBot: Legacy function called. This function is deprecated due to async dependencies.');
-  
+  console.warn(
+    'performanceTestBot: Legacy function called. This function is deprecated due to async dependencies.'
+  );
+
   // Return a minimal result since we can't handle async in this sync function
   return {
     averageTime: 0,
     totalTime: 0,
-    successRate: 0
+    successRate: 0,
   };
 }
 
@@ -697,7 +835,7 @@ export function performanceTestBot(_iterations = 100): {
  * Use explainBotMoveWithDependencies for new code.
  */
 export function explainBotMove(
-  _currentWord: string, 
+  _currentWord: string,
   _keyLetters: string[] = [],
   _showTop = 5
 ): {
@@ -705,14 +843,18 @@ export function explainBotMove(
   topMoves: BotMove[];
   reasoning: string[];
 } {
-  console.warn('explainBotMove: Legacy function called. This function is deprecated due to async dependencies.');
-  
+  console.warn(
+    'explainBotMove: Legacy function called. This function is deprecated due to async dependencies.'
+  );
+
   // Return a minimal result since we can't handle async in this sync function
-  const reasoning = ['Legacy function called - use explainBotMoveWithDependencies instead'];
-  
+  const reasoning = [
+    'Legacy function called - use explainBotMoveWithDependencies instead',
+  ];
+
   return {
     analysis: reasoning.join('\n'),
     topMoves: [],
-    reasoning
+    reasoning,
   };
-} 
+}

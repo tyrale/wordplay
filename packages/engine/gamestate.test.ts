@@ -1,6 +1,6 @@
 /**
  * Unit tests for Local GameState Manager
- * 
+ *
  * Covers all game state management functionality including word management,
  * key/locked letters, turn-based flow, bot integration, and performance.
  */
@@ -16,11 +16,11 @@ describe('LocalGameStateManager', () => {
 
   beforeEach(() => {
     testAdapter = createTestAdapter();
-    
+
     // Add words that the tests expect
     const testWords = ['CAT', 'CATS', 'CART', 'BATS', 'BAT'];
-    testWords.forEach(word => testAdapter.addWord(word));
-    
+    testWords.forEach((word) => testAdapter.addWord(word));
+
     const config: GameConfig = {
       initialWord: 'CAT',
       allowBotPlayer: true,
@@ -74,7 +74,7 @@ describe('LocalGameStateManager', () => {
         name: id.toUpperCase(),
         isBot: false,
         score: 0,
-        isCurrentPlayer: index === currentPlayerIndex
+        isCurrentPlayer: index === currentPlayerIndex,
       }));
       return {
         ...base,
@@ -82,7 +82,7 @@ describe('LocalGameStateManager', () => {
         currentPlayerIndex,
         maxTurns: 1, // 1 round
         currentTurn,
-        gameStatus: 'playing' as const
+        gameStatus: 'playing' as const,
       };
     }
 
@@ -114,12 +114,32 @@ describe('LocalGameStateManager', () => {
       // never rolled a new one - every reset silently produced the exact
       // same starting word forever.
       const testAdapter2 = createTestAdapter();
-      const fourLetterWords = ['CATS', 'DOGS', 'BATS', 'RATS', 'HATS', 'MATS', 'FAST', 'LAST', 'GAME', 'NAME', 'SAME', 'CAME', 'FAME', 'TAME', 'LAME', 'DAME'];
-      fourLetterWords.forEach(word => testAdapter2.addWord(word));
+      const fourLetterWords = [
+        'CATS',
+        'DOGS',
+        'BATS',
+        'RATS',
+        'HATS',
+        'MATS',
+        'FAST',
+        'LAST',
+        'GAME',
+        'NAME',
+        'SAME',
+        'CAME',
+        'FAME',
+        'TAME',
+        'LAME',
+        'DAME',
+      ];
+      fourLetterWords.forEach((word) => testAdapter2.addWord(word));
 
       // No explicit initialWord here - let the manager pick one randomly,
       // matching how a real vs-bot game or zen mode session is created.
-      const manager = new LocalGameStateManager(testAdapter2.getGameDependencies(), { allowBotPlayer: false });
+      const manager = new LocalGameStateManager(
+        testAdapter2.getGameDependencies(),
+        { allowBotPlayer: false }
+      );
 
       const seenWords = new Set<string>();
       for (let i = 0; i < 20; i++) {
@@ -179,7 +199,7 @@ describe('LocalGameStateManager', () => {
       gameManager.resetGame({ initialWord: 'CAT', allowBotPlayer: true });
       gameManager.startGame();
       gameManager.applyMove('CATS');
-      
+
       const botMove = await gameManager.makeBotMove();
       // Bot might find a move or pass - both are acceptable
       if (botMove) {
@@ -197,13 +217,17 @@ describe('LocalGameStateManager', () => {
       // it becomes the bot's turn (applyMove() would change the word).
       testAdapter.reset();
       testAdapter.addWord('CRAPS');
-      testAdapter.addWord('CRAP');   // remove S -> profane once flagged below
+      testAdapter.addWord('CRAP'); // remove S -> profane once flagged below
       testAdapter.addWord('CRAPSX'); // add key letter X -> higher-scoring, non-profane
       testAdapter.addProfanityWord('CRAP');
 
       // Baseline: with no botId, the bot should prefer the higher-scoring,
       // key-letter move (CRAPSX) over the lower-scoring profane one (CRAP).
-      gameManager.resetGame({ initialWord: 'CRAPS', allowBotPlayer: true, botId: undefined });
+      gameManager.resetGame({
+        initialWord: 'CRAPS',
+        allowBotPlayer: true,
+        botId: undefined,
+      });
       gameManager.startGame();
       gameManager.addKeyLetter('X');
       gameManager.passTurn(); // human passes, word stays 'CRAPS', now bot's turn
@@ -213,7 +237,11 @@ describe('LocalGameStateManager', () => {
 
       // Same setup, but with botId: 'pirate-bot' - it should pick the profane
       // word (CRAP) over the higher-scoring CRAPSX, proving botId is forwarded.
-      gameManager.resetGame({ initialWord: 'CRAPS', allowBotPlayer: true, botId: 'pirate-bot' });
+      gameManager.resetGame({
+        initialWord: 'CRAPS',
+        allowBotPlayer: true,
+        botId: 'pirate-bot',
+      });
       gameManager.startGame();
       gameManager.addKeyLetter('X');
       gameManager.passTurn();
@@ -222,4 +250,4 @@ describe('LocalGameStateManager', () => {
       expect(pirateMove!.word).toBe('CRAP');
     });
   });
-}); 
+});

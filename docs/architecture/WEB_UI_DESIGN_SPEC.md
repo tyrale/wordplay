@@ -4,7 +4,7 @@
 
 **Accuracy note (2026-07-14)**: The banner below ("MATCHES CURRENT UI") previously contradicted the "Component Checklist" and "Implementation Verification" sections further down, which had every single item unchecked (`[ ]`) despite the banner claiming full verification. This document is best treated as a **design reference**, not a maintained status tracker — the checklists are not kept in sync with implementation and shouldn't be trusted as a literal completion record.
 
-What *is* re-confirmed as of this date: all of the named components in the "Must-Have Components" checklist below exist in `src/components/game/` and `src/components/ui/` (`ThemeProvider`, `WordTrail`, `ActionIndicators`, `SubmitButton`, `AlphabetGrid`, `GridCell`, `ScoreDisplay`, plus `GameBoard`) and the theme system (`ThemeProvider.tsx`, `types/theme.ts`) implements CSS-variable-driven theming with localStorage persistence, matching the general architecture described here. The more granular visual/interaction/functional parity checklists were **not** re-verified pixel-by-pixel against the original mockups and are left unchecked intentionally.
+What _is_ re-confirmed as of this date: all of the named components in the "Must-Have Components" checklist below exist in `src/components/game/` and `src/components/ui/` (`ThemeProvider`, `WordTrail`, `ActionIndicators`, `SubmitButton`, `AlphabetGrid`, `GridCell`, `ScoreDisplay`, plus `GameBoard`) and the theme system (`ThemeProvider.tsx`, `types/theme.ts`) implements CSS-variable-driven theming with localStorage persistence, matching the general architecture described here. The more granular visual/interaction/functional parity checklists were **not** re-verified pixel-by-pixel against the original mockups and are left unchecked intentionally.
 
 > **Original Purpose**: This document provides the complete visual and interaction specification for the web UI components based on the provided screen designs for turn 4 and turn 5. This ensures pixel-perfect implementation matching the intended design.
 
@@ -15,6 +15,7 @@ What *is* re-confirmed as of this date: all of the named components in the "Must
 Based on the provided screen designs (turn4.png and turn5.png), this document details every visual element, layout pattern, typography choice, and interaction state shown in the mockups.
 
 **Key Observations:**
+
 - **Screen Dimensions**: 1276×2090 pixels (mobile-first design)
 - **Turn Progression**: Shows game state progression from turn 4 to turn 5
 - **Word Evolution**: "HIPS" (turn 4) → "PUSH" (turn 5)
@@ -29,14 +30,15 @@ Based on the provided screen designs (turn4.png and turn5.png), this document de
 ### 1. Header Section (Top)
 
 **Word Sequence Trail**
+
 - **Content**: "PLAY LAPS SLIP" (turn 4) → "PLAY LAPS SLIP HIPS" (turn 5)
-- **Typography**: 
+- **Typography**:
   - Font: Inter
   - Weight: Black (900) - **ONLY FONT WEIGHT USED**
   - Size: ~18pt equivalent
   - Color: Theme text color
   - Letter spacing: Wide (~0.1em)
-- **Layout**: 
+- **Layout**:
   - Horizontally centered
   - Top margin: ~40px from screen edge
   - Bottom margin: ~24px before current word
@@ -44,6 +46,7 @@ Based on the provided screen designs (turn4.png and turn5.png), this document de
 ### 2. Current Word Display (Center)
 
 **Main Word**
+
 - **Content**: "HIPS" (turn 4) → "PUSH" (turn 5)
 - **Typography**:
   - Font: Inter
@@ -59,19 +62,21 @@ Based on the provided screen designs (turn4.png and turn5.png), this document de
 ### 3. Action Controls Section
 
 **Layout Anchor Point**
+
 - **Checkmark Placement**: Centered horizontally and vertically on the page
 - **All other elements** (game board, word display, letter grid) positioned relative to this centered checkmark
 
 **Action Indicators & Submit** (Horizontal row)
+
 - **Visual Indicators** (non-interactive):
   1. **Remove Indicator**: `−` (shows when user removed a letter)
   2. **Add Indicator**: `+` (shows when user added a letter)
   3. **Move Indicator**: `~` (shows when user rearranged/moved letters)
   4. **Score Display**: Shows scoring breakdown (e.g., "+3 +1")
-- **Interactive Element**:
-  5. **Submit Button**: `✓` (when word is valid) or `✗` (when word is invalid)
+- **Interactive Element**: 5. **Submit Button**: `✓` (when word is valid) or `✗` (when word is invalid)
 
 **Action Indicator Specifications**:
+
 - **Purpose**: Visual feedback showing what actions user has taken to help explain score calculation
 - **Style**: Text symbols only, no backgrounds, no borders
 - **Font**: Inter, Weight: Black (900)
@@ -82,7 +87,8 @@ Based on the provided screen designs (turn4.png and turn5.png), this document de
 - **Visibility**: Only show indicators for actions that have been taken
 
 **Submit Button Specifications**:
-- **States**: 
+
+- **States**:
   - Valid word: `✓` (checkmark, interactive)
   - Invalid word: `✗` (X mark, non-interactive)
 - **Style**: Text symbol only, no background, no borders
@@ -94,6 +100,7 @@ Based on the provided screen designs (turn4.png and turn5.png), this document de
 - **Position**: Centered anchor point for entire layout
 
 **Score Display**:
+
 - **Format**: Shows scoring breakdown (e.g., "+3 +1")
 - **Position**: Left aligned from submit checkmark
 - **Font**: Inter, Weight: Black (900)
@@ -103,6 +110,7 @@ Based on the provided screen designs (turn4.png and turn5.png), this document de
 ### 4. Alphabet Grid (Main Interface)
 
 **Grid Layout**:
+
 - **Dimensions**: 6 columns × 5 rows (A-Z + additional symbols)
 - **Letters Shown**: Full alphabet A-Z plus special characters
 - **Cell Size**: Square cells, ~56px × 56px equivalent
@@ -113,6 +121,7 @@ Based on the provided screen designs (turn4.png and turn5.png), this document de
 **Cell States**:
 
 1. **Normal Letters** (majority):
+
    - Background: Theme background color
    - Text: Theme text color
    - Font: Inter, Weight: Black (900)
@@ -125,17 +134,19 @@ Based on the provided screen designs (turn4.png and turn5.png), this document de
    - Visual prominence: Clearly distinguishable
 
 **Grid Content**:
+
 ```
 A  B  C  D  E  F
-G  H  I  J  K  L  
+G  H  I  J  K  L
 M  N  O  P  Q  R
 S  T  U  V  W  X
 ←  ↶  Y  Z  ?  ≡
 ```
 
 **Special Bottom Row Functions**:
+
 - **Arrow Left** (←): Return to game home screen
-- **Rotate** (↶): Undo player changes, reset back to word in play  
+- **Rotate** (↶): Undo player changes, reset back to word in play
 - **Y, Z**: Regular letters
 - **Question Mark** (?): Help function, will open word definition (feature TBD)
 - **Menu/Lines** (≡): Settings/Menu function (including theme selection)
@@ -143,70 +154,73 @@ S  T  U  V  W  X
 ### 5. Theme System Design
 
 **Theme Structure** (All colors must be themeable):
+
 ```typescript
 interface GameTheme {
   name: string;
   colors: {
     // Text colors
-    primary: string;        // Current word, key letters
-    text: string;          // Default text color
+    primary: string; // Current word, key letters
+    text: string; // Default text color
     textSecondary: string; // Secondary text elements
-    
+
     // Background colors
-    background: string;     // Main background
-    surface: string;       // Letter cell backgrounds
-    surfaceHover: string;  // Letter cell interaction (touch feedback)
-    
+    background: string; // Main background
+    surface: string; // Letter cell backgrounds
+    surfaceHover: string; // Letter cell interaction (touch feedback)
+
     // Accent colors
-    accent: string;        // Key letters, highlights
-    accentText: string;    // Text on accent backgrounds
-    
+    accent: string; // Key letters, highlights
+    accentText: string; // Text on accent backgrounds
+
     // Special states
-    locked: string;        // Lock icon color
-    disabled: string;      // Disabled elements
+    locked: string; // Lock icon color
+    disabled: string; // Disabled elements
   };
   typography: {
     // Font family
-    fontFamily: string;    // Font family for entire app
-    fontWeight: number;    // Font weight (currently 900 throughout)
-    
+    fontFamily: string; // Font family for entire app
+    fontWeight: number; // Font weight (currently 900 throughout)
+
     // Font sizes
-    fontSizeXL: string;    // Current word (48px)
-    fontSizeLG: string;    // Word trail (18px)
-    fontSizeMD: string;    // Buttons, grid letters (16px)
-    fontSizeSM: string;    // Icons, secondary text (14px)
+    fontSizeXL: string; // Current word (48px)
+    fontSizeLG: string; // Word trail (18px)
+    fontSizeMD: string; // Buttons, grid letters (16px)
+    fontSizeSM: string; // Icons, secondary text (14px)
   };
 }
 ```
 
 **Default Theme** (Based on designs):
+
 ```typescript
 const defaultTheme: GameTheme = {
-  name: "Classic Blue",
+  name: 'Classic Blue',
   colors: {
-    primary: "#3b82f6",      // Current word, key letters
-    text: "#1e3a8a",         // Default text
-    textSecondary: "#64748b", // Secondary text
-    background: "#ffffff",    // Main background
-    surface: "#f1f5f9",      // Letter cells
-    surfaceHover: "#e2e8f0",  // Touch feedback
-    accent: "#3b82f6",       // Key letters
-    accentText: "#ffffff",   // Text on accent
-    locked: "#f59e0b",       // Lock icons
-    disabled: "#94a3b8"      // Disabled elements
+    primary: '#3b82f6', // Current word, key letters
+    text: '#1e3a8a', // Default text
+    textSecondary: '#64748b', // Secondary text
+    background: '#ffffff', // Main background
+    surface: '#f1f5f9', // Letter cells
+    surfaceHover: '#e2e8f0', // Touch feedback
+    accent: '#3b82f6', // Key letters
+    accentText: '#ffffff', // Text on accent
+    locked: '#f59e0b', // Lock icons
+    disabled: '#94a3b8', // Disabled elements
   },
   typography: {
-    fontFamily: "Inter, system-ui, sans-serif",
+    fontFamily: 'Inter, system-ui, sans-serif',
     fontWeight: 900,
-    fontSizeXL: "48px",      // Current word
-    fontSizeLG: "18px",      // Word trail
-    fontSizeMD: "16px",      // Buttons, grid letters
-    fontSizeSM: "14px"       // Icons, secondary text
-  }
+    fontSizeXL: '48px', // Current word
+    fontSizeLG: '18px', // Word trail
+    fontSizeMD: '16px', // Buttons, grid letters
+    fontSizeSM: '14px', // Icons, secondary text
+  },
 };
 ```
 
 **Typography System** (Part of Theme):
+
 - **Font Family**: From theme.typography.fontFamily (default: Inter)
 - **Font Weight**: From theme.typography.fontWeight (default: 900 - Black)
 - **Sizes**: All from theme.typography
@@ -216,6 +230,7 @@ const defaultTheme: GameTheme = {
   - SM: theme.typography.fontSizeSM (default: 14px - Icons, secondary text)
 
 **Spacing System**:
+
 - **Container Padding**: ~20px left/right margins
 - **Section Spacing**: ~24-32px between major sections
 - **Grid Gaps**: ~6px between cells
@@ -224,16 +239,19 @@ const defaultTheme: GameTheme = {
 ### 6. Game State Differences (Turn 4 → Turn 5)
 
 **Word Progression**:
+
 - Turn 4: Current word "HIPS"
 - Turn 5: Current word "PUSH", with "HIPS" added to word trail
 
 **Visual State Changes**:
+
 - Word trail grows with previous word
 - Current word updates completely
 - Key letter highlighting updates (using theme accent color)
 - Score display updates (shows turn progression)
 
 **Letter Grid Updates**:
+
 - Key letters change based on new turn (theme accent color)
 - Interactive states update accordingly (touch feedback only)
 
@@ -242,6 +260,7 @@ const defaultTheme: GameTheme = {
 ## 🎨 Implementation Guidelines
 
 ### Theme Provider Setup
+
 ```css
 :root {
   /* Theme variables (dynamically updated) */
@@ -255,7 +274,7 @@ const defaultTheme: GameTheme = {
   --theme-accent-text: #ffffff;
   --theme-locked: #f59e0b;
   --theme-disabled: #94a3b8;
-  
+
   /* Typography (from theme) */
   --theme-font-family: Inter, system-ui, sans-serif;
   --theme-font-weight: 900;
@@ -263,7 +282,7 @@ const defaultTheme: GameTheme = {
   --theme-font-size-lg: 18px;
   --theme-font-size-md: 16px;
   --theme-font-size-sm: 14px;
-  
+
   /* Spacing (fixed) */
   --spacing-xs: 6px;
   --spacing-sm: 8px;
@@ -274,6 +293,7 @@ const defaultTheme: GameTheme = {
 ```
 
 ### Responsive Considerations
+
 - **Mobile-First**: Designs are mobile-optimized (1276×2090)
 - **Desktop Scaling**: Adapt for larger screens while maintaining proportions
 - **Touch Targets**: Grid cells appropriately sized for touch interaction (minimum 44px)
@@ -281,6 +301,7 @@ const defaultTheme: GameTheme = {
 - **No Keyboard Support**: Design assumes mouse/touch only
 
 ### Accessibility Requirements
+
 - **Color Contrast**: Ensure WCAG AA compliance for all theme combinations
 - **Touch Accessibility**: Minimum 44px touch targets throughout
 - **Screen Reader**: Semantic HTML with proper ARIA labels
@@ -288,6 +309,7 @@ const defaultTheme: GameTheme = {
 - **No Focus States**: No keyboard navigation support required
 
 ### Interaction Model
+
 - **Mouse/Desktop**: Click interactions only, no hover effects needed
 - **Touch/Mobile**: Tap interactions with brief visual feedback
 - **No Keyboard**: No keyboard navigation, no focus states, no shortcuts
@@ -298,6 +320,7 @@ const defaultTheme: GameTheme = {
 ## 📋 Component Checklist
 
 ### Must-Have Components (Phase 2.1):
+
 - [x] **ThemeProvider**: Context provider for theme switching (`src/components/theme/ThemeProvider.tsx`)
 - [x] **WordTrail**: Displays previous words (`src/components/game/WordTrail.tsx`)
 - [ ] **CurrentWord**: Large centered word display with key letter highlighting (no standalone `CurrentWord` component found by name; likely inlined in `GameBoard.tsx` — not independently verified)
@@ -310,6 +333,7 @@ const defaultTheme: GameTheme = {
 (Existence of each file was confirmed 2026-07-14; exact visual/behavioral fidelity to the spec below was not re-verified.)
 
 ### Visual States to Implement:
+
 - [ ] **Normal Letter**: Theme surface color background
 - [ ] **Key Letter**: Theme accent color background
 - [ ] **Locked Letter**: Theme default color with lock icon
@@ -319,14 +343,16 @@ const defaultTheme: GameTheme = {
 - [ ] **Action Indicators**: Show only for actions taken (−, +, ~)
 
 ### Layout Containers:
+
 - [ ] **GameBoard**: Main container with centered checkmark anchor
 - [ ] **Header**: Word trail section
-- [ ] **WordDisplay**: Current word section  
+- [ ] **WordDisplay**: Current word section
 - [ ] **Controls**: Action indicators and submit button (centered on submit)
 - [ ] **Grid**: Alphabet grid container
 - [ ] **Footer**: Bottom navigation/functions
 
 ### Theme System Components:
+
 - [ ] **ThemeContext**: React context for theme state
 - [ ] **ThemeSelector**: UI for choosing available themes
 - [ ] **ThemeStorage**: Persistence of user theme choice
@@ -336,6 +362,7 @@ const defaultTheme: GameTheme = {
 ## 🔍 Implementation Verification
 
 ### Visual Accuracy Checklist:
+
 - [ ] **Typography**: Only Inter Black (900) weight used throughout
 - [ ] **Colors**: All colors come from theme system
 - [ ] **Layout**: Checkmark-centered layout implemented
@@ -345,6 +372,7 @@ const defaultTheme: GameTheme = {
 - [ ] **Responsive**: Adapts properly to different screen sizes
 
 ### Interaction Accuracy Checklist:
+
 - [ ] **Touch/Mouse Only**: No keyboard navigation anywhere
 - [ ] **No Hover States**: No hover effects implemented
 - [ ] **Touch Feedback**: Brief visual feedback on interactions
@@ -354,6 +382,7 @@ const defaultTheme: GameTheme = {
 - [ ] **Action Indicators**: No interaction on −, +, ~ symbols
 
 ### Functional Accuracy Checklist:
+
 - [ ] **Action Indicators**: Show correct symbols for user actions taken
 - [ ] **Score Calculation**: Display matches actual scoring logic
 - [ ] **Submit State**: Correctly shows ✓ for valid, ✗ for invalid
@@ -362,6 +391,7 @@ const defaultTheme: GameTheme = {
 - [ ] **Scoring Display**: Format "+3 +1" shows breakdown correctly
 
 ### Theme System Verification:
+
 - [ ] **Multiple Themes**: At least 2-3 themes implemented
 - [ ] **Color Consistency**: All colors use theme variables
 - [ ] **Typography Consistency**: All fonts and sizes use theme variables
@@ -372,9 +402,10 @@ const defaultTheme: GameTheme = {
 ---
 
 **Next Steps**: Use this specification to implement the React components in Phase 2.1, ensuring:
+
 1. Only Inter font with Black (900) weight
 2. Complete theme system for user customization
 3. Text-only buttons with no backgrounds
 4. Mouse/touch interaction only (no keyboard support)
 
-**Reference Images**: `screen_designs/turn4.png` and `screen_designs/turn5.png` 
+**Reference Images**: `screen_designs/turn4.png` and `screen_designs/turn5.png`

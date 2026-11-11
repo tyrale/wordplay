@@ -22,10 +22,10 @@ Engine Function(gameData, dependencies) → Result
 Main interface that combines all engine dependencies (from `packages/engine/interfaces.ts`).
 
 ```typescript
-interface GameStateDependencies extends 
-  GameStateDictionaryDependencies, 
-  GameStateScoringDependencies, 
-  GameStateBotDependencies {}
+interface GameStateDependencies
+  extends GameStateDictionaryDependencies,
+    GameStateScoringDependencies,
+    GameStateBotDependencies {}
 ```
 
 ### GameStateDictionaryDependencies
@@ -40,6 +40,7 @@ interface GameStateDictionaryDependencies {
 ```
 
 **Methods**:
+
 - `validateWord(word, options?)`: Validates a word against game rules with optional configuration
 - `getRandomWordByLength(length)`: Returns random word of specified length or null if none available
 
@@ -49,13 +50,22 @@ Interface for scoring calculations.
 
 ```typescript
 interface GameStateScoringDependencies {
-  calculateScore: (fromWord: string, toWord: string, options?: any) => ScoringResult;
-  getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]) => number;
+  calculateScore: (
+    fromWord: string,
+    toWord: string,
+    options?: any
+  ) => ScoringResult;
+  getScoreForMove: (
+    fromWord: string,
+    toWord: string,
+    keyLetters?: string[]
+  ) => number;
   isValidMove: (fromWord: string, toWord: string) => boolean;
 }
 ```
 
 **Methods**:
+
 - `calculateScore(fromWord, toWord, options?)`: Calculates detailed scoring for a move
 - `getScoreForMove(fromWord, toWord, keyLetters?)`: Returns total score for a move
 - `isValidMove(fromWord, toWord)`: Checks if move is valid without scoring
@@ -71,6 +81,7 @@ interface GameStateBotDependencies {
 ```
 
 **Methods**:
+
 - `generateBotMove(word, options?)`: Generates bot move asynchronously with optional configuration
 
 ### WordDataDependencies
@@ -88,12 +99,14 @@ interface WordDataDependencies {
 ```
 
 **Properties** (declared on the interface):
+
 - `enableWords`: Set of valid dictionary words
-- `slangWords`: Set of accepted slang words  
+- `slangWords`: Set of accepted slang words
 - `profanityWords`: Set of profanity words (for filtering)
 - `wordCount`: Total number of words available
 
 **Methods** (implemented by every concrete adapter, e.g. `BrowserWordData` in `src/adapters/browserAdapter.ts` — **not** currently declared on the `WordDataDependencies` interface itself, but relied on by dictionary/adapter code):
+
 - `hasWord(word)`: Check if word exists in any word set
 - `isLoaded()`: Check if dictionary data is loaded
 - `waitForLoad()`: Wait for dictionary to finish loading
@@ -106,7 +119,10 @@ interface WordDataDependencies {
 For web applications using HTTP dictionary loading. **This is the only web adapter** — used by every web consumer (`ChallengeGame.tsx`, `InteractiveGame.tsx`, `useGameState.ts`, `useChallenge.ts`, `DebugDialog.tsx`). There is no separate `webAdapter.ts` (it existed at one point and was removed).
 
 ```typescript
-import { BrowserAdapter, createBrowserAdapter } from '../adapters/browserAdapter';
+import {
+  BrowserAdapter,
+  createBrowserAdapter,
+} from '../adapters/browserAdapter';
 
 // Singleton pattern
 const adapter = BrowserAdapter.getInstance();
@@ -119,6 +135,7 @@ const dependencies = adapter.getGameDependencies();
 ```
 
 **Features**:
+
 - HTTP dictionary loading via fetch API (enable1.txt)
 - JSON-based slang and profanity word loading
 - Browser-compatible performance timing
@@ -126,6 +143,7 @@ const dependencies = adapter.getGameDependencies();
 - Async initialization with waitForLoad()
 
 **Used By**:
+
 - `ChallengeGame.tsx` component
 - `InteractiveGame.tsx` component
 - `useGameState.ts` hook
@@ -154,13 +172,22 @@ const dependencies = getNodeGameDependencies();
 For unit testing with controlled environments.
 
 ```typescript
-import { createTestAdapter, TestAdapter, createCustomTestDependencies } from '../adapters/testAdapter';
+import {
+  createTestAdapter,
+  TestAdapter,
+  createCustomTestDependencies,
+} from '../adapters/testAdapter';
 
 const adapter = createTestAdapter(); // takes no arguments — returns the singleton, pre-loaded with a fixed test word set
 const dependencies = adapter.getGameDependencies();
 
 // Custom word list: build standalone dependencies instead of configuring the singleton
-const customDependencies = createCustomTestDependencies(['CAT', 'CATS', 'DOG', 'DOGS']);
+const customDependencies = createCustomTestDependencies([
+  'CAT',
+  'CATS',
+  'DOG',
+  'DOGS',
+]);
 
 // Or mutate the singleton's word data directly via its instance methods
 const wordData = adapter.getWordData();
@@ -170,12 +197,14 @@ wordData.clearWords();
 ```
 
 **Features**:
+
 - Deterministic word sets for predictable testing
 - Synchronous initialization (no async loading)
 - Configurable test scenarios
 - Minimal word sets for fast testing
 
 **Used By**:
+
 - Unit tests throughout the codebase
 - Integration tests with mocked adapters
 
@@ -190,29 +219,42 @@ function validateWordWithDependencies(
   word: string,
   wordData: WordDataDependencies,
   options?: any
-): ValidationResult
+): ValidationResult;
 ```
 
 **Parameters**:
+
 - `word`: Word to validate (automatically converted to uppercase)
 - `wordData`: Word data dependencies providing dictionary access
 - `options`: Optional configuration for validation
 
 **Returns**: `ValidationResult`
+
 ```typescript
 // packages/engine/interfaces.ts
 interface ValidationResult {
   isValid: boolean;
-  reason?: 'NOT_IN_DICTIONARY' | 'ALREADY_PLAYED' | 'TOO_MANY_ADDS' | 'TOO_MANY_REMOVES' |
-    'INVALID_CHARACTERS' | 'TOO_SHORT' | 'EMPTY_WORD' | 'GAME_NOT_PLAYING' | 'NO_PLAYER' |
-    'LENGTH_CHANGE_TOO_LARGE' | 'INVALID_MOVE' | string; // UPPER_SNAKE_CASE reason codes
-  word: string;       // the normalized (uppercased) word that was validated
+  reason?:
+    | 'NOT_IN_DICTIONARY'
+    | 'ALREADY_PLAYED'
+    | 'TOO_MANY_ADDS'
+    | 'TOO_MANY_REMOVES'
+    | 'INVALID_CHARACTERS'
+    | 'TOO_SHORT'
+    | 'EMPTY_WORD'
+    | 'GAME_NOT_PLAYING'
+    | 'NO_PLAYER'
+    | 'LENGTH_CHANGE_TOO_LARGE'
+    | 'INVALID_MOVE'
+    | string; // UPPER_SNAKE_CASE reason codes
+  word: string; // the normalized (uppercased) word that was validated
   userMessage?: string;
-  censored?: string;  // For profanity filtering
+  censored?: string; // For profanity filtering
 }
 ```
 
 **Example**:
+
 ```typescript
 const adapter = await createBrowserAdapter();
 const wordData = adapter.getWordData();
@@ -230,16 +272,18 @@ const invalid = validateWordWithDependencies('ZZZZZ', wordData);
 function isValidDictionaryWordWithDependencies(
   word: string,
   wordData: WordDataDependencies
-): boolean
+): boolean;
 ```
 
 **Parameters**:
+
 - `word`: Word to check
 - `wordData`: Word data dependencies
 
 **Returns**: Boolean indicating if word exists in dictionary
 
 **Example**:
+
 ```typescript
 const isValid = isValidDictionaryWordWithDependencies('CATS', wordData);
 // true
@@ -254,15 +298,17 @@ function calculateScore(
   fromWord: string,
   toWord: string,
   options?: any
-): ScoringResult
+): ScoringResult;
 ```
 
 **Parameters**:
+
 - `fromWord`: Previous word state
-- `toWord`: New word state  
+- `toWord`: New word state
 - `options`: Optional scoring configuration (keyLetters, etc.)
 
 **Returns**: `ScoringResult`
+
 ```typescript
 // packages/engine/interfaces.ts
 interface ScoringResult {
@@ -285,6 +331,7 @@ interface ScoringAction {
 > **⚠️ Known inconsistency**: `breakdown` is typed as `string[] | Record<string, number>` because different call sites disagree on its shape — `scoring.test.ts` expects a structured `Record` (`breakdown.addLetterPoints`, etc.), the empty-word edge case inside `calculateScore()` itself returns that same `Record` shape, but the normal (non-edge-case) path returns a `string[]` of human-readable action descriptions instead. This is tracked as step 7a in `docs/project/PROJECT_STATUS_AUDIT.md` and is **not yet resolved** — check the actual return value at the call site you're working with rather than trusting this type alone.
 
 **Example** (verified against `packages/engine/scoring.ts`, normal non-edge-case path):
+
 ```typescript
 const score = calculateScore('CAT', 'CATS', { keyLetters: ['S'] });
 // {
@@ -305,10 +352,11 @@ function getScoreForMove(
   fromWord: string,
   toWord: string,
   keyLetters?: string[]
-): number
+): number;
 ```
 
 **Parameters**:
+
 - `fromWord`: Previous word
 - `toWord`: New word
 - `keyLetters`: Optional key letters for bonus scoring
@@ -318,13 +366,11 @@ function getScoreForMove(
 #### isValidMove
 
 ```typescript
-function isValidMove(
-  fromWord: string,
-  toWord: string
-): boolean
+function isValidMove(fromWord: string, toWord: string): boolean;
 ```
 
 **Parameters**:
+
 - `fromWord`: Previous word
 - `toWord`: New word
 
@@ -340,15 +386,17 @@ function generateBotMoveWithDependencies(
   currentWord: string,
   dependencies: BotDependencies,
   options?: BotOptions
-): BotResult
+): BotResult;
 ```
 
 **Parameters**:
+
 - `currentWord`: Current word state
 - `dependencies`: Bot dependencies (extends dictionary and scoring)
 - `options`: Bot configuration options
 
 **Returns**: `BotResult` (synchronously — there is no `await` on this call itself)
+
 ```typescript
 // packages/engine/interfaces.ts
 interface BotResult {
@@ -369,6 +417,7 @@ interface BotMove {
 > **Note**: Adapters expose bot moves via `GameStateBotDependencies.generateBotMove`, which is declared as returning `Promise<BotResult>` — that's because each adapter wraps the synchronous `generateBotMoveWithDependencies()` call in an `async` function (see `browserAdapter.ts`'s `browserBotDependencies.generateBotMove`), not because the engine function itself is async.
 
 **Example**:
+
 ```typescript
 const adapter = await createBrowserAdapter();
 const botDeps = adapter.getBotDependencies(); // GameStateBotDependencies — async wrapper
@@ -405,7 +454,7 @@ class LocalGameStateManagerWithDependencies {
   subscribe(listener: (update: GameStateUpdate) => void): () => void;
 
   // Move management
-  attemptMove(newWord: string): MoveAttempt;      // validate without applying
+  attemptMove(newWord: string): MoveAttempt; // validate without applying
   validateMove(newWord: string): ValidationResult; // convenience wrapper around attemptMove
   applyMove(wordOrAttempt: string | MoveAttempt): boolean; // validates+applies if given a string
 
@@ -423,6 +472,7 @@ class LocalGameStateManagerWithDependencies {
 **Note**: There is no `applyMoveAttempt(word, isBot, playerId)` public method and no `MoveAttemptResult` type — `applyMoveAttempt(moveAttempt: MoveAttempt)` is `private`. From outside the class, call `applyMove(word)` (which internally calls `attemptMove()` then the private `applyMoveAttempt()`) or use `attemptMove()` first if you need the `MoveAttempt` details (validation + scoring) before deciding whether to apply it.
 
 **Example Usage**:
+
 ```typescript
 import { createBrowserAdapter } from '../adapters/browserAdapter';
 import { createGameStateManagerWithDependencies } from '../../packages/engine/gamestate';
@@ -432,7 +482,7 @@ const dependencies = adapter.getGameDependencies();
 const gameManager = createGameStateManagerWithDependencies(dependencies, {
   maxTurns: 20,
   allowBotPlayer: true,
-  enableKeyLetters: true
+  enableKeyLetters: true,
 });
 
 // Start game
@@ -470,9 +520,19 @@ if (botMove) {
 ```typescript
 interface ValidationResult {
   isValid: boolean;
-  reason?: 'NOT_IN_DICTIONARY' | 'ALREADY_PLAYED' | 'TOO_MANY_ADDS' | 'TOO_MANY_REMOVES' |
-    'INVALID_CHARACTERS' | 'TOO_SHORT' | 'EMPTY_WORD' | 'GAME_NOT_PLAYING' | 'NO_PLAYER' |
-    'LENGTH_CHANGE_TOO_LARGE' | 'INVALID_MOVE' | string;
+  reason?:
+    | 'NOT_IN_DICTIONARY'
+    | 'ALREADY_PLAYED'
+    | 'TOO_MANY_ADDS'
+    | 'TOO_MANY_REMOVES'
+    | 'INVALID_CHARACTERS'
+    | 'TOO_SHORT'
+    | 'EMPTY_WORD'
+    | 'GAME_NOT_PLAYING'
+    | 'NO_PLAYER'
+    | 'LENGTH_CHANGE_TOO_LARGE'
+    | 'INVALID_MOVE'
+    | string;
   word: string;
   userMessage?: string;
   censored?: string;
@@ -557,13 +617,21 @@ Challenge mode uses a separate, dependency-injected engine (`packages/engine/cha
 
 ```typescript
 import { createChallengeEngine } from '../../packages/engine/challenge';
-import type { ChallengeEngine, ChallengeDependencies, ChallengeState } from '../../packages/engine/challenge';
+import type {
+  ChallengeEngine,
+  ChallengeDependencies,
+  ChallengeState,
+} from '../../packages/engine/challenge';
 
 const dependencies: ChallengeDependencies = {
-  dictionary,   // DictionaryEngine
-  utilities,    // UtilityDependencies
-  loadState: async (date) => { /* load persisted ChallengeState or null */ return null; },
-  saveState: async (state) => { /* persist ChallengeState */ }
+  dictionary, // DictionaryEngine
+  utilities, // UtilityDependencies
+  loadState: async (date) => {
+    /* load persisted ChallengeState or null */ return null;
+  },
+  saveState: async (state) => {
+    /* persist ChallengeState */
+  },
 };
 
 const challengeEngine: ChallengeEngine = createChallengeEngine(dependencies);
@@ -588,12 +656,16 @@ await challengeEngine.generateRandomChallenge();
 ```
 
 **Full `ChallengeEngine` interface** (`packages/engine/challenge.ts`):
+
 ```typescript
 interface ChallengeEngine {
   initialize(): Promise<void>;
   getDailyChallengeState(date?: string): Promise<ChallengeState>;
   startDailyChallenge(date?: string): Promise<ChallengeState>;
-  submitWord(word: string, currentState: ChallengeState): Promise<{
+  submitWord(
+    word: string,
+    currentState: ChallengeState
+  ): Promise<{
     newState: ChallengeState;
     isValid: boolean;
     isComplete: boolean;
@@ -609,6 +681,7 @@ interface ChallengeEngine {
 ```
 
 **Used By**:
+
 - `ChallengeGame.tsx` component
 - `useChallenge.ts` hook — see `createChallengeEngine(challengeDependencies)` call and `challengeEngine.getDailyChallengeState/submitWord/forfeitChallenge/...` usage for the canonical integration pattern
 
@@ -622,7 +695,7 @@ const validationError: ValidationResult = {
   isValid: false,
   reason: 'NOT_IN_DICTIONARY',
   word: 'ZZZZZ',
-  userMessage: 'Word not found in dictionary'
+  userMessage: 'Word not found in dictionary',
 };
 
 // Bot "no move found" case
@@ -630,7 +703,7 @@ const botError: BotResult = {
   move: null,
   candidates: [],
   processingTime: 12,
-  totalCandidatesGenerated: 0
+  totalCandidatesGenerated: 0,
 };
 ```
 
@@ -666,6 +739,7 @@ if (!status.loaded) {
 ### Performance Characteristics
 
 These are qualitative expectations from the implementation, not benchmarked/re-verified figures — treat as rules of thumb, not SLAs:
+
 - **Word Validation**: single `Set.has()` lookup — effectively O(1)
 - **Score Calculation**: pure string comparisons over short words — fast, no I/O
 - **Bot Move Generation**: generates+scores+filters many move candidates per call — the most expensive engine operation
@@ -682,7 +756,7 @@ const dependencies = adapter.getGameDependencies();
 // Batch word validations when possible
 const words = ['CAT', 'CATS', 'DOG', 'DOGS'];
 const wordData = adapter.getWordData();
-const results = words.map(word => 
+const results = words.map((word) =>
   validateWordWithDependencies(word, wordData)
 );
 
@@ -719,10 +793,10 @@ wordData.addWord('WORD');
 wordData.addWord('LIST');
 
 // Deterministic test scenarios
-const gameManager = createGameStateManagerWithDependencies(
-  deps, 
-  { maxTurns: 5, enableKeyLetters: false }
-);
+const gameManager = createGameStateManagerWithDependencies(deps, {
+  maxTurns: 5,
+  enableKeyLetters: false,
+});
 ```
 
 ### Mock Dependencies for Unit Tests
@@ -735,9 +809,9 @@ vi.mock('../adapters/browserAdapter', () => {
       getInstance: () => ({
         initialize: async () => {},
         getGameDependencies: () => mockDependencies,
-        getDictionaryStatus: () => ({ loaded: true, wordCount: 100 })
-      })
-    }
+        getDictionaryStatus: () => ({ loaded: true, wordCount: 100 }),
+      }),
+    },
   };
 });
 
@@ -752,7 +826,7 @@ const mockDependencies: GameStateDependencies = {
     actions: [],
     keyLetterScore: 0,
     baseScore: 1,
-    keyLettersUsed: []
+    keyLettersUsed: [],
   }),
   getScoreForMove: vi.fn().mockReturnValue(1),
   isValidMove: vi.fn().mockReturnValue(true),
@@ -760,8 +834,8 @@ const mockDependencies: GameStateDependencies = {
     move: { word: 'TESTS', score: 1, confidence: 0.8, reasoning: ['Added S'] },
     candidates: [],
     processingTime: 5,
-    totalCandidatesGenerated: 1
-  })
+    totalCandidatesGenerated: 1,
+  }),
 };
 ```
 
@@ -837,4 +911,4 @@ For the current, maintained list of known issues (test failures, `tsc -b`/ESLint
 
 ---
 
-*For the most up-to-date interfaces, always refer to `packages/engine/interfaces.ts` and the adapter implementations in `src/adapters/` — this document was last re-verified against those sources on 2026-07-14.*
+_For the most up-to-date interfaces, always refer to `packages/engine/interfaces.ts` and the adapter implementations in `src/adapters/` — this document was last re-verified against those sources on 2026-07-14._

@@ -14,7 +14,7 @@ import type {
   GameResultSummary,
   ChallengeResultSummary,
   TurnHistory,
-  BotRecord
+  BotRecord,
 } from './interfaces';
 import { getInitialPlayerStats } from './player-stats-definitions';
 
@@ -26,7 +26,10 @@ function isPassEntry(entry: GameResultSummary['turnHistory'][number]): boolean {
   return entry.previousWord === entry.newWord;
 }
 
-function incrementLetterCounts(counts: Record<string, number>, letters: string[]): void {
+function incrementLetterCounts(
+  counts: Record<string, number>,
+  letters: string[]
+): void {
   for (const letter of letters) {
     const key = letter.toUpperCase();
     counts[key] = (counts[key] || 0) + 1;
@@ -45,14 +48,20 @@ function isSameCalendarDay(a: number, b: number): boolean {
 
 function isNextCalendarDay(previous: number, current: number): boolean {
   const prevDate = new Date(previous);
-  const nextDay = new Date(prevDate.getFullYear(), prevDate.getMonth(), prevDate.getDate() + 1);
+  const nextDay = new Date(
+    prevDate.getFullYear(),
+    prevDate.getMonth(),
+    prevDate.getDate() + 1
+  );
   return isSameCalendarDay(nextDay.getTime(), current);
 }
 
 /**
  * Creates a player stats engine instance with dependency injection
  */
-export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): PlayerStatsEngine {
+export function createPlayerStatsEngine(
+  dependencies: PlayerStatsDependencies
+): PlayerStatsEngine {
   let currentStats: PlayerStats | null = null;
 
   async function initialize(): Promise<void> {
@@ -64,7 +73,10 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
       try {
         currentStats = await dependencies.loadState();
       } catch (error) {
-        console.warn('Failed to load player stats, using initial state:', error);
+        console.warn(
+          'Failed to load player stats, using initial state:',
+          error
+        );
         currentStats = getInitialPlayerStats();
         try {
           await dependencies.saveState(currentStats);
@@ -93,7 +105,10 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
       stats.currentDailyStreak = 1;
     }
 
-    stats.longestDailyStreak = Math.max(stats.longestDailyStreak, stats.currentDailyStreak);
+    stats.longestDailyStreak = Math.max(
+      stats.longestDailyStreak,
+      stats.currentDailyStreak
+    );
   }
 
   /**
@@ -116,7 +131,10 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
       stats.longestWordPlayed = move.newWord;
     }
 
-    if (stats.shortestWordLength === 0 || wordLength < stats.shortestWordLength) {
+    if (
+      stats.shortestWordLength === 0 ||
+      wordLength < stats.shortestWordLength
+    ) {
       stats.shortestWordLength = wordLength;
       stats.shortestWordPlayed = move.newWord;
     }
@@ -138,7 +156,10 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
       }
     }
 
-    incrementLetterCounts(stats.keyLetterUsageCounts, move.keyLettersUsed ?? []);
+    incrementLetterCounts(
+      stats.keyLetterUsageCounts,
+      move.keyLettersUsed ?? []
+    );
     stats.totalKeyLetterPoints += move.scoringBreakdown?.keyLetterScore ?? 0;
   }
 
@@ -149,13 +170,17 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
     return getStats();
   }
 
-  async function recordGameResult(result: GameResultSummary): Promise<PlayerStats> {
+  async function recordGameResult(
+    result: GameResultSummary
+  ): Promise<PlayerStats> {
     const stats = await ensureStateLoaded();
     const timestamp = result.timestamp ?? dependencies.getTimestamp();
 
     // Word/letter-level stats are recorded live via `recordMove` as each
     // move happens - only the pass count is needed here (for perfectGames).
-    const playerMoves = result.turnHistory.filter(entry => entry.playerId === result.playerId);
+    const playerMoves = result.turnHistory.filter(
+      (entry) => entry.playerId === result.playerId
+    );
     const passMoves = playerMoves.filter(isPassEntry);
 
     // Games
@@ -167,10 +192,16 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
       stats.highestGameScore = result.finalScore;
     }
 
-    if (stats.longestGameTurns === 0 || result.totalTurns > stats.longestGameTurns) {
+    if (
+      stats.longestGameTurns === 0 ||
+      result.totalTurns > stats.longestGameTurns
+    ) {
       stats.longestGameTurns = result.totalTurns;
     }
-    if (stats.shortestGameTurns === 0 || result.totalTurns < stats.shortestGameTurns) {
+    if (
+      stats.shortestGameTurns === 0 ||
+      result.totalTurns < stats.shortestGameTurns
+    ) {
       stats.shortestGameTurns = result.totalTurns;
     }
 
@@ -179,7 +210,11 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
       if (result.gameDurationMs > stats.longestGameDurationMs) {
         stats.longestGameDurationMs = result.gameDurationMs;
       }
-      if (result.won && (stats.fastestWinDurationMs === 0 || result.gameDurationMs < stats.fastestWinDurationMs)) {
+      if (
+        result.won &&
+        (stats.fastestWinDurationMs === 0 ||
+          result.gameDurationMs < stats.fastestWinDurationMs)
+      ) {
         stats.fastestWinDurationMs = result.gameDurationMs;
       }
     }
@@ -190,7 +225,10 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
     } else if (result.won) {
       stats.gamesWon += 1;
       stats.currentWinStreak += 1;
-      stats.longestWinStreak = Math.max(stats.longestWinStreak, stats.currentWinStreak);
+      stats.longestWinStreak = Math.max(
+        stats.longestWinStreak,
+        stats.currentWinStreak
+      );
 
       if (passMoves.length === 0) {
         stats.perfectGames += 1;
@@ -202,7 +240,11 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
 
     // Bots
     if (result.botId) {
-      const record: BotRecord = stats.botRecords[result.botId] ?? { wins: 0, losses: 0, gamesPlayed: 0 };
+      const record: BotRecord = stats.botRecords[result.botId] ?? {
+        wins: 0,
+        losses: 0,
+        gamesPlayed: 0,
+      };
       record.gamesPlayed += 1;
       if (result.won) {
         record.wins += 1;
@@ -226,7 +268,9 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
     return getStats();
   }
 
-  async function recordChallengeResult(result: ChallengeResultSummary): Promise<PlayerStats> {
+  async function recordChallengeResult(
+    result: ChallengeResultSummary
+  ): Promise<PlayerStats> {
     const stats = await ensureStateLoaded();
     const timestamp = result.timestamp ?? dependencies.getTimestamp();
 
@@ -239,7 +283,10 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
         stats.currentChallengeStreak
       );
 
-      if (stats.fewestStepsToComplete === 0 || result.stepCount < stats.fewestStepsToComplete) {
+      if (
+        stats.fewestStepsToComplete === 0 ||
+        result.stepCount < stats.fewestStepsToComplete
+      ) {
         stats.fewestStepsToComplete = result.stepCount;
       }
     } else {
@@ -249,7 +296,10 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
 
     // Step-count extremes across every challenge played (won or lost),
     // mirroring shortestGameTurns/longestGameTurns.
-    if (stats.shortestChallengeSteps === 0 || result.stepCount < stats.shortestChallengeSteps) {
+    if (
+      stats.shortestChallengeSteps === 0 ||
+      result.stepCount < stats.shortestChallengeSteps
+    ) {
       stats.shortestChallengeSteps = result.stepCount;
     }
     if (result.stepCount > stats.longestChallengeSteps) {
@@ -284,9 +334,12 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
       letterUsageCounts: { ...currentStats.letterUsageCounts },
       keyLetterUsageCounts: { ...currentStats.keyLetterUsageCounts },
       botRecords: Object.fromEntries(
-        Object.entries(currentStats.botRecords).map(([id, record]) => [id, { ...record }])
+        Object.entries(currentStats.botRecords).map(([id, record]) => [
+          id,
+          { ...record },
+        ])
       ),
-      botsBeaten: [...currentStats.botsBeaten]
+      botsBeaten: [...currentStats.botsBeaten],
     };
   }
 
@@ -302,6 +355,6 @@ export function createPlayerStatsEngine(dependencies: PlayerStatsDependencies): 
     recordChallengeResult,
     recordUnlockEarned,
     getStats,
-    resetStats
+    resetStats,
   };
 }

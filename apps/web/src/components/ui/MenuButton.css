@@ -10,20 +10,20 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  
+
   /* Font and theme integration */
   font-family: var(--theme-font-family, 'Inter, system-ui, sans-serif');
   font-weight: var(--theme-font-weight, 900);
   color: var(--theme-text);
   font-size: calc(var(--theme-font-size-md, 16px) * 1.2);
-  
+
   /* Touch target */
   min-height: 44px;
   min-width: 44px;
-  
+
   /* Transition for smooth animation */
   transition: all 0.2s ease-in-out;
-  
+
   /* Remove focus outline */
   outline: none;
 }
@@ -40,8 +40,10 @@
   font-size: inherit;
   line-height: 1;
   position: absolute;
-  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-  
+  transition:
+    opacity 0.3s ease-in-out,
+    transform 0.3s ease-in-out;
+
   /* Ensure proper alignment */
   text-align: center;
   min-width: 20px;

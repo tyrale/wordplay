@@ -11,14 +11,14 @@ export interface UseVanityFilterReturn {
   // State
   vanityState: VanityState;
   isLoading: boolean;
-  
+
   // Display functions
   getDisplayWord: (word: string, options?: { isEditing?: boolean }) => string;
-  
+
   // Toggle functions
   toggleVanityFilter: () => void;
   unlockVanityToggle: () => void;
-  
+
   // Query functions
   isVanityFilterUnlocked: () => boolean;
   isVanityFilterOn: () => boolean;
@@ -35,7 +35,9 @@ export interface UseVanityFilterProps {
  * Now uses centralized context for shared state across all components
  * Legacy props are ignored - all state comes from context
  */
-export function useVanityFilter(_props?: UseVanityFilterProps): UseVanityFilterReturn {
+export function useVanityFilter(
+  _props?: UseVanityFilterProps
+): UseVanityFilterReturn {
   // Use the centralized context instead of local state
   return useVanityFilterContext();
-} 
+}

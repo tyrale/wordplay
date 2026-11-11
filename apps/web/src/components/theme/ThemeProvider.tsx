@@ -25,7 +25,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       try {
         const parsed = JSON.parse(savedTheme);
         // Validate that it's a valid theme
-        const foundTheme = availableThemes.find(theme => theme.name === parsed.name);
+        const foundTheme = availableThemes.find(
+          (theme) => theme.name === parsed.name
+        );
         return foundTheme || defaultTheme;
       } catch {
         return defaultTheme;
@@ -43,7 +45,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const setTheme = (theme: GameTheme) => {
     setCurrentTheme(theme);
     // Save theme to localStorage
-    localStorage.setItem('wordplay-theme', JSON.stringify({ name: theme.name }));
+    localStorage.setItem(
+      'wordplay-theme',
+      JSON.stringify({ name: theme.name })
+    );
   };
 
   const setInverted = (value: boolean) => {
@@ -59,14 +64,16 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Apply theme CSS custom properties
   useEffect(() => {
     const root = document.documentElement;
-    
+
     // Apply color variables with inversion if enabled
-    const colors = isInverted ? {
-      ...currentTheme.colors,
-      background: currentTheme.colors.text,
-      text: currentTheme.colors.background
-    } : currentTheme.colors;
-    
+    const colors = isInverted
+      ? {
+          ...currentTheme.colors,
+          background: currentTheme.colors.text,
+          text: currentTheme.colors.background,
+        }
+      : currentTheme.colors;
+
     root.style.setProperty('--theme-primary', colors.primary);
     root.style.setProperty('--theme-text', colors.text);
     root.style.setProperty('--theme-text-secondary', colors.textSecondary);
@@ -77,14 +84,32 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     root.style.setProperty('--theme-accent-text', colors.accentText);
     root.style.setProperty('--theme-locked', colors.locked);
     root.style.setProperty('--theme-disabled', colors.disabled);
-    
+
     // Apply typography variables
-    root.style.setProperty('--theme-font-family', currentTheme.typography.fontFamily);
-    root.style.setProperty('--theme-font-weight', currentTheme.typography.fontWeight.toString());
-    root.style.setProperty('--theme-font-size-xl', currentTheme.typography.fontSizeXL);
-    root.style.setProperty('--theme-font-size-lg', currentTheme.typography.fontSizeLG);
-    root.style.setProperty('--theme-font-size-md', currentTheme.typography.fontSizeMD);
-    root.style.setProperty('--theme-font-size-sm', currentTheme.typography.fontSizeSM);
+    root.style.setProperty(
+      '--theme-font-family',
+      currentTheme.typography.fontFamily
+    );
+    root.style.setProperty(
+      '--theme-font-weight',
+      currentTheme.typography.fontWeight.toString()
+    );
+    root.style.setProperty(
+      '--theme-font-size-xl',
+      currentTheme.typography.fontSizeXL
+    );
+    root.style.setProperty(
+      '--theme-font-size-lg',
+      currentTheme.typography.fontSizeLG
+    );
+    root.style.setProperty(
+      '--theme-font-size-md',
+      currentTheme.typography.fontSizeMD
+    );
+    root.style.setProperty(
+      '--theme-font-size-sm',
+      currentTheme.typography.fontSizeSM
+    );
   }, [currentTheme, isInverted]);
 
   const value: ThemeContextType = {
@@ -97,8 +122,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   };
 
   return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
-}; 
+};

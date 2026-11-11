@@ -2,13 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [main, restart-vers]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   test-and-build:
-    runs-on: ubuntu-latest
+    # Pinned: Playwright 1.52 can't install Chromium on ubuntu-latest (26.04).
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
@@ -17,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
       - name: Install dependencies
@@ -43,6 +44,10 @@ jobs:
       # on, so it gets its own explicit check.
       - name: Run TypeScript check (apps/native)
         run: npm run typecheck:native
+
+      # Storybook browser tests (vitest project in apps/web) need Chromium.
+      - name: Install Playwright browser (Storybook tests)
+        run: npx playwright install --with-deps chromium
 
       # Covers apps/web + packages/engine + apps/native (see the root
       # package.json's own `test` script) - packages/engine is the

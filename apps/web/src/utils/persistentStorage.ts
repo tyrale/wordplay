@@ -24,9 +24,13 @@ export async function requestPersistentStorage(): Promise<boolean> {
 
     const granted = await navigator.storage.persist();
     if (granted) {
-      console.log('[Storage] Persistent storage granted - unlocks/stats are protected from automatic eviction');
+      console.log(
+        '[Storage] Persistent storage granted - unlocks/stats are protected from automatic eviction'
+      );
     } else {
-      console.log('[Storage] Persistent storage not granted (browser heuristics); data may still be evicted under storage pressure');
+      console.log(
+        '[Storage] Persistent storage not granted (browser heuristics); data may still be evicted under storage pressure'
+      );
     }
     return granted;
   } catch (error) {

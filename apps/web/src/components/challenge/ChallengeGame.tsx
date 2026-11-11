@@ -635,7 +635,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const showInvalidX = !isValidSubmit;
 
   // Parse challenge share text into meta content for the completion AlertOverlay
-  const isPatternLine = (line: string) => /[◼︎◻︎]/.test(line);
+  const isPatternLine = (line: string) => /[◼◻]/u.test(line);
 
   const renderShareLine = (line: string, index: number) => {
     if (index === 0 && line.endsWith(' ✓')) {

@@ -4,19 +4,19 @@
   font-weight: var(--theme-font-weight);
   font-size: var(--theme-font-size-md);
   color: var(--theme-text);
-  
+
   /* Layout */
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 40px;
   height: 40px;
-  
+
   /* No background - text only */
   background: none;
   border: none;
   cursor: pointer;
-  
+
   /* Transitions */
   transition: all 0.15s ease;
 }
@@ -57,4 +57,4 @@
   cursor: not-allowed;
 }
 
-/* Removed focus styles */ 
+/* Removed focus styles */

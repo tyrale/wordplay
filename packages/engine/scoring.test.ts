@@ -1,6 +1,6 @@
 /**
  * Unit tests for Scoring Module
- * 
+ *
  * Covers all scoring scenarios including letter additions, removals, moves,
  * key letter bonuses, and complex action combinations as specified in task 1.2.
  */
@@ -14,15 +14,14 @@ import {
   performanceTestScoring,
   formatScoreBreakdown,
   isValidMove,
-  type ScoringResult
+  type ScoringResult,
 } from './scoring';
 
 function hasAction(result: ScoringResult, type: string): boolean {
-  return result.actions.some(action => action.type === type);
+  return result.actions.some((action) => action.type === type);
 }
 
 describe('Scoring Module', () => {
-
   describe('Core Scoring Rules - Base Letters Only', () => {
     it('should score CAT→CATS as 1 point (add letter)', () => {
       const result = calculateScore('CAT', 'CATS');
@@ -53,7 +52,7 @@ describe('Scoring Module', () => {
     });
 
     it('should score CATS→TABS as 3 points (remove C, add T, move)', () => {
-      const result = calculateScore('CATS', 'TABS');  
+      const result = calculateScore('CATS', 'TABS');
       expect(result.totalScore).toBe(3);
       expect(result.breakdown.addLetterPoints).toBe(1);
       expect(result.breakdown.removeLetterPoints).toBe(1);
@@ -144,7 +143,7 @@ describe('Scoring Module', () => {
       const result = calculateScore('CATS', 'TABS'); // Remove C, add T, move ATS
       expect(result.totalScore).toBe(3);
       expect(result.breakdown.addLetterPoints).toBe(1);
-      expect(result.breakdown.removeLetterPoints).toBe(1);  
+      expect(result.breakdown.removeLetterPoints).toBe(1);
       expect(result.breakdown.movePoints).toBe(1);
     });
 
@@ -261,15 +260,15 @@ describe('Scoring Module', () => {
       const testCases = [
         ['CAT', 'CATS'],
         ['DOG', 'DOGS'],
-        ['HELLO', 'WORLD']
+        ['HELLO', 'WORLD'],
       ];
-      
+
       const startTime = performance.now();
       testCases.forEach(([prev, curr]) => {
         calculateScore(prev, curr);
       });
       const endTime = performance.now();
-      
+
       expect(endTime - startTime).toBeLessThan(10); // Less than 10ms total
     });
   });
@@ -279,16 +278,16 @@ describe('Scoring Module', () => {
       // Simulate a typical game sequence
       let currentWord = 'CAT';
       let totalScore = 0;
-      
+
       // Turn 1: CAT → CATS
       let result = calculateScore(currentWord, 'CATS');
       totalScore += result.totalScore;
       currentWord = 'CATS';
-      
+
       // Turn 2: CATS → BATS
       result = calculateScore(currentWord, 'BATS');
       totalScore += result.totalScore;
-      
+
       expect(totalScore).toBe(3); // 1 + 2
     });
 
@@ -303,7 +302,7 @@ describe('Scoring Module', () => {
     it('should maintain consistent scoring across multiple calls', () => {
       const result1 = calculateScore('CAT', 'CATS');
       const result2 = calculateScore('CAT', 'CATS');
-      
+
       expect(result1.totalScore).toBe(result2.totalScore);
       expect(result1.breakdown).toEqual(result2.breakdown);
     });
@@ -313,12 +312,15 @@ describe('Scoring Module', () => {
         ['CAT', 'CATS'],
         ['CAT', 'BAT'],
         ['LISTEN', 'SILENT'],
-        ['HELLO', 'WORLD']
+        ['HELLO', 'WORLD'],
       ];
-      
+
       testCases.forEach(([prev, curr]) => {
         const result = calculateScore(prev, curr);
-        const expectedTotal = Object.values(result.breakdown).reduce((sum, points) => sum + points, 0);
+        const expectedTotal = Object.values(result.breakdown).reduce(
+          (sum, points) => sum + points,
+          0
+        );
         expect(result.totalScore).toBe(expectedTotal);
       });
     });
@@ -361,7 +363,7 @@ describe('Scoring Module', () => {
     it('should give same +1 regardless of previous key letters', () => {
       const result1 = calculateScore('CAT', 'CATS', { keyLetters: ['S'] });
       const result2 = calculateScore('DOG', 'DOGS', { keyLetters: ['S'] });
-      
+
       expect(result1.breakdown.keyLetterUsagePoints).toBe(1);
       expect(result2.breakdown.keyLetterUsagePoints).toBe(1);
     });
@@ -390,7 +392,7 @@ describe('Scoring Module', () => {
       // Simulate game with key letters
       const result1 = calculateScore('CAT', 'CATS', { keyLetters: ['S'] });
       expect(result1.totalScore).toBe(2); // Add + Key usage
-      
+
       const result2 = calculateScore('CATS', 'BATS', { keyLetters: ['B'] });
       expect(result2.totalScore).toBe(3); // Remove + Add + Key usage
     });
@@ -510,4 +512,4 @@ describe('Scoring Module', () => {
       expect(hasAction(result, 'rearrange')).toBe(false);
     });
   });
-}); 
+});

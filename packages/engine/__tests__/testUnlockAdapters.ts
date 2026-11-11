@@ -1,6 +1,6 @@
 /**
  * Test Unlock Adapter
- * 
+ *
  * Provides in-memory persistence for testing the unlock system.
  * Allows for controlled testing scenarios and state manipulation.
  */
@@ -16,7 +16,7 @@ export function createTestUnlockDependencies(
 ): UnlockDependencies {
   let currentState: UnlockState = {
     ...getInitialUnlockState(),
-    ...initialState
+    ...initialState,
   };
 
   return {
@@ -28,10 +28,10 @@ export function createTestUnlockDependencies(
         bots: [...currentState.bots],
         achievements: [...currentState.achievements],
         reveals: [...currentState.reveals],
-        hasUsedReset: currentState.hasUsedReset
+        hasUsedReset: currentState.hasUsedReset,
       };
     },
-    
+
     saveState: async (state: UnlockState): Promise<void> => {
       // Store a copy to prevent external mutation
       currentState = {
@@ -40,11 +40,11 @@ export function createTestUnlockDependencies(
         bots: [...state.bots],
         achievements: [...state.achievements],
         reveals: [...state.reveals],
-        hasUsedReset: state.hasUsedReset
+        hasUsedReset: state.hasUsedReset,
       };
     },
-    
-    getTimestamp: () => Date.now()
+
+    getTimestamp: () => Date.now(),
   };
 }
 
@@ -64,10 +64,10 @@ export function createControlledTestUnlockDependencies(
         bots: [...controlledState.bots],
         achievements: [...controlledState.achievements],
         reveals: [...controlledState.reveals],
-        hasUsedReset: controlledState.hasUsedReset
+        hasUsedReset: controlledState.hasUsedReset,
       };
     },
-    
+
     saveState: async (state: UnlockState): Promise<void> => {
       // Update the controlled state by replacing arrays
       controlledState.themes = [...state.themes];
@@ -77,8 +77,8 @@ export function createControlledTestUnlockDependencies(
       controlledState.reveals = [...state.reveals];
       controlledState.hasUsedReset = state.hasUsedReset;
     },
-    
-    getTimestamp: () => Date.now()
+
+    getTimestamp: () => Date.now(),
   };
 }
 
@@ -103,10 +103,10 @@ export function createFailingTestUnlockDependencies(
         bots: [...currentState.bots],
         achievements: [...currentState.achievements],
         reveals: [...currentState.reveals],
-        hasUsedReset: currentState.hasUsedReset
+        hasUsedReset: currentState.hasUsedReset,
       };
     },
-    
+
     saveState: async (state: UnlockState): Promise<void> => {
       if (shouldFailSave) {
         throw new Error('Simulated save failure');
@@ -117,11 +117,11 @@ export function createFailingTestUnlockDependencies(
         bots: [...state.bots],
         achievements: [...state.achievements],
         reveals: [...state.reveals],
-        hasUsedReset: state.hasUsedReset
+        hasUsedReset: state.hasUsedReset,
       };
     },
-    
-    getTimestamp: () => Date.now()
+
+    getTimestamp: () => Date.now(),
   };
 }
 
@@ -142,10 +142,10 @@ export function createDeterministicTestUnlockDependencies(
         bots: [...currentState.bots],
         achievements: [...currentState.achievements],
         reveals: [...currentState.reveals],
-        hasUsedReset: currentState.hasUsedReset
+        hasUsedReset: currentState.hasUsedReset,
       };
     },
-    
+
     saveState: async (state: UnlockState): Promise<void> => {
       currentState = {
         themes: [...state.themes],
@@ -153,10 +153,10 @@ export function createDeterministicTestUnlockDependencies(
         bots: [...state.bots],
         achievements: [...state.achievements],
         reveals: [...state.reveals],
-        hasUsedReset: state.hasUsedReset
+        hasUsedReset: state.hasUsedReset,
       };
     },
-    
-    getTimestamp: () => fixedTimestamp
+
+    getTimestamp: () => fixedTimestamp,
   };
-} 
+}

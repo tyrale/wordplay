@@ -11,7 +11,7 @@ interface MenuButtonProps {
 export const MenuButton: React.FC<MenuButtonProps> = ({
   isMenuOpen,
   onClick,
-  className = ''
+  className = '',
 }) => {
   return (
     <button
@@ -29,4 +29,4 @@ export const MenuButton: React.FC<MenuButtonProps> = ({
       )}
     </button>
   );
-}; 
+};

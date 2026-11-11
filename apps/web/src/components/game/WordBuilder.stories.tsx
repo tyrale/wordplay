@@ -9,7 +9,8 @@ const meta: Meta<typeof WordBuilder> = {
     layout: 'centered',
     docs: {
       description: {
-        component: 'Interactive word builder with drag-and-drop functionality for constructing and modifying words.',
+        component:
+          'Interactive word builder with drag-and-drop functionality for constructing and modifying words.',
       },
     },
   },
@@ -114,9 +115,7 @@ export const MaxLength: Story = {
 export const Disabled: Story = {
   args: {
     currentWord: 'WORD',
-    wordHighlights: [
-      { index: 0, type: 'key' },
-    ] as LetterHighlight[],
+    wordHighlights: [{ index: 0, type: 'key' }] as LetterHighlight[],
     disabled: true,
     maxLength: 10,
     minLength: 3,
@@ -131,4 +130,4 @@ export const Empty: Story = {
     maxLength: 10,
     minLength: 3,
   },
-}; 
+};

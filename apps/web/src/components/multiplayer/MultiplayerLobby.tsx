@@ -11,10 +11,15 @@ import {
   type MatchmakingHandle,
   type MatchmakingMode,
   type ActiveGameSummary,
-  type GameJoinInfo
+  type GameJoinInfo,
 } from '../../adapters/supabaseMultiplayerAdapter';
 import { supabase } from '../../lib/supabase';
-import { getDisplayName, setDisplayName, hasConfirmedDisplayName, markDisplayNameConfirmed } from '../../adapters/supabaseAuthAdapter';
+import {
+  getDisplayName,
+  setDisplayName,
+  hasConfirmedDisplayName,
+  markDisplayNameConfirmed,
+} from '../../adapters/supabaseAuthAdapter';
 import { NamePromptOverlay } from './NamePromptOverlay';
 import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
 import { useRoundLength } from '../../contexts/RoundLengthContext';
@@ -33,13 +38,18 @@ export interface MultiplayerLobbyProps {
 type LobbyView = 'menu' | 'create' | 'join' | 'matchmaking';
 type LobbyAction = 'create' | 'join' | 'random';
 
-export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady, onBack }) => {
+export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
+  onGameReady,
+  onBack,
+}) => {
   const [view, setView] = useState<LobbyView>('menu');
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [joinCodeInput, setJoinCodeInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
-  const [showNamePrompt, setShowNamePrompt] = useState(!hasConfirmedDisplayName());
+  const [showNamePrompt, setShowNamePrompt] = useState(
+    !hasConfirmedDisplayName()
+  );
   const [activeGames, setActiveGames] = useState<ActiveGameSummary[]>([]);
   const [opponentName, setOpponentName] = useState<string | null>(null);
   const [readyGameId, setReadyGameId] = useState<string | null>(null);
@@ -48,12 +58,16 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
   // chosen) Create/Join/Random slides in in its place.
   const [menuStep, setMenuStep] = useState<'mode' | 'action'>('mode');
   const [isMenuStepExiting, setIsMenuStepExiting] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<MatchmakingMode | null>(null);
+  const [selectedMode, setSelectedMode] = useState<MatchmakingMode | null>(
+    null
+  );
   const [createMode, setCreateMode] = useState<MatchmakingMode>('vsone');
   const [createGameId, setCreateGameId] = useState<string | null>(null);
   // Live list of joined players for a vsmany "Create" game, shown while it's
   // still 'waiting' for the host to manually start it.
-  const [joinedPlayers, setJoinedPlayers] = useState<GameJoinInfo['players']>([]);
+  const [joinedPlayers, setJoinedPlayers] = useState<GameJoinInfo['players']>(
+    []
+  );
   // Cleans up the realtime channel + polling fallback from the most recent
   // handleCreateInvite call, so a stale one doesn't linger if the host backs
   // out or creates another game before the first settles.
@@ -66,16 +80,25 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
   const { roundLength } = useRoundLength();
   const { getUnlockedItems } = useUnlockSystem();
   const unlockedMechanics = getUnlockedItems('mechanic');
-  const isTimePressureOn = unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
-  const availableStartLengths = START_WORD_LENGTHS.filter(len =>
-    unlockedMechanics.includes(`${len}-letter-start`) && isMechanicOn(`${len}-letter-start`)
+  const isTimePressureOn =
+    unlockedMechanics.includes('time-pressure') &&
+    isMechanicOn('time-pressure');
+  const availableStartLengths = START_WORD_LENGTHS.filter(
+    (len) =>
+      unlockedMechanics.includes(`${len}-letter-start`) &&
+      isMechanicOn(`${len}-letter-start`)
   );
-  const startingWordLength = availableStartLengths.length > 0
-    ? availableStartLengths[Math.floor(Math.random() * availableStartLengths.length)]
-    : undefined;
+  const startingWordLength =
+    availableStartLengths.length > 0
+      ? availableStartLengths[
+          Math.floor(Math.random() * availableStartLengths.length)
+        ]
+      : undefined;
 
   useEffect(() => {
-    listMyActiveGames().then(setActiveGames).catch(() => setActiveGames([]));
+    listMyActiveGames()
+      .then(setActiveGames)
+      .catch(() => setActiveGames([]));
   }, []);
 
   useEffect(() => {
@@ -90,71 +113,84 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     setShowNamePrompt(false);
   }, []);
 
-  const handleCreateInvite = useCallback(async (mode: MatchmakingMode) => {
-    setView('create');
-    setError(null);
-    setIsBusy(true);
-    setOpponentName(null);
-    setReadyGameId(null);
-    setCreateMode(mode);
-    setCreateGameId(null);
-    setJoinedPlayers([]);
-    try {
-      const { gameId, inviteCode: code } = await createInviteGame({
-        maxPlayers: mode === 'vsmany' ? 8 : 2,
-        // These three settings apply to every player in the game, not just
-        // the host - see createInviteGame()'s doc comments.
-        maxTurns: roundLength,
-        initialWordLength: startingWordLength,
-        timePressureEnabled: isTimePressureOn
-      });
-      setInviteCode(code);
-      setCreateGameId(gameId);
-      getGameJoinInfo(gameId).then((info) => {
-        if (info) setJoinedPlayers(info.players);
-      });
-      // vsone fills up (2/2) and activates as soon as the opponent joins -
-      // wait for that, then load their name and stay on this screen until
-      // the host taps Start rather than jumping straight into the game.
-      // vsmany stays 'waiting' until the host manually starts it (see
-      // handleStartVsManyGame) or it fills up to 8, so we just track the
-      // live joined-players list until either happens.
-      const channel = supabase
-        .channel(`lobby-${gameId}`)
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
-          (payload: { new?: { status?: string } }) => {
-            if (payload.new?.status === 'active') {
-              supabase.removeChannel(channel);
-              if (mode === 'vsone') {
-                getOpponentName(gameId).then((name) => {
-                  setOpponentName(name || 'Your opponent');
-                  setReadyGameId(gameId);
-                });
-              } else {
-                // Filled up to max_players automatically - jump straight in.
-                onGameReady(gameId);
+  const handleCreateInvite = useCallback(
+    async (mode: MatchmakingMode) => {
+      setView('create');
+      setError(null);
+      setIsBusy(true);
+      setOpponentName(null);
+      setReadyGameId(null);
+      setCreateMode(mode);
+      setCreateGameId(null);
+      setJoinedPlayers([]);
+      try {
+        const { gameId, inviteCode: code } = await createInviteGame({
+          maxPlayers: mode === 'vsmany' ? 8 : 2,
+          // These three settings apply to every player in the game, not just
+          // the host - see createInviteGame()'s doc comments.
+          maxTurns: roundLength,
+          initialWordLength: startingWordLength,
+          timePressureEnabled: isTimePressureOn,
+        });
+        setInviteCode(code);
+        setCreateGameId(gameId);
+        getGameJoinInfo(gameId).then((info) => {
+          if (info) setJoinedPlayers(info.players);
+        });
+        // vsone fills up (2/2) and activates as soon as the opponent joins -
+        // wait for that, then load their name and stay on this screen until
+        // the host taps Start rather than jumping straight into the game.
+        // vsmany stays 'waiting' until the host manually starts it (see
+        // handleStartVsManyGame) or it fills up to 8, so we just track the
+        // live joined-players list until either happens.
+        const channel = supabase
+          .channel(`lobby-${gameId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'games',
+              filter: `id=eq.${gameId}`,
+            },
+            (payload: { new?: { status?: string } }) => {
+              if (payload.new?.status === 'active') {
+                supabase.removeChannel(channel);
+                if (mode === 'vsone') {
+                  getOpponentName(gameId).then((name) => {
+                    setOpponentName(name || 'Your opponent');
+                    setReadyGameId(gameId);
+                  });
+                } else {
+                  // Filled up to max_players automatically - jump straight in.
+                  onGameReady(gameId);
+                }
               }
             }
-          }
-        )
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'game_players', filter: `game_id=eq.${gameId}` },
-          () => {
-            getGameJoinInfo(gameId).then((info) => {
-              if (info) setJoinedPlayers(info.players);
-            });
-          }
-        )
-        .subscribe();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create game');
-    } finally {
-      setIsBusy(false);
-    }
-  }, [onGameReady, roundLength, startingWordLength, isTimePressureOn]);
+          )
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'game_players',
+              filter: `game_id=eq.${gameId}`,
+            },
+            () => {
+              getGameJoinInfo(gameId).then((info) => {
+                if (info) setJoinedPlayers(info.players);
+              });
+            }
+          )
+          .subscribe();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to create game');
+      } finally {
+        setIsBusy(false);
+      }
+    },
+    [onGameReady, roundLength, startingWordLength, isTimePressureOn]
+  );
 
   const handleStartGame = useCallback(() => {
     if (readyGameId) onGameReady(readyGameId);
@@ -178,7 +214,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     if (!inviteCode) return;
     const shareData = {
       title: 'Join my Wordplay game',
-      text: `Join my Wordplay game with code ${inviteCode}`
+      text: `Join my Wordplay game with code ${inviteCode}`,
     };
     try {
       if (navigator.share) {
@@ -204,21 +240,30 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     }
   }, [joinCodeInput, onGameReady]);
 
-  const handleFindMatch = useCallback(async (mode: MatchmakingMode) => {
-    setView('matchmaking');
-    setError(null);
-    setIsBusy(true);
-    try {
-      const handle = await findMatch((gameId) => {
-        onGameReady(gameId);
-      }, mode, { timePressureEnabled: isTimePressureOn });
-      matchmakingHandleRef.current = handle;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to search for a match');
-    } finally {
-      setIsBusy(false);
-    }
-  }, [onGameReady, isTimePressureOn]);
+  const handleFindMatch = useCallback(
+    async (mode: MatchmakingMode) => {
+      setView('matchmaking');
+      setError(null);
+      setIsBusy(true);
+      try {
+        const handle = await findMatch(
+          (gameId) => {
+            onGameReady(gameId);
+          },
+          mode,
+          { timePressureEnabled: isTimePressureOn }
+        );
+        matchmakingHandleRef.current = handle;
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to search for a match'
+        );
+      } finally {
+        setIsBusy(false);
+      }
+    },
+    [onGameReady, isTimePressureOn]
+  );
 
   // Tapping vsone/vsmany on the first menu step: slide it out to the left,
   // then reveal the Create/Join/Random step sliding in from the right.
@@ -234,16 +279,19 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
   // Tapping Create/Join/Random on the second menu step. Join's behavior
   // doesn't depend on mode - any invite code works regardless of the
   // created game's max_players - so it's ignored there.
-  const handleActionSelect = useCallback((action: LobbyAction) => {
-    const mode = selectedMode ?? 'vsone';
-    if (action === 'create') {
-      handleCreateInvite(mode);
-    } else if (action === 'join') {
-      setView('join');
-    } else {
-      handleFindMatch(mode);
-    }
-  }, [selectedMode, handleCreateInvite, handleFindMatch]);
+  const handleActionSelect = useCallback(
+    (action: LobbyAction) => {
+      const mode = selectedMode ?? 'vsone';
+      if (action === 'create') {
+        handleCreateInvite(mode);
+      } else if (action === 'join') {
+        setView('join');
+      } else {
+        handleFindMatch(mode);
+      }
+    },
+    [selectedMode, handleCreateInvite, handleFindMatch]
+  );
 
   const handleCancelMatchmaking = useCallback(async () => {
     await matchmakingHandleRef.current?.cancel();
@@ -254,7 +302,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
   const handleCancelGame = useCallback(async (gameId: string) => {
     try {
       await cancelGame(gameId);
-      setActiveGames(prev => prev.filter(g => g.gameId !== gameId));
+      setActiveGames((prev) => prev.filter((g) => g.gameId !== gameId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to cancel game');
     }
@@ -309,10 +357,16 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
             <div
               className={`multiplayer-lobby__link-list ${isMenuStepExiting ? 'multiplayer-lobby__link-list--exiting' : ''}`}
             >
-              <button className="multiplayer-lobby__link" onClick={() => handleSelectMode('vsone')}>
+              <button
+                className="multiplayer-lobby__link"
+                onClick={() => handleSelectMode('vsone')}
+              >
                 <span className="multiplayer-lobby__vs-text">vs</span>one
               </button>
-              <button className="multiplayer-lobby__link" onClick={() => handleSelectMode('vsmany')}>
+              <button
+                className="multiplayer-lobby__link"
+                onClick={() => handleSelectMode('vsmany')}
+              >
                 <span className="multiplayer-lobby__vs-text">vs</span>many
               </button>
             </div>
@@ -320,15 +374,32 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
 
           {menuStep === 'action' && (
             <div className="multiplayer-lobby__link-list multiplayer-lobby__link-list--entering">
-              <button className="multiplayer-lobby__link" onClick={() => handleActionSelect('create')}>Create</button>
-              <button className="multiplayer-lobby__link" onClick={() => handleActionSelect('join')}>Join</button>
-              <button className="multiplayer-lobby__link" onClick={() => handleActionSelect('random')}>Random</button>
+              <button
+                className="multiplayer-lobby__link"
+                onClick={() => handleActionSelect('create')}
+              >
+                Create
+              </button>
+              <button
+                className="multiplayer-lobby__link"
+                onClick={() => handleActionSelect('join')}
+              >
+                Join
+              </button>
+              <button
+                className="multiplayer-lobby__link"
+                onClick={() => handleActionSelect('random')}
+              >
+                Random
+              </button>
             </div>
           )}
 
           {activeGames.length > 0 && (
             <div className="multiplayer-lobby__games">
-              <p className="multiplayer-lobby__games-title">Games in Progress</p>
+              <p className="multiplayer-lobby__games-title">
+                Games in Progress
+              </p>
               {activeGames.map((game) => (
                 <div key={game.gameId} className="multiplayer-lobby__game-row">
                   <button
@@ -337,7 +408,11 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
                   >
                     {game.opponentName}
                     <span className="multiplayer-lobby__game-status">
-                      {game.status === 'waiting' ? 'waiting' : game.isMyTurn ? 'your turn' : 'their turn'}
+                      {game.status === 'waiting'
+                        ? 'waiting'
+                        : game.isMyTurn
+                          ? 'your turn'
+                          : 'their turn'}
                     </span>
                   </button>
                   <button
@@ -380,7 +455,12 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
           {opponentName && createMode === 'vsone' && (
             <>
               <p className="multiplayer-lobby__hint">{opponentName} joined!</p>
-              <button className="multiplayer-lobby__link" onClick={handleStartGame}>Start</button>
+              <button
+                className="multiplayer-lobby__link"
+                onClick={handleStartGame}
+              >
+                Start
+              </button>
             </>
           )}
           {inviteCode && createMode === 'vsmany' && (
@@ -401,7 +481,9 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
                   <li key={player.id}>{player.name}</li>
                 ))}
               </ul>
-              <p className="multiplayer-lobby__hint">{joinedPlayers.length} / 8 joined</p>
+              <p className="multiplayer-lobby__hint">
+                {joinedPlayers.length} / 8 joined
+              </p>
               <button
                 className="multiplayer-lobby__link"
                 onClick={handleStartVsManyGame}
@@ -432,7 +514,12 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
           >
             {isBusy ? 'Joining…' : 'Join'}
           </button>
-          <button className="multiplayer-lobby__link" onClick={handleBackToMenu}>Cancel</button>
+          <button
+            className="multiplayer-lobby__link"
+            onClick={handleBackToMenu}
+          >
+            Cancel
+          </button>
         </div>
       )}
 
@@ -440,7 +527,12 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
         <div className="multiplayer-lobby__panel">
           <h3>Finding a Match…</h3>
           <p className="multiplayer-lobby__hint">This may take a moment.</p>
-          <button className="multiplayer-lobby__link" onClick={handleCancelMatchmaking}>Cancel Search</button>
+          <button
+            className="multiplayer-lobby__link"
+            onClick={handleCancelMatchmaking}
+          >
+            Cancel Search
+          </button>
         </div>
       )}
 

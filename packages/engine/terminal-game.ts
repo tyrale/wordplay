@@ -1,10 +1,10 @@
 /**
  * Terminal Game Interface
- * 
+ *
  * Interactive command-line interface for playing WordPlay against the bot.
  * This provides a way to test and validate the game engine logic and flow
  * before implementing the web UI.
- * 
+ *
  * Features:
  * - Human vs Bot gameplay
  * - Real-time game state display
@@ -13,7 +13,11 @@
  * - Performance monitoring
  */
 
-import { createGameStateManagerWithDependencies, type LocalGameStateManagerWithDependencies, type GameConfig } from './gamestate';
+import {
+  createGameStateManagerWithDependencies,
+  type LocalGameStateManagerWithDependencies,
+  type GameConfig,
+} from './gamestate';
 import type { ScoringBreakdown, GameStateDependencies } from './interfaces';
 import { createNodeAdapter } from './adapters/nodeAdapter';
 import * as readline from 'readline';
@@ -29,26 +33,26 @@ const colors = {
   magenta: '\x1b[35m',
   cyan: '\x1b[36m',
   white: '\x1b[37m',
-  
+
   // Blue theme colors (for odd turns: 1, 3, 5, etc.)
   blueTheme: {
-    primary: '\x1b[34m',      // Standard blue
-    bright: '\x1b[94m',       // Bright blue
-    light: '\x1b[36m',        // Cyan (light blue)
+    primary: '\x1b[34m', // Standard blue
+    bright: '\x1b[94m', // Bright blue
+    light: '\x1b[36m', // Cyan (light blue)
     dark: '\x1b[44m\x1b[37m', // Blue background with white text
-    accent: '\x1b[96m',       // Bright cyan
-    header: '\x1b[1m\x1b[34m' // Bold blue
+    accent: '\x1b[96m', // Bright cyan
+    header: '\x1b[1m\x1b[34m', // Bold blue
   },
-  
+
   // Green theme colors (for even turns: 2, 4, 6, etc.)
   greenTheme: {
-    primary: '\x1b[32m',      // Standard green
-    bright: '\x1b[92m',       // Bright green
-    light: '\x1b[32m',        // Green
+    primary: '\x1b[32m', // Standard green
+    bright: '\x1b[92m', // Bright green
+    light: '\x1b[32m', // Green
     dark: '\x1b[42m\x1b[30m', // Green background with black text
-    accent: '\x1b[93m',       // Bright yellow (complements green)
-    header: '\x1b[1m\x1b[32m' // Bold green
-  }
+    accent: '\x1b[93m', // Bright yellow (complements green)
+    header: '\x1b[1m\x1b[32m', // Bold green
+  },
 };
 
 interface TerminalGameOptions {
@@ -69,7 +73,7 @@ export class TerminalGame {
       initialWord: options.initialWord,
       allowBotPlayer: true,
       enableKeyLetters: options.enableKeyLetters ?? true,
-      enableLockedLetters: options.enableLockedLetters ?? true
+      enableLockedLetters: options.enableLockedLetters ?? true,
     };
 
     // Initialize with null, will be replaced in start() or manually in tests
@@ -77,7 +81,7 @@ export class TerminalGame {
 
     this.rl = readline.createInterface({
       input: process.stdin,
-      output: process.stdout
+      output: process.stdout,
     });
 
     // Note: We handle game ending in the main game loop instead of subscription
@@ -88,7 +92,10 @@ export class TerminalGame {
    * Initialize game manager with given dependencies (for testing)
    */
   public initializeForTesting(dependencies: GameStateDependencies): void {
-    this.gameManager = createGameStateManagerWithDependencies(dependencies, this.gameConfig);
+    this.gameManager = createGameStateManagerWithDependencies(
+      dependencies,
+      this.gameConfig
+    );
   }
 
   /**
@@ -104,16 +111,19 @@ export class TerminalGame {
   public async start(): Promise<void> {
     this.showWelcome();
     this.showHelp();
-    
+
     // Initialize Node.js adapter and create game manager (only if not already initialized for tests)
     if (!this.gameManager) {
       const nodeAdapter = await createNodeAdapter();
       const dependencies = nodeAdapter.getGameDependencies();
-      this.gameManager = createGameStateManagerWithDependencies(dependencies, this.gameConfig);
+      this.gameManager = createGameStateManagerWithDependencies(
+        dependencies,
+        this.gameConfig
+      );
     }
-    
+
     this.gameManager.startGame();
-    
+
     await this.gameLoop();
   }
 
@@ -123,17 +133,19 @@ export class TerminalGame {
   private async gameLoop(): Promise<void> {
     while (true) {
       const state = this.gameManager.getState();
-      
+
       if (state.gameStatus === 'finished') {
         this.handleGameEnd();
         break;
       }
 
       this.displayGameState();
-      
+
       const currentPlayer = this.gameManager.getCurrentPlayer();
       if (!currentPlayer) {
-        console.log(`${colors.red}Error: No current player found${colors.reset}`);
+        console.log(
+          `${colors.red}Error: No current player found${colors.reset}`
+        );
         break;
       }
 
@@ -151,23 +163,30 @@ export class TerminalGame {
   private async handleBotTurn(): Promise<void> {
     const state = this.gameManager.getState();
     const theme = this.getTurnTheme(state.currentTurn);
-    
+
     console.log(`${theme.accent}🤖 Bot is thinking...${colors.reset}`);
-    
+
     const startTime = Date.now();
     const botMove = await this.gameManager.makeBotMove();
     const duration = Date.now() - startTime;
-    
+
     if (botMove) {
       if (botMove.reasoning.includes('PASS')) {
-        console.log(`${theme.bright}Bot passed its turn${colors.reset} ${theme.primary}(${duration}ms)${colors.reset}`);
-        console.log(`${theme.light}Reason: ${botMove.reasoning[0]}${colors.reset}`);
+        console.log(
+          `${theme.bright}Bot passed its turn${colors.reset} ${theme.primary}(${duration}ms)${colors.reset}`
+        );
+        console.log(
+          `${theme.light}Reason: ${botMove.reasoning[0]}${colors.reset}`
+        );
       } else {
-        console.log(`${theme.bright}Bot played: ${theme.header}${botMove.word}${colors.reset} ${theme.primary}(+${botMove.score} points, ${duration}ms)${colors.reset}`);
-        
+        console.log(
+          `${theme.bright}Bot played: ${theme.header}${botMove.word}${colors.reset} ${theme.primary}(+${botMove.score} points, ${duration}ms)${colors.reset}`
+        );
+
         // Show bot scoring breakdown from the latest turn history
         const updatedState = this.gameManager.getState();
-        const latestTurn = updatedState.turnHistory[updatedState.turnHistory.length - 1];
+        const latestTurn =
+          updatedState.turnHistory[updatedState.turnHistory.length - 1];
         if (latestTurn && latestTurn.scoringBreakdown) {
           this.showScoringBreakdown(latestTurn.scoringBreakdown);
         }
@@ -175,9 +194,9 @@ export class TerminalGame {
     } else {
       console.log(`${colors.red}Bot couldn't find a valid move${colors.reset}`);
     }
-    
+
     // Small delay for readability
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
   /**
@@ -186,36 +205,38 @@ export class TerminalGame {
   private async handleHumanTurn(): Promise<void> {
     const state = this.gameManager.getState();
     const theme = this.getTurnTheme(state.currentTurn);
-    
-    const input = await this.promptUser(`${theme.header}Your turn! Enter a word: ${colors.reset}`);
-    
+
+    const input = await this.promptUser(
+      `${theme.header}Your turn! Enter a word: ${colors.reset}`
+    );
+
     const command = input.trim().toUpperCase();
-    
+
     // Handle special commands
     if (command === 'QUIT' || command === 'EXIT') {
       console.log(`${colors.yellow}Thanks for playing!${colors.reset}`);
       process.exit(0);
     }
-    
+
     if (command === 'HELP') {
       this.showHelp();
       return;
     }
-    
+
     if (command === 'STATE') {
       this.displayDetailedState();
       return;
     }
-    
+
     if (command === 'DEBUG') {
       // Test the exact words from the bug report
       const testWords = ['LOCK', 'CLOCK'];
-      testWords.forEach(word => {
+      testWords.forEach((word) => {
         this.gameManager.attemptMove(word);
       });
       return;
     }
-    
+
     if (command === 'PASS') {
       const success = this.gameManager.passTurn();
       if (success) {
@@ -225,19 +246,21 @@ export class TerminalGame {
       }
       return;
     }
-    
+
     // Handle word input
     if (command.length === 0) {
       console.log(`${colors.red}Please enter a word${colors.reset}`);
       return;
     }
-    
+
     const moveAttempt = this.gameManager.attemptMove(command);
-    
+
     if (moveAttempt.canApply) {
       const success = this.gameManager.applyMove(moveAttempt);
       if (success) {
-        console.log(`${theme.bright}Valid move! ${theme.header}${moveAttempt.newWord}${colors.reset} ${theme.primary}(+${moveAttempt.scoringResult?.totalScore} points)${colors.reset}`);
+        console.log(
+          `${theme.bright}Valid move! ${theme.header}${moveAttempt.newWord}${colors.reset} ${theme.primary}(+${moveAttempt.scoringResult?.totalScore} points)${colors.reset}`
+        );
         if (moveAttempt.scoringResult) {
           this.showScoringBreakdown(moveAttempt.scoringResult);
         }
@@ -246,20 +269,27 @@ export class TerminalGame {
       }
     } else {
       // Use the user-friendly message if available, otherwise fall back to the reason
-      const errorMessage = moveAttempt.validationResult.userMessage || moveAttempt.reason;
-      
+      const errorMessage =
+        moveAttempt.validationResult.userMessage || moveAttempt.reason;
+
       // Special handling for "was played" errors to make them more helpful
       if (moveAttempt.validationResult.userMessage === 'was played') {
         const currentState = this.gameManager.getState();
         const hiddenCount = Math.max(0, currentState.usedWords.length - 5);
         if (hiddenCount > 0) {
           console.log(`${colors.red}Invalid word: was played${colors.reset}`);
-          console.log(`${colors.yellow}💡 "${command}" was used earlier (${hiddenCount} words not shown). Use 'state' to see all words.${colors.reset}`);
+          console.log(
+            `${colors.yellow}💡 "${command}" was used earlier (${hiddenCount} words not shown). Use 'state' to see all words.${colors.reset}`
+          );
         } else {
-          console.log(`${colors.red}Invalid word: ${errorMessage}${colors.reset}`);
+          console.log(
+            `${colors.red}Invalid word: ${errorMessage}${colors.reset}`
+          );
         }
       } else {
-        console.log(`${colors.red}Invalid word: ${errorMessage}${colors.reset}`);
+        console.log(
+          `${colors.red}Invalid word: ${errorMessage}${colors.reset}`
+        );
       }
     }
   }
@@ -270,61 +300,89 @@ export class TerminalGame {
   private displayGameState(): void {
     const state = this.gameManager.getState();
     const theme = this.getTurnTheme(state.currentTurn);
-    
+
     console.log('\n' + '='.repeat(60));
-    console.log(`${theme.header}WORDPLAY - Turn ${state.currentTurn}/${state.maxTurns}${colors.reset}`);
+    console.log(
+      `${theme.header}WORDPLAY - Turn ${state.currentTurn}/${state.maxTurns}${colors.reset}`
+    );
     console.log('='.repeat(60));
-    
+
     // Current word with locked letters highlighted
-    const highlightedWord = this.highlightLockedLetters(state.currentWord, state.lockedKeyLetters, theme);
-    console.log(`${theme.primary}Current Word: ${highlightedWord}${colors.reset}`);
-    
+    const highlightedWord = this.highlightLockedLetters(
+      state.currentWord,
+      state.lockedKeyLetters,
+      theme
+    );
+    console.log(
+      `${theme.primary}Current Word: ${highlightedWord}${colors.reset}`
+    );
+
     // Key and locked letters
     if (state.keyLetters.length > 0) {
-      console.log(`${theme.accent}Key Letters (bonus +1 each): ${state.keyLetters.join(', ')}${colors.reset}`);
+      console.log(
+        `${theme.accent}Key Letters (bonus +1 each): ${state.keyLetters.join(', ')}${colors.reset}`
+      );
     }
     if (state.lockedLetters.length > 0) {
-      console.log(`${theme.primary}Locked Letters: ${state.lockedLetters.join(', ')}${colors.reset}`);
+      console.log(
+        `${theme.primary}Locked Letters: ${state.lockedLetters.join(', ')}${colors.reset}`
+      );
     }
-    
+
     // Show locked key letters explanation if any exist
     if (state.lockedKeyLetters.length > 0) {
-      console.log(`${theme.light}📌 Locked letters (cannot remove): ${state.lockedKeyLetters.join(', ')}${colors.reset}`);
+      console.log(
+        `${theme.light}📌 Locked letters (cannot remove): ${state.lockedKeyLetters.join(', ')}${colors.reset}`
+      );
     }
-    
+
     // Show recently used words
     if (state.usedWords.length > 1) {
       const recentWords = state.usedWords.slice(-5).join(' → ');
       const hiddenCount = Math.max(0, state.usedWords.length - 5);
-      
+
       if (hiddenCount > 0) {
-        console.log(`${theme.light}Recent words (+${hiddenCount} more): ${recentWords}${colors.reset}`);
-        console.log(`${theme.accent}💡 Use 'state' command to see all ${state.usedWords.length} used words${colors.reset}`);
+        console.log(
+          `${theme.light}Recent words (+${hiddenCount} more): ${recentWords}${colors.reset}`
+        );
+        console.log(
+          `${theme.accent}💡 Use 'state' command to see all ${state.usedWords.length} used words${colors.reset}`
+        );
       } else {
-        console.log(`${theme.light}Recent words: ${recentWords}${colors.reset}`);
+        console.log(
+          `${theme.light}Recent words: ${recentWords}${colors.reset}`
+        );
       }
     }
-    
+
     // Player scores
     console.log('\n' + theme.header + 'SCORES:' + colors.reset);
-    state.players.forEach(player => {
+    state.players.forEach((player) => {
       const indicator = player.isCurrentPlayer ? '→' : ' ';
       const playerColor = player.isBot ? theme.light : theme.bright;
-      const currentMarker = player.isCurrentPlayer ? theme.accent + ' (CURRENT)' + colors.reset : '';
-      console.log(`${indicator} ${playerColor}${player.name}: ${player.score} points${currentMarker}${colors.reset}`);
+      const currentMarker = player.isCurrentPlayer
+        ? theme.accent + ' (CURRENT)' + colors.reset
+        : '';
+      console.log(
+        `${indicator} ${playerColor}${player.name}: ${player.score} points${currentMarker}${colors.reset}`
+      );
     });
-    
+
     console.log('');
   }
 
   /**
    * Highlight locked key letters within the current word using inverted colors
    */
-  private highlightLockedLetters(word: string, lockedKeyLetters: string[], theme: typeof colors.blueTheme): string {
+  private highlightLockedLetters(
+    word: string,
+    lockedKeyLetters: string[],
+    theme: typeof colors.blueTheme
+  ): string {
     if (lockedKeyLetters.length === 0) {
       return `${theme.header}${word}`;
     }
-    
+
     let highlightedWord = '';
     for (let i = 0; i < word.length; i++) {
       const letter = word[i];
@@ -335,7 +393,7 @@ export class TerminalGame {
         highlightedWord += letter;
       }
     }
-    
+
     return `${theme.header}${highlightedWord}`;
   }
 
@@ -346,40 +404,63 @@ export class TerminalGame {
     const state = this.gameManager.getState();
     const stats = this.gameManager.getGameStats();
     const theme = this.getTurnTheme(state.currentTurn);
-    
+
     console.log('\n' + theme.header + 'DETAILED GAME STATE:' + colors.reset);
-    console.log(`${theme.primary}Game Status: ${state.gameStatus}${colors.reset}`);
-    console.log(`${theme.primary}Total Moves: ${state.totalMoves}${colors.reset}`);
-    console.log(`${theme.primary}Game Duration: ${Math.round(stats.duration / 1000)}s${colors.reset}`);
-    console.log(`${theme.primary}Average Score: ${stats.averageScore.toFixed(1)}${colors.reset}`);
-    
+    console.log(
+      `${theme.primary}Game Status: ${state.gameStatus}${colors.reset}`
+    );
+    console.log(
+      `${theme.primary}Total Moves: ${state.totalMoves}${colors.reset}`
+    );
+    console.log(
+      `${theme.primary}Game Duration: ${Math.round(stats.duration / 1000)}s${colors.reset}`
+    );
+    console.log(
+      `${theme.primary}Average Score: ${stats.averageScore.toFixed(1)}${colors.reset}`
+    );
+
     // Current word with highlighting
-    const highlightedWord = this.highlightLockedLetters(state.currentWord, state.lockedKeyLetters, theme);
-    console.log(`\n${theme.header}CURRENT WORD: ${highlightedWord}${colors.reset}`);
-    
+    const highlightedWord = this.highlightLockedLetters(
+      state.currentWord,
+      state.lockedKeyLetters,
+      theme
+    );
+    console.log(
+      `\n${theme.header}CURRENT WORD: ${highlightedWord}${colors.reset}`
+    );
+
     if (state.usedWords.length > 0) {
       console.log('\n' + theme.header + 'ALL USED WORDS:' + colors.reset);
-      console.log(`${theme.light}${state.usedWords.join(' → ')}${colors.reset}`);
+      console.log(
+        `${theme.light}${state.usedWords.join(' → ')}${colors.reset}`
+      );
     }
-    
+
     if (state.keyLetters.length > 0) {
       console.log('\n' + theme.header + 'CURRENT KEY LETTERS:' + colors.reset);
-      console.log(`${theme.accent}${state.keyLetters.join(', ')} (each worth +1 bonus point)${colors.reset}`);
+      console.log(
+        `${theme.accent}${state.keyLetters.join(', ')} (each worth +1 bonus point)${colors.reset}`
+      );
     }
-    
+
     // Show locked key letters in detailed state
     if (state.lockedKeyLetters.length > 0) {
       console.log('\n' + theme.header + 'LOCKED KEY LETTERS:' + colors.reset);
-      console.log(`${theme.light}📌 ${state.lockedKeyLetters.join(', ')} (highlighted in current word above, cannot be removed this turn)${colors.reset}`);
+      console.log(
+        `${theme.light}📌 ${state.lockedKeyLetters.join(', ')} (highlighted in current word above, cannot be removed this turn)${colors.reset}`
+      );
     }
-    
+
     if (state.turnHistory.length > 0) {
       console.log('\n' + theme.header + 'RECENT MOVES:' + colors.reset);
       const recentMoves = state.turnHistory.slice(-5);
-      recentMoves.forEach(turn => {
-        const playerName = state.players.find(p => p.id === turn.playerId)?.name || 'Unknown';
+      recentMoves.forEach((turn) => {
+        const playerName =
+          state.players.find((p) => p.id === turn.playerId)?.name || 'Unknown';
         const turnTheme = this.getTurnTheme(turn.turnNumber);
-        console.log(`${turnTheme.primary}Turn ${turn.turnNumber}: ${playerName} played ${turn.previousWord} → ${turn.newWord} (+${turn.score})${colors.reset}`);
+        console.log(
+          `${turnTheme.primary}Turn ${turn.turnNumber}: ${playerName} played ${turn.previousWord} → ${turn.newWord} (+${turn.score})${colors.reset}`
+        );
       });
     }
   }
@@ -387,12 +468,15 @@ export class TerminalGame {
   /**
    * Show scoring breakdown using action icons format
    */
-  private showScoringBreakdown(scoring: { breakdown: ScoringBreakdown; keyLettersUsed: string[] }): void {
+  private showScoringBreakdown(scoring: {
+    breakdown: ScoringBreakdown;
+    keyLettersUsed: string[];
+  }): void {
     const state = this.gameManager.getState();
     const theme = this.getTurnTheme(state.currentTurn);
     const breakdown = scoring.breakdown;
     const actions = [];
-    
+
     // Build action icons based on what actions were taken
     if (breakdown.addLetterPoints > 0) {
       actions.push('+');
@@ -403,26 +487,29 @@ export class TerminalGame {
     if (breakdown.movePoints > 0) {
       actions.push('~'); // Using ~ for rearrangement/move
     }
-    
+
     // Calculate base score (non-key-letter points)
-    const baseScore = (breakdown.addLetterPoints || 0) + 
-                     (breakdown.removeLetterPoints || 0) + 
-                     (breakdown.movePoints || 0);
-    
+    const baseScore =
+      (breakdown.addLetterPoints || 0) +
+      (breakdown.removeLetterPoints || 0) +
+      (breakdown.movePoints || 0);
+
     // Build the scoring display line
     if (actions.length > 0) {
       let scoreLine = actions.join(' | ') + ` ${baseScore}`;
-      
+
       // Add key letter bonus if any
       if (breakdown.keyLetterUsagePoints > 0) {
         scoreLine += ` +${breakdown.keyLetterUsagePoints}`;
       }
-      
+
       console.log(`${theme.light}Scoring: ${scoreLine}${colors.reset}`);
-      
+
       // Show which key letters were used
       if (scoring.keyLettersUsed.length > 0) {
-        console.log(`${theme.accent}Key letters used: ${scoring.keyLettersUsed.join(', ')}${colors.reset}`);
+        console.log(
+          `${theme.accent}Key letters used: ${scoring.keyLettersUsed.join(', ')}${colors.reset}`
+        );
       }
     }
   }
@@ -433,46 +520,54 @@ export class TerminalGame {
   private handleGameEnd(): void {
     const state = this.gameManager.getState();
     const stats = this.gameManager.getGameStats();
-    
+
     console.log('\n' + '='.repeat(60));
     console.log(`${colors.bright}${colors.green}GAME OVER!${colors.reset}`);
     console.log('='.repeat(60));
-    
+
     if (state.winner) {
       const winnerColor = state.winner.isBot ? colors.cyan : colors.green;
-      console.log(`${colors.bright}🏆 Winner: ${winnerColor}${state.winner.name}${colors.reset} ${colors.bright}(${state.winner.score} points)${colors.reset}`);
+      console.log(
+        `${colors.bright}🏆 Winner: ${winnerColor}${state.winner.name}${colors.reset} ${colors.bright}(${state.winner.score} points)${colors.reset}`
+      );
     } else {
       console.log(`${colors.yellow}It's a tie!${colors.reset}`);
     }
-    
+
     console.log('\n' + colors.bright + 'FINAL SCORES:' + colors.reset);
     const sortedPlayers = [...state.players].sort((a, b) => b.score - a.score);
     sortedPlayers.forEach((player, index) => {
       const medal = index === 0 ? '🥇' : '🥈';
       const playerColor = player.isBot ? colors.cyan : colors.green;
-      console.log(`${medal} ${playerColor}${player.name}: ${player.score} points${colors.reset}`);
+      console.log(
+        `${medal} ${playerColor}${player.name}: ${player.score} points${colors.reset}`
+      );
     });
-    
+
     console.log('\n' + colors.bright + 'GAME STATISTICS:' + colors.reset);
     console.log(`Duration: ${Math.round(stats.duration / 1000)}s`);
     console.log(`Total Moves: ${stats.totalMoves}`);
     console.log(`Average Score per Move: ${stats.averageScore.toFixed(1)}`);
-    
-    stats.playerStats.forEach(playerStat => {
-      const player = state.players.find(p => p.id === playerStat.id);
+
+    stats.playerStats.forEach((playerStat) => {
+      const player = state.players.find((p) => p.id === playerStat.id);
       const playerColor = player?.isBot ? colors.cyan : colors.green;
-      console.log(`${playerColor}${playerStat.name}${colors.reset}: ${playerStat.moveCount} moves, ${playerStat.averageScorePerMove.toFixed(1)} avg/move`);
+      console.log(
+        `${playerColor}${playerStat.name}${colors.reset}: ${playerStat.moveCount} moves, ${playerStat.averageScorePerMove.toFixed(1)} avg/move`
+      );
     });
-    
+
     if (state.turnHistory.length > 0) {
       console.log('\n' + colors.bright + 'MOVE HISTORY:' + colors.reset);
-      state.turnHistory.forEach(turn => {
-        const player = state.players.find(p => p.id === turn.playerId);
+      state.turnHistory.forEach((turn) => {
+        const player = state.players.find((p) => p.id === turn.playerId);
         const turnTheme = this.getTurnTheme(turn.turnNumber);
-        console.log(`${turnTheme.primary}Turn ${turn.turnNumber}: ${player?.name}${colors.reset} ${turn.previousWord} → ${turn.newWord} (+${turn.score})`);
+        console.log(
+          `${turnTheme.primary}Turn ${turn.turnNumber}: ${player?.name}${colors.reset} ${turn.previousWord} → ${turn.newWord} (+${turn.score})`
+        );
       });
     }
-    
+
     this.rl.close();
   }
 
@@ -489,9 +584,15 @@ export class TerminalGame {
     console.log('║              Human vs Bot Word Challenge                 ║');
     console.log('╚══════════════════════════════════════════════════════════╝');
     console.log(colors.reset);
-    console.log(`${colors.green}Welcome to WordPlay! Transform words by adding, removing, or rearranging letters.${colors.reset}`);
-    console.log(`${colors.green}Score points for each transformation and try to beat the bot!${colors.reset}`);
-    console.log(`${colors.yellow}Each game starts with a random 4-letter word and generates key letters automatically!${colors.reset}\n`);
+    console.log(
+      `${colors.green}Welcome to WordPlay! Transform words by adding, removing, or rearranging letters.${colors.reset}`
+    );
+    console.log(
+      `${colors.green}Score points for each transformation and try to beat the bot!${colors.reset}`
+    );
+    console.log(
+      `${colors.yellow}Each game starts with a random 4-letter word and generates key letters automatically!${colors.reset}\n`
+    );
   }
 
   /**
@@ -499,21 +600,35 @@ export class TerminalGame {
    */
   private showHelp(): void {
     console.log(colors.bright + 'HOW TO PLAY:' + colors.reset);
-    console.log('• Transform the current word by adding, removing, or rearranging letters');
-    console.log('• Each transformation scores points: +1 for add/remove/rearrange');
-    console.log('• Key letters are automatically generated and give bonus points (+1 when used)');
-    console.log('• Key letters used successfully become LOCKED for the next player (cannot remove)');
-    console.log('• Must be valid dictionary words with max ±1 letter change per turn');
+    console.log(
+      '• Transform the current word by adding, removing, or rearranging letters'
+    );
+    console.log(
+      '• Each transformation scores points: +1 for add/remove/rearrange'
+    );
+    console.log(
+      '• Key letters are automatically generated and give bonus points (+1 when used)'
+    );
+    console.log(
+      '• Key letters used successfully become LOCKED for the next player (cannot remove)'
+    );
+    console.log(
+      '• Must be valid dictionary words with max ±1 letter change per turn'
+    );
     console.log('• No word can be played twice in the same game');
     console.log('');
     console.log(colors.bright + 'SCORING DISPLAY:' + colors.reset);
     console.log('• + = letter addition, - = letter removal, ~ = rearrangement');
-    console.log('• Example: "+ | ~ 2 +1" means add + rearrange (2 pts) + key letter bonus (1 pt)');
+    console.log(
+      '• Example: "+ | ~ 2 +1" means add + rearrange (2 pts) + key letter bonus (1 pt)'
+    );
     console.log('');
     console.log(colors.bright + 'COMMANDS:' + colors.reset);
     console.log('• [word]        - Make a move with the word');
     console.log('• state         - Show detailed game state');
-    console.log('• debug         - Test LOCK and CLOCK validation (for bug investigation)');
+    console.log(
+      '• debug         - Test LOCK and CLOCK validation (for bug investigation)'
+    );
     console.log('• pass          - Skip your turn (clears locked letters)');
     console.log('• help          - Show this help message');
     console.log('• quit          - Exit the game');
@@ -535,7 +650,9 @@ export class TerminalGame {
 /**
  * Start a terminal game with default settings
  */
-export async function startTerminalGame(options?: TerminalGameOptions): Promise<void> {
+export async function startTerminalGame(
+  options?: TerminalGameOptions
+): Promise<void> {
   const game = new TerminalGame(options);
   await game.start();
 }
@@ -547,7 +664,7 @@ export async function quickGame(): Promise<void> {
   await startTerminalGame({
     maxTurns: 5,
     enableKeyLetters: true,
-    enableLockedLetters: false
+    enableLockedLetters: false,
   });
 }
 
@@ -555,4 +672,4 @@ export async function quickGame(): Promise<void> {
 if (import.meta.url === `file://${process.argv[1]}`) {
   console.log('Starting WordPlay Terminal Game...');
   startTerminalGame().catch(console.error);
-} 
+}

@@ -9,12 +9,14 @@ The Vanity Filter System provides real-time bad word filtering with user-control
 ### Core Components
 
 1. **Context Provider** (`src/contexts/VanityFilterContext.tsx`)
+
    - Centralizes all vanity filter state
    - Manages localStorage persistence
    - Provides shared word data loading
    - Exports `useVanityFilter` hook
 
 2. **Hook** (`src/hooks/useVanityFilter.ts`)
+
    - Consumes context instead of managing local state
    - Provides consistent API for all components
    - Handles loading states gracefully
@@ -27,19 +29,21 @@ The Vanity Filter System provides real-time bad word filtering with user-control
 
 ```typescript
 interface VanityState {
-  hasUnlockedToggle: boolean;  // Whether user has unlocked the filter
-  isVanityFilterOn: boolean;   // Current filter state (on/off)
+  hasUnlockedToggle: boolean; // Whether user has unlocked the filter
+  isVanityFilterOn: boolean; // Current filter state (on/off)
 }
 ```
 
 ## How It Works
 
 ### 1. Initialization
+
 - Context provider loads state from localStorage on mount
 - Word data is loaded asynchronously from browser adapter
 - Default state: `hasUnlockedToggle: false`, `isVanityFilterOn: true`
 
 ### 2. Unlock Process
+
 - User plays a profane word (e.g., "shit")
 - `shouldWordUnlockVanity()` detects the profane word
 - `unlockVanityToggle()` sets `hasUnlockedToggle: true`
@@ -47,6 +51,7 @@ interface VanityState {
 - Menu toggle becomes visible in mechanics section
 
 ### 3. Live Toggle Functionality
+
 - User clicks toggle in menu (mechanics section)
 - `toggleVanityFilter()` updates state immediately
 - All components using `useVanityFilter()` re-render automatically
@@ -54,6 +59,7 @@ interface VanityState {
 - No page refresh required
 
 ### 4. Persistence
+
 - State changes are automatically saved to localStorage
 - Settings persist across browser sessions
 - State is restored on page load
@@ -61,6 +67,7 @@ interface VanityState {
 ## User Experience Flow
 
 ### New Users
+
 1. Bad words are automatically censored (filter ON by default)
 2. User plays a profane word (e.g., "shit")
 3. Toast notification: "Bad Word Filter Unlocked!"
@@ -68,6 +75,7 @@ interface VanityState {
 5. User can now toggle filter on/off with immediate effect
 
 ### Existing Users
+
 1. Previous filter preference is restored from localStorage
 2. Toggle state is immediately available
 3. All words display according to saved preference
@@ -76,6 +84,7 @@ interface VanityState {
 ## Component Integration
 
 ### Components Using Vanity Filter
+
 - **CurrentWord**: Displays current word with filtering
 - **WordTrail**: Shows word history with filtering
 - **WordBuilder**: Word building interface with filtering
@@ -84,9 +93,15 @@ interface VanityState {
 - **ChallengeGame**: Challenge mode integration
 
 ### Integration Pattern
+
 ```typescript
 // All components follow this pattern:
-const { getDisplayWord, isVanityFilterUnlocked, isVanityFilterOn, toggleVanityFilter } = useVanityFilter();
+const {
+  getDisplayWord,
+  isVanityFilterUnlocked,
+  isVanityFilterOn,
+  toggleVanityFilter,
+} = useVanityFilter();
 
 // Use getDisplayWord for filtered display
 const displayWord = getDisplayWord(word, { isEditing });
@@ -100,20 +115,21 @@ if (isVanityFilterUnlocked() && isVanityFilterOn()) {
 ## Technical Implementation
 
 ### Context Provider Structure
+
 ```typescript
 export const VanityFilterProvider: React.FC<VanityFilterProviderProps> = ({ children }) => {
   const [vanityState, setVanityState] = useState<VanityState>(() => {
     // Initialize from localStorage
   });
-  
+
   const [wordData, setWordData] = useState<WordDataDependencies | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  
+
   // Initialize word data
   useEffect(() => {
     // Load word data from browser adapter
   }, []);
-  
+
   // Persist state to localStorage
   useEffect(() => {
     // Save state changes
@@ -129,8 +145,11 @@ export const VanityFilterProvider: React.FC<VanityFilterProviderProps> = ({ chil
 ```
 
 ### Hook Implementation
+
 ```typescript
-export function useVanityFilter(props?: UseVanityFilterProps): UseVanityFilterReturn {
+export function useVanityFilter(
+  props?: UseVanityFilterProps
+): UseVanityFilterReturn {
   // Use the centralized context instead of local state
   return useVanityFilterContext();
 }
@@ -139,20 +158,21 @@ export function useVanityFilter(props?: UseVanityFilterProps): UseVanityFilterRe
 ## Filter Logic
 
 ### Display Logic (`packages/engine/dictionary.ts`)
+
 ```typescript
 export function getVanityDisplayWordWithDependencies(
-  word: string, 
+  word: string,
   vanityState: VanityState,
   wordData: WordDataDependencies,
   options: { isEditing?: boolean } = {}
 ): string {
   const normalizedWord = word.trim().toUpperCase();
-  
+
   // If word is not profane, always show real word
   if (!wordData.profanityWords.has(normalizedWord)) {
     return normalizedWord;
   }
-  
+
   // Word is profane - check vanity filter settings
   // Only show symbols if the filter is ON
   if (vanityState.isVanityFilterOn) {
@@ -164,9 +184,10 @@ export function getVanityDisplayWordWithDependencies(
 ```
 
 ### Unlock Detection
+
 ```typescript
 export function shouldUnlockVanityToggleWithDependencies(
-  word: string, 
+  word: string,
   wordData: WordDataDependencies
 ): boolean {
   const normalizedWord = word.trim().toUpperCase();
@@ -177,12 +198,14 @@ export function shouldUnlockVanityToggleWithDependencies(
 ## Template for Future Filters
 
 ### Required Components
+
 1. **Context Provider**: `src/contexts/[FilterName]Context.tsx`
 2. **Hook**: `src/hooks/use[FilterName].ts`
 3. **App Integration**: Wrap with provider in `App.tsx`
 4. **Component Updates**: Update all relevant components
 
 ### Required Features
+
 1. **Live Updates**: Toggle changes apply immediately
 2. **Shared State**: All components use same context
 3. **Persistence**: Settings saved to localStorage
@@ -191,6 +214,7 @@ export function shouldUnlockVanityToggleWithDependencies(
 6. **Toast Notifications**: User feedback for unlocks
 
 ### State Interface Template
+
 ```typescript
 interface [FilterName]State {
   hasUnlockedToggle: boolean;
@@ -199,6 +223,7 @@ interface [FilterName]State {
 ```
 
 ### Hook Interface Template
+
 ```typescript
 export interface Use[FilterName]Return {
   [filterName]State: [FilterName]State;
@@ -215,6 +240,7 @@ export interface Use[FilterName]Return {
 ## Testing
 
 ### Test Structure
+
 ```typescript
 describe('use[FilterName] with context', () => {
   beforeEach(() => {
@@ -225,7 +251,7 @@ describe('use[FilterName] with context', () => {
     const { result } = renderHook(() => use[FilterName](), {
       wrapper: [FilterName]Provider
     });
-    
+
     expect(result.current.[filterName]State.hasUnlockedToggle).toBe(false);
     expect(result.current.[filterName]State.is[FilterName]On).toBe(true);
   });
@@ -234,11 +260,11 @@ describe('use[FilterName] with context', () => {
     const { result } = renderHook(() => use[FilterName](), {
       wrapper: [FilterName]Provider
     });
-    
+
     act(() => {
       result.current.toggle[FilterName]();
     });
-    
+
     expect(result.current.[filterName]State.is[FilterName]On).toBe(false);
   });
 });
@@ -247,26 +273,31 @@ describe('use[FilterName] with context', () => {
 ## Benefits of This Architecture
 
 ### 1. Live Updates
+
 - Changes apply immediately without page refresh
 - Real-time user feedback
 - Smooth user experience
 
 ### 2. Shared State
+
 - All components use same filter state
 - Consistent behavior across game modes
 - No state synchronization issues
 
 ### 3. Performance
+
 - Single state source
 - No duplicate initialization
 - Efficient re-rendering
 
 ### 4. Maintainability
+
 - Centralized state management
 - Clear separation of concerns
 - Easy to extend and modify
 
 ### 5. User Experience
+
 - Persistent preferences
 - Immediate visual feedback
 - Intuitive unlock system
@@ -282,4 +313,4 @@ When implementing new filters (e.g., slang filter, custom word filter), follow t
 5. **Update menu integration**
 6. **Add comprehensive tests**
 
-This ensures consistency across all filter systems and provides the same high-quality user experience. 
+This ensures consistency across all filter systems and provides the same high-quality user experience.

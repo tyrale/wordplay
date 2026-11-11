@@ -1,11 +1,17 @@
 /**
  * Animation Provider
- * 
+ *
  * React context provider for managing animation themes and providing
  * cross-platform animation capabilities to components.
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 import type { AnimationContextValue, AnimationTheme, Animation } from './types';
 import { getDefaultTheme, getThemeByName, allThemes } from './themes';
 
@@ -18,14 +24,16 @@ export interface AnimationProviderProps {
 
 export const AnimationProvider: React.FC<AnimationProviderProps> = ({
   children,
-  initialTheme = 'default'
+  initialTheme = 'default',
 }) => {
   const [currentTheme, setCurrentTheme] = useState<AnimationTheme>(() => {
     return getThemeByName(initialTheme) || getDefaultTheme();
   });
-  
+
   const [isReducedMotion, setIsReducedMotion] = useState(false);
-  const [activeAnimations, setActiveAnimations] = useState<Set<HTMLElement>>(new Set());
+  const [activeAnimations, setActiveAnimations] = useState<Set<HTMLElement>>(
+    new Set()
+  );
 
   // Check for reduced motion preference
   useEffect(() => {
@@ -73,19 +81,24 @@ export const AnimationProvider: React.FC<AnimationProviderProps> = ({
 
   // Generate CSS animation from Animation object
   const generateCSSAnimation = useCallback((animation: Animation): string => {
-    const keyframes = animation.keyframes.map(frame => {
-      const offset = frame.offset * 100;
-      const properties = Object.entries(frame)
-        .filter(([key]) => key !== 'offset')
-        .map(([key, value]) => {
-          // Convert camelCase to kebab-case for CSS
-          const cssKey = key.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
-          return `${cssKey}: ${value}`;
-        })
-        .join('; ');
-      
-      return `${offset}% { ${properties} }`;
-    }).join(' ');
+    const keyframes = animation.keyframes
+      .map((frame) => {
+        const offset = frame.offset * 100;
+        const properties = Object.entries(frame)
+          .filter(([key]) => key !== 'offset')
+          .map(([key, value]) => {
+            // Convert camelCase to kebab-case for CSS
+            const cssKey = key.replace(
+              /[A-Z]/g,
+              (letter) => `-${letter.toLowerCase()}`
+            );
+            return `${cssKey}: ${value}`;
+          })
+          .join('; ');
+
+        return `${offset}% { ${properties} }`;
+      })
+      .join(' ');
 
     return `
       @keyframes ${animation.name} {
@@ -95,85 +108,94 @@ export const AnimationProvider: React.FC<AnimationProviderProps> = ({
   }, []);
 
   // Apply animation to element using CSS animations
-  const animate = useCallback(async (
-    element: HTMLElement, 
-    animationName: string, 
-    component: string
-  ): Promise<void> => {
-    if (!element || isReducedMotion) {
-      return Promise.resolve();
-    }
-
-    // Get animation from current theme
-    const componentAnimations = (currentTheme as unknown as Record<string, Record<string, Animation>>)[component];
-    if (!componentAnimations || !componentAnimations[animationName]) {
-      console.warn(`Animation ${animationName} not found for component ${component}`);
-      return Promise.resolve();
-    }
-
-    const animation: Animation = componentAnimations[animationName];
-
-    return new Promise((resolve) => {
-      // Add element to active animations
-      setActiveAnimations(prev => new Set(prev).add(element));
-
-      // Generate and inject CSS keyframes if needed (skip in test environment)
-      if (typeof document !== 'undefined') {
-        const styleId = `animation-${animation.name}`;
-        if (!document.getElementById(styleId)) {
-          const style = document.createElement('style');
-          style.id = styleId;
-          style.textContent = generateCSSAnimation(animation);
-          document.head.appendChild(style);
-        }
+  const animate = useCallback(
+    async (
+      element: HTMLElement,
+      animationName: string,
+      component: string
+    ): Promise<void> => {
+      if (!element || isReducedMotion) {
+        return Promise.resolve();
       }
 
-      // Apply animation to element
-      const animationProperty = [
-        animation.name,
-        `${animation.duration}ms`,
-        animation.easing,
-        animation.delay ? `${animation.delay}ms` : '0ms',
-        animation.iterations === 'infinite' ? 'infinite' : (animation.iterations || 1),
-        animation.direction || 'normal',
-        animation.fillMode || 'none'
-      ].join(' ');
+      // Get animation from current theme
+      const componentAnimations = (
+        currentTheme as unknown as Record<string, Record<string, Animation>>
+      )[component];
+      if (!componentAnimations || !componentAnimations[animationName]) {
+        console.warn(
+          `Animation ${animationName} not found for component ${component}`
+        );
+        return Promise.resolve();
+      }
 
-      element.style.animation = animationProperty;
+      const animation: Animation = componentAnimations[animationName];
 
-      // Handle animation end
-      const handleAnimationEnd = () => {
-        element.removeEventListener('animationend', handleAnimationEnd);
-        element.removeEventListener('animationcancel', handleAnimationEnd);
-        
-        // Reset animation unless fillMode is forwards
-        if (animation.fillMode !== 'forwards') {
-          element.style.animation = '';
+      return new Promise((resolve) => {
+        // Add element to active animations
+        setActiveAnimations((prev) => new Set(prev).add(element));
+
+        // Generate and inject CSS keyframes if needed (skip in test environment)
+        if (typeof document !== 'undefined') {
+          const styleId = `animation-${animation.name}`;
+          if (!document.getElementById(styleId)) {
+            const style = document.createElement('style');
+            style.id = styleId;
+            style.textContent = generateCSSAnimation(animation);
+            document.head.appendChild(style);
+          }
         }
-        
-        // Remove from active animations
-        setActiveAnimations(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(element);
-          return newSet;
-        });
 
-        resolve();
-      };
+        // Apply animation to element
+        const animationProperty = [
+          animation.name,
+          `${animation.duration}ms`,
+          animation.easing,
+          animation.delay ? `${animation.delay}ms` : '0ms',
+          animation.iterations === 'infinite'
+            ? 'infinite'
+            : animation.iterations || 1,
+          animation.direction || 'normal',
+          animation.fillMode || 'none',
+        ].join(' ');
 
-      element.addEventListener('animationend', handleAnimationEnd);
-      element.addEventListener('animationcancel', handleAnimationEnd);
+        element.style.animation = animationProperty;
 
-      // Fallback timeout (animation duration + 100ms buffer)
-      setTimeout(handleAnimationEnd, animation.duration + 100);
-    });
-  }, [currentTheme, isReducedMotion, generateCSSAnimation]);
+        // Handle animation end
+        const handleAnimationEnd = () => {
+          element.removeEventListener('animationend', handleAnimationEnd);
+          element.removeEventListener('animationcancel', handleAnimationEnd);
+
+          // Reset animation unless fillMode is forwards
+          if (animation.fillMode !== 'forwards') {
+            element.style.animation = '';
+          }
+
+          // Remove from active animations
+          setActiveAnimations((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(element);
+            return newSet;
+          });
+
+          resolve();
+        };
+
+        element.addEventListener('animationend', handleAnimationEnd);
+        element.addEventListener('animationcancel', handleAnimationEnd);
+
+        // Fallback timeout (animation duration + 100ms buffer)
+        setTimeout(handleAnimationEnd, animation.duration + 100);
+      });
+    },
+    [currentTheme, isReducedMotion, generateCSSAnimation]
+  );
 
   // Stop animation on specific element
   const stopAnimation = useCallback((element: HTMLElement) => {
     if (element) {
       element.style.animation = '';
-      setActiveAnimations(prev => {
+      setActiveAnimations((prev) => {
         const newSet = new Set(prev);
         newSet.delete(element);
         return newSet;
@@ -183,7 +205,7 @@ export const AnimationProvider: React.FC<AnimationProviderProps> = ({
 
   // Stop all animations
   const stopAllAnimations = useCallback(() => {
-    activeAnimations.forEach(element => {
+    activeAnimations.forEach((element) => {
       element.style.animation = '';
     });
     setActiveAnimations(new Set());
@@ -197,7 +219,7 @@ export const AnimationProvider: React.FC<AnimationProviderProps> = ({
     isReducedMotion,
     animate,
     stopAnimation,
-    stopAllAnimations
+    stopAllAnimations,
   };
 
   return (
@@ -211,7 +233,9 @@ export const AnimationProvider: React.FC<AnimationProviderProps> = ({
 export const useAnimationContext = (): AnimationContextValue => {
   const context = useContext(AnimationContext);
   if (!context) {
-    throw new Error('useAnimationContext must be used within AnimationProvider');
+    throw new Error(
+      'useAnimationContext must be used within AnimationProvider'
+    );
   }
   return context;
-}; 
+};

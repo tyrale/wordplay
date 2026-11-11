@@ -3,6 +3,7 @@
 ## Core Gameplay
 
 ### Word Validation
+
 - Words must be in the game's dictionary (common words or slang)
 - Each new word must differ in length by at most 1 letter from the previous word
 - All words are displayed in uppercase
@@ -10,9 +11,11 @@
 - Cannot replay words that have already been used in the current game
 
 ### Scoring System
+
 The game awards points for different types of word transformations:
 
 **Core Rules:**
+
 - **Add letter**: +1 point (e.g., CAT → CATS)
 - **Remove letter**: +1 point (e.g., CATS → CAT)
 - **Move letters**: +1 point (when stayed letters change sequence, e.g., CAT → TAC)
@@ -20,6 +23,7 @@ The game awards points for different types of word transformations:
 - **Combinations**: Actions score independently (e.g., substitute = remove + add = 2 points)
 
 **Examples:**
+
 - CAT → CATS: 1 point (add S)
 - CATS → BATS: 2 points (remove C, add B)
 - CAT → COAT: 1 point (add O)
@@ -27,10 +31,12 @@ The game awards points for different types of word transformations:
 - CAT → CATS with key letter S: 2 points (add S + key letter bonus)
 
 **Scoring Display Format:**
+
 - `+` = letter addition, `-` = letter removal, `~` = rearrangement
 - Example: `+ | ~ 2 +1` means add + rearrange (2 pts) + key letter bonus (1 pt)
 
 ### Key Letters System
+
 - Key letters are automatically generated after successful moves
 - Using a key letter in your word grants +1 bonus point
 - Successfully used key letters become "locked" for the next player
@@ -72,6 +78,7 @@ The game uses a comprehensive word validation system:
 3. **Profanity Words**: Managed separately for filtering (loaded from JSON)
 
 **Dictionary Loading:**
+
 - Browser: HTTP fetch with fallback to minimal word set
 - Platform-agnostic: Same validation logic across all environments
 - Updates: Dictionary content is updated with app releases
