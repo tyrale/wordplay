@@ -18,12 +18,13 @@
  */
 import React, { useCallback, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { getAllBots } from '@wordplay/engine/botRegistry';
 import { Menu } from '../components/Menu';
 import { AlertOverlay } from '../components/AlertOverlay';
+import { triggerSoundFeedback } from '../utils/sound';
 
 export type MainScreenGameType = 'bot' | 'challenge' | 'tutorial' | 'zen';
 
@@ -35,6 +36,12 @@ export interface MainScreenProps {
 export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMultiplayer }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
+  // SafeAreaView's own inset padding doesn't apply to these buttons since
+  // they're `position: 'absolute'` (see InteractiveGame.tsx's identical
+  // comment on its header) - on Android, that leaves them sitting right
+  // under the gesture nav bar / 3-button nav, which covers them. Reading
+  // the inset directly and folding it into `bottom` sidesteps that.
+  const insets = useSafeAreaInsets();
   const [currentView, setCurrentView] = useState<'main' | 'bots'>('main');
   const [showVsHumanLocked, setShowVsHumanLocked] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -45,6 +52,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
   const isZenModeUnlocked = isUnlocked('mechanic', 'zen-mode');
 
   const handleGameTypeSelect = useCallback((gameType: string) => {
+    triggerSoundFeedback('click');
     if (gameType === 'vs-bot') {
       setCurrentView('bots');
     } else if (gameType === 'challenge') {
@@ -61,20 +69,29 @@ export const MainScreen: React.FC<MainScreenProps> = ({ onStartGame, onStartMult
   }, [onStartGame, onStartMultiplayer]);
 
   const handleBotSelect = useCallback((botId: string) => {
+    triggerSoundFeedback('click');
     onStartGame('bot', botId);
   }, [onStartGame]);
 
-  const handleBack = useCallback(() => setCurrentView('main'), []);
+  const handleBack = useCallback(() => {
+    triggerSoundFeedback('click');
+    setCurrentView('main');
+  }, []);
+
+  const handleMenuOpen = useCallback(() => {
+    triggerSoundFeedback('click');
+    setIsMenuOpen(true);
+  }, []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {currentView !== 'main' && (
-        <Pressable onPress={handleBack} accessibilityRole="button" accessibilityLabel="Back" style={styles.backButton}>
+        <Pressable onPress={handleBack} accessibilityRole="button" accessibilityLabel="Back" style={[styles.backButton, { bottom: insets.bottom + 8 }]}>
           <Text style={[styles.backButtonText, { color: colors.text }]}>←</Text>
         </Pressable>
       )}
 
-      <Pressable onPress={() => setIsMenuOpen(true)} accessibilityRole="button" accessibilityLabel="Open menu" style={styles.menuButton}>
+      <Pressable onPress={handleMenuOpen} accessibilityRole="button" accessibilityLabel="Open menu" style={[styles.menuButton, { bottom: insets.bottom + 8 }]}>
         <Text style={[styles.menuButtonText, { color: colors.accent }]}>≡</Text>
       </Pressable>
 

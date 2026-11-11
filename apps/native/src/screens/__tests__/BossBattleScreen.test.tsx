@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider, useTheme } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider } from '../../providers/UnlockProvider';
+import { WordPathGraphProvider } from '../../providers/WordPathGraphProvider';
 import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
@@ -17,13 +18,15 @@ function renderBoss(props: Partial<React.ComponentProps<typeof BossBattleScreen>
       <ThemeProvider>
         <AlertProvider>
           <UnlockProvider>
-            <VanityFilterProvider>
-            <MechanicsSettingsProvider>
-              <RoundLengthProvider>
-                <BossBattleScreen onExit={onExit} {...props} />
-              </RoundLengthProvider>
-            </MechanicsSettingsProvider>
-            </VanityFilterProvider>
+            <WordPathGraphProvider>
+              <VanityFilterProvider>
+              <MechanicsSettingsProvider>
+                <RoundLengthProvider>
+                  <BossBattleScreen onExit={onExit} {...props} />
+                </RoundLengthProvider>
+              </MechanicsSettingsProvider>
+              </VanityFilterProvider>
+            </WordPathGraphProvider>
           </UnlockProvider>
         </AlertProvider>
       </ThemeProvider>
@@ -48,14 +51,16 @@ describe('native BossBattleScreen', () => {
       <ThemeProvider>
         <AlertProvider>
           <UnlockProvider>
-            <VanityFilterProvider>
-            <MechanicsSettingsProvider>
-              <RoundLengthProvider>
-                <ThemeSpy />
-                <BossBattleScreen onExit={jest.fn()} />
-              </RoundLengthProvider>
-            </MechanicsSettingsProvider>
-            </VanityFilterProvider>
+            <WordPathGraphProvider>
+              <VanityFilterProvider>
+              <MechanicsSettingsProvider>
+                <RoundLengthProvider>
+                  <ThemeSpy />
+                  <BossBattleScreen onExit={jest.fn()} />
+                </RoundLengthProvider>
+              </MechanicsSettingsProvider>
+              </VanityFilterProvider>
+            </WordPathGraphProvider>
           </UnlockProvider>
         </AlertProvider>
       </ThemeProvider>
@@ -78,8 +83,10 @@ describe('native BossBattleScreen', () => {
     fireEvent.press(screen.getByLabelText('Close'));
 
     await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
-    // 130s countdown for the first stage (BOSS_STAGES.boss.timeLimitSeconds).
-    await waitFor(() => expect(screen.getByText('130s')).toBeTruthy());
+    // 160s countdown for the first stage (BOSS_STAGES.boss.timeLimitSeconds),
+    // shown inside ScoreDisplay (same spot as the time-pressure timer) with
+    // no unit suffix, matching web's ScoreDisplay exactly.
+    await waitFor(() => expect(screen.getByText('160')).toBeTruthy());
   });
 
   it('resigning mid-battle shows the defeat overlay and reverts the theme on exit', async () => {

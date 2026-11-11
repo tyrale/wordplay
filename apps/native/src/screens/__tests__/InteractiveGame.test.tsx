@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider, useUnlockSystem } from '../../providers/UnlockProvider';
+import { WordPathGraphProvider } from '../../providers/WordPathGraphProvider';
 import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
@@ -29,14 +30,16 @@ function renderGame(props: React.ComponentProps<typeof InteractiveGame> = {}, un
     <ThemeProvider>
       <AlertProvider>
         <UnlockProvider>
-          <VanityFilterProvider>
-            <MechanicsSettingsProvider>
-              <RoundLengthProvider>
-                <Unlocker words={unlockWords} />
-                <InteractiveGame {...props} />
-              </RoundLengthProvider>
-            </MechanicsSettingsProvider>
-          </VanityFilterProvider>
+          <WordPathGraphProvider>
+            <VanityFilterProvider>
+              <MechanicsSettingsProvider>
+                <RoundLengthProvider>
+                  <Unlocker words={unlockWords} />
+                  <InteractiveGame {...props} />
+                </RoundLengthProvider>
+              </MechanicsSettingsProvider>
+            </VanityFilterProvider>
+          </WordPathGraphProvider>
         </UnlockProvider>
       </AlertProvider>
     </ThemeProvider>
@@ -235,7 +238,8 @@ describe('native InteractiveGame screen', () => {
     const onGameEnd = jest.fn();
     renderGame({ config: { maxTurns: 1, initialWord: 'CAT' }, onGameEnd });
     await waitFor(() => expect(screen.getByLabelText('Current word: CAT')).toBeTruthy());
-    expect(screen.getByText('round 1')).toBeTruthy();
+    expect(screen.getByTestId('score-bar-round-number')).toHaveTextContent('1');
+    expect(screen.getByText('round')).toBeTruthy();
 
     fireEvent.press(screen.getByLabelText('Letter S'));
     const submit = await screen.findByLabelText('Submit word');
@@ -249,8 +253,7 @@ describe('native InteractiveGame screen', () => {
     // which would trivially pass even if the game hadn't progressed yet.
     await waitFor(() => expect(onGameEnd).toHaveBeenCalled(), { timeout: 3000 });
 
-    expect(screen.getByText('round 1')).toBeTruthy();
-    expect(screen.queryByText('round 2')).toBeNull();
+    expect(screen.getByTestId('score-bar-round-number')).toHaveTextContent('1');
   });
 
   it('regression: a played move and a finished game are actually recorded into the player stats log', async () => {
@@ -321,16 +324,16 @@ describe('native InteractiveGame screen', () => {
   it('shows a whole-game boss countdown when config.gameTimeLimitSeconds is set, and fires onGameTimeout at zero', async () => {
     const onGameTimeout = jest.fn();
     renderGame({ config: { gameTimeLimitSeconds: 1 }, onGameTimeout });
-    await waitFor(() => expect(screen.getByText('1s')).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId('score-display-timer')).toHaveTextContent('1'));
 
     await waitFor(() => expect(onGameTimeout).toHaveBeenCalledTimes(1), { timeout: 3000 });
-    expect(screen.getByText('0s')).toBeTruthy();
+    expect(screen.getByTestId('score-display-timer')).toHaveTextContent('0');
   });
 
   it('does not show a boss countdown for a normal game (no gameTimeLimitSeconds)', async () => {
     renderGame();
     await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
-    expect(screen.queryByText(/^\d+s$/)).toBeNull();
+    expect(screen.queryByText(/^\d+$/)).toBeNull();
   });
 
   it('fires onBossTrigger when the player submits "GUS"', async () => {

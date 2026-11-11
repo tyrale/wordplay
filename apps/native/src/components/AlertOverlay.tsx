@@ -38,6 +38,8 @@ import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-na
 import type { NativeSyntheticEvent, TextLayoutEventData } from 'react-native';
 import { triggerHapticFeedback } from '../utils/haptics';
 import type { HapticPattern } from '../utils/haptics';
+import { triggerSoundFeedback } from '../utils/sound';
+import type { SoundPattern } from '../utils/sound';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 
 export interface AlertOverlayAction {
@@ -93,11 +95,22 @@ const LINE_BOX_WIDTH_FRACTION = 8;
  * shrinking the box text renders into. One-sided (not `marginVertical`)
  * so this maps directly to the actual gap between two lines, instead of
  * being doubled by both lines each contributing their own top+bottom
- * margin. A flat pixel value rather than scaled off each line's own
- * (independently-fitted, often very different) font size, so the gap
- * between lines reads consistently regardless of how big any one word
- * happened to render. */
-const NEGATIVE_LEADING_MARGIN = -60;
+ * margin.
+ *
+ * Scaled proportionally to the *smaller of the two adjacent lines' own
+ * fitted font sizes* (see `lineFontSizes` state below), not a flat pixel
+ * value - web's `line-height: 0.8` is a ratio of each line's own
+ * font-size, so the amount of overlap it produces between two lines is
+ * inherently proportional to how big those two lines render. Headline
+ * lines are fitted independently to the target width (a short word like
+ * "NEW" renders far larger than a long phrase like "5 LETTER START"), so
+ * a flat pixel margin previously pulled small-font lines up by way more
+ * than their own line-height, overlapping them entirely into whatever
+ * huge line sat above. Using the *smaller* of the pair (rather than,
+ * say, an average) guarantees the pull-up never exceeds what the
+ * smaller, more constrained line can visually absorb, regardless of how
+ * large its neighbor happens to be. */
+const LEADING_MARGIN_RATIO = 0.4;
 /** Empirical average glyph-width-to-font-size ratio for the system's
  * default bold sans-serif - used only to pick a reasonable *starting*
  * font size before the real `onTextLayout` measurement corrects it (see
@@ -129,10 +142,16 @@ interface FitLineProps {
   targetWidth: number;
   maxFontSize: number;
   color: string;
-  /** Skips the negative top margin - there's no previous line to pull
-   * this one closer to, and the whole block is already centered as a
-   * unit, so the first line shouldn't shift independently of it. */
-  isFirst: boolean;
+  /** Negative top margin to apply, precomputed by the parent from this
+   * line's and the previous line's fitted font sizes (see
+   * `LEADING_MARGIN_RATIO`) - 0 for the first line, since there's no
+   * previous line to pull this one closer to. */
+  marginTop: number;
+  /** Reports this line's fitted font size back up to the parent (both
+   * the initial guess and any later `onTextLayout` correction) so it can
+   * recompute neighboring lines' `marginTop` off the real values instead
+   * of a flat pixel guess. */
+  onFontSizeChange: (fontSize: number) => void;
 }
 
 /** Renders one headline line, correcting its own font size once real
@@ -149,9 +168,18 @@ interface FitLineProps {
  * actually prevents the wrap/truncate from happening in the first
  * place - this component doesn't need to know about that, just that it
  * must never self-limit past whatever room its parent gives it. */
-const FitLine: React.FC<FitLineProps> = ({ text, displayText, targetWidth, maxFontSize, color, isFirst }) => {
+const FitLine: React.FC<FitLineProps> = ({ text, displayText, targetWidth, maxFontSize, color, marginTop, onFontSizeChange }) => {
   const [fontSize, setFontSize] = useState(() => estimateFontSize(text, targetWidth / TARGET_WIDTH_FRACTION, maxFontSize / MAX_FONT_SIZE_VH_FRACTION));
   const correctedRef = useRef(false);
+
+  // Reports the initial guess up as soon as it's known, and again if
+  // `handleTextLayout` below corrects it - `onFontSizeChange` is a
+  // stable per-index setter (see AlertOverlay), so this only re-fires
+  // when `fontSize` itself actually changes.
+  useEffect(() => {
+    onFontSizeChange(fontSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onFontSizeChange is a stable per-index closure; re-running on it would be a no-op anyway
+  }, [fontSize]);
 
   const handleTextLayout = (e: NativeSyntheticEvent<TextLayoutEventData>) => {
     if (correctedRef.current) return;
@@ -170,7 +198,7 @@ const FitLine: React.FC<FitLineProps> = ({ text, displayText, targetWidth, maxFo
   return (
     <Text
       onTextLayout={handleTextLayout}
-      style={[styles.line, { fontSize, marginTop: isFirst ? 0 : NEGATIVE_LEADING_MARGIN, color }]}
+      style={[styles.line, { fontSize, marginTop, color }]}
     >
       {displayText}
     </Text>
@@ -183,9 +211,27 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({ isVisible, lines, on
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
 
+  // Each line's currently-fitted font size (initial guess, then corrected
+  // in place once `FitLine`'s `onTextLayout` measurement comes in) - kept
+  // here rather than local to each `FitLine` so `marginTop` below can be
+  // computed off *both* of two adjacent lines' real sizes instead of a
+  // flat pixel value (see `LEADING_MARGIN_RATIO`'s doc comment). Reset
+  // whenever the copy itself changes so stale sizes from a previous
+  // alert don't leak into a new one's initial margins.
+  const [lineFontSizes, setLineFontSizes] = useState<number[]>(() => lines.map(line => estimateFontSize(line, width, height)));
+  useEffect(() => {
+    setLineFontSizes(lines.map(line => estimateFontSize(line, width, height)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `lines.join` gives a stable key so this only resets when the actual copy changes, not on every parent re-render
+  }, [lines.join('\u0000'), width, height]);
+
   useEffect(() => {
     if (isVisible) {
       triggerHapticFeedback(VARIANT_HAPTIC[variant]);
+      // Every HapticPattern value used above is also a valid SoundPattern
+      // (both unions share these literal names) - matches web's
+      // AlertOverlay.tsx, which computes and calls both from the same
+      // single pattern value.
+      triggerSoundFeedback(VARIANT_HAPTIC[variant] as SoundPattern);
     }
   }, [isVisible, variant]);
 
@@ -200,18 +246,32 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({ isVisible, lines, on
   return (
     <View style={[styles.overlay, { backgroundColor: colors.background }]} accessibilityRole="alert" accessibilityViewIsModal>
       <View style={styles.linesContainer}>
-        {lines.map((line, index) => (
-          <View key={`${index}-${line}`} style={[styles.lineBox, { width: lineBoxWidth }]}>
-            <FitLine
-              text={line}
-              displayText={variant === 'start' ? line : line.toUpperCase()}
-              targetWidth={targetWidth}
-              maxFontSize={maxFontSize}
-              color={lineColor}
-              isFirst={index === 0}
-            />
-          </View>
-        ))}
+        {lines.map((line, index) => {
+          // Uses the smaller of this line's and the previous line's
+          // fitted font sizes - see `LEADING_MARGIN_RATIO`'s doc comment
+          // for why the smaller (not larger, not average) of the pair.
+          const marginTop = index === 0 ? 0 : -LEADING_MARGIN_RATIO * Math.min(lineFontSizes[index - 1] ?? 0, lineFontSizes[index] ?? 0);
+          return (
+            <View key={`${index}-${line}`} style={[styles.lineBox, { width: lineBoxWidth }]}>
+              <FitLine
+                text={line}
+                displayText={variant === 'start' ? line : line.toUpperCase()}
+                targetWidth={targetWidth}
+                maxFontSize={maxFontSize}
+                color={lineColor}
+                marginTop={marginTop}
+                onFontSizeChange={fontSize =>
+                  setLineFontSizes(prev => {
+                    if (prev[index] === fontSize) return prev;
+                    const next = [...prev];
+                    next[index] = fontSize;
+                    return next;
+                  })
+                }
+              />
+            </View>
+          );
+        })}
       </View>
 
       {meta && (
@@ -225,7 +285,10 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({ isVisible, lines, on
           {actions.map(action => (
             <Pressable
               key={action.label}
-              onPress={action.onPress}
+              onPress={() => {
+                triggerSoundFeedback('click');
+                action.onPress();
+              }}
               style={[styles.actionButton, { borderColor: colors.text }]}
               accessibilityRole="button"
             >
@@ -235,7 +298,15 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({ isVisible, lines, on
         </View>
       )}
 
-      <Pressable onPress={onClose} style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close">
+      <Pressable
+        onPress={() => {
+          triggerSoundFeedback('click');
+          onClose();
+        }}
+        style={styles.closeButton}
+        accessibilityRole="button"
+        accessibilityLabel="Close"
+      >
         <Text style={[styles.closeButtonText, { color: colors.text }]}>×</Text>
       </Pressable>
     </View>

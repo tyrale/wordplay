@@ -77,12 +77,17 @@ export const DrunkModeOverlay: React.FC<DrunkModeOverlayProps> = ({ children }) 
   };
 
   // The blur "breathes" along with the wobble instead of sitting at a
-  // constant intensity - stronger than the wobble-only version this
-  // replaced, per direct request to blur more. `BlurView`'s `intensity`
-  // is a plain number (0-100), not an Animated-drivable style prop, so
-  // this can't reuse `useNativeDriver: true` the way the transform
-  // does - a second, JS-driven listener keeps a plain number in sync
-  // instead.
+  // constant intensity. `BlurView`'s `intensity` is a plain number
+  // (0-100), not an Animated-drivable style prop, so this can't reuse
+  // `useNativeDriver: true` the way the transform does - a second,
+  // JS-driven listener keeps a plain number in sync instead.
+  //
+  // One full `sin` hump per wobble loop (rather than two) means the
+  // intensity eases all the way down to 0 - genuinely clear, not just
+  // "less blurry" - once per cycle before building back up to the haziest
+  // point at the loop's midpoint, per direct request that it should
+  // actually go from clear to blurred instead of oscillating between two
+  // blurred states.
   const [blurIntensity, setBlurIntensity] = React.useState(0);
   useEffect(() => {
     if (!isDrunkOn) {
@@ -90,9 +95,7 @@ export const DrunkModeOverlay: React.FC<DrunkModeOverlayProps> = ({ children }) 
       return;
     }
     const id = drunkAnim.addListener(({ value }) => {
-      // Oscillates between ~20 and ~45 - noticeably hazier than a
-      // barely-there blur, without fully obscuring the content.
-      setBlurIntensity(20 + Math.abs(Math.sin(value * Math.PI * 2)) * 25);
+      setBlurIntensity(Math.sin(value * Math.PI) * 45);
     });
     return () => drunkAnim.removeListener(id);
   }, [isDrunkOn, drunkAnim]);

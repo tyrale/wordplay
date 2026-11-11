@@ -1,13 +1,16 @@
 /**
  * Challenge Engine - Daily Word Transformation Puzzles
- *
+ * 
  * Platform-agnostic challenge system that generates daily word puzzles
  * where players transform a start word into a target word following
  * standard game rules. Provides consistent challenges worldwide using
  * deterministic daily seeds.
  */
 
-import type { DictionaryEngine, UtilityDependencies } from './interfaces';
+import type { 
+  DictionaryEngine, 
+  UtilityDependencies
+} from './interfaces';
 import { analyzeWordChange, type WordAnalysis } from './scoring';
 
 // =============================================================================
@@ -43,32 +46,29 @@ export interface ChallengeDependencies {
 export interface ChallengeEngine {
   // Initialization
   initialize(): Promise<void>;
-
+  
   // Daily challenge management
   getDailyChallengeState(date?: string): Promise<ChallengeState>;
   startDailyChallenge(date?: string): Promise<ChallengeState>;
-
+  
   // Game progression
-  submitWord(
-    word: string,
-    currentState: ChallengeState
-  ): Promise<{
+  submitWord(word: string, currentState: ChallengeState): Promise<{
     newState: ChallengeState;
     isValid: boolean;
     isComplete: boolean;
     error?: string;
   }>;
-
+  
   // Forfeit/give up
   forfeitChallenge(currentState: ChallengeState): Promise<ChallengeState>;
-
+  
   // Sharing system
   generateSharingPattern(wordSequence: string[]): string[];
   generateSharingText(state: ChallengeState): string;
-
+  
   // Utilities
   isValidMove(fromWord: string, toWord: string): boolean;
-
+  
   // Debug
   resetDailyChallenge(date?: string): Promise<void>;
   generateRandomChallenge(): Promise<ChallengeState>;
@@ -100,9 +100,7 @@ class SeededRandom {
 // CHALLENGE ENGINE IMPLEMENTATION
 // =============================================================================
 
-export function createChallengeEngine(
-  dependencies: ChallengeDependencies
-): ChallengeEngine {
+export function createChallengeEngine(dependencies: ChallengeDependencies): ChallengeEngine {
   const { dictionary, utilities, loadState, saveState } = dependencies;
 
   /**
@@ -120,7 +118,7 @@ export function createChallengeEngine(
     let hash = 0;
     for (let i = 0; i < dateString.length; i++) {
       const char = dateString.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
+      hash = ((hash << 5) - hash) + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);
@@ -156,10 +154,7 @@ export function createChallengeEngine(
    * backed by Math.random() and would silently make the challenge different
    * per browser/session even on the same UTC date.
    */
-  function generateDailyWords(dateString: string): {
-    startWord: string;
-    targetWord: string;
-  } {
+  function generateDailyWords(dateString: string): { startWord: string; targetWord: string } {
     const seed = generateDailySeed(dateString);
     const rng = new SeededRandom(seed);
 
@@ -167,32 +162,19 @@ export function createChallengeEngine(
     // deterministically indexed from every valid (no repeating letters)
     // dictionary word of that length, sorted for a stable order.
     const startLength = 5;
-    const startCandidates = dictionary
-      .getWordsByLength(startLength)
-      .map((word) => word.toUpperCase())
+    const startCandidates = dictionary.getWordsByLength(startLength)
+      .map(word => word.toUpperCase())
       .filter(isValidStartWord)
       .sort();
 
-    let startWord: string | null =
-      startCandidates.length > 0
-        ? startCandidates[rng.nextInt(0, startCandidates.length - 1)]
-        : null;
+    let startWord: string | null = startCandidates.length > 0
+      ? startCandidates[rng.nextInt(0, startCandidates.length - 1)]
+      : null;
 
     if (!startWord) {
       // Fallback words if the dictionary has no valid 5-letter words - all
       // 5 letters, no repeating letters.
-      const fallbacks = [
-        'GAMES',
-        'WORDS',
-        'PLAYS',
-        'TIMES',
-        'MAKES',
-        'WORLD',
-        'HOUSE',
-        'LIGHT',
-        'SOUND',
-        'NIGHT',
-      ];
+      const fallbacks = ['GAMES', 'WORDS', 'PLAYS', 'TIMES', 'MAKES', 'WORLD', 'HOUSE', 'LIGHT', 'SOUND', 'NIGHT'];
       startWord = fallbacks[rng.nextInt(0, fallbacks.length - 1)];
     }
 
@@ -202,21 +184,16 @@ export function createChallengeEngine(
     const targetLength = startWord.length + rng.nextInt(-1, 1);
     const minTargetLength = Math.max(5, targetLength); // Enforce minimum 5 letters
     const maxTargetLength = Math.min(8, targetLength);
-    const finalTargetLength = Math.max(
-      minTargetLength,
-      Math.min(maxTargetLength, targetLength)
-    );
+    const finalTargetLength = Math.max(minTargetLength, Math.min(maxTargetLength, targetLength));
 
-    const targetCandidates = dictionary
-      .getWordsByLength(finalTargetLength)
-      .map((word) => word.toUpperCase())
-      .filter((word) => isValidTargetWord(startWord as string, word))
+    const targetCandidates = dictionary.getWordsByLength(finalTargetLength)
+      .map(word => word.toUpperCase())
+      .filter(word => isValidTargetWord(startWord as string, word))
       .sort();
 
-    let targetWord: string | null =
-      targetCandidates.length > 0
-        ? targetCandidates[rng.nextInt(0, targetCandidates.length - 1)]
-        : null;
+    let targetWord: string | null = targetCandidates.length > 0
+      ? targetCandidates[rng.nextInt(0, targetCandidates.length - 1)]
+      : null;
 
     if (!targetWord) {
       // Enhanced fallback logic with words that meet the constraints above
@@ -226,7 +203,7 @@ export function createChallengeEngine(
 
     return {
       startWord: startWord.toUpperCase(),
-      targetWord: targetWord.toUpperCase(),
+      targetWord: targetWord.toUpperCase()
     };
   }
 
@@ -236,21 +213,21 @@ export function createChallengeEngine(
   function countCommonLetters(word1: string, word2: string): number {
     const freq1 = new Map<string, number>();
     const freq2 = new Map<string, number>();
-
+    
     for (const char of word1.toUpperCase()) {
       freq1.set(char, (freq1.get(char) || 0) + 1);
     }
-
+    
     for (const char of word2.toUpperCase()) {
       freq2.set(char, (freq2.get(char) || 0) + 1);
     }
-
+    
     let commonCount = 0;
     for (const [char, count1] of freq1) {
       const count2 = freq2.get(char) || 0;
       commonCount += Math.min(count1, count2);
     }
-
+    
     return commonCount;
   }
 
@@ -261,101 +238,58 @@ export function createChallengeEngine(
     if (!targetWord || targetWord === startWord.toUpperCase()) {
       return false;
     }
-
+    
     // Must be ≥5 letters
     if (targetWord.length < 5) {
       return false;
     }
-
+    
     // Must have ≤2 letters in common
     if (countCommonLetters(startWord, targetWord) > 2) {
       return false;
     }
-
+    
     // Must not have repeating letters
     if (hasRepeatingLetters(targetWord)) {
       return false;
     }
-
+    
     return true;
   }
 
   /**
    * Get fallback target words that meet the new constraints
    */
-  function getFallbackTargetWords(
-    startWord: string,
-    targetLength: number
-  ): string[] {
+  function getFallbackTargetWords(startWord: string, targetLength: number): string[] {
     // Pre-selected words that are likely to meet constraints for common start words
     // All words below have NO repeating letters and minimal overlap potential
     const allFallbacks = [
       // 5-letter words with minimal overlap potential
-      'QUICK',
-      'JUMPY',
-      'BLITZ',
-      'WALTZ',
-      'QUIRK',
-      'FJORD',
-      'BUMPH',
-      'ZINGY',
-      'PROXY',
-      'WHISK',
-      'JERKY',
-      'MIXED',
-      'VINYL',
-      'ZEBRA',
+      'QUICK', 'JUMPY', 'BLITZ', 'WALTZ', 'QUIRK', 'FJORD', 'BUMPH',
+      'ZINGY', 'PROXY', 'WHISK', 'JERKY', 'MIXED', 'VINYL', 'ZEBRA',
       // 6-letter words
-      'QUARTZ',
-      'JOCKEY',
-      'WHISKY',
-      'ZEPHYR',
-      'OXYGEN',
-      'PYTHON',
-      'RHYTHM',
-      'SPHINX',
-      'SYZYGY',
-      'FLYWAY',
-      'GIZMOS',
-      'HIJACK',
-      'JAUNTY',
-      // 7-letter words
-      'QUICKLY',
-      'JOCKEYS',
-      'WHISKEY',
-      'ZEPHYRS',
-      'PYTHONS',
-      'RHYTHMS',
-      'FLYWAYS',
-      'HIJACKS',
-      'JAUNTED',
-      'COMPLEX',
-      'DYNASTY',
+      'QUARTZ', 'JOCKEY', 'WHISKY', 'ZEPHYR', 'OXYGEN', 'PYTHON',
+      'RHYTHM', 'SPHINX', 'SYZYGY', 'FLYWAY', 'GIZMOS', 'HIJACK', 'JAUNTY',
+      // 7-letter words  
+      'QUICKLY', 'JOCKEYS', 'WHISKEY', 'ZEPHYRS', 'PYTHONS',
+      'RHYTHMS', 'FLYWAYS', 'HIJACKS', 'JAUNTED', 'COMPLEX', 'DYNASTY',
       // 8-letter words
-      'JOCKEYED',
-      'WHISKEYS',
-      'RHYTHMIC',
-      'HIJACKED',
-      'DYNAMITE',
-      'SYMPHONY',
+      'JOCKEYED', 'WHISKEYS', 'RHYTHMIC', 'HIJACKED', 'DYNAMITE', 'SYMPHONY'
     ];
-
+    
     // Filter by length and constraint validation
-    const validFallbacks = allFallbacks.filter(
-      (word) =>
-        word.length === targetLength && isValidTargetWord(startWord, word)
+    const validFallbacks = allFallbacks.filter(word => 
+      word.length === targetLength && isValidTargetWord(startWord, word)
     );
-
+    
     // If no valid fallbacks for exact length, try other lengths ≥5
     if (validFallbacks.length === 0) {
-      const anyLengthFallbacks = allFallbacks.filter(
-        (word) => word.length >= 5 && isValidTargetWord(startWord, word)
+      const anyLengthFallbacks = allFallbacks.filter(word => 
+        word.length >= 5 && isValidTargetWord(startWord, word)
       );
-      return anyLengthFallbacks.length > 0
-        ? anyLengthFallbacks
-        : ['QUICK', 'JUMPY', 'BLITZ'];
+      return anyLengthFallbacks.length > 0 ? anyLengthFallbacks : ['QUICK', 'JUMPY', 'BLITZ'];
     }
-
+    
     return validFallbacks;
   }
 
@@ -374,20 +308,18 @@ export function createChallengeEngine(
   /**
    * Get daily challenge state, creating new if needed
    */
-  async function getDailyChallengeState(
-    date?: string
-  ): Promise<ChallengeState> {
+  async function getDailyChallengeState(date?: string): Promise<ChallengeState> {
     const dateString = date || getCurrentDateString();
-
+    
     // Try to load existing state
     const existingState = await loadState(dateString);
     if (existingState) {
       return existingState;
     }
-
+    
     // Generate new challenge
     const { startWord, targetWord } = generateDailyWords(dateString);
-
+    
     const newState: ChallengeState = {
       date: dateString,
       startWord,
@@ -396,12 +328,12 @@ export function createChallengeEngine(
       wordSequence: [startWord],
       stepCount: 0,
       completed: false,
-      failed: false,
+      failed: false
     };
-
+    
     // Save the new state
     await saveState(newState);
-
+    
     return newState;
   }
 
@@ -413,81 +345,92 @@ export function createChallengeEngine(
   }
 
   /**
-   * Check if a word transformation is valid according to game rules
+   * Check if a word transformation is valid according to game rules.
    *
-   * NOTE: This is a simplified validation for internal challenge engine use.
-   * For UI validation, use the agnostic game engine's validation system
-   * (GameStateDependencies.isValidMove) to ensure consistency across all game modes.
+   * Mirrors scoring.ts's isValidMove exactly (at most one letter added and
+   * at most one letter removed per turn, rearranging the rest is
+   * unlimited) via the same analyzeWordChange - this used to only check
+   * the length delta and dictionary membership, which let through any
+   * same-length (or ±1) dictionary word regardless of how many letters
+   * actually differed (e.g. AMP -> NOT, a totally different set of
+   * letters, was wrongly accepted since both are 3-letter dictionary
+   * words). This is the validation submitWord below actually enforces, so
+   * it must not be weaker than the UI-facing one (GameStateDependencies.
+   * isValidMove) - previously it was, so a stale/bypassed UI check could
+   * let an illegal transformation through here.
    */
   function isValidMove(fromWord: string, toWord: string): boolean {
     if (!fromWord || !toWord) return false;
-
+    
     const from = fromWord.toUpperCase().trim();
     const to = toWord.toUpperCase().trim();
-
+    
     // Words must be different
     if (from === to) return false;
-
+    
     // Length can only change by ±1
     const lengthDiff = Math.abs(to.length - from.length);
     if (lengthDiff > 1) return false;
-
+    
     // Must be valid dictionary words
     if (!dictionary.isValidDictionaryWord(to)) return false;
 
+    // Must follow the core add/remove-one-letter rule
+    const analysis = analyzeWordChange(from, to);
+    if (analysis.addedLetters.length > 1 || analysis.removedLetters.length > 1) {
+      return false;
+    }
+    
     return true;
   }
 
   /**
    * Submit a word in the challenge
    */
-  async function submitWord(
-    word: string,
-    currentState: ChallengeState
-  ): Promise<{
+  async function submitWord(word: string, currentState: ChallengeState): Promise<{
     newState: ChallengeState;
     isValid: boolean;
     isComplete: boolean;
     error?: string;
   }> {
     const wordUpper = word.toUpperCase().trim();
-
+    
     // Check if word was already used first
     if (currentState.wordSequence.includes(wordUpper)) {
       return {
         newState: currentState,
         isValid: false,
         isComplete: false,
-        error: 'Word already used',
+        error: 'Word already used'
       };
     }
-
+    
     // Validate the move
     if (!isValidMove(currentState.currentWord, wordUpper)) {
       return {
         newState: currentState,
         isValid: false,
         isComplete: false,
-        error: 'Invalid word transformation',
+        error: 'Invalid word transformation'
       };
     }
-
+    
     // Create new state
     const newWordSequence = [...currentState.wordSequence, wordUpper];
     const isComplete = wordUpper === currentState.targetWord;
-
+    
     const newState: ChallengeState = {
       ...currentState,
       currentWord: wordUpper,
       wordSequence: newWordSequence,
       stepCount: currentState.stepCount + 1,
       completed: isComplete,
-      failed: false,
+      failed: false
     };
-
+    
     // Save the updated state
     await saveState(newState);
-
+    
     return {
       newState,
       isValid: true,
@@ -498,15 +441,13 @@ export function createChallengeEngine(
   /**
    * Forfeit the current challenge
    */
-  async function forfeitChallenge(
-    currentState: ChallengeState
-  ): Promise<ChallengeState> {
+  async function forfeitChallenge(currentState: ChallengeState): Promise<ChallengeState> {
     const newState: ChallengeState = {
       ...currentState,
       failed: true,
-      failedAtWord: currentState.currentWord,
+      failedAtWord: currentState.currentWord
     };
-
+    
     await saveState(newState);
     return newState;
   }
@@ -516,53 +457,49 @@ export function createChallengeEngine(
    */
   function generateSharingPattern(wordSequence: string[]): string[] {
     if (wordSequence.length < 2) return [];
-
+    
     const patterns: string[] = [];
-
+    
     for (let i = 1; i < wordSequence.length; i++) {
       const prevWord = wordSequence[i - 1];
       const currWord = wordSequence[i];
-
+      
       // Use the engine's word analysis to understand the transformation
       const analysis: WordAnalysis = analyzeWordChange(prevWord, currWord);
-
+      
       // Generate pattern based on the analysis
       const pattern = generatePatternFromAnalysis(prevWord, currWord, analysis);
       patterns.push(pattern);
     }
-
+    
     return patterns;
   }
 
   /**
    * Generate visual pattern from word analysis
    */
-  function generatePatternFromAnalysis(
-    prevWord: string,
-    currWord: string,
-    analysis: WordAnalysis
-  ): string {
+  function generatePatternFromAnalysis(prevWord: string, currWord: string, analysis: WordAnalysis): string {
     // Create frequency maps to track letter usage
     const prevFreq = new Map<string, number>();
     const currFreq = new Map<string, number>();
-
+    
     for (const char of prevWord) {
       prevFreq.set(char, (prevFreq.get(char) || 0) + 1);
     }
-
+    
     for (const char of currWord) {
       currFreq.set(char, (currFreq.get(char) || 0) + 1);
     }
-
+    
     // Build pattern character by character
     let pattern = '';
-
+    
     for (let i = 0; i < currWord.length; i++) {
       const char = currWord[i];
-
+      
       // Check if this character is truly new (added)
       const isNewLetter = analysis.addedLetters.includes(char);
-
+      
       if (isNewLetter) {
         // This is a new letter
         pattern += '◼︎';
@@ -576,7 +513,7 @@ export function createChallengeEngine(
         pattern += '◻︎';
       }
     }
-
+    
     return pattern;
   }
 
@@ -584,12 +521,8 @@ export function createChallengeEngine(
    * Generate complete sharing text
    */
   function generateSharingText(state: ChallengeState): string {
-    const dayNumber =
-      Math.floor(
-        (new Date(state.date).getTime() - new Date('2024-01-01').getTime()) /
-          (1000 * 60 * 60 * 24)
-      ) + 1;
-
+    const dayNumber = Math.floor((new Date(state.date).getTime() - new Date('2024-01-01').getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
     // Add checkmark for completed or red X for failed after the challenge #,
     // then put the start/target words on their own line
     let result = `Challenge #${dayNumber}`;
@@ -600,7 +533,7 @@ export function createChallengeEngine(
     } else {
       result += `\n${state.startWord} → ${state.targetWord}`;
     }
-
+    
     if (state.completed) {
       result += `\n\n`;
     } else if (state.failed) {
@@ -608,17 +541,17 @@ export function createChallengeEngine(
     } else {
       result += ` (in progress)\n\n`;
     }
-
+    
     if (state.wordSequence.length >= 2) {
       const patterns = generateSharingPattern(state.wordSequence);
       result += patterns.join('\n');
     }
-
+    
     // Add step count as separate line for completed challenges
     if (state.completed) {
       result += `\n${state.stepCount} turns`;
     }
-
+    
     return result;
   }
 
@@ -628,7 +561,7 @@ export function createChallengeEngine(
   async function resetDailyChallenge(date?: string): Promise<void> {
     const dateString = date || getCurrentDateString();
     const { startWord, targetWord } = generateDailyWords(dateString);
-
+    
     const newState: ChallengeState = {
       date: dateString,
       startWord,
@@ -637,9 +570,9 @@ export function createChallengeEngine(
       wordSequence: [startWord],
       stepCount: 0,
       completed: false,
-      failed: false,
+      failed: false
     };
-
+    
     await saveState(newState);
   }
 
@@ -650,18 +583,18 @@ export function createChallengeEngine(
     // Use current timestamp as seed for random challenge
     const randomSeed = utilities.getTimestamp();
     const rng = new SeededRandom(randomSeed);
-
+    
     // Generate random start word (5 letters only, no repeating letters)
     const startLength = 5;
-
+    
     let startWord: string | null = null;
     let attempts = 0;
     const maxAttempts = 50;
-
+    
     // Try to get a valid start word (no repeating letters)
     while (!startWord && attempts < maxAttempts) {
       const candidateWord = dictionary.getRandomWordByLength(startLength);
-
+      
       if (candidateWord && isValidStartWord(candidateWord)) {
         // Use the RNG to vary selection
         if (rng.next() < 0.7 || attempts >= maxAttempts - 5) {
@@ -669,67 +602,45 @@ export function createChallengeEngine(
         }
         // Otherwise skip this word to get variation
       }
-
+      
       attempts++;
     }
-
+    
     if (!startWord) {
       // Fallback words if random generation fails - all 5 letters, no repeating letters
-      const fallbacks = [
-        'GAMES',
-        'WORDS',
-        'PLAYS',
-        'TIMES',
-        'MAKES',
-        'WORLD',
-        'HOUSE',
-        'LIGHT',
-        'SOUND',
-        'NIGHT',
-      ];
+      const fallbacks = ['GAMES', 'WORDS', 'PLAYS', 'TIMES', 'MAKES', 'WORLD', 'HOUSE', 'LIGHT', 'SOUND', 'NIGHT'];
       startWord = fallbacks[rng.nextInt(0, fallbacks.length - 1)];
     }
-
+    
     // Generate random target word with same constraints as daily challenges
     const targetLength = startWord.length + rng.nextInt(-1, 1);
     const minTargetLength = Math.max(5, targetLength); // Enforce minimum 5 letters
     const maxTargetLength = Math.min(8, targetLength);
-    const finalTargetLength = Math.max(
-      minTargetLength,
-      Math.min(maxTargetLength, targetLength)
-    );
-
+    const finalTargetLength = Math.max(minTargetLength, Math.min(maxTargetLength, targetLength));
+    
     let targetWord: string | null = null;
     let targetAttempts = 0;
     const maxTargetAttempts = 50;
-
+    
     // Try to get a valid target word with all constraints
-    while (
-      (!targetWord || !isValidTargetWord(startWord, targetWord)) &&
-      targetAttempts < maxTargetAttempts
-    ) {
+    while ((!targetWord || !isValidTargetWord(startWord, targetWord)) && targetAttempts < maxTargetAttempts) {
       targetWord = dictionary.getRandomWordByLength(finalTargetLength);
       targetAttempts++;
-
+      
       // Use the RNG to vary selection
-      if (
-        targetWord &&
-        isValidTargetWord(startWord, targetWord) &&
-        rng.next() < 0.3 &&
-        targetAttempts < maxTargetAttempts
-      ) {
+      if (targetWord && isValidTargetWord(startWord, targetWord) && rng.next() < 0.3 && targetAttempts < maxTargetAttempts) {
         targetWord = null; // Skip this word sometimes to get variation
       }
     }
-
+    
     if (!targetWord || !isValidTargetWord(startWord, targetWord)) {
       // Use same fallback logic as daily challenges
       const fallbacks = getFallbackTargetWords(startWord, finalTargetLength);
       targetWord = fallbacks[rng.nextInt(0, fallbacks.length - 1)];
     }
-
+    
     const dateString = 'random-' + randomSeed;
-
+    
     const state: ChallengeState = {
       date: dateString,
       startWord: startWord.toUpperCase(),
@@ -738,9 +649,9 @@ export function createChallengeEngine(
       wordSequence: [startWord.toUpperCase()],
       stepCount: 0,
       completed: false,
-      failed: false,
+      failed: false
     };
-
+    
     await saveState(state);
     return state;
   }
@@ -755,7 +666,7 @@ export function createChallengeEngine(
     generateSharingText,
     isValidMove,
     resetDailyChallenge,
-    generateRandomChallenge,
+    generateRandomChallenge
   };
 }
 
@@ -770,8 +681,8 @@ export function hashString(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
+    hash = ((hash << 5) - hash) + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
   return Math.abs(hash);
-}
+} 

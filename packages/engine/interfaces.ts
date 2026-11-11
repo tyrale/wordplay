@@ -772,6 +772,17 @@ export interface RemoteGamePlayerInfo {
   name: string;
   playerIndex: number;
   score: number;
+  /**
+   * Whether this player is a "phantom" bot opponent standing in for a
+   * human that random matchmaking couldn't find in time. Indistinguishable
+   * from a real player anywhere in the UI - only used internally so
+   * whichever human client has the game open knows to drive this player's
+   * turns via the bot engine instead of waiting on a real opponent.
+   */
+  isBot?: boolean;
+  /** Which bot engine strategy (see packages/engine/botRegistry.ts ids)
+   * this player's moves should be generated with, when `isBot` is true. */
+  botEngineId?: string | null;
 }
 
 export type RemoteGameStatus = 'waiting' | 'active' | 'completed' | 'abandoned';

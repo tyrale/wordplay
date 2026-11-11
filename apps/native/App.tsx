@@ -11,6 +11,7 @@ import { AlertOverlay } from './src/components/AlertOverlay';
 import type { AlertOverlayVariant } from './src/components/AlertOverlay';
 import { alertCopy, pickAlertVariant } from './src/content/alertCopy';
 import { UnlockProvider } from './src/providers/UnlockProvider';
+import { WordPathGraphProvider } from './src/providers/WordPathGraphProvider';
 import { VanityFilterProvider } from './src/contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from './src/contexts/MechanicsSettingsContext';
 import { RoundLengthProvider, useRoundLength } from './src/contexts/RoundLengthContext';
@@ -110,7 +111,16 @@ function MainScreenRoute({ navigation }: NativeStackScreenProps<RootStackParamLi
 function MultiplayerLobbyRoute({ navigation }: NativeStackScreenProps<RootStackParamList, 'MultiplayerLobby'>) {
   return (
     <MultiplayerLobby
-      onBack={() => navigation.goBack()}
+      // Reset to Main rather than `goBack()`: the lobby's "previous screen"
+      // isn't always a menu. After a vs-human game, MultiplayerGameRoute's
+      // `onExit`/end-overlay both `navigation.replace('MultiplayerLobby')`,
+      // leaving a stack like [Main, MultiplayerLobby, MultiplayerLobby] - so
+      // a plain `goBack()` pops to the *other* lobby instance (you stay
+      // stuck in the lobby and have to press back twice). In the app-resume
+      // case (initialRouteName='MultiplayerGame') there may be no Main
+      // underneath at all, so `navigate('Main')` would just push one. Reset
+      // always lands on the main menu with a clean stack regardless.
+      onBack={() => navigation.reset({ index: 0, routes: [{ name: 'Main' }] })}
       onGameReady={gameId => {
         saveActiveMultiplayerGameId(gameId).catch(err =>
           console.warn('Failed to persist active multiplayer game id:', err)
@@ -399,16 +409,18 @@ export default function App() {
       <ThemeProvider>
         <AlertProvider>
           <UnlockProvider>
-            <VanityFilterProvider>
-              <MechanicsSettingsProvider>
-                <RoundLengthProvider>
-                  <DrunkModeOverlay>
-                    <AppNavigator />
-                  </DrunkModeOverlay>
-                  <ThemedStatusBar />
-                </RoundLengthProvider>
-              </MechanicsSettingsProvider>
-            </VanityFilterProvider>
+            <WordPathGraphProvider>
+              <VanityFilterProvider>
+                <MechanicsSettingsProvider>
+                  <RoundLengthProvider>
+                    <DrunkModeOverlay>
+                      <AppNavigator />
+                    </DrunkModeOverlay>
+                    <ThemedStatusBar />
+                  </RoundLengthProvider>
+                </MechanicsSettingsProvider>
+              </VanityFilterProvider>
+            </WordPathGraphProvider>
           </UnlockProvider>
         </AlertProvider>
       </ThemeProvider>

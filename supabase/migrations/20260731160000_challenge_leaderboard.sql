@@ -84,10 +84,10 @@ BEGIN
     END IF;
 
     RETURN QUERY
-    SELECT step_count, player_count
-    FROM public.challenge_leaderboard
-    WHERE challenge_date = p_challenge_date
-    ORDER BY step_count ASC;
+    SELECT cl.step_count, cl.player_count
+    FROM public.challenge_leaderboard cl
+    WHERE cl.challenge_date = p_challenge_date
+    ORDER BY cl.step_count ASC;
 END;
 $$ language 'plpgsql';
 

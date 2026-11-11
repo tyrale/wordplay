@@ -28,6 +28,20 @@ function generateInviteCode(length = 6): string {
 }
 
 /**
+ * A Supabase realtime channel is reused (not recreated) if `.channel()` is
+ * called again with the same topic string while a prior channel with that
+ * topic still exists - and calling `.on(...)` on an already-`subscribe()`d
+ * channel throws ("cannot add `postgres_changes` callbacks ... after
+ * `subscribe()`"). Suffixing each matchmaking attempt's topic with a fresh
+ * random id guarantees a brand new channel every time `findMatch()` is
+ * called, even if a previous attempt's channel wasn't cleanly removed yet
+ * (e.g. the caller navigated away without cancelling first).
+ */
+function uniqueChannelSuffix(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
  * Pick a random starting word the same way vs-bot games do (via the shared
  * dictionary dependencies), instead of relying on the DB's fixed default.
  */
@@ -93,7 +107,7 @@ async function fetchGameRow(gameId: string): Promise<GameRow> {
 async function fetchPlayers(gameId: string): Promise<RemoteGamePlayerInfo[]> {
   const { data, error } = await supabase
     .from('game_players')
-    .select('user_id, player_index, score, users(display_name, username)')
+    .select('user_id, player_index, score, is_bot, bot_engine_id, users(display_name, username)')
     .eq('game_id', gameId)
     .order('player_index', { ascending: true });
 
@@ -107,7 +121,9 @@ async function fetchPlayers(gameId: string): Promise<RemoteGamePlayerInfo[]> {
       id: row.user_id,
       name: userInfo?.display_name || userInfo?.username || 'Player',
       playerIndex: row.player_index,
-      score: row.score
+      score: row.score,
+      isBot: row.is_bot ?? false,
+      botEngineId: row.bot_engine_id ?? null
     };
   });
 }
@@ -511,6 +527,13 @@ export type MatchmakingMode = 'vsone' | 'vsmany';
  * (minimum 2) into a single game, rather than holding out for a full 8. */
 const VSMANY_GROUP_DELAY_MS = 8000;
 
+/** How long a vsone search waits for a real opponent before falling back to
+ * a bot-fallback opponent (see try_match()'s `p_allow_bot_fallback`), so
+ * random matchmaking doesn't leave a player waiting indefinitely when few
+ * others happen to be online. The bot opponent is indistinguishable from a
+ * real player - see RemoteGameStateManager for how its moves get driven. */
+const VSONE_BOT_FALLBACK_DELAY_MS = 9000;
+
 export interface FindMatchOptions {
   /** Whether the caller has the "time-pressure" mechanic toggled on. If this
    * caller is the one who ends up creating the game (either matched player
@@ -540,6 +563,9 @@ export async function findMatch(
   if (!userId) throw new Error('Unable to authenticate for multiplayer');
 
   const displayName = getDisplayName();
+  // Unique per call - see uniqueChannelSuffix() for why this can't just be
+  // `matchmaking-${userId}` reused across attempts.
+  const channelTopic = `matchmaking-${userId}-${uniqueChannelSuffix()}`;
 
   const { error: queueError } = await supabase
     .from('matchmaking_queue')
@@ -552,10 +578,15 @@ export async function findMatch(
   let settled = false;
 
   if (mode === 'vsone') {
+    // Flips to true once we've given real opponents a fair window to show
+    // up - only then does try_match() fall back to a bot opponent.
+    let allowBotFallback = false;
+
     const attemptMatch = async () => {
       if (settled) return;
       const { data, error } = await supabase.rpc('try_match', {
-        p_time_pressure_enabled: timePressureEnabled
+        p_time_pressure_enabled: timePressureEnabled,
+        p_allow_bot_fallback: allowBotFallback
       });
       if (error) {
         console.warn('try_match() failed:', error);
@@ -580,7 +611,7 @@ export async function findMatch(
     // Also retry whenever the queue changes (e.g. another player joined and
     // may have matched us, or we should re-attempt matching them).
     const channel = supabase
-      .channel(`matchmaking-${userId}`)
+      .channel(channelTopic)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matchmaking_queue' }, () => {
         attemptMatch();
       })
@@ -588,8 +619,14 @@ export async function findMatch(
 
     const pollInterval = setInterval(attemptMatch, 4000);
 
+    const botFallbackTimer = setTimeout(() => {
+      allowBotFallback = true;
+      attemptMatch();
+    }, VSONE_BOT_FALLBACK_DELAY_MS);
+
     function cleanup() {
       clearInterval(pollInterval);
+      clearTimeout(botFallbackTimer);
       supabase.removeChannel(channel);
     }
 
@@ -624,8 +661,11 @@ export async function findMatch(
 
   const finalizeGroup = async () => {
     if (settled) return;
+    // Allow topping up with bot opponents if fewer than 3 humans queued in
+    // time, so a vsmany random match never starts as a de-facto 1-on-1.
     const { data, error } = await supabase.rpc('finalize_vsmany_match', {
-      p_time_pressure_enabled: timePressureEnabled
+      p_time_pressure_enabled: timePressureEnabled,
+      p_allow_bot_fallback: true
     });
     if (error) {
       console.warn('finalize_vsmany_match() failed:', error);
@@ -646,7 +686,7 @@ export async function findMatch(
   };
 
   const channel = supabase
-    .channel(`matchmaking-${userId}`)
+    .channel(channelTopic)
     .on(
       'postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'matchmaking_queue', filter: `user_id=eq.${userId}` },

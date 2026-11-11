@@ -48,14 +48,14 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 3,
-    banner: ['Drag letters around', 'to spell ROWS', 'then tap ✓'],
+    banner: ['Rearrange the letters', 'to spell ROWS,', 'then submit the word'],
     disableLetterRemoval: true,
     completionCondition: (_gameState, tutorialState) =>
       tutorialState.submittedWords.includes('ROWS')
   },
   {
     id: 4,
-    banner: ['Key letters +1 point', "& locked next round", 'now play the game!'],
+    banner: ['Key letters +1 point', 'and locked for next player'],
     completionCondition: (_gameState, tutorialState) =>
       tutorialState.submittedWords.includes('ROWS') && tutorialState.submittedWords.length >= 2
   },

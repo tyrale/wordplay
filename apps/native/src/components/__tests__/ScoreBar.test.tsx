@@ -114,7 +114,8 @@ describe('native ScoreBar', () => {
 
   it('shows the round number when provided', async () => {
     renderScoreBar({ players: [player()], currentRound: 3 });
-    expect(await screen.findByText('round 3')).toBeTruthy();
+    expect(await screen.findByText('3')).toBeTruthy();
+    expect(screen.getByText('round')).toBeTruthy();
   });
 
   it('renders the score value at the heaviest available font weight (900)', async () => {
@@ -136,7 +137,7 @@ describe('native ScoreBar', () => {
     });
 
     const score = await screen.findByText('12');
-    const round = await screen.findByText('round 2');
+    const round = await screen.findByText('2');
 
     const invertedTextColor = defaultTheme.colors.background;
     expect([score.props.style].flat()).toEqual(

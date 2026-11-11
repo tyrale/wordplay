@@ -7,6 +7,7 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
+import { triggerSoundFeedback } from '../utils/sound';
 
 export interface ThoughtsOverlayProps {
   isVisible: boolean;
@@ -15,6 +16,7 @@ export interface ThoughtsOverlayProps {
 
 const THOUGHTS: string[] = [
   'Dark mode is my favorite. So it is hard to find.',
+  'There are many creative unlock mechanics.',
   'Unlocks will never alter points or give advantage.'
 ];
 
@@ -35,7 +37,15 @@ export const ThoughtsOverlay: React.FC<ThoughtsOverlayProps> = ({ isVisible, onC
         ))}
       </ScrollView>
 
-      <Pressable onPress={onClose} style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close">
+      <Pressable
+        onPress={() => {
+          triggerSoundFeedback('click');
+          onClose();
+        }}
+        style={styles.closeButton}
+        accessibilityRole="button"
+        accessibilityLabel="Close"
+      >
         <Text style={[styles.closeButtonText, { color: colors.text }]}>×</Text>
       </Pressable>
     </View>

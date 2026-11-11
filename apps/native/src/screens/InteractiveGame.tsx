@@ -38,11 +38,12 @@ import type { WordMove } from '../components/WordTrail';
 import { Menu } from '../components/Menu';
 import { TutorialOverlay } from '../components/TutorialOverlay';
 import { NamePromptOverlay } from '../components/NamePromptOverlay';
+import { BossMonsterBackground } from '../components/BossMonsterBackground';
 import { getDisplayName as getVanityName, setDisplayName, markDisplayNameConfirmed } from '../adapters/nativeAuthAdapter';
 import { getBotDisplayName } from '@wordplay/engine/botRegistry';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { usePlayerStats } from '../hooks/usePlayerStats';
-import { useWordPathGraph } from '../hooks/useWordPathGraph';
+import { useWordPathGraph } from '../providers/WordPathGraphProvider';
 import { useTutorialProgress } from '../hooks/useTutorialProgress';
 import { useWordDropZone } from '../hooks/useWordDropZone';
 import { useDictionaryData } from '../hooks/useDictionaryData';
@@ -57,6 +58,7 @@ import {
 } from '../utils/wordHelp';
 import { markTutorialSeen } from '../utils/tutorialStorage';
 import { triggerHapticFeedback } from '../utils/haptics';
+import { triggerSoundFeedback } from '../utils/sound';
 
 const MAX_WORD_LENGTH = 10;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -186,6 +188,19 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     : undefined;
   const allowSeussCanonical = unlockedMechanics.includes('seuss-canonical-words');
 
+  // Ninjabot gimmick: while playing against it, its own word trail plays are
+  // shown as dashes and every alphabet grid letter is invisible (opacity 0,
+  // still fully functional). Not gated by any unlock - it's inherent to
+  // playing this bot. Matches web's InteractiveGame.tsx.
+  const isNinjaBotOpponent = botId === 'ninja-bot';
+
+  // Ninja word trail: unlocked permanently by beating the Ninjabot (see
+  // unlock-definitions.ts, beat_ninja_bot). No toggle — once unlocked, the
+  // local player's own word trail plays are always shown as dashes here
+  // (InteractiveGame covers bot games and boss battles; ChallengeGame is a
+  // separate component and is intentionally exempt).
+  const ninjaWordTrailUnlocked = unlockedMechanics.includes('ninja-word-trail');
+
   const { gameState, actions, isPlayerTurn, isProcessingMove, isGameActive, isGameFinished, isBotTurn, isBotThinking } =
     useGameState({
       config: { maxTurns: 10, allowBotPlayer: true, botId, startingWordLength, allowSeussCanonical, ...config },
@@ -203,6 +218,13 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // both the player's and the bot's turns (unlike a per-turn timer).
   const isBossBattle = typeof config?.gameTimeLimitSeconds === 'number';
   const bossTimeLimitSeconds = isBossBattle ? (config!.gameTimeLimitSeconds as number) : null;
+
+  // Gigaboss-only animated monster-shadow background (lightning flash +
+  // silhouette + glowing eyes) - derived from the active theme name
+  // (matches web's InteractiveGame.tsx `bossEffectTier` exactly) so it
+  // also applies if the gigaboss theme is picked from the menu after
+  // being permanently unlocked, not just during a live boss battle.
+  const isGigaBossTheme = currentTheme.name === 'gigaboss';
 
   // Time-pressure mechanic: unlocked via the "time" word and toggled on
   // in the mechanics menu. Suppressed during a boss battle - the boss has
@@ -413,20 +435,26 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   // Word trail with move details - matches web's InteractiveGame.tsx
   // exactly, generalized via localPlayerId the same way Phase 4's other
-  // fixes were. Ninjabot's dash-masking gimmick is deliberately not
-  // wired here - see WordTrail.tsx's doc comment.
+  // fixes were.
   const wordTrailMoves: WordMove[] = useMemo(() => {
     const localId = localPlayerId ?? 'human';
-    return gameState.turnHistory.map(turn => ({
-      word: turn.newWord,
-      score: turn.score,
-      player: turn.playerId,
-      opponentName: turn.playerId === 'bot' && botId ? getBotDisplayName(botId) : undefined,
-      turnNumber: turn.turnNumber,
-      keyLetters: turn.scoringBreakdown.keyLettersUsed || [],
-      scoreBreakdown: turn.scoringBreakdown.breakdown
-    }));
-  }, [gameState, botId, localPlayerId]);
+    return gameState.turnHistory.map(turn => {
+      const isOwnMove = turn.playerId === localId;
+      return {
+        word: turn.newWord,
+        score: turn.score,
+        player: turn.playerId,
+        opponentName: turn.playerId === 'bot' && botId ? getBotDisplayName(botId) : undefined,
+        turnNumber: turn.turnNumber,
+        keyLetters: turn.scoringBreakdown.keyLettersUsed || [],
+        scoreBreakdown: turn.scoringBreakdown.breakdown,
+        // Ninjabot's own moves are masked during the fight; the local
+        // player's own moves are masked permanently once ninja-word-trail
+        // is unlocked.
+        maskWord: (isNinjaBotOpponent && !isOwnMove) || (ninjaWordTrailUnlocked && isOwnMove)
+      };
+    });
+  }, [gameState, botId, localPlayerId, isNinjaBotOpponent, ninjaWordTrailUnlocked]);
 
   const handleWordChange = useCallback(
     (newWord: string) => {
@@ -455,11 +483,13 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       // reset effect above).
       if (isTypeToClearOn && !hasEditedThisTurnRef.current && pendingWord.length > 0) {
         triggerHapticFeedback('add');
+        triggerSoundFeedback('add');
         handleWordChange(letter);
         return;
       }
       if (pendingWord.length >= MAX_WORD_LENGTH) return;
       triggerHapticFeedback('add');
+      triggerSoundFeedback('add');
       handleWordChange(pendingWord + letter);
     },
     [canEdit, pendingWord, handleWordChange, isTypeToClearOn]
@@ -481,6 +511,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     (index: number) => {
       if (!canEdit) return;
       triggerHapticFeedback('remove');
+      triggerSoundFeedback('remove');
       const letters = pendingWord.split('');
       letters.splice(index, 1);
       handleWordChange(letters.join(''));
@@ -659,6 +690,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
     if (pendingMoveAttempt) {
       triggerHapticFeedback('submit');
+      triggerSoundFeedback('submit');
       const applied = actions.applyMove(pendingMoveAttempt);
       if (applied) {
         // Check for unlock triggers on the local player's own submitted
@@ -697,6 +729,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {isGigaBossTheme && <BossMonsterBackground />}
+
       {/* Left-aligned overlay near the top of the screen, matching web's
           ScoreBar.css exactly (position: absolute; left: 0; right: 0;
           align-items: flex-start) - not centered, and not a separate
@@ -711,9 +745,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
           localPlayerId={localPlayerId}
           onOwnNameTap={handleOwnNameTap}
         />
-        {isBossBattle && bossTimeRemaining !== null && (
-          <Text style={[styles.bossTimer, { color: colors.text }]}>{bossTimeRemaining}s</Text>
-        )}
       </View>
 
       {/* Rename overlay - reuses the same banner used to pick a name the
@@ -746,7 +777,11 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
             onPress={canEdit ? handleSubmit : undefined}
             disabled={!canEdit}
             showValidationError={showValidationError}
-            timerSeconds={isTimePressureOn && isPlayerTurn ? turnTimeRemaining : null}
+            timerSeconds={
+              isBossBattle
+                ? bossTimeRemaining
+                : (isTimePressureOn && isPlayerTurn ? turnTimeRemaining : null)
+            }
           />
 
           <View style={styles.wordPositioned}>
@@ -771,6 +806,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
               onActionPress={handleActionPress}
               onLetterDragRelease={handleLetterDragRelease}
               disabled={!canEdit}
+              lettersHidden={isNinjaBotOpponent}
             />
             {isBotThinking && (
               <Text style={[styles.status, { color: colors.textSecondary }]}>Bot is thinking...</Text>
@@ -819,11 +855,6 @@ const styles = StyleSheet.create({
     left: 12,
     alignItems: 'flex-start',
     zIndex: 1
-  },
-  bossTimer: {
-    fontSize: 16,
-    fontWeight: '900',
-    marginTop: 4
   },
   // Fills all remaining space below the (absolutely-positioned) header
   // and flex-centers its one child (submitAnchor) - this is what makes

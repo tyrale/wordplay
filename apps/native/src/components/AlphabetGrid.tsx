@@ -36,6 +36,10 @@ export interface AlphabetGridProps {
    * screen) decides whether the release point landed on the word-in-play
    * and, if so, appends it. */
   onLetterDragRelease?: (letter: string, pageX: number, pageY: number) => void;
+  /** When true, hides every letter tile's visual content (opacity 0) while
+   * keeping the grid fully functional - the Ninjabot gimmick. Matches
+   * web's `AlphabetGrid.tsx` `lettersHidden` prop. */
+  lettersHidden?: boolean;
 }
 
 const ALPHABET_GRID = [
@@ -72,7 +76,8 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
   enableDrag = true,
   onLetterDragStart,
   onLetterDragMove,
-  onLetterDragRelease
+  onLetterDragRelease,
+  lettersHidden = false
 }) => {
   const { width } = useWindowDimensions();
 
@@ -124,6 +129,7 @@ export const AlphabetGrid: React.FC<AlphabetGridProps> = ({
                 onPress={() => handleCellPress(content)}
                 disabled={isAlwaysEnabled(content) ? false : disabled || state === 'disabled'}
                 accessibilityLabel={getAriaLabel(content)}
+                contentHidden={lettersHidden}
                 size={cellSize}
                 draggable={canDrag}
                 onDragStart={canDrag ? () => onLetterDragStart?.(content) : undefined}

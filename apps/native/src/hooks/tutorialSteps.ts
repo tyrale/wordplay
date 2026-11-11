@@ -1,14 +1,13 @@
 /**
  * Native tutorial step definitions - ports apps/web's
  * `components/tutorial/tutorialSteps.ts`, with one real adaptation: step
- * 3 on web is a drag-only step ("Drag letters around to spell ROWS") that
- * disables tap-to-remove specifically to force the player to practice
- * dragging. This native port has no drag-and-drop at all (tap-to-append/
- * tap-to-remove only - see AlphabetGrid.tsx's doc comment), so the step
- * is rewritten for the tap interaction model instead of ported verbatim:
- * the banner now instructs clearing letters and retyping rather than
- * dragging, and `disableLetterRemoval` is dropped (there's no drag
- * alternative to fall back on if removal were disabled here).
+ * 3 on web is a drag-only step that disables tap-to-remove specifically
+ * to force the player to practice dragging. This native port has no
+ * drag-and-drop at all (tap-to-append/tap-to-remove only - see
+ * AlphabetGrid.tsx's doc comment), so `disableLetterRemoval` is dropped
+ * (there's no drag alternative to fall back on if removal were disabled
+ * here) - the banner copy itself ("rearrange the letters") is shared
+ * with web since it's agnostic to drag vs. tap-to-clear-and-retype.
  *
  * The actual completion condition for step 3 - "the player has submitted
  * the word ROWS" - is unchanged, since it doesn't care *how* the word was
@@ -59,13 +58,13 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 3,
-    banner: ['Clear it, then tap letters', 'to spell ROWS,', 'then tap the checkmark'],
+    banner: ['Rearrange the letters', 'to spell ROWS,', 'then submit the word'],
     completionCondition: (_pendingWord, _gameState, tutorialState) =>
       tutorialState.submittedWords.includes('ROWS')
   },
   {
     id: 4,
-    banner: ['Key letters +1 point', '& locked next round', 'now play the game!'],
+    banner: ['Key letters +1 point', 'and locked for next player'],
     completionCondition: (_pendingWord, _gameState, tutorialState) =>
       tutorialState.submittedWords.includes('ROWS') && tutorialState.submittedWords.length >= 2
   },

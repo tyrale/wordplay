@@ -46,8 +46,8 @@ const PlayerRow: React.FC<{ displayName: string; player: Player; isSelf: boolean
     role={isSelf && onTap ? 'button' : undefined}
     tabIndex={isSelf && onTap ? 0 : undefined}
   >
-    <span className="score-bar__name">{displayName}</span>
     <span className="score-bar__score">{player.score === 0 ? '-' : player.score}</span>
+    <span className="score-bar__name">{displayName}</span>
   </div>
 );
 
@@ -77,7 +77,10 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({ players, botId, isMultiplaye
           );
         })}
         {typeof currentRound === 'number' && (
-          <div className="score-bar__round">round {currentRound}</div>
+          <div className="score-bar__round">
+            <span>{currentRound}</span>
+            <span>round</span>
+          </div>
         )}
       </div>
     </div>

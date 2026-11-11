@@ -10,20 +10,22 @@
  * each stage's actual battle (same whole-game countdown/GUS-trigger
  * support added there for this feature).
  *
- * Deliberately deferred, not silently dropped: the escalating procedural
- * boss music (Web Audio API synth on web - no audio assets, would need a
- * from-scratch native equivalent) and the boss-theme visual effect tiers
- * (red letter outlines for megaboss, animated monster-shadow background +
- * "lightning strike" reveal for gigaboss - CSS-driven on web). The actual
- * encounter mechanic (three escalating stages, whole-game countdowns,
- * strict win condition, permanent unlock on beating gigaboss, retryable
- * on loss) is fully real.
+ * The gigaboss visual effect (animated monster-shadow background +
+ * "lightning strike" reveal, CSS/SVG-driven on web) is ported here via
+ * `BossMonsterBackground` (Animated + react-native-svg), shown both
+ * behind this screen's advance-to-giga alert and behind the actual giga
+ * battle itself (see InteractiveGame.tsx, keyed off the active theme
+ * name). The escalating boss music (see ../hooks/useBossMusic) and the
+ * actual encounter mechanic (three escalating stages, whole-game
+ * countdowns, strict win condition, permanent unlock on beating gigaboss,
+ * retryable on loss) are fully real.
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { InteractiveGame } from './InteractiveGame';
 import { AlertOverlay } from '../components/AlertOverlay';
+import { BossMonsterBackground } from '../components/BossMonsterBackground';
 import type { AlertOverlayVariant } from '../components/AlertOverlay';
 import { alertCopy } from '../content/alertCopy';
 import { getBotDisplayName } from '@wordplay/engine/botRegistry';
@@ -31,6 +33,7 @@ import { BOSS_STAGES, BOSS_BATTLE_MAX_TURNS, getBossTheme, getThemeByName } from
 import type { BossStage } from '../data/bossBattle';
 import { clearActiveGame } from '../adapters/nativeGameSaveAdapter';
 import { defaultTheme } from '@wordplay/theme/theme';
+import { useBossMusic } from '../hooks/useBossMusic';
 
 type BossPhase = 'intro' | 'battle' | 'advance' | 'victory' | 'defeat' | 'timeout';
 
@@ -116,8 +119,20 @@ export const BossBattleScreen: React.FC<BossBattleScreenProps> = ({ onExit }) =>
     onExit();
   }, [revertTheme, onExit]);
 
+  // Procedural boss battle music, escalating per stage (boss -> mega ->
+  // giga). Plays continuously across the intro/advance overlay and the
+  // battle itself (matches web's App.tsx), and stops once the encounter
+  // resolves (victory/defeat/timeout).
+  const bossMusicActive = phase === 'intro' || phase === 'battle' || phase === 'advance';
+  useBossMusic({ enabled: bossMusicActive, stage: bossMusicActive ? stage : null });
+
   const stageConfig = BOSS_STAGES[stage];
-  const introOrAdvanceCopy = phase === 'intro' ? alertCopy.boss.intro : alertCopy.boss.advance;
+  // `stage` is already the *upcoming* stage by the time `phase` is
+  // 'advance' (handleBossGameEnd sets it before setPhase('advance')), so
+  // this always names the boss the player is about to face next, not
+  // the one they just beat.
+  const introOrAdvanceCopy =
+    phase === 'intro' ? alertCopy.boss.intro : alertCopy.boss.advance[stage as 'mega' | 'giga'];
   const endCopy = phase === 'victory' ? alertCopy.boss.victory : phase === 'timeout' ? alertCopy.boss.timeout : alertCopy.boss.defeat;
   const endVariant: AlertOverlayVariant | undefined = phase === 'victory' ? 'win' : phase === 'defeat' || phase === 'timeout' ? 'lose' : undefined;
 
@@ -139,6 +154,11 @@ export const BossBattleScreen: React.FC<BossBattleScreenProps> = ({ onExit }) =>
           onNavigateHome={handleNavigateHome}
         />
       )}
+
+      {/* Gigaboss lightning-reveal shadow behind the advance overlay (the
+          buildup to the final boss). `stage` is already 'giga' here
+          (advanced before the alert shows) - matches web's App.tsx. */}
+      {phase === 'advance' && stage === 'giga' && <BossMonsterBackground />}
 
       {(phase === 'intro' || phase === 'advance') && (
         <AlertOverlay

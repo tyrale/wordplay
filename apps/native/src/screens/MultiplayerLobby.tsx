@@ -22,7 +22,7 @@
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   createInviteGame,
   joinGameByInviteCode,
@@ -59,6 +59,11 @@ type LobbyAction = 'create' | 'join' | 'random';
 export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady, onBack }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
+  // See MainScreen.tsx's identical comment: `backButton` below is
+  // `position: 'absolute'`, so SafeAreaView's own inset padding doesn't
+  // apply to it - without this it sits under Android's gesture/3-button
+  // nav bar.
+  const insets = useSafeAreaInsets();
   const [view, setView] = useState<LobbyView>('menu');
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [joinCodeInput, setJoinCodeInput] = useState('');
@@ -103,6 +108,13 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
   useEffect(() => {
     return () => {
       createCleanupRef.current?.();
+      // If a search is still in flight when this screen unmounts (e.g. the
+      // player navigated away without hitting "Cancel Search"), make sure
+      // it's actually torn down - otherwise its realtime channel and queue
+      // row leak, and the *next* findMatch() call for this user can fail
+      // (a leaked, already-subscribed channel can't be re-subscribed).
+      matchmakingHandleRef.current?.cancel();
+      matchmakingHandleRef.current = null;
     };
   }, []);
 
@@ -329,7 +341,7 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ onGameReady,
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Pressable
         onPress={handleBack}
-        style={styles.backButton}
+        style={[styles.backButton, { bottom: insets.bottom + 8 }]}
         accessibilityRole="button"
         accessibilityLabel={view === 'create' ? 'Close' : 'Back'}
       >

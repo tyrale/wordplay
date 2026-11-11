@@ -56,9 +56,12 @@
 }
 
 .score-bar__round {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-xs);
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: 16px;
+  font-size: 18.4px;
   color: var(--theme-text);
   text-transform: uppercase;
   padding: 2px 10px;
@@ -67,7 +70,7 @@
 .score-bar__name {
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: 16px;
+  font-size: 18.4px;
   color: var(--theme-text);
   text-transform: uppercase;
   white-space: nowrap;
@@ -79,7 +82,7 @@
 .score-bar__score {
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
-  font-size: 16px;
+  font-size: 18.4px;
   color: var(--theme-text);
 }
 
@@ -105,15 +108,15 @@
   }
 
   .score-bar__name {
-    font-size: 14px;
+    font-size: 16.1px;
     max-width: 90px;
   }
 
   .score-bar__score {
-    font-size: 14px;
+    font-size: 16.1px;
   }
 
   .score-bar__round {
-    font-size: 14px;
+    font-size: 16.1px;
   }
 }

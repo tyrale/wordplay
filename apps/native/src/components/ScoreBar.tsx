@@ -89,10 +89,10 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({
 
         const row = (
           <View style={styles.row}>
-            <Text style={[styles.name, { color: rowColor }]}>{displayName}</Text>
             <Text style={[styles.score, { color: rowColor }]}>
               {player.score === 0 ? '-' : player.score}
             </Text>
+            <Text style={[styles.name, { color: rowColor }]}>{displayName}</Text>
           </View>
         );
 
@@ -107,7 +107,10 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({
         return <View key={player.id}>{row}</View>;
       })}
       {typeof currentRound === 'number' && (
-        <Text style={[styles.round, { color: colors.text }]}>round {currentRound}</Text>
+        <View style={styles.roundRow}>
+          <Text testID="score-bar-round-number" style={[styles.round, { color: colors.text }]}>{currentRound}</Text>
+          <Text style={[styles.round, { color: colors.text }]}>round</Text>
+        </View>
       )}
     </View>
   );
@@ -126,7 +129,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2
   },
   name: {
-    fontSize: 9.6,
+    fontSize: 11.04,
     fontWeight: '700',
     textTransform: 'uppercase'
   },
@@ -134,14 +137,19 @@ const styles = StyleSheet.create({
   // same treatment as ScoreDisplay.tsx's score/checkmark and Menu.tsx's
   // "N/N unlocked" counts.
   score: {
-    fontSize: 9.6,
+    fontSize: 11.04,
     fontWeight: '900'
   },
-  round: {
-    fontSize: 9.6,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+  roundRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
     paddingHorizontal: 10,
     paddingVertical: 2
+  },
+  round: {
+    fontSize: 11.04,
+    fontWeight: '700',
+    textTransform: 'uppercase'
   }
 });

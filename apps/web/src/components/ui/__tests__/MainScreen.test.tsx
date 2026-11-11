@@ -1,6 +1,6 @@
 /**
  * MainScreen Component Tests
- *
+ * 
  * Tests the main screen component including bot filtering based on unlock state.
  */
 
@@ -10,6 +10,7 @@ import { vi } from 'vitest';
 import { MainScreen } from '../MainScreen';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { UnlockProvider } from '../../unlock/UnlockProvider';
+import { WordPathGraphProvider } from '../../../contexts/WordPathGraphContext';
 import { AlertProvider } from '../AlertProvider';
 import { VanityFilterProvider } from '../../../contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from '../../../contexts/MechanicsSettingsContext';
@@ -21,11 +22,15 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
     <ThemeProvider>
       <AlertProvider>
         <UnlockProvider>
-          <VanityFilterProvider>
-            <MechanicsSettingsProvider>
-              <RoundLengthProvider>{children}</RoundLengthProvider>
-            </MechanicsSettingsProvider>
-          </VanityFilterProvider>
+          <WordPathGraphProvider>
+            <VanityFilterProvider>
+              <MechanicsSettingsProvider>
+                <RoundLengthProvider>
+                  {children}
+                </RoundLengthProvider>
+              </MechanicsSettingsProvider>
+            </VanityFilterProvider>
+          </WordPathGraphProvider>
         </UnlockProvider>
       </AlertProvider>
     </ThemeProvider>
@@ -47,21 +52,15 @@ describe('MainScreen Component', () => {
     );
 
     // Should show main game options
-    expect(
-      screen.getByText((_content, element) => {
-        return element?.textContent === 'vs world';
-      })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText((_content, element) => {
-        return element?.textContent === 'vshuman';
-      })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText((_content, element) => {
-        return element?.textContent === 'vs bot';
-      })
-    ).toBeInTheDocument();
+    expect(screen.getByText((_content, element) => {
+      return element?.textContent === 'vs world';
+    })).toBeInTheDocument();
+    expect(screen.getByText((_content, element) => {
+      return element?.textContent === 'vshuman';
+    })).toBeInTheDocument();
+    expect(screen.getByText((_content, element) => {
+      return element?.textContent === 'vs bot';
+    })).toBeInTheDocument();
   });
 
   it('should show bot selection when vs bot is clicked', async () => {
@@ -78,10 +77,8 @@ describe('MainScreen Component', () => {
     fireEvent.click(vsBotButton);
 
     // Should show bot selection screen (no back button - uses menu navigation)
-    expect(
-      screen.getByRole('button', { name: 'Open menu' })
-    ).toBeInTheDocument();
-
+    expect(screen.getByRole('button', { name: 'Open menu' })).toBeInTheDocument();
+    
     // Should show at least the Basic Bot bot (always unlocked)
     expect(screen.getByText('basicbot')).toBeInTheDocument();
   });
@@ -106,7 +103,7 @@ describe('MainScreen Component', () => {
 
     // In fresh user state, should only show Basic Bot bot
     expect(screen.getByText('basicbot')).toBeInTheDocument();
-
+    
     // Should not show locked bots like easy bot (until unlocked)
     expect(screen.queryByText('easy bot')).not.toBeInTheDocument();
     expect(screen.queryByText('medium bot')).not.toBeInTheDocument();
@@ -164,4 +161,4 @@ describe('MainScreen Component', () => {
     // Should show bot selection content
     expect(screen.getByText('basicbot')).toBeInTheDocument();
   });
-});
+}); 

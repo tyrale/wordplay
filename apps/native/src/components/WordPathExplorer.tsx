@@ -21,8 +21,9 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, StyleSheet } from 'react-native';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
-import { useWordPathGraph } from '../hooks/useWordPathGraph';
+import { useWordPathGraph } from '../providers/WordPathGraphProvider';
 import { triggerHapticFeedback } from '../utils/haptics';
+import { triggerSoundFeedback } from '../utils/sound';
 import { calculateScore } from '@wordplay/engine/scoring';
 
 export interface WordPathExplorerProps {
@@ -61,12 +62,14 @@ export const WordPathExplorer: React.FC<WordPathExplorerProps> = ({ isVisible, o
     setWord(connectedWord);
     setMode('browsing');
     triggerHapticFeedback('submit');
+    triggerSoundFeedback('submit');
   }, []);
 
   const handleClearActiveWord = useCallback(() => {
     setWord('');
     setMode('typing');
     triggerHapticFeedback('remove');
+    triggerSoundFeedback('remove');
     requestAnimationFrame(() => inputRef.current?.focus());
   }, []);
 

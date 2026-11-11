@@ -161,4 +161,28 @@ describe('native AlertOverlay', () => {
     )?.width;
     expect(boxWidth).toBeGreaterThan(1000);
   });
+
+  /**
+   * Regression test for a real-device bug: a short headline word (e.g.
+   * "NEW") renders at a much larger fitted font size than a long phrase
+   * on the next line (e.g. "5 LETTER START"), since each line is fit to
+   * the target width independently. The gap between two stacked lines
+   * used to be a single flat negative margin regardless of how big
+   * either line rendered, which over-pulled the small-font line up into
+   * the huge one above it, visibly overlapping the text. The negative
+   * margin should instead shrink for a short-line-then-long-line pair
+   * like this, not stay flat.
+   */
+  it('uses a smaller negative margin between a huge short line and a much smaller long line, instead of a flat overlap-prone value', () => {
+    renderOverlay({ lines: ['NEW', 'FIVE LETTER START'] });
+
+    const longLine = screen.getByText('FIVE LETTER START');
+    const marginTop = (longLine.props.style as { marginTop?: number }[]).find(s => 'marginTop' in s)?.marginTop as number;
+    const longLineFontSize = (longLine.props.style as { fontSize: number }[]).find(s => 'fontSize' in s)?.fontSize as number;
+
+    // The pull-up should never be more negative than (roughly) the small
+    // line's own font size - a flat, large pixel margin sized for huge
+    // headline words would overlap a much smaller line entirely.
+    expect(Math.abs(marginTop)).toBeLessThan(longLineFontSize);
+  });
 });

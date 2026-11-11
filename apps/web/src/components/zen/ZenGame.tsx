@@ -17,7 +17,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useGameState, useWordState } from '../../hooks/useGameState';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
-import { useWordPathGraph } from '../../hooks/useWordPathGraph';
+import { useWordPathGraph } from '../../contexts/WordPathGraphContext';
 import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
 import { useAlert } from '../ui/AlertProvider';
 import { AlphabetGrid, type LetterState } from '../game/AlphabetGrid';

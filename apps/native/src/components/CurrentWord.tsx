@@ -85,6 +85,7 @@ import { LockIcon } from './LockIcon';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useVanityFilter } from '../contexts/VanityFilterContext';
 import { triggerHapticFeedback } from '../utils/haptics';
+import { triggerSoundFeedback } from '../utils/sound';
 
 export interface LetterHighlight {
   index: number;
@@ -330,6 +331,7 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
       // separate from the per-target-change feedback in handleDragMove
       // below and the on-drop feedback in handleDragRelease.
       triggerHapticFeedback('move');
+      triggerSoundFeedback('move');
       setDraggedIndex(index);
       setDropTargetIndex(index);
     };
@@ -343,6 +345,7 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
       // continuously instead of reading as discrete "clicks" into place.
       if (newDropTarget !== dropTargetIndex) {
         triggerHapticFeedback('move');
+        triggerSoundFeedback('move');
       }
       setDropTargetIndex(newDropTarget);
     };
@@ -350,6 +353,7 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
     const handleDragRelease = (index: number, dx: number, dy: number) => {
       const dropIndex = computeDropIndex(letterLayoutsRef.current, index, dx);
       triggerHapticFeedback('move');
+      triggerSoundFeedback('move');
       pan.setValue({ x: 0, y: 0 });
       setDraggedIndex(null);
       setDropTargetIndex(null);

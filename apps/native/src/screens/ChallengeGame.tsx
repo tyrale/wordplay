@@ -49,9 +49,14 @@ import { alertCopy } from '../content/alertCopy';
 import { recordChallengeCompletion } from '../adapters/nativeChallengeLeaderboardAdapter';
 import { shareChallengeResult } from '../utils/shareUtils';
 import { triggerHapticFeedback } from '../utils/haptics';
+import { triggerSoundFeedback } from '../utils/sound';
 
 const MAX_WORD_LENGTH = 10;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+/** A share-text row is the ◼︎/◻︎ word-path grid (not a plain text line) if
+ * it contains either glyph - matches web's ChallengeGame.tsx exactly. */
+const isPatternLine = (line: string) => /◼︎|◻︎/.test(line);
 
 export interface ChallengeGameProps {
   onNavigateHome?: () => void;
@@ -217,11 +222,13 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
       // appending - matches InteractiveGame.tsx exactly.
       if (isTypeToClearOn && !hasEditedThisTurnRef.current && pendingWord.length > 0) {
         triggerHapticFeedback('add');
+        triggerSoundFeedback('add');
         handleWordChange(letter);
         return;
       }
       if (pendingWord.length >= MAX_WORD_LENGTH) return;
       triggerHapticFeedback('add');
+      triggerSoundFeedback('add');
       handleWordChange(pendingWord + letter);
     },
     [canEdit, pendingWord, handleWordChange, isTypeToClearOn]
@@ -239,6 +246,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
     (index: number) => {
       if (!canEdit) return;
       triggerHapticFeedback('remove');
+      triggerSoundFeedback('remove');
       handleWordChange(pendingWord.slice(0, index) + pendingWord.slice(index + 1));
     },
     [canEdit, pendingWord, handleWordChange]
@@ -339,6 +347,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
       const result = await submitWord(pendingWord);
       if (result.success) {
         triggerHapticFeedback('submit');
+        triggerSoundFeedback('submit');
         setShowValidationError(false);
         const isProfane = !!wordData?.profanityWords.has(pendingWord.toUpperCase());
         handleWordSubmission(pendingWord, isProfane).catch(err =>
@@ -432,6 +441,59 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
     ? (completionOverlay.isWinner ? alertCopy.challenge.win : alertCopy.challenge.lose)
     : null;
 
+  // Parses the same share text the share-sheet sends (generateSharingText)
+  // into the completion overlay's meta content, so the player sees the
+  // ◼︎/◻︎ word-path grid there too instead of just the bare win/lose
+  // headline - matches web's ChallengeGame.tsx isPatternLine/renderShareLine
+  // handling exactly (see its doc comment for why the trailing "N turns"
+  // line is only stripped for completed challenges, not forfeits).
+  const shareLines = useMemo(
+    () => (completionOverlay?.shareText || '').split('\n').filter(line => line.trim()),
+    [completionOverlay?.shareText]
+  );
+  const shareContent = completionOverlay?.isWinner ? shareLines.slice(0, -1) : shareLines;
+  const stepCountLine = completionOverlay?.isWinner ? shareLines[shareLines.length - 1] : null;
+  // For the win screen, the headline already shows "start -> finish" via
+  // completionCopy, so drop the redundant words line (always the 2nd line).
+  const winMetaContent = shareContent.filter((line, index) => !(index === 1 && !isPatternLine(line)));
+  const completionMetaLines = completionOverlay?.isWinner ? winMetaContent : shareContent;
+
+  // Renders one parsed share-text line for the completion overlay's meta
+  // content - mirrors web's renderShareLine: the first line's trailing
+  // " \u2713"/" \u274c" is colored separately, ◼︎/◻︎ grid rows render larger
+  // and letter-spaced (matching web's `.alert-overlay__meta-pattern`), and
+  // everything else renders as plain centered text.
+  const renderShareLine = (line: string, index: number) => {
+    if (index === 0 && line.endsWith(' \u2713')) {
+      const prefix = line.slice(0, -2);
+      return (
+        <Text key={index} style={[styles.metaLine, { color: colors.text }]}>
+          {prefix} <Text style={{ color: colors.accent }}>{'\u2713'}</Text>
+        </Text>
+      );
+    }
+    if (index === 0 && line.endsWith(' \u274c')) {
+      const prefix = line.slice(0, -2);
+      return (
+        <Text key={index} style={[styles.metaLine, { color: colors.text }]}>
+          {prefix} <Text style={{ color: '#ff4444' }}>{'\u274c'}</Text>
+        </Text>
+      );
+    }
+    if (isPatternLine(line)) {
+      return (
+        <Text key={index} style={[styles.metaPattern, { color: colors.text }]}>
+          {line}
+        </Text>
+      );
+    }
+    return (
+      <Text key={index} style={[styles.metaLine, { color: colors.text }]}>
+        {line}
+      </Text>
+    );
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* See InteractiveGame.tsx's identical comment: the submit row is
@@ -513,6 +575,14 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({ onNavigateHome, on
           isVisible={!isLeaderboardOpen}
           lines={[...completionCopy.lines]}
           variant={completionVariant}
+          meta={
+            <>
+              {completionMetaLines.map(renderShareLine)}
+              {stepCountLine && (
+                <Text style={[styles.metaLine, { color: colors.text }]}>{stepCountLine}</Text>
+              )}
+            </>
+          }
           actions={[{ label: 'share', onPress: handleShare }, { label: 'leaderboard', onPress: () => setIsLeaderboardOpen(true) }]}
           onClose={() => {
             setCompletionOverlay(null);
@@ -568,5 +638,20 @@ const styles = StyleSheet.create({
   steps: {
     fontSize: 13,
     marginTop: 8
+  },
+  // Completion overlay meta content - matches web's AlertOverlay.css
+  // `.alert-overlay__meta`/`.alert-overlay__meta-pattern`: plain share-text
+  // lines render at normal size, the ◼︎/◻︎ word-path grid rows render much
+  // larger (and letter-spaced) so the grid pattern is easy to read.
+  metaLine: {
+    fontSize: 14,
+    textAlign: 'center',
+    opacity: 0.8
+  },
+  metaPattern: {
+    fontSize: 30,
+    lineHeight: 34,
+    letterSpacing: 3,
+    textAlign: 'center'
   }
 });

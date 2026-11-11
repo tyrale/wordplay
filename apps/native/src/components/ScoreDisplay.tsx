@@ -96,7 +96,7 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
     >
       <Text style={[styles.side, styles.left, { color }]}>{leftContent}</Text>
       <Text style={[styles.center, { color: centerColor }]}>{centerContent}</Text>
-      <Text style={[styles.side, styles.right, { color }]}>{rightContent}</Text>
+      <Text testID={typeof timerSeconds === 'number' ? 'score-display-timer' : undefined} style={[styles.side, styles.right, { color }]}>{rightContent}</Text>
     </Pressable>
   );
 };

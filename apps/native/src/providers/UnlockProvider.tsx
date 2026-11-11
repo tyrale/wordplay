@@ -10,9 +10,10 @@
  * category, and community "X% found" rarity text when available.
  */
 import React, { createContext, useContext, useCallback } from 'react';
+import { Text } from 'react-native';
 import { useUnlocks } from '../hooks/useUnlocks';
 import type { UseUnlocksReturn } from '../hooks/useUnlocks';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useAlert } from './AlertProvider';
 import { alertCopy, resolveAlertMeta } from '../content/alertCopy';
 import type { AlertCopyEntry } from '../content/alertCopy';
@@ -48,7 +49,8 @@ interface UnlockProviderProps {
 
 export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
   const unlocks = useUnlocks();
-  const { setTheme } = useTheme();
+  const { setTheme, currentTheme, isInverted } = useTheme();
+  const colors = getEffectiveColors(currentTheme, isInverted);
   const { showAlert } = useAlert();
 
   // Show unlock notification using the universal alert overlay - mirrors
@@ -64,10 +66,10 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
       const withRarity = (baseMeta?: string): React.ReactNode => {
         if (percent == null) return baseMeta;
         return (
-          <>
-            {baseMeta && <React.Fragment>{baseMeta}{'\n'}</React.Fragment>}
+          <Text style={{ color: colors.text, fontSize: 14, textAlign: 'center' }}>
+            {baseMeta && <Text>{baseMeta}{'\n'}</Text>}
             {percent}% found
-          </>
+          </Text>
         );
       };
 
@@ -109,7 +111,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
       const baseMeta = resolveAlertMeta(entry, params, result.itemId);
       showAlert('unlocks', category, { params, itemId: result.itemId, variant: 'unlock', meta: withRarity(baseMeta) });
     }
-  }, [showAlert]);
+  }, [showAlert, colors]);
 
   const handleImmediateEffects = useCallback((results: UnlockResult[]) => {
     for (const result of results) {

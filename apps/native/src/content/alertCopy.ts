@@ -79,7 +79,15 @@ export const alertCopy = {
   /** "GUS" boss battle chain - intro, stage advance, victory, defeat. */
   boss: {
     intro: { lines: ['BOSS', 'BATTLE'], meta: 'A special idea from my son. Beat the clock. Beat the boss.' },
-    advance: { lines: ['MEGA', 'BOSS'], meta: 'The next boss is coming...' },
+    /** Advance copy is keyed by the upcoming stage - beating the first
+     * boss advances to 'mega', beating megaboss advances to 'giga'. Each
+     * stage names its own boss, so this must not be a single flat entry
+     * (that previously always said "MEGA BOSS" even advancing into the
+     * final gigaboss stage). */
+    advance: {
+      mega: { lines: ['MEGA', 'BOSS'], meta: 'The next boss is coming...' },
+      giga: { lines: ['GIGA', 'BOSS'], meta: 'The final boss is coming...' }
+    },
     victory: { lines: ['YOU', 'BEAT', 'THE', 'BOSS'], meta: 'bossbot unlocked. themes unlocked.' },
     defeat: { lines: ['BOSS', 'WINS'], meta: 'Maybe next time. Play GUS to try again.' },
     timeout: { lines: ['OUT', 'OF', 'TIME'] }

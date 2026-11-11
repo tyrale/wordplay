@@ -32,7 +32,7 @@ import { useGameState, useWordState } from '../hooks/useGameState';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { useMechanicsSettings } from '../contexts/MechanicsSettingsContext';
-import { useWordPathGraph } from '../hooks/useWordPathGraph';
+import { useWordPathGraph } from '../providers/WordPathGraphProvider';
 import { useDictionaryData } from '../hooks/useDictionaryData';
 import { useAlert } from '../providers/AlertProvider';
 import {
@@ -52,6 +52,7 @@ import type { WordMove } from '../components/WordTrail';
 import { Menu } from '../components/Menu';
 import { useWordDropZone } from '../hooks/useWordDropZone';
 import { triggerHapticFeedback } from '../utils/haptics';
+import { triggerSoundFeedback } from '../utils/sound';
 
 const MAX_WORD_LENGTH = 10;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -223,11 +224,13 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onBossTrigger,
       // appending - matches InteractiveGame.tsx exactly.
       if (isTypeToClearOn && !hasEditedThisTurnRef.current && pendingWord.length > 0) {
         triggerHapticFeedback('add');
+        triggerSoundFeedback('add');
         handleWordChange(letter);
         return;
       }
       if (pendingWord.length >= MAX_WORD_LENGTH) return;
       triggerHapticFeedback('add');
+      triggerSoundFeedback('add');
       handleWordChange(pendingWord + letter);
     },
     [canEdit, pendingWord, handleWordChange, isTypeToClearOn]
@@ -245,6 +248,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onBossTrigger,
     (index: number) => {
       if (!canEdit) return;
       triggerHapticFeedback('remove');
+      triggerSoundFeedback('remove');
       const letters = pendingWord.split('');
       letters.splice(index, 1);
       handleWordChange(letters.join(''));
@@ -324,6 +328,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onBossTrigger,
 
     if (isValidSubmit && pendingMoveAttempt) {
       triggerHapticFeedback('submit');
+      triggerSoundFeedback('submit');
       const previousWord = wordState.currentWord;
       const applied = actions.applyMove(pendingMoveAttempt);
       if (applied) {

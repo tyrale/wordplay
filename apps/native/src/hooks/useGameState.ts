@@ -14,6 +14,7 @@ import { createGameStateManagerWithDependencies } from '@wordplay/engine/gamesta
 import { createNativeAdapter } from '../adapters/nativeAdapter';
 import { loadActiveGame, saveActiveGame, clearActiveGame } from '../adapters/nativeGameSaveAdapter';
 import { triggerHapticFeedback } from '../utils/haptics';
+import { triggerSoundFeedback } from '../utils/sound';
 import type { GameState, MoveAttempt, GameConfig, BotMove, IGameStateManager } from '@wordplay/engine/interfaces';
 
 /**
@@ -305,6 +306,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
         const passed = gameManager.passTurn();
         if (passed) {
           triggerHapticFeedback('pass');
+          triggerSoundFeedback('pass');
         }
         return passed;
       } catch (error) {
@@ -390,6 +392,7 @@ export function useGameState(options: UseGameStateOptions = {}): UseGameStateRet
     if (isGameActive) {
       if (hasSeenActiveGameRef.current && isPlayerTurn && !wasPlayerTurnRef.current) {
         triggerHapticFeedback('yourTurn');
+        triggerSoundFeedback('yourTurn');
       }
       hasSeenActiveGameRef.current = true;
     } else {

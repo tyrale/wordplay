@@ -7,6 +7,7 @@ import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
 import { TUTORIAL_INITIAL_CONFIG } from './components/tutorial/tutorialSteps';
 import { AnimationProvider } from './animations';
 import { UnlockProvider, useUnlockSystem } from './components/unlock/UnlockProvider';
+import { WordPathGraphProvider } from './contexts/WordPathGraphContext';
 import { VanityFilterProvider } from './contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from './contexts/MechanicsSettingsContext';
 import { RoundLengthProvider, useRoundLength } from './contexts/RoundLengthContext';
@@ -477,12 +478,20 @@ function AppContent() {
     );
   };
 
-  // Pick a random phrase each time a win/lose/quit screen is shown (not on every re-render)
-  const quitCopy = useMemo(() => pickAlertVariant(alertCopy.quit), [appState === 'quitter']);
-  const winCopy = useMemo(() => pickAlertVariant(alertCopy.win), [appState === 'winner']);
+  // Pick a random phrase each time a win/lose/quit screen is shown (not on every re-render).
+  // These booleans are used purely as memo triggers (recompute on the transition *into* the
+  // state), not read inside the callbacks, so they're intentionally exempt from exhaustive-deps.
+  const isQuitterResult = appState === 'quitter';
+  const isWinnerResult = appState === 'winner';
+  const isLoserResult = appState === 'loser';
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const quitCopy = useMemo(() => pickAlertVariant(alertCopy.quit), [isQuitterResult]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const winCopy = useMemo(() => pickAlertVariant(alertCopy.win), [isWinnerResult]);
   const loseCopy = useMemo(
     () => pickAlertVariant(isMultiplayerResult ? alertCopy.losePvp : alertCopy.lose),
-    [appState === 'loser']
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isLoserResult, isMultiplayerResult]
   );
 
   // Initialize viewport height handling
@@ -585,7 +594,7 @@ function AppContent() {
                       enableKeyLetters: true,
                       enableLockedLetters: true,
                       botId: BOSS_STAGES[bossStage].botId,
-                      // Whole-game countdown for this boss stage (90/60/45s).
+                      // Whole-game countdown for this boss stage (160/190/220s).
                       gameTimeLimitSeconds: BOSS_STAGES[bossStage].timeLimitSeconds
                     }}
                     onGameEnd={handleBossGameEnd}
@@ -708,10 +717,20 @@ function AppContent() {
                   </svg>
                 </div>
               )}
+              {/* `bossStage` is already the *upcoming* stage by the time
+                  `bossPhase` is 'advance' (handleBossGameEnd sets it before
+                  setBossPhase('advance')), so this always names the boss
+                  the player is about to face next, not the one they just
+                  beat. Falls back to 'mega' when `bossStage` is still
+                  'boss' (its default before any advance has happened) -
+                  this component renders unconditionally even while
+                  `isVisible` is false, so `alertCopy.boss.advance` (which
+                  has no 'boss' entry - you can never "advance" into the
+                  first stage) must never be indexed by it directly. */}
               <AlertOverlay
                 isVisible={appState === 'boss' && bossPhase === 'advance'}
-                lines={[...alertCopy.boss.advance.lines]}
-                meta={alertCopy.boss.advance.meta}
+                lines={[...(alertCopy.boss.advance[bossStage as 'mega' | 'giga'] ?? alertCopy.boss.advance.mega).lines]}
+                meta={(alertCopy.boss.advance[bossStage as 'mega' | 'giga'] ?? alertCopy.boss.advance.mega).meta}
                 onClose={advanceBossBattle}
               />
               <AlertOverlay
@@ -748,7 +767,9 @@ function App() {
       <ThemeProvider>
         <AlertProvider>
           <UnlockProvider>
-            <AppContent />
+            <WordPathGraphProvider>
+              <AppContent />
+            </WordPathGraphProvider>
           </UnlockProvider>
         </AlertProvider>
       </ThemeProvider>

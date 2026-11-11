@@ -9,7 +9,7 @@
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { InteractiveGame } from './InteractiveGame';
 import { useMultiplayerManager } from '../hooks/useMultiplayerManager';
 import { getGameJoinInfo, startWaitingGame } from '../adapters/nativeMultiplayerAdapter';
@@ -49,6 +49,11 @@ export interface MultiplayerGameProps {
 export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit, onGameEnd, onBossTrigger }) => {
   const { currentTheme, isInverted } = useTheme();
   const colors = getEffectiveColors(currentTheme, isInverted);
+  // See MainScreen.tsx's identical comment: `backButton` below is
+  // `position: 'absolute'`, so SafeAreaView's own inset padding doesn't
+  // apply to it - without this it sits under Android's gesture/3-button
+  // nav bar.
+  const insets = useSafeAreaInsets();
   const { manager, localPlayerId, isLoading, error } = useMultiplayerManager(gameId);
   const [maxPlayers, setMaxPlayers] = useState<number | null>(null);
   const [isStarting, setIsStarting] = useState(false);
@@ -208,7 +213,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
         <Pressable onPress={handleCancelWaiting} accessibilityRole="button">
           <Text style={[styles.cancelLink, { color: colors.text }]}>Cancel</Text>
         </Pressable>
-        <Pressable onPress={onExit} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Back">
+        <Pressable onPress={onExit} style={[styles.backButton, { bottom: insets.bottom + 20 }]} accessibilityRole="button" accessibilityLabel="Back">
           <Text style={[styles.backButtonText, { color: colors.text }]}>←</Text>
         </Pressable>
       </SafeAreaView>

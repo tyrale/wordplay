@@ -8,6 +8,7 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../providers/UnlockProvider';
+import { triggerSoundFeedback } from '../utils/sound';
 
 export interface DictionariesOverlayProps {
   isVisible: boolean;
@@ -70,7 +71,15 @@ export const DictionariesOverlay: React.FC<DictionariesOverlayProps> = ({ isVisi
         </Text>
       </ScrollView>
 
-      <Pressable onPress={onClose} style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close">
+      <Pressable
+        onPress={() => {
+          triggerSoundFeedback('click');
+          onClose();
+        }}
+        style={styles.closeButton}
+        accessibilityRole="button"
+        accessibilityLabel="Close"
+      >
         <Text style={[styles.closeButtonText, { color: colors.text }]}>×</Text>
       </Pressable>
     </View>

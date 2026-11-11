@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider, useUnlockSystem } from '../../providers/UnlockProvider';
+import { WordPathGraphProvider } from '../../providers/WordPathGraphProvider';
 import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
@@ -50,14 +51,16 @@ function renderMenu(
       <ThemeProvider>
         <AlertProvider>
           <UnlockProvider>
-            <VanityFilterProvider>
-              <MechanicsSettingsProvider>
-                <RoundLengthProvider>
-                  <Unlocker words={unlockWords} profaneWords={profaneWords} achievements={achievements} />
-                  <Menu isOpen onClose={onClose} {...props} />
-                </RoundLengthProvider>
-              </MechanicsSettingsProvider>
-            </VanityFilterProvider>
+            <WordPathGraphProvider>
+              <VanityFilterProvider>
+                <MechanicsSettingsProvider>
+                  <RoundLengthProvider>
+                    <Unlocker words={unlockWords} profaneWords={profaneWords} achievements={achievements} />
+                    <Menu isOpen onClose={onClose} {...props} />
+                  </RoundLengthProvider>
+                </MechanicsSettingsProvider>
+              </VanityFilterProvider>
+            </WordPathGraphProvider>
           </UnlockProvider>
         </AlertProvider>
       </ThemeProvider>

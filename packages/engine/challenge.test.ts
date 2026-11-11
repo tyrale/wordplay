@@ -294,13 +294,34 @@ describe('Challenge Engine', () => {
   describe('Word Submission', () => {
     test('should accept valid word moves', async () => {
       const challenge = await challengeEngine.getDailyChallengeState('2024-01-15');
-      
-      const result = await challengeEngine.submitWord('GAMES', challenge);
+      // Use a synthetic currentWord (GAME) rather than the generated
+      // startWord/targetWord pair: submitting a word only has to be a
+      // legal *move* from currentWord (add/remove one letter, rearrange
+      // freely), it doesn't need to relate to the puzzle's actual target -
+      // GAME -> GAMES (add "S") is a real, unambiguous one-letter move.
+      const testChallenge: ChallengeState = { ...challenge, currentWord: 'GAME', wordSequence: ['GAME'] };
+
+      const result = await challengeEngine.submitWord('GAMES', testChallenge);
       
       expect(result.isValid).toBe(true);
       expect(result.newState.wordSequence).toContain('GAMES');
       expect(result.newState.stepCount).toBe(1);
       expect(result.newState.currentWord).toBe('GAMES');
+    });
+
+    test('should reject dictionary words that are not a legal one-letter move (regression)', async () => {
+      // Regression test: isValidMove previously only checked the length
+      // delta and dictionary membership, so two same-length (or ±1)
+      // dictionary words with completely different letters were wrongly
+      // accepted (e.g. AMP -> NOT in production, reproduced here with
+      // JERKY -> GAMES: same length, both real words, but sharing no
+      // meaningful letters - not reachable via add/remove-one-letter).
+      const challenge = await challengeEngine.getDailyChallengeState('2024-01-15');
+      const testChallenge: ChallengeState = { ...challenge, currentWord: 'JERKY', wordSequence: ['JERKY'] };
+
+      const result = await challengeEngine.submitWord('GAMES', testChallenge);
+
+      expect(result.isValid).toBe(false);
     });
 
     test('should reject invalid dictionary words', async () => {

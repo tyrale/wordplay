@@ -6,6 +6,15 @@ import { ThemeProvider, useTheme } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider, useUnlockSystem } from '../UnlockProvider';
 
+// Mocked per-test (not globally) so most tests keep exercising the real
+// no-Supabase-configured path (percent == null) - only the rarity test
+// below needs a non-null community count/total.
+jest.mock('../../adapters/nativeCommunityUnlocksAdapter', () => {
+  const actual = jest.requireActual('../../adapters/nativeCommunityUnlocksAdapter');
+  return { ...actual, recordCommunityUnlock: jest.fn(actual.recordCommunityUnlock) };
+});
+import { recordCommunityUnlock } from '../../adapters/nativeCommunityUnlocksAdapter';
+
 function Probe({ onReady }: { onReady: (ctx: ReturnType<typeof useUnlockSystem>) => void }) {
   const ctx = useUnlockSystem();
   const { currentTheme } = useTheme();
@@ -89,6 +98,39 @@ describe('native UnlockProvider', () => {
 
     // The alert is a full-screen overlay, dismissed via its own close button.
     expect(screen.getByLabelText('Close')).toBeTruthy();
+  });
+
+  it('shows a theme unlock alert with community rarity text without a <Text> nesting error', async () => {
+    // Regression test: `meta` used to leak raw `{percent}% found` text
+    // nodes directly under a <View> whenever community rarity data was
+    // present, throwing RN's "Text strings must be rendered within a
+    // <Text> component" error - reproduced here by mocking a non-null
+    // community count/total onto the theme unlock result.
+    (recordCommunityUnlock as jest.Mock).mockResolvedValueOnce({ count: 3, totalPlayers: 12 });
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    let latestCtx: ReturnType<typeof useUnlockSystem> | undefined;
+
+    render(
+      <ThemeProvider>
+        <AlertProvider>
+          <UnlockProvider>
+            <Probe onReady={ctx => { latestCtx = ctx; }} />
+          </UnlockProvider>
+        </AlertProvider>
+      </ThemeProvider>
+    );
+    await waitFor(() => expect(latestCtx?.isLoading).toBe(false));
+
+    await act(async () => {
+      await latestCtx!.handleWordSubmission('blue');
+    });
+
+    await waitFor(() => expect(screen.getByText(/25% found/)).toBeTruthy());
+    expect(screen.getByText(/Now available in the menu/)).toBeTruthy();
+    expect(consoleError).not.toHaveBeenCalledWith(expect.stringContaining('Text strings must be rendered within a <Text> component'));
+
+    consoleError.mockRestore();
   });
 
   it('shows the special-cased dark mode alert copy for the dark-mode unlock', async () => {

@@ -177,6 +177,43 @@ describe('LocalGameStateManager', () => {
       // The reason might be about locked letters or word repetition
       expect(move.reason).toBeDefined();
     });
+
+    it('should reject a move that drops a locked key letter even when the word-diff rules alone would allow it (e.g. type-to-clear replacing the whole word instead of editing it letter-by-letter)', () => {
+      // CAT -> CART (add R) locks R for the next player's turn.
+      testAdapter.addWord('CART');
+      gameManager.addKeyLetter('R');
+      gameManager.applyMove('CART');
+      expect(gameManager.getState().lockedKeyLetters).toContain('R');
+
+      // CART -> CATS is otherwise a perfectly legal move by the generic
+      // add/remove-one-letter diff rules (removes R, adds S) - not a
+      // previously-used word, and not blocked by any per-letter UI
+      // affordance since a wholesale word replacement (type-to-clear)
+      // never goes through one. It must still be rejected for dropping
+      // the locked key letter R.
+      const move = gameManager.validateMove('CATS');
+      expect(move.isValid).toBe(false);
+      expect(move.reason).toBe('LOCKED_LETTER_REMOVED');
+    });
+
+    it('should reset the used key letter pool once every letter has been served, instead of running out', () => {
+      // Force the "used key letters" pool to already contain every letter
+      // not present in the current word, simulating a long game where every
+      // letter has already been served once as a key letter.
+      const state = (gameManager as any).state;
+      const currentWordLetters = new Set(state.currentWord.split(''));
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      state.usedKeyLetters = alphabet.filter(letter => !currentWordLetters.has(letter));
+      state.keyLetters = [];
+
+      // Triggering generation again should reset the used pool rather than
+      // fail to produce a new key letter.
+      (gameManager as any).generateRandomKeyLetter();
+
+      const newState = gameManager.getState();
+      expect(newState.keyLetters.length).toBe(1);
+      expect(newState.usedKeyLetters.length).toBeLessThan(alphabet.length);
+    });
   });
 
   describe('Bot Player Scenarios', () => {

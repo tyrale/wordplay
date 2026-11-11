@@ -16,7 +16,7 @@ import { AlertOverlay } from '../ui/AlertOverlay';
 import { alertCopy } from '../../content/alertCopy';
 import { useChallenge } from '../../hooks/useChallenge';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
-import { useWordPathGraph } from '../../hooks/useWordPathGraph';
+import { useWordPathGraph } from '../../contexts/WordPathGraphContext';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import { recordChallengeCompletion } from '../../adapters/supabaseChallengeLeaderboardAdapter';
 import { shareChallengeResult, getShareResultMessage } from '../../utils/shareUtils';
@@ -635,7 +635,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   const showInvalidX = !isValidSubmit;
 
   // Parse challenge share text into meta content for the completion AlertOverlay
-  const isPatternLine = (line: string) => /[◼◻]/u.test(line);
+  const isPatternLine = (line: string) => /◼︎|◻︎/.test(line);
 
   const renderShareLine = (line: string, index: number) => {
     if (index === 0 && line.endsWith(' ✓')) {

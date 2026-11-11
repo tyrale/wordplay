@@ -104,6 +104,13 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
   useEffect(() => {
     return () => {
       createCleanupRef.current?.();
+      // If a search is still in flight when this component unmounts (e.g.
+      // the player navigated away without hitting "Cancel Search"), make
+      // sure it's actually torn down - otherwise its realtime channel and
+      // queue row leak, and the *next* findMatch() call for this user can
+      // fail (a leaked, already-subscribed channel can't be re-subscribed).
+      matchmakingHandleRef.current?.cancel();
+      matchmakingHandleRef.current = null;
     };
   }, []);
 

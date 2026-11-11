@@ -6,7 +6,7 @@
  * Single source of truth for the "GUS" boss-chain encounter: the three
  * stages (boss -> megaboss -> gigaboss), the bot id and theme each stage
  * uses, the whole-game countdown length (escalating +30s per stage:
- * 130/160/190), and the fixed 20-turn round length.
+ * 160/190/220), and the fixed 20-turn round length.
  *
  * This is a transient, retryable encounter (not a permanent unlock).
  * Playing "GUS" grants one fresh chance; losing/resigning/timing out
@@ -30,9 +30,9 @@ export interface BossStageConfig {
 }
 
 export const BOSS_STAGES: Record<BossStage, BossStageConfig> = {
-  boss: { stage: 'boss', botId: 'boss-bot', themeName: 'boss', timeLimitSeconds: 130, next: 'mega' },
-  mega: { stage: 'mega', botId: 'mega-boss-bot', themeName: 'megaboss', timeLimitSeconds: 160, next: 'giga' },
-  giga: { stage: 'giga', botId: 'giga-boss-bot', themeName: 'gigaboss', timeLimitSeconds: 190, next: null }
+  boss: { stage: 'boss', botId: 'boss-bot', themeName: 'boss', timeLimitSeconds: 160, next: 'mega' },
+  mega: { stage: 'mega', botId: 'mega-boss-bot', themeName: 'megaboss', timeLimitSeconds: 190, next: 'giga' },
+  giga: { stage: 'giga', botId: 'giga-boss-bot', themeName: 'gigaboss', timeLimitSeconds: 220, next: null }
 };
 
 /** The boss theme names, used for effect/restore guards. */

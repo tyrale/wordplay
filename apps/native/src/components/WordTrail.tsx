@@ -65,8 +65,10 @@ export interface WordMove {
   keyLetters?: string[];
   scoreBreakdown?: WordMoveScoreBreakdown;
   /** When true, the word is rendered as dashes instead of its real
-   * letters - the "ninja" gimmick (not currently wired up anywhere in
-   * this port - see this file's doc comment). */
+   * letters - the "ninja" gimmick. Set by the caller for either the
+   * Ninjabot's own moves (during a Ninjabot game) or the local player's
+   * moves (once the "ninja-word-trail" mechanic has been permanently
+   * unlocked by beating the Ninjabot), matching web's InteractiveGame.tsx. */
   maskWord?: boolean;
 }
 

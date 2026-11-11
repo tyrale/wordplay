@@ -7,6 +7,7 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
+import { triggerSoundFeedback } from '../utils/sound';
 
 export interface TheGameOverlayProps {
   isVisible: boolean;
@@ -35,7 +36,15 @@ export const TheGameOverlay: React.FC<TheGameOverlayProps> = ({ isVisible, onClo
         ))}
       </ScrollView>
 
-      <Pressable onPress={onClose} style={styles.closeButton} accessibilityRole="button" accessibilityLabel="Close">
+      <Pressable
+        onPress={() => {
+          triggerSoundFeedback('click');
+          onClose();
+        }}
+        style={styles.closeButton}
+        accessibilityRole="button"
+        accessibilityLabel="Close"
+      >
         <Text style={[styles.closeButtonText, { color: colors.text }]}>×</Text>
       </Pressable>
     </View>

@@ -7,9 +7,10 @@
   pointer-events: none;
 }
 
-/* Banner uses the theme's inverted (dark-mode-style) colors regardless of the
-   app's own light/dark setting: base/text color as the background, and the
-   theme's background color for the text - so it always reads as an overlay. */
+/* Banner uses the same theme variables as the rest of the app (surface for
+   the panel, text/accent/disabled for content) so it automatically flips
+   correctly when dark mode (theme inversion) is toggled, instead of
+   hardcoding an inverted look that only reads correctly in light mode. */
 .tutorial-overlay__banner {
   position: fixed;
   top: 10%;
@@ -22,7 +23,7 @@
   align-items: center;
   gap: 8px;
   padding: 16px 20px;
-  background: var(--theme-text);
+  background: var(--theme-surface);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   width: 100%;
   text-transform: uppercase;
@@ -37,13 +38,11 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--theme-background);
-  opacity: 0.35;
+  background: var(--theme-disabled);
 }
 
 .tutorial-overlay__dot--active {
-  background: var(--theme-background);
-  opacity: 1;
+  background: var(--theme-accent);
 }
 
 .tutorial-overlay__lines {
@@ -51,7 +50,7 @@
   font-family: var(--theme-font-family);
   font-size: var(--theme-font-size-lg);
   font-weight: var(--theme-font-weight);
-  color: var(--theme-background);
+  color: var(--theme-text);
 }
 
 .tutorial-overlay__line {
@@ -65,7 +64,7 @@
 .tutorial-overlay__skip {
   background: none;
   border: none;
-  color: var(--theme-background);
+  color: var(--theme-text-secondary);
   opacity: 0.7;
   font-family: var(--theme-font-family);
   font-size: 12px;

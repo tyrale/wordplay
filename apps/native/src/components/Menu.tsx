@@ -47,6 +47,7 @@ import { ThoughtsOverlay } from './ThoughtsOverlay';
 import { TheGameOverlay } from './TheGameOverlay';
 import { StatsOverlay } from './StatsOverlay';
 import { WordPathExplorer } from './WordPathExplorer';
+import { triggerSoundFeedback } from '../utils/sound';
 
 const ALL_MECHANIC_IDS = ['vanity-filter', '3-letter-start', '5-letter-start', '6-letter-start', '7-letter-start', '8-letter-start', '9-letter-start', '10-letter-start', 'time-pressure', 'gravity', 'drunk', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
 const ROUND_LENGTH_MECHANIC_IDS = new Set(['round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100']);
@@ -283,14 +284,14 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                       // comment for what's still deferred.
                       if (id === 'player-stats') {
                         return (
-                          <Pressable key={id} onPress={() => setIsStatsOpen(true)} style={styles.row} accessibilityRole="button">
+                          <Pressable key={id} onPress={() => { triggerSoundFeedback('click'); setIsStatsOpen(true); }} style={styles.row} accessibilityRole="button">
                             <Text style={{ color: colors.text, fontWeight: '900' }}>{MECHANIC_DISPLAY_NAMES[id]}</Text>
                           </Pressable>
                         );
                       }
                       if (id === 'word-paths') {
                         return (
-                          <Pressable key={id} onPress={() => setIsWordPathsOpen(true)} style={styles.row} accessibilityRole="button">
+                          <Pressable key={id} onPress={() => { triggerSoundFeedback('click'); setIsWordPathsOpen(true); }} style={styles.row} accessibilityRole="button">
                             <Text style={{ color: colors.text, fontWeight: '900' }}>{MECHANIC_DISPLAY_NAMES[id]}</Text>
                           </Pressable>
                         );
@@ -372,7 +373,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
             {expandedSection === 'bots' && (
               <View style={styles.sectionBody}>
                 {availableBots.map(botId => (
-                  <Pressable key={botId} onPress={() => handleBotSelect(botId)} style={styles.row} accessibilityRole="button">
+                  <Pressable key={botId} onPress={() => { triggerSoundFeedback('click'); handleBotSelect(botId); }} style={styles.row} accessibilityRole="button">
                     <Text style={{ color: colors.text, fontWeight: '900' }}>{botDisplayNames[botId] || botId}</Text>
                   </Pressable>
                 ))}
@@ -389,6 +390,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
               <View style={styles.sectionBody}>
                 <Pressable
                   onPress={() => {
+                    triggerSoundFeedback('click');
                     // Force-replay the tutorial on a fresh basicBot game -
                     // matches web's "the basics" entry (beginTutorialGame).
                     onStartGame?.('tutorial', 'basicBot');
@@ -399,16 +401,16 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                 >
                   <Text style={{ color: colors.text, fontWeight: '900' }}>the basics</Text>
                 </Pressable>
-                <Pressable onPress={() => setIsTheGameOpen(true)} style={styles.row} accessibilityRole="button">
+                <Pressable onPress={() => { triggerSoundFeedback('click'); setIsTheGameOpen(true); }} style={styles.row} accessibilityRole="button">
                   <Text style={{ color: colors.text, fontWeight: '900' }}>the game</Text>
                 </Pressable>
-                <Pressable onPress={() => setIsDictionariesOpen(true)} style={styles.row} accessibilityRole="button">
+                <Pressable onPress={() => { triggerSoundFeedback('click'); setIsDictionariesOpen(true); }} style={styles.row} accessibilityRole="button">
                   <Text style={{ color: colors.text, fontWeight: '900' }}>dictionaries</Text>
                 </Pressable>
-                <Pressable onPress={() => setIsThoughtsOpen(true)} style={styles.row} accessibilityRole="button">
+                <Pressable onPress={() => { triggerSoundFeedback('click'); setIsThoughtsOpen(true); }} style={styles.row} accessibilityRole="button">
                   <Text style={{ color: colors.text, fontWeight: '900' }}>thoughts</Text>
                 </Pressable>
-                <Pressable onPress={resetUnlocksToFresh} style={styles.row} accessibilityRole="button">
+                <Pressable onPress={() => { triggerSoundFeedback('click'); resetUnlocksToFresh(); }} style={styles.row} accessibilityRole="button">
                   <Text style={{ color: colors.textSecondary, fontWeight: '900' }}>reset unlocks (debug)</Text>
                 </Pressable>
               </View>
@@ -443,7 +445,14 @@ const SectionHeader: React.FC<{ label: string; color: string; accentColor?: stri
   count,
   onPress
 }) => (
-  <Pressable onPress={onPress} style={[styles.sectionHeader, styles.sectionHeaderRow]} accessibilityRole="button">
+  <Pressable
+    onPress={() => {
+      triggerSoundFeedback('click');
+      onPress();
+    }}
+    style={[styles.sectionHeader, styles.sectionHeaderRow]}
+    accessibilityRole="button"
+  >
     {count && (
       <Text style={[styles.sectionHeaderCount, { color: accentColor ?? color }]}>
         {count.unlocked}/{count.total}
@@ -484,7 +493,10 @@ const ThemeSwatch: React.FC<{ theme: GameTheme; isSelected: boolean; onPress: ()
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        triggerSoundFeedback('click');
+        onPress();
+      }}
       style={[styles.themeSwatch, { backgroundColor: theme.colors.background }]}
       accessibilityRole="button"
       // The selected theme is otherwise only distinguished by the small
@@ -554,7 +566,10 @@ const ToggleRow: React.FC<{ label: string; value: boolean; onToggle: () => void;
           required, not just nice-to-have, so VoiceOver/TalkBack announce
           "dark mode switch, on" instead of just "switch". */}
       <Pressable
-        onPress={onToggle}
+        onPress={() => {
+          triggerSoundFeedback('click');
+          onToggle();
+        }}
         accessibilityRole="switch"
         accessibilityLabel={label}
         accessibilityState={{ checked: value }}

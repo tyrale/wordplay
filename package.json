@@ -19,6 +19,7 @@
     "play": "npm run play --workspace=packages/engine",
     "native": "npm run start --workspace=apps/native",
     "typecheck:native": "npm run typecheck --workspace=apps/native",
-    "generate:native-data": "node scripts/generate-native-word-data.cjs"
+    "generate:native-data": "node scripts/generate-native-word-data.cjs",
+    "generate:native-sounds": "node scripts/generate-native-sound-assets.cjs"
   }
 }

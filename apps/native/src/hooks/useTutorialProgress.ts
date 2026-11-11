@@ -30,6 +30,7 @@ export function useTutorialProgress(pendingWord: string, gameState: GameState | 
     finalStepWordBaseline: undefined
   });
   const isAdvancingRef = useRef(false);
+  const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentStep = TUTORIAL_STEPS[currentStepIndex];
 
@@ -58,6 +59,15 @@ export function useTutorialProgress(pendingWord: string, gameState: GameState | 
 
   // Advance to the next step (or complete the tutorial) once the current
   // step's condition is met.
+  //
+  // The scheduled timeout is tracked in `advanceTimeoutRef` rather than
+  // returned as this effect's cleanup function. Returning it as a cleanup
+  // would mean any dependency change while the timeout is pending (e.g. the
+  // bot playing its move within the 500ms delay, which changes `gameState`)
+  // cancels it - and since `isAdvancingRef.current` is already true at that
+  // point, the re-run bails out at the guard above without rescheduling,
+  // leaving the step stuck forever. Only actually clearing the timeout on
+  // unmount avoids that race.
   useEffect(() => {
     if (isComplete) return;
     if (isAdvancingRef.current) return;
@@ -66,7 +76,8 @@ export function useTutorialProgress(pendingWord: string, gameState: GameState | 
     isAdvancingRef.current = true;
     const isLastStep = currentStepIndex === TUTORIAL_STEPS.length - 1;
 
-    const timeoutId = setTimeout(() => {
+    advanceTimeoutRef.current = setTimeout(() => {
+      advanceTimeoutRef.current = null;
       if (isLastStep) {
         setIsComplete(true);
       } else {
@@ -79,9 +90,14 @@ export function useTutorialProgress(pendingWord: string, gameState: GameState | 
         isAdvancingRef.current = false;
       }
     }, isLastStep ? 1200 : 500);
-
-    return () => clearTimeout(timeoutId);
   }, [pendingWord, gameState, tutorialState, currentStep, currentStepIndex, isComplete]);
+
+  // Clear any pending advance timeout on unmount only.
+  useEffect(() => {
+    return () => {
+      if (advanceTimeoutRef.current) clearTimeout(advanceTimeoutRef.current);
+    };
+  }, []);
 
   return { currentStepIndex, currentStep, isComplete };
 }

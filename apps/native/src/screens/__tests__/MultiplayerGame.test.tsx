@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { AlertProvider } from '../../providers/AlertProvider';
 import { UnlockProvider } from '../../providers/UnlockProvider';
+import { WordPathGraphProvider } from '../../providers/WordPathGraphProvider';
 import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
@@ -26,13 +27,15 @@ function renderScreen(props: Partial<React.ComponentProps<typeof MultiplayerGame
       <ThemeProvider>
         <AlertProvider>
           <UnlockProvider>
-            <VanityFilterProvider>
-              <MechanicsSettingsProvider>
-                <RoundLengthProvider>
-                  <MultiplayerGame gameId="game-1" onExit={onExit} {...props} />
-                </RoundLengthProvider>
-              </MechanicsSettingsProvider>
-            </VanityFilterProvider>
+            <WordPathGraphProvider>
+              <VanityFilterProvider>
+                <MechanicsSettingsProvider>
+                  <RoundLengthProvider>
+                    <MultiplayerGame gameId="game-1" onExit={onExit} {...props} />
+                  </RoundLengthProvider>
+                </MechanicsSettingsProvider>
+              </VanityFilterProvider>
+            </WordPathGraphProvider>
           </UnlockProvider>
         </AlertProvider>
       </ThemeProvider>

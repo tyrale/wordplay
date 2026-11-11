@@ -3,7 +3,7 @@
  *
  * Single source of truth for the "GUS" boss-chain encounter: the three stages
  * (boss -> megaboss -> gigaboss), the bot id and theme each stage uses, the
- * whole-game countdown length (escalating +30s per stage: 130/160/190), and the
+ * whole-game countdown length (escalating +30s per stage: 160/190/220), and the
  * fixed 20-turn round length.
  *
  * This is a transient, retryable encounter (not a permanent unlock). Playing
@@ -28,35 +28,13 @@ export interface BossStageConfig {
 }
 
 export const BOSS_STAGES: Record<BossStage, BossStageConfig> = {
-  boss: {
-    stage: 'boss',
-    botId: 'boss-bot',
-    themeName: 'boss',
-    timeLimitSeconds: 130,
-    next: 'mega',
-  },
-  mega: {
-    stage: 'mega',
-    botId: 'mega-boss-bot',
-    themeName: 'megaboss',
-    timeLimitSeconds: 160,
-    next: 'giga',
-  },
-  giga: {
-    stage: 'giga',
-    botId: 'giga-boss-bot',
-    themeName: 'gigaboss',
-    timeLimitSeconds: 190,
-    next: null,
-  },
+  boss: { stage: 'boss', botId: 'boss-bot', themeName: 'boss', timeLimitSeconds: 160, next: 'mega' },
+  mega: { stage: 'mega', botId: 'mega-boss-bot', themeName: 'megaboss', timeLimitSeconds: 190, next: 'giga' },
+  giga: { stage: 'giga', botId: 'giga-boss-bot', themeName: 'gigaboss', timeLimitSeconds: 220, next: null }
 };
 
 /** The boss theme names, used for effect/restore guards. */
-export const BOSS_THEME_NAMES: readonly string[] = [
-  'boss',
-  'megaboss',
-  'gigaboss',
-];
+export const BOSS_THEME_NAMES: readonly string[] = ['boss', 'megaboss', 'gigaboss'];
 
 /** Fixed round length (turns) for every boss battle. */
 export const BOSS_BATTLE_MAX_TURNS = 20;
@@ -72,10 +50,10 @@ export const GIGA_BEAT_ACHIEVEMENT = 'beat_giga_boss_bot';
 /** Resolve a boss stage's GameTheme object from the shared theme list. */
 export function getBossTheme(stage: BossStage): GameTheme {
   const name = BOSS_STAGES[stage].themeName;
-  return availableThemes.find((t) => t.name === name) ?? availableThemes[0];
+  return availableThemes.find(t => t.name === name) ?? availableThemes[0];
 }
 
 /** Resolve a GameTheme by name (used by the reload/restore guard). */
 export function getThemeByName(name: string): GameTheme | undefined {
-  return availableThemes.find((t) => t.name === name);
+  return availableThemes.find(t => t.name === name);
 }

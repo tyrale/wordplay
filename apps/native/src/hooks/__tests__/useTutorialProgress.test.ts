@@ -85,6 +85,41 @@ describe('native useTutorialProgress', () => {
     expect(result.current.currentStep.id).toBe(4);
   });
 
+  it('still advances to step 4 when gameState changes again (e.g. the bot moving) while the advance is pending', async () => {
+    // Regression test: submitting ROWS schedules a delayed advance out of
+    // step 3. If something else updates `gameState` before that delay
+    // elapses - e.g. the bot immediately taking its turn - the step must
+    // still advance instead of getting stuck forever.
+    const gameStateWithRows = makeGameState({
+      turnHistory: [
+        { turnNumber: 1, playerId: 'human', previousWord: 'WORS', newWord: 'ROWS', score: 5, keyLettersUsed: [], scoringBreakdown: {} as never, timestamp: Date.now() }
+      ]
+    });
+    const gameStateWithBotMoveToo = makeGameState({
+      turnHistory: [
+        ...gameStateWithRows.turnHistory,
+        { turnNumber: 2, playerId: 'bot', previousWord: 'ROWS', newWord: 'CROWS', score: 3, keyLettersUsed: [], scoringBreakdown: {} as never, timestamp: Date.now() }
+      ]
+    });
+
+    const { result, rerender } = renderHook(
+      (props: HookProps) => useTutorialProgress(props.pendingWord, props.gameState),
+      { initialProps: { pendingWord: 'WORS', gameState: makeGameState() } }
+    );
+    rerender({ pendingWord: 'WORDS', gameState: makeGameState() });
+    await waitFor(() => expect(result.current.currentStepIndex).toBe(1));
+    rerender({ pendingWord: 'WORS', gameState: makeGameState() });
+    await waitFor(() => expect(result.current.currentStepIndex).toBe(2));
+
+    // Submit ROWS, which schedules the delayed advance to step 4.
+    rerender({ pendingWord: 'CROWS', gameState: gameStateWithRows });
+    // Before the 500ms delay elapses, the bot's move updates gameState again.
+    rerender({ pendingWord: 'CROWS', gameState: gameStateWithBotMoveToo });
+
+    await waitFor(() => expect(result.current.currentStepIndex).toBe(3), { timeout: 2000 });
+    expect(result.current.currentStep.id).toBe(4);
+  });
+
   it('completes after one more word is played beyond the final step baseline', async () => {
     // Directly exercise the last step's completion condition in isolation
     // (a full walk-through would be slow/flaky here) - this is the same

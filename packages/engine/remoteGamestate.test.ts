@@ -5,7 +5,7 @@
  * a real Supabase backend, so these tests run fully offline/deterministically.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RemoteGameStateManager } from './remoteGamestate';
 import { createTestAdapter, TestAdapter } from './adapters/testAdapter';
 import type {
@@ -397,5 +397,68 @@ describe('RemoteGameStateManager', () => {
     expect(result).toBeNull();
 
     manager.dispose();
+  });
+
+  describe('bot-fallback opponent', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    it('automatically plays a bot-fallback opponent\'s turn after a delay, without the UI calling makeBotMove()', async () => {
+      // Player B is a bot-fallback opponent standing in for a human random
+      // matchmaking couldn't find in time (see try_match()'s bot fallback).
+      store.snapshot.players[1].isBot = true;
+      store.snapshot.players[1].botEngineId = 'easy-bot';
+      store.snapshot.currentPlayerIndex = 1; // it's the bot's turn already
+
+      const deps = createFakeDependencies(store, PLAYER_A);
+      const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+      await manager.initialize();
+
+      // Nothing happens instantly - it should feel like waiting on a human.
+      expect(store.snapshot.turnHistory.length).toBe(0);
+
+      // Advance past the longest possible scheduled delay.
+      await vi.advanceTimersByTimeAsync(21000);
+
+      expect(store.snapshot.turnHistory.length).toBe(1);
+      expect(store.snapshot.turnHistory[0].playerId).toBe(PLAYER_B);
+      expect(manager.getState().currentPlayerIndex).toBe(0); // turn handed back to the human
+
+      manager.dispose();
+    });
+
+    it('never schedules a bot move for an ordinary human-vs-human game', async () => {
+      const deps = createFakeDependencies(store, PLAYER_A);
+      const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+      await manager.initialize();
+
+      await vi.advanceTimersByTimeAsync(60000);
+
+      expect(store.snapshot.turnHistory.length).toBe(0);
+
+      manager.dispose();
+    });
+
+    it('only schedules one bot move per turn even if refreshFromRemote fires repeatedly', async () => {
+      store.snapshot.players[1].isBot = true;
+      store.snapshot.players[1].botEngineId = 'easy-bot';
+      store.snapshot.currentPlayerIndex = 1;
+
+      const deps = createFakeDependencies(store, PLAYER_A);
+      const manager = new RemoteGameStateManager(testAdapter.getGameDependencies(), deps, 'game-1');
+      await manager.initialize();
+
+      // Simulate the realtime subscription and the 3s poll both firing
+      // again before the bot's delay elapses.
+      await (manager as unknown as { refreshFromRemote(): Promise<void> }).refreshFromRemote();
+      await (manager as unknown as { refreshFromRemote(): Promise<void> }).refreshFromRemote();
+
+      await vi.advanceTimersByTimeAsync(21000);
+
+      expect(store.snapshot.turnHistory.length).toBe(1);
+
+      manager.dispose();
+    });
   });
 });
