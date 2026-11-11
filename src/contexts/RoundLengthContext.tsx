@@ -9,7 +9,13 @@
  * selected at a time, unlike other mechanics which are independent toggles.
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 import type { ReactNode } from 'react';
 
 export const DEFAULT_ROUND_LENGTH = 20;
@@ -27,12 +33,16 @@ interface RoundLengthProviderProps {
   children: ReactNode;
 }
 
-export const RoundLengthProvider: React.FC<RoundLengthProviderProps> = ({ children }) => {
+export const RoundLengthProvider: React.FC<RoundLengthProviderProps> = ({
+  children,
+}) => {
   const [roundLength, setRoundLengthState] = useState<number>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       const parsed = stored ? parseInt(stored, 10) : NaN;
-      return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_ROUND_LENGTH;
+      return Number.isFinite(parsed) && parsed > 0
+        ? parsed
+        : DEFAULT_ROUND_LENGTH;
     } catch (error) {
       console.warn('Failed to load round length from localStorage:', error);
       return DEFAULT_ROUND_LENGTH;
@@ -53,7 +63,7 @@ export const RoundLengthProvider: React.FC<RoundLengthProviderProps> = ({ childr
 
   const contextValue: RoundLengthContextValue = {
     roundLength,
-    setRoundLength
+    setRoundLength,
   };
 
   return (

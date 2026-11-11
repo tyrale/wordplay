@@ -12,9 +12,9 @@ export interface ActionIndicatorsProps {
   className?: string;
 }
 
-export const ActionIndicators: React.FC<ActionIndicatorsProps> = ({ 
-  actions, 
-  className = '' 
+export const ActionIndicators: React.FC<ActionIndicatorsProps> = ({
+  actions,
+  className = '',
 }) => {
   return (
     <div className={`action-indicators ${className}`.trim()}>
@@ -35,4 +35,4 @@ export const ActionIndicators: React.FC<ActionIndicatorsProps> = ({
       )}
     </div>
   );
-}; 
+};

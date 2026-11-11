@@ -13,7 +13,7 @@ export function initViewportHeight() {
 
   // Update on resize
   window.addEventListener('resize', updateViewportHeight);
-  
+
   // Update on orientation change
   window.addEventListener('orientationchange', () => {
     // Small delay to ensure the browser has completed any UI adjustments
@@ -22,9 +22,9 @@ export function initViewportHeight() {
 
   // Some mobile browsers need an update after page load
   window.addEventListener('load', updateViewportHeight);
-  
+
   // Update after any dynamic toolbar changes (some mobile browsers)
   window.addEventListener('scroll', () => {
     requestAnimationFrame(updateViewportHeight);
   });
-} 
+}

@@ -29,30 +29,30 @@
 
 ## 🏗️ **CORE ARCHITECTURAL PRINCIPLES**
 
-### **MANDATORY RULES** *(Prevent Future Deviations)*
+### **MANDATORY RULES** _(Prevent Future Deviations)_
 
-| Rule | Description | Enforcement |
-|------|-------------|-------------|
-| **Single Source of Truth** | Core game logic exists ONLY in `packages/engine/` | NO browser-specific engines allowed |
-| **Dependency Injection** | Engine components accept dependencies, never import platform code | Use interfaces, not direct imports |
-| **Platform Adapters Only** | Only adapters are platform-specific (Node.js, Browser, Test) | Adapters provide dependencies to engine |
-| **No Code Duplication** | Never recreate engine logic for different platforms | Reuse via dependency injection |
-| **Interface Contracts** | All engine interactions via typed interfaces | Changes require interface updates |
+| Rule                       | Description                                                       | Enforcement                             |
+| -------------------------- | ----------------------------------------------------------------- | --------------------------------------- |
+| **Single Source of Truth** | Core game logic exists ONLY in `packages/engine/`                 | NO browser-specific engines allowed     |
+| **Dependency Injection**   | Engine components accept dependencies, never import platform code | Use interfaces, not direct imports      |
+| **Platform Adapters Only** | Only adapters are platform-specific (Node.js, Browser, Test)      | Adapters provide dependencies to engine |
+| **No Code Duplication**    | Never recreate engine logic for different platforms               | Reuse via dependency injection          |
+| **Interface Contracts**    | All engine interactions via typed interfaces                      | Changes require interface updates       |
 
-### **FORBIDDEN PATTERNS** *(Will be rejected in code review)*
+### **FORBIDDEN PATTERNS** _(Will be rejected in code review)_
 
 ❌ `browserEngine.ts` - Reimplementing engine for browsers  
 ❌ `import { validateWord } from './dictionary'` in bot.ts - Direct imports  
 ❌ Platform-specific engine modifications - Use adapters instead  
 ❌ Duplicate validation logic - Use dependency injection  
-❌ "Browser-compatible" versions of core logic - Use same engine + adapters  
+❌ "Browser-compatible" versions of core logic - Use same engine + adapters
 
-### **REQUIRED PATTERNS** *(Must be followed)*
+### **REQUIRED PATTERNS** _(Must be followed)_
 
 ✅ **Dependency Injection**: `function botMove(word: string, deps: BotDependencies)`  
 ✅ **Platform Adapters**: `createBrowserAdapter()`, `createNodeAdapter()`  
 ✅ **Interface Contracts**: All engine interactions via TypeScript interfaces  
-✅ **Unified Testing**: Same test suite runs on all platforms via adapters  
+✅ **Unified Testing**: Same test suite runs on all platforms via adapters
 
 _When Cursor is unsure about a requirement it \***\*must\*\*** halt and request clarification rather than assuming._
 
@@ -60,13 +60,13 @@ _When Cursor is unsure about a requirement it \***\*must\*\*** halt and request 
 
 ## 🛠️ Development Workflow Guidelines
 
-| #   | Rule for Cursor                                                                           | Rationale                     |
-| --- | ----------------------------------------------------------------------------------------- | ----------------------------- |
-| 1   | Follow tasks **in listed order**; do **not** skip.                                        | Prevent dependency breaks.    |
-| 2   | After completing a task, run its **Checkpoint** tests (unit/E2E).                         | Ensures quality gate.         |
+| #   | Rule for Cursor                                                                         | Rationale                     |
+| --- | --------------------------------------------------------------------------------------- | ----------------------------- |
+| 1   | Follow tasks **in listed order**; do **not** skip.                                      | Prevent dependency breaks.    |
+| 2   | After completing a task, run its **Checkpoint** tests (unit/E2E).                       | Ensures quality gate.         |
 | 3   | Open a PR titled `ShipHip: <Task Name>` containing only the files touched by that task. | Traceability + context token. |
-| 4   | Await human approval **before** starting the next task.                                   | Allows manual validation.     |
-| 5   | Update `/docs/CHANGELOG.md` with a one‑line entry per task.                               | Audit trail.                  |
+| 4   | Await human approval **before** starting the next task.                                 | Allows manual validation.     |
+| 5   | Update `/docs/CHANGELOG.md` with a one‑line entry per task.                             | Audit trail.                  |
 
 Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking each task `✅` when merged.
 
@@ -95,79 +95,79 @@ Cursor should maintain a running TODO list in `/docs/TASK_PROGRESS.md`, marking 
 
 ### Phase 2 – Web UI Foundation ✅ **COMPLETE**
 
-| ID  | Task                                   | Deliverable                                   | Checkpoint                                      |
-| --- | -------------------------------------- | --------------------------------------------- | ----------------------------------------------- |
-| 2.1 | **React Component Library**           | Reusable game components with TypeScript     | Storybook: displays normal/key/locked letters. |
-| 2.2 | **Alphabet Grid & Word Display**      | Interactive letter grid and word trail       | UI responds to clicks, shows game state.       |
-| 2.3 | **Single‑Player Web Game**            | Complete offline game vs bot                 | Human can play and finish 10-turn game in browser. |
-| 2.4 | **Responsive Design**                  | Works on desktop and mobile browsers         | Game playable on phone browsers and desktop.   |
+| ID  | Task                             | Deliverable                              | Checkpoint                                         |
+| --- | -------------------------------- | ---------------------------------------- | -------------------------------------------------- |
+| 2.1 | **React Component Library**      | Reusable game components with TypeScript | Storybook: displays normal/key/locked letters.     |
+| 2.2 | **Alphabet Grid & Word Display** | Interactive letter grid and word trail   | UI responds to clicks, shows game state.           |
+| 2.3 | **Single‑Player Web Game**       | Complete offline game vs bot             | Human can play and finish 10-turn game in browser. |
+| 2.4 | **Responsive Design**            | Works on desktop and mobile browsers     | Game playable on phone browsers and desktop.       |
 
 ### Phase 3 – Challenge Mode ✅ **COMPLETE**
 
-| ID  | Task                              | Deliverable                                            | Checkpoint                                           |
-| --- | --------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
+| ID  | Task                                  | Deliverable                                               | Checkpoint                                           |
+| --- | ------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------- |
 | 3.1 | **Challenge Engine (Cross-Platform)** | Daily puzzle generation with cross-platform compatibility | Challenge engine generates consistent daily puzzles. |
-| 3.2 | **Challenge Storage System**      | IndexedDB persistence for challenge progress          | Challenge state persists across browser sessions.   |
-| 3.3 | **Challenge UI Components**       | React components for challenge gameplay               | Challenge mode playable with proper UI feedback.    |
-| 3.4 | **Menu Integration**              | Challenge menu items and navigation                   | "vs world" button launches challenge mode.          |
+| 3.2 | **Challenge Storage System**          | IndexedDB persistence for challenge progress              | Challenge state persists across browser sessions.    |
+| 3.3 | **Challenge UI Components**           | React components for challenge gameplay                   | Challenge mode playable with proper UI feedback.     |
+| 3.4 | **Menu Integration**                  | Challenge menu items and navigation                       | "vs world" button launches challenge mode.           |
 
 ### Phase 4 – Online Multiplayer (Web) ⏳ **PENDING**
 
-| ID  | Task                                   | Deliverable                                                          | Checkpoint                                           |
-| --- | -------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------- |
-| 4.1 | **Auth Flow (Supabase EmailLink)**    | `/auth` pages, session persistence                                  | Signup/login works in browser.                      |
-| 4.2 | **Game CRUD API**                     | `supabase` RPC + hooks: create/join, list games                     | API tests return 200; RLS prevents cross‑access.   |
-| 4.3 | **Realtime Turn Sync**                | Subscriptions push opponent moves; 48‑h timer job                   | Two browser tabs stay in sync under 1 s.           |
-| 4.4 | **Avatar & Score HUD**                | Upload to Supabase Storage; display top‑corners                     | PNG uploads within 100 kB; shows in game.          |
+| ID  | Task                               | Deliverable                                       | Checkpoint                                       |
+| --- | ---------------------------------- | ------------------------------------------------- | ------------------------------------------------ |
+| 4.1 | **Auth Flow (Supabase EmailLink)** | `/auth` pages, session persistence                | Signup/login works in browser.                   |
+| 4.2 | **Game CRUD API**                  | `supabase` RPC + hooks: create/join, list games   | API tests return 200; RLS prevents cross‑access. |
+| 4.3 | **Realtime Turn Sync**             | Subscriptions push opponent moves; 48‑h timer job | Two browser tabs stay in sync under 1 s.         |
+| 4.4 | **Avatar & Score HUD**             | Upload to Supabase Storage; display top‑corners   | PNG uploads within 100 kB; shows in game.        |
 
 ### Phase 5 – Themes & Unlocks 🔄 **IN PROGRESS**
 
-| ID  | Task                              | Deliverable                                            | Checkpoint                                           |
-| --- | --------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
-| 5.1 | **Unlock Framework** ✅           | Achievement system with cross-platform persistence    | Unit: unlock fires when word == "BROWN".            |
-| 5.2 | **Theme Provider + Brown Theme** ✅ | Context to swap colors; toggle in menu              | Selecting theme re‑paints grid instantly.           |
-| 5.3 | **Six‑Letter Attribute** ⏳       | Config to set initial word length 6                   | New game w/ attribute starts with 6‑letter seed.   |
+| ID  | Task                                | Deliverable                                        | Checkpoint                                       |
+| --- | ----------------------------------- | -------------------------------------------------- | ------------------------------------------------ |
+| 5.1 | **Unlock Framework** ✅             | Achievement system with cross-platform persistence | Unit: unlock fires when word == "BROWN".         |
+| 5.2 | **Theme Provider + Brown Theme** ✅ | Context to swap colors; toggle in menu             | Selecting theme re‑paints grid instantly.        |
+| 5.3 | **Six‑Letter Attribute** ⏳         | Config to set initial word length 6                | New game w/ attribute starts with 6‑letter seed. |
 
 ### Phase 5.5 – Tutorials ⏳ **PENDING**
 
-| ID   | Task                         | Deliverable                                            | Checkpoint                                           |
-| ---- | ---------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
-| 5.5  | **Base Tutorial**            | Step-by-step tutorial building UI for each step       | New users can complete interactive tutorial.        |
-| 5.6  | **Challenge Tutorial**       | Tutorial explaining challenge mode                     | Users understand challenge mode mechanics.          |
+| ID  | Task                   | Deliverable                                     | Checkpoint                                   |
+| --- | ---------------------- | ----------------------------------------------- | -------------------------------------------- |
+| 5.5 | **Base Tutorial**      | Step-by-step tutorial building UI for each step | New users can complete interactive tutorial. |
+| 5.6 | **Challenge Tutorial** | Tutorial explaining challenge mode              | Users understand challenge mode mechanics.   |
 
 ### Phase 6 – Web Polish & Accessibility ⏳ **PENDING**
 
-| ID  | Task                              | Deliverable                                            | Checkpoint                                           |
-| --- | --------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
-| 6.1 | **Colour‑blind Palettes**        | Two alt palettes w/ settings toggle                   | Sim Daltonism test passes WCAG contrast.            |
-| 6.2 | **Web Audio & Haptics**          | Click sounds + vibration API for mobile browsers      | Audio plays on moves; mobile browsers vibrate.      |
-| 6.3 | **E2E Web Testing**              | Playwright tests covering full game flow              | CI tests pass on Chrome, Firefox, Safari.           |
+| ID  | Task                      | Deliverable                                      | Checkpoint                                     |
+| --- | ------------------------- | ------------------------------------------------ | ---------------------------------------------- |
+| 6.1 | **Colour‑blind Palettes** | Two alt palettes w/ settings toggle              | Sim Daltonism test passes WCAG contrast.       |
+| 6.2 | **Web Audio & Haptics**   | Click sounds + vibration API for mobile browsers | Audio plays on moves; mobile browsers vibrate. |
+| 6.3 | **E2E Web Testing**       | Playwright tests covering full game flow         | CI tests pass on Chrome, Firefox, Safari.      |
 
 ### Phase 7 – Web Release Prep ⏳ **PENDING**
 
-| ID  | Task                              | Deliverable                                            | Checkpoint                                           |
-| --- | --------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
-| 7.1 | **PWA Features**                  | Service worker, offline play, install prompt          | Game works offline; can be "installed" on mobile.   |
-| 7.2 | **Web Performance Optimization** | Bundle size < 1MB, loading < 3s                       | Lighthouse score > 90 on all metrics.               |
-| 7.3 | **Analytics Integration**         | PostHog events: session_start, turn_commit, unlock    | Dashboard shows live web events.                    |
-| 7.4 | **Production Launch**             | Custom domain, monitoring, error tracking             | Web game live at production URL.                    |
+| ID  | Task                             | Deliverable                                        | Checkpoint                                        |
+| --- | -------------------------------- | -------------------------------------------------- | ------------------------------------------------- |
+| 7.1 | **PWA Features**                 | Service worker, offline play, install prompt       | Game works offline; can be "installed" on mobile. |
+| 7.2 | **Web Performance Optimization** | Bundle size < 1MB, loading < 3s                    | Lighthouse score > 90 on all metrics.             |
+| 7.3 | **Analytics Integration**        | PostHog events: session_start, turn_commit, unlock | Dashboard shows live web events.                  |
+| 7.4 | **Production Launch**            | Custom domain, monitoring, error tracking          | Web game live at production URL.                  |
 
 ### Phase 8 – Monetization & Live‑Ops (Web) ⏳ **PENDING**
 
-| ID  | Task                              | Deliverable                                            | Checkpoint                                           |
-| --- | --------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
-| 8.1 | **Web Payment Integration**       | Stripe/PayPal for theme purchases                      | Sandbox purchase completes; restores properly.      |
-| 8.2 | **Global Leaderboard**           | Supabase function ranking by ELO                      | Top‑100 endpoint returns ≤ 200 ms.                  |
-| 8.3 | **Admin Dashboard**               | Moderation tools, user management                     | Admin can manage users and content.                 |
+| ID  | Task                        | Deliverable                       | Checkpoint                                     |
+| --- | --------------------------- | --------------------------------- | ---------------------------------------------- |
+| 8.1 | **Web Payment Integration** | Stripe/PayPal for theme purchases | Sandbox purchase completes; restores properly. |
+| 8.2 | **Global Leaderboard**      | Supabase function ranking by ELO  | Top‑100 endpoint returns ≤ 200 ms.             |
+| 8.3 | **Admin Dashboard**         | Moderation tools, user management | Admin can manage users and content.            |
 
 ### Phase 9 – Native Mobile Expansion (After Web Success) ⏳ **PENDING**
 
-| ID  | Task                              | Deliverable                                            | Checkpoint                                           |
-| --- | --------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
-| 9.1 | **React Native Setup**           | Expo/RN app using shared game engine                  | Native app boots with web game logic.               |
-| 9.2 | **Native UI Adaptation**         | Platform-specific components and navigation           | Native feel while using same game engine.           |
-| 9.3 | **App Store Optimization**       | Icons, screenshots, store listings                    | Apps pass review on Google Play and App Store.      |
-| 9.4 | **Native-Specific Features**     | Push notifications, native sharing                    | Features that enhance mobile experience.            |
+| ID  | Task                         | Deliverable                                 | Checkpoint                                     |
+| --- | ---------------------------- | ------------------------------------------- | ---------------------------------------------- |
+| 9.1 | **React Native Setup**       | Expo/RN app using shared game engine        | Native app boots with web game logic.          |
+| 9.2 | **Native UI Adaptation**     | Platform-specific components and navigation | Native feel while using same game engine.      |
+| 9.3 | **App Store Optimization**   | Icons, screenshots, store listings          | Apps pass review on Google Play and App Store. |
+| 9.4 | **Native-Specific Features** | Push notifications, native sharing          | Features that enhance mobile experience.       |
 
 ---
 

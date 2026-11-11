@@ -1,6 +1,6 @@
 /**
  * Animation System Index
- * 
+ *
  * Main entry point for the WordPlay animation system.
  * Exports all types, providers, hooks, and themes.
  */
@@ -15,14 +15,14 @@ export type {
   AnimationEvent,
   AnimationTrigger,
   ComponentAnimations,
-  Keyframe
+  Keyframe,
 } from './types';
 
 // Animation Provider and Context
 export {
   AnimationProvider,
   useAnimationContext,
-  type AnimationProviderProps
+  type AnimationProviderProps,
 } from './AnimationProvider';
 
 // Animation Hooks
@@ -33,7 +33,7 @@ export {
   useScoreDisplayAnimations,
   useWordTrailAnimations,
   useAlphabetGridAnimations,
-  useBackgroundAnimations
+  useBackgroundAnimations,
 } from './useAnimations';
 
 // Animation Themes
@@ -42,5 +42,5 @@ export {
   fallingTheme,
   allThemes,
   getThemeByName,
-  getDefaultTheme
-} from './themes'; 
+  getDefaultTheme,
+} from './themes';

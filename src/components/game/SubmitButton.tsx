@@ -18,10 +18,10 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
   className = '',
   isPassMode = false,
   isInvalid,
-  isPassConfirming
+  isPassConfirming,
 }) => {
   const canClick = (isValid || isPassMode) && !disabled && onClick;
-  
+
   const handleClick = () => {
     if (canClick) {
       onClick!();
@@ -37,7 +37,9 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
 
   const icon = isInvalid || isPassConfirming ? '×' : '✓';
   const buttonClass = `submit-button ${
-    isInvalid || isPassConfirming ? 'submit-button--invalid' : 'submit-button--valid'
+    isInvalid || isPassConfirming
+      ? 'submit-button--invalid'
+      : 'submit-button--valid'
   } ${className}`.trim();
 
   return (
@@ -51,4 +53,4 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
       {icon}
     </button>
   );
-}; 
+};

@@ -17,10 +17,13 @@ export interface ThoughtsOverlayProps {
 
 const THOUGHTS: string[] = [
   'Dark mode is my favorite. So it is hard to find.',
-  'Unlocks will never alter points or give advantage.'
+  'Unlocks will never alter points or give advantage.',
 ];
 
-export const ThoughtsOverlay: React.FC<ThoughtsOverlayProps> = ({ isVisible, onClose }) => {
+export const ThoughtsOverlay: React.FC<ThoughtsOverlayProps> = ({
+  isVisible,
+  onClose,
+}) => {
   if (!isVisible) return null;
 
   return (
@@ -31,7 +34,6 @@ export const ThoughtsOverlay: React.FC<ThoughtsOverlayProps> = ({ isVisible, onC
       aria-labelledby="thoughts-overlay-title"
     >
       <div className="thoughts-overlay__content">
-
         <ol className="thoughts-overlay__list">
           {THOUGHTS.map((thought, index) => (
             <li key={index} className="thoughts-overlay__item">

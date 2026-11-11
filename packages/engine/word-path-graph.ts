@@ -47,7 +47,10 @@ export interface WordPathGraphEngine {
    * non-empty) are marked as seen. An edge is only created between them if
    * they differ (a pass, where the word is unchanged, adds no edge).
    */
-  recordTransition(previousWord: string, newWord: string): Promise<WordPathGraph>;
+  recordTransition(
+    previousWord: string,
+    newWord: string
+  ): Promise<WordPathGraph>;
   getConnectedWords(word: string): string[];
   hasSeenWord(word: string): boolean;
   /** Edge pairs not yet marked as synced, for uploading to the server. */
@@ -63,7 +66,7 @@ export function getInitialWordPathGraph(): WordPathGraph {
     syncedEdgeKeys: {},
     totalWordsSeen: 0,
     totalEdges: 0,
-    lastUpdatedAt: null
+    lastUpdatedAt: null,
   };
 }
 
@@ -94,10 +97,14 @@ function withDefaults(loaded: Partial<WordPathGraph>): WordPathGraph {
 
 /** Parses/validates a loaded value, falling back to a fresh graph if invalid. */
 export function coerceWordPathGraph(loaded: unknown): WordPathGraph {
-  return isValidWordPathGraph(loaded) ? withDefaults(loaded) : getInitialWordPathGraph();
+  return isValidWordPathGraph(loaded)
+    ? withDefaults(loaded)
+    : getInitialWordPathGraph();
 }
 
-export function createWordPathGraphEngine(dependencies: WordPathGraphDependencies): WordPathGraphEngine {
+export function createWordPathGraphEngine(
+  dependencies: WordPathGraphDependencies
+): WordPathGraphEngine {
   let currentGraph: WordPathGraph | null = null;
   const getTimestamp = dependencies.getTimestamp ?? (() => Date.now());
 
@@ -106,7 +113,10 @@ export function createWordPathGraphEngine(dependencies: WordPathGraphDependencie
       try {
         currentGraph = await dependencies.loadState();
       } catch (error) {
-        console.warn('Failed to load word path graph, using initial state:', error);
+        console.warn(
+          'Failed to load word path graph, using initial state:',
+          error
+        );
         currentGraph = getInitialWordPathGraph();
       }
     }
@@ -144,7 +154,10 @@ export function createWordPathGraphEngine(dependencies: WordPathGraphDependencie
     }
   }
 
-  async function recordTransition(previousWord: string, newWord: string): Promise<WordPathGraph> {
+  async function recordTransition(
+    previousWord: string,
+    newWord: string
+  ): Promise<WordPathGraph> {
     const graph = await ensureStateLoaded();
 
     const prev = normalizeWord(previousWord || '');
@@ -196,7 +209,9 @@ export function createWordPathGraphEngine(dependencies: WordPathGraphDependencie
     return result;
   }
 
-  async function markEdgesSynced(edges: Array<[string, string]>): Promise<void> {
+  async function markEdgesSynced(
+    edges: Array<[string, string]>
+  ): Promise<void> {
     const graph = await ensureStateLoaded();
     for (const [a, b] of edges) {
       graph.syncedEdgeKeys[edgeKey(a, b)] = true;
@@ -217,6 +232,6 @@ export function createWordPathGraphEngine(dependencies: WordPathGraphDependencie
     hasSeenWord,
     getUnsyncedEdges,
     markEdgesSynced,
-    reset
+    reset,
   };
 }

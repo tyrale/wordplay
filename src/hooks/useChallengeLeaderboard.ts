@@ -16,7 +16,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   fetchChallengeLeaderboard,
-  type LeaderboardEntry
+  type LeaderboardEntry,
 } from '../adapters/supabaseChallengeLeaderboardAdapter';
 
 export interface LocalChallengeResult {
@@ -54,7 +54,9 @@ export function getTodayChallengeDate(): string {
 /** Reads today's persisted challenge state from localStorage. Returns null
  *  if there is no state yet (the player hasn't opened today's challenge) or
  *  if the stored JSON is malformed. */
-export function readLocalChallengeResult(date: string): LocalChallengeResult | null {
+export function readLocalChallengeResult(
+  date: string
+): LocalChallengeResult | null {
   try {
     const stored = localStorage.getItem(`wordplay-challenge-${date}`);
     if (!stored) return null;
@@ -65,21 +67,25 @@ export function readLocalChallengeResult(date: string): LocalChallengeResult | n
       startWord: parsed.startWord ?? '',
       targetWord: parsed.targetWord ?? '',
       completed: !!parsed.completed,
-      stepCount: typeof parsed.stepCount === 'number' ? parsed.stepCount : 0
+      stepCount: typeof parsed.stepCount === 'number' ? parsed.stepCount : 0,
     };
   } catch {
     return null;
   }
 }
 
-export function useChallengeLeaderboard(challengeDate: string | null): ChallengeLeaderboardState {
+export function useChallengeLeaderboard(
+  challengeDate: string | null
+): ChallengeLeaderboardState {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [localResult, setLocalResult] = useState<LocalChallengeResult | null>(null);
+  const [localResult, setLocalResult] = useState<LocalChallengeResult | null>(
+    null
+  );
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   useEffect(() => {
     if (!challengeDate) return;
@@ -94,12 +100,12 @@ export function useChallengeLeaderboard(challengeDate: string | null): Challenge
     setError(null);
 
     fetchChallengeLeaderboard(challengeDate)
-      .then(result => {
+      .then((result) => {
         if (cancelled) return;
         setEntries(result.entries);
         setIsLoading(false);
       })
-      .catch(err => {
+      .catch((err) => {
         if (cancelled) return;
         console.warn('Failed to fetch challenge leaderboard:', err);
         setError('Failed to load leaderboard');
@@ -116,6 +122,6 @@ export function useChallengeLeaderboard(challengeDate: string | null): Challenge
     isLoading,
     error,
     localResult,
-    refresh
+    refresh,
   };
 }

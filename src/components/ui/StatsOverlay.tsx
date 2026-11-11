@@ -42,7 +42,10 @@ function topEntry(counts: Record<string, number>): string {
   return `${letter} (${count}x)`;
 }
 
-export const StatsOverlay: React.FC<StatsOverlayProps> = ({ isVisible, onClose }) => {
+export const StatsOverlay: React.FC<StatsOverlayProps> = ({
+  isVisible,
+  onClose,
+}) => {
   const { stats } = usePlayerStats();
 
   if (!isVisible) return null;
@@ -58,7 +61,7 @@ export const StatsOverlay: React.FC<StatsOverlayProps> = ({ isVisible, onClose }
     { label: 'Letters removed', value: String(stats.totalLettersRemoved) },
     { label: 'Rearranges', value: String(stats.totalRearranges) },
     { label: 'Substitutions', value: String(stats.totalSubstitutions) },
-    { label: 'Most used letter', value: topEntry(stats.letterUsageCounts) }
+    { label: 'Most used letter', value: topEntry(stats.letterUsageCounts) },
   ];
 
   const gameStats: StatRow[] = [
@@ -74,47 +77,88 @@ export const StatsOverlay: React.FC<StatsOverlayProps> = ({ isVisible, onClose }
     { label: 'Shortest game (turns)', value: String(stats.shortestGameTurns) },
     { label: 'Total score', value: String(stats.totalScore) },
     { label: 'Highest game score', value: String(stats.highestGameScore) },
-    { label: 'Highest single move score', value: String(stats.highestSingleMoveScore) },
+    {
+      label: 'Highest single move score',
+      value: String(stats.highestSingleMoveScore),
+    },
     { label: 'Total play time', value: formatDuration(stats.totalPlayTimeMs) },
-    { label: 'Longest game duration', value: formatDuration(stats.longestGameDurationMs) },
-    { label: 'Fastest win', value: stats.fastestWinDurationMs > 0 ? formatDuration(stats.fastestWinDurationMs) : 'none yet' }
+    {
+      label: 'Longest game duration',
+      value: formatDuration(stats.longestGameDurationMs),
+    },
+    {
+      label: 'Fastest win',
+      value:
+        stats.fastestWinDurationMs > 0
+          ? formatDuration(stats.fastestWinDurationMs)
+          : 'none yet',
+    },
   ];
 
   const challengeStats: StatRow[] = [
     { label: 'Challenges played', value: String(stats.challengesPlayed) },
     { label: 'Challenges completed', value: String(stats.challengesCompleted) },
     { label: 'Challenges failed', value: String(stats.challengesFailed) },
-    { label: 'Current completion streak', value: String(stats.currentChallengeStreak) },
-    { label: 'Longest completion streak', value: String(stats.longestChallengeStreak) },
-    { label: 'Shortest challenge (steps)', value: String(stats.shortestChallengeSteps) },
-    { label: 'Longest challenge (steps)', value: String(stats.longestChallengeSteps) },
-    { label: 'Fewest steps to complete', value: stats.fewestStepsToComplete > 0 ? String(stats.fewestStepsToComplete) : 'none yet' }
+    {
+      label: 'Current completion streak',
+      value: String(stats.currentChallengeStreak),
+    },
+    {
+      label: 'Longest completion streak',
+      value: String(stats.longestChallengeStreak),
+    },
+    {
+      label: 'Shortest challenge (steps)',
+      value: String(stats.shortestChallengeSteps),
+    },
+    {
+      label: 'Longest challenge (steps)',
+      value: String(stats.longestChallengeSteps),
+    },
+    {
+      label: 'Fewest steps to complete',
+      value:
+        stats.fewestStepsToComplete > 0
+          ? String(stats.fewestStepsToComplete)
+          : 'none yet',
+    },
   ];
 
-  const botStats: StatRow[] = Object.entries(stats.botRecords).map(([botId, record]) => ({
-    label: botDisplayNames[botId] || botId,
-    value: `${record.wins}W - ${record.losses}L (${record.gamesPlayed} played)`
-  }));
+  const botStats: StatRow[] = Object.entries(stats.botRecords).map(
+    ([botId, record]) => ({
+      label: botDisplayNames[botId] || botId,
+      value: `${record.wins}W - ${record.losses}L (${record.gamesPlayed} played)`,
+    })
+  );
 
   const keyLetterStats: StatRow[] = [
-    { label: 'Most used key letter', value: topEntry(stats.keyLetterUsageCounts) },
-    { label: 'Key letter points', value: String(stats.totalKeyLetterPoints) }
+    {
+      label: 'Most used key letter',
+      value: topEntry(stats.keyLetterUsageCounts),
+    },
+    { label: 'Key letter points', value: String(stats.totalKeyLetterPoints) },
   ];
 
   const metaStats: StatRow[] = [
     { label: 'Unlocks earned', value: String(stats.totalUnlocksEarned) },
     { label: 'First played', value: formatDate(stats.firstPlayedAt) },
     { label: 'Last played', value: formatDate(stats.lastPlayedAt) },
-    { label: 'Current daily streak', value: `${stats.currentDailyStreak} day(s)` },
-    { label: 'Longest daily streak', value: `${stats.longestDailyStreak} day(s)` }
+    {
+      label: 'Current daily streak',
+      value: `${stats.currentDailyStreak} day(s)`,
+    },
+    {
+      label: 'Longest daily streak',
+      value: `${stats.longestDailyStreak} day(s)`,
+    },
   ];
 
-  const renderSection = (title: string, rows: StatRow[]) => (
+  const renderSection = (title: string, rows: StatRow[]) =>
     rows.length === 0 ? null : (
       <div className="stats-overlay__section" key={title}>
         <h3 className="stats-overlay__section-title">{title}</h3>
         <ul className="stats-overlay__list">
-          {rows.map(row => (
+          {rows.map((row) => (
             <li key={row.label} className="stats-overlay__item">
               <span className="stats-overlay__item-label">{row.label}</span>
               <span className="stats-overlay__item-value">{row.value}</span>
@@ -122,8 +166,7 @@ export const StatsOverlay: React.FC<StatsOverlayProps> = ({ isVisible, onClose }
           ))}
         </ul>
       </div>
-    )
-  );
+    );
 
   return (
     <div

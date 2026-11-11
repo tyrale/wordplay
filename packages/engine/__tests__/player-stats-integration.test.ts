@@ -12,14 +12,20 @@ import { LocalGameStateManagerWithDependencies as LocalGameStateManager } from '
 import { createTestAdapter } from '../../../src/adapters/testAdapter';
 import { createPlayerStatsEngine } from '../player-stats';
 import { getInitialPlayerStats } from '../player-stats-definitions';
-import type { PlayerStatsDependencies, PlayerStats, GameConfig } from '../interfaces';
+import type {
+  PlayerStatsDependencies,
+  PlayerStats,
+  GameConfig,
+} from '../interfaces';
 
 function createInMemoryPlayerStatsDependencies(): PlayerStatsDependencies {
   let state: PlayerStats = getInitialPlayerStats();
   return {
     loadState: async () => state,
-    saveState: async (newState: PlayerStats) => { state = newState; },
-    getTimestamp: () => Date.now()
+    saveState: async (newState: PlayerStats) => {
+      state = newState;
+    },
+    getTimestamp: () => Date.now(),
   };
 }
 
@@ -27,14 +33,14 @@ describe('Player Stats + GameStateManager Integration', () => {
   it('records a completed bot game exactly as InteractiveGame.tsx would', async () => {
     const testAdapter = createTestAdapter();
     testAdapter.reset();
-    ['CAT', 'CATS', 'BATS', 'BAT'].forEach(w => testAdapter.addWord(w));
+    ['CAT', 'CATS', 'BATS', 'BAT'].forEach((w) => testAdapter.addWord(w));
 
     const config: GameConfig = {
       initialWord: 'CAT',
       allowBotPlayer: true,
       // 1 round = each of the 2 players (human + bot) gets exactly one turn.
       maxTurns: 1,
-      botId: 'test-bot'
+      botId: 'test-bot',
     };
     const dependencies = testAdapter.getGameDependencies();
     const gameManager = new LocalGameStateManager(dependencies, config);
@@ -54,15 +60,18 @@ describe('Player Stats + GameStateManager Integration', () => {
     // Mirror InteractiveGame.tsx's onGameStateChange 'finished' branch exactly
     const localId = 'human';
     const opponentId = 'bot';
-    const humanScore = state.players.find(p => p.id === localId)?.score || 0;
-    const botScore = state.players.find(p => p.id === opponentId)?.score || 0;
+    const humanScore = state.players.find((p) => p.id === localId)?.score || 0;
+    const botScore = state.players.find((p) => p.id === opponentId)?.score || 0;
     const won = state.winner?.id === localId;
     const tied = humanScore === botScore;
-    const gameDurationMs = state.gameStartTime && state.lastMoveTime
-      ? state.lastMoveTime - state.gameStartTime
-      : null;
+    const gameDurationMs =
+      state.gameStartTime && state.lastMoveTime
+        ? state.lastMoveTime - state.gameStartTime
+        : null;
 
-    const statsEngine = createPlayerStatsEngine(createInMemoryPlayerStatsDependencies());
+    const statsEngine = createPlayerStatsEngine(
+      createInMemoryPlayerStatsDependencies()
+    );
 
     // InteractiveGame.tsx records each of the local player's moves live, as
     // they happen, rather than waiting for the game to finish.
@@ -81,7 +90,7 @@ describe('Player Stats + GameStateManager Integration', () => {
       totalTurns: state.totalMoves,
       finalScore: humanScore,
       gameDurationMs,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     expect(result.gamesPlayed).toBe(1);

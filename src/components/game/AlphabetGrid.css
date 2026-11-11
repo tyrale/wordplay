@@ -19,15 +19,13 @@
   justify-content: center;
 }
 
-
-
 /* Responsive adjustments */
 @container app (max-width: 768px) {
   .alphabet-grid {
     gap: calc(var(--spacing-xs, 6px) / 2);
   }
-  
+
   .alphabet-grid__row {
     gap: calc(var(--spacing-xs, 6px) / 2);
   }
-} 
+}

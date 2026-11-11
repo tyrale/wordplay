@@ -43,7 +43,7 @@ export interface WordTrailProps {
   isChallengeMode?: boolean;
 }
 
-export const WordTrail: React.FC<WordTrailProps> = ({ 
+export const WordTrail: React.FC<WordTrailProps> = ({
   words = [],
   moves = [],
   showScores = false,
@@ -53,47 +53,50 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   className = '',
   startWord,
   targetWord,
-  isChallengeMode = false
+  isChallengeMode = false,
 }) => {
   // Unused parameters to avoid TS warnings
   void showTurnNumbers;
   void maxVisible;
-  
+
   const { getDisplayWord } = useVanityFilter();
-  
+
   // ALWAYS declare all hooks at the top level - no conditional hooks!
   const playedWordsRef = useRef<HTMLDivElement>(null);
   const challengeContainerRef = useRef<HTMLDivElement>(null);
   const regularContainerRef = useRef<HTMLDivElement>(null);
-  
+
   // Use moves if available, otherwise fall back to simple words
-  const displayData = moves.length > 0 
-    ? moves.map((move, index) => ({
-        word: move.word,
-        score: move.score,
-        player: move.player,
-        opponentName: move.opponentName,
-        turnNumber: move.turnNumber || index + 1,
-        actions: move.actions || [],
-        keyLetters: move.keyLetters || [],
-        scoreBreakdown: move.scoreBreakdown,
-        maskWord: move.maskWord || false
-      }))
-    : words.map((word, index) => ({
-        word,
-        score: 0,
-        player: undefined,
-        opponentName: undefined,
-        turnNumber: index + 1,
-        actions: [],
-        keyLetters: [],
-        scoreBreakdown: undefined,
-        maskWord: false
-      }));
+  const displayData =
+    moves.length > 0
+      ? moves.map((move, index) => ({
+          word: move.word,
+          score: move.score,
+          player: move.player,
+          opponentName: move.opponentName,
+          turnNumber: move.turnNumber || index + 1,
+          actions: move.actions || [],
+          keyLetters: move.keyLetters || [],
+          scoreBreakdown: move.scoreBreakdown,
+          maskWord: move.maskWord || false,
+        }))
+      : words.map((word, index) => ({
+          word,
+          score: 0,
+          player: undefined,
+          opponentName: undefined,
+          turnNumber: index + 1,
+          actions: [],
+          keyLetters: [],
+          scoreBreakdown: undefined,
+          maskWord: false,
+        }));
 
   // Challenge mode data processing
-  const playedMoves = isChallengeMode 
-    ? displayData.filter(item => item.player !== 'start' && item.player !== 'target')
+  const playedMoves = isChallengeMode
+    ? displayData.filter(
+        (item) => item.player !== 'start' && item.player !== 'target'
+      )
     : [];
   const hasPlayedWords = playedMoves.length > 0;
   const reversedPlayedMoves = [...playedMoves].reverse();
@@ -110,7 +113,11 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   }, [isChallengeMode, playedMoves.length, hasPlayedWords]);
 
   useEffect(() => {
-    if (!isChallengeMode && regularContainerRef.current && displayData.length > 0) {
+    if (
+      !isChallengeMode &&
+      regularContainerRef.current &&
+      displayData.length > 0
+    ) {
       const container = regularContainerRef.current;
       requestAnimationFrame(() => {
         container.scrollTop = 0;
@@ -125,12 +132,18 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   };
 
   // Render a word with key letter highlighting
-  const renderWordWithHighlights = (word: string, keyLetters: string[], masked: boolean = false) => {
+  const renderWordWithHighlights = (
+    word: string,
+    keyLetters: string[],
+    masked: boolean = false
+  ) => {
     // Apply the ninja mask (dashes) if requested, otherwise the normal
     // vanity filtering - completed words in trail are not being edited
-    const displayWord = masked ? maskWordAsDashes(word) : getDisplayWord(word, { isEditing: false });
+    const displayWord = masked
+      ? maskWordAsDashes(word)
+      : getDisplayWord(word, { isEditing: false });
     const letters = displayWord.toUpperCase().split('');
-    
+
     return (
       <span className="word-trail__word-container">
         {letters.map((letter, index) => {
@@ -149,11 +162,15 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   };
 
   // Render a word with start word positioned inside the first letter
-  const renderWordWithStartWord = (word: string, keyLetters: string[], startWord: string) => {
+  const renderWordWithStartWord = (
+    word: string,
+    keyLetters: string[],
+    startWord: string
+  ) => {
     // Apply vanity filtering to the main word
     const displayWord = getDisplayWord(word, { isEditing: false });
     const letters = displayWord.toUpperCase().split('');
-    
+
     return (
       <span className="word-trail__word-container">
         {letters.map((letter, index) => {
@@ -169,7 +186,9 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                   <span className="word-trail__word word-trail__word--start">
                     {renderWordWithHighlights(startWord, [])}
                   </span>
-                  <span className="word-trail__arrow word-trail__arrow--right">→</span>
+                  <span className="word-trail__arrow word-trail__arrow--right">
+                    →
+                  </span>
                 </div>
               )}
               {letter}
@@ -181,11 +200,15 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   };
 
   // Render a word with target word positioned inside the last letter
-  const renderWordWithTargetWord = (word: string, keyLetters: string[], targetWord: string) => {
+  const renderWordWithTargetWord = (
+    word: string,
+    keyLetters: string[],
+    targetWord: string
+  ) => {
     // Apply vanity filtering to the main word
     const displayWord = getDisplayWord(word, { isEditing: false });
     const letters = displayWord.toUpperCase().split('');
-    
+
     return (
       <span className="word-trail__word-container">
         {letters.map((letter, index) => {
@@ -199,7 +222,9 @@ export const WordTrail: React.FC<WordTrailProps> = ({
               {letter}
               {isLastLetter && (
                 <div className="word-trail__target-word">
-                  <span className="word-trail__arrow word-trail__arrow--left">←</span>
+                  <span className="word-trail__arrow word-trail__arrow--left">
+                    ←
+                  </span>
                   <span className="word-trail__word word-trail__word--target">
                     {renderWordWithHighlights(targetWord, [])}
                   </span>
@@ -213,11 +238,16 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   };
 
   // Render a word with both start and target words positioned around it (for single-word case)
-  const renderWordWithBothStartAndTargetWord = (word: string, keyLetters: string[], startWord: string, targetWord: string) => {
+  const renderWordWithBothStartAndTargetWord = (
+    word: string,
+    keyLetters: string[],
+    startWord: string,
+    targetWord: string
+  ) => {
     // Apply vanity filtering to the main word
     const displayWord = getDisplayWord(word, { isEditing: false });
     const letters = displayWord.toUpperCase().split('');
-    
+
     return (
       <span className="word-trail__word-container">
         {letters.map((letter, index) => {
@@ -234,13 +264,17 @@ export const WordTrail: React.FC<WordTrailProps> = ({
                   <span className="word-trail__word word-trail__word--start">
                     {renderWordWithHighlights(startWord, [])}
                   </span>
-                  <span className="word-trail__arrow word-trail__arrow--right">→</span>
+                  <span className="word-trail__arrow word-trail__arrow--right">
+                    →
+                  </span>
                 </div>
               )}
               {letter}
               {isLastLetter && (
                 <div className="word-trail__target-word">
-                  <span className="word-trail__arrow word-trail__arrow--left">←</span>
+                  <span className="word-trail__arrow word-trail__arrow--left">
+                    ←
+                  </span>
                   <span className="word-trail__word word-trail__word--target">
                     {renderWordWithHighlights(targetWord, [])}
                   </span>
@@ -256,139 +290,211 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   // Challenge mode rendering
   if (isChallengeMode && startWord && targetWord) {
     return (
-        <div className={`word-trail word-trail--challenge ${className}`.trim()} role="region" aria-label="Challenge word trail">
-          <div className="word-trail__challenge-container" ref={challengeContainerRef}>
-            {/* Played words trail with absolutely positioned start/target words */}
-            <div className="word-trail__played-words" ref={playedWordsRef}>
-              {hasPlayedWords ? (
-                <div className="word-trail__container">
-                  {reversedPlayedMoves.map((item, index) => {
-                    const isFirstWord = index === reversedPlayedMoves.length - 1;
-                    const isLastWord = index === 0;
-                    
-                    return (
-                      <div 
-                        key={`${item.word}-${item.turnNumber}-${index}`}
-                        className={[
-                          'word-trail__line',
-                          onWordClick && 'word-trail__line--clickable',
-                          item.player && `word-trail__line--player-${item.player}`,
-                          isFirstWord && 'word-trail__line--first',
-                          isLastWord && 'word-trail__line--last'
-                        ].filter(Boolean).join(' ')}
-                        role="listitem"
+      <div
+        className={`word-trail word-trail--challenge ${className}`.trim()}
+        role="region"
+        aria-label="Challenge word trail"
+      >
+        <div
+          className="word-trail__challenge-container"
+          ref={challengeContainerRef}
+        >
+          {/* Played words trail with absolutely positioned start/target words */}
+          <div className="word-trail__played-words" ref={playedWordsRef}>
+            {hasPlayedWords ? (
+              <div className="word-trail__container">
+                {reversedPlayedMoves.map((item, index) => {
+                  const isFirstWord = index === reversedPlayedMoves.length - 1;
+                  const isLastWord = index === 0;
+
+                  return (
+                    <div
+                      key={`${item.word}-${item.turnNumber}-${index}`}
+                      className={[
+                        'word-trail__line',
+                        onWordClick && 'word-trail__line--clickable',
+                        item.player &&
+                          `word-trail__line--player-${item.player}`,
+                        isFirstWord && 'word-trail__line--first',
+                        isLastWord && 'word-trail__line--last',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      role="listitem"
+                    >
+                      <span
+                        className="word-trail__word"
+                        onClick={
+                          onWordClick
+                            ? () => handleWordClick(item.word, index)
+                            : undefined
+                        }
+                        role={onWordClick ? 'button' : undefined}
+                        tabIndex={onWordClick ? 0 : undefined}
+                        aria-label={`Word: ${item.word}${showScores ? `, ${item.score} points` : ''}`}
                       >
-                        <span 
-                          className="word-trail__word"
-                          onClick={onWordClick ? () => handleWordClick(item.word, index) : undefined}
-                          role={onWordClick ? 'button' : undefined}
-                          tabIndex={onWordClick ? 0 : undefined}
-                          aria-label={`Word: ${item.word}${showScores ? `, ${item.score} points` : ''}`}
-                        >
-                          {isFirstWord && isLastWord
-                            ? renderWordWithBothStartAndTargetWord(item.word, item.keyLetters, startWord, targetWord)
-                            : isFirstWord 
-                            ? renderWordWithStartWord(item.word, item.keyLetters, startWord)
+                        {isFirstWord && isLastWord
+                          ? renderWordWithBothStartAndTargetWord(
+                              item.word,
+                              item.keyLetters,
+                              startWord,
+                              targetWord
+                            )
+                          : isFirstWord
+                            ? renderWordWithStartWord(
+                                item.word,
+                                item.keyLetters,
+                                startWord
+                              )
                             : isLastWord
-                            ? renderWordWithTargetWord(item.word, item.keyLetters, targetWord)
-                            : renderWordWithHighlights(item.word, item.keyLetters, item.maskWord)
+                              ? renderWordWithTargetWord(
+                                  item.word,
+                                  item.keyLetters,
+                                  targetWord
+                                )
+                              : renderWordWithHighlights(
+                                  item.word,
+                                  item.keyLetters,
+                                  item.maskWord
+                                )}
+                      </span>
+
+                      {showScores && (
+                        <span
+                          className="word-trail__score"
+                          aria-label={
+                            item.score === 0
+                              ? 'passed turn'
+                              : `${item.score} points`
                           }
-                        </span>
-                        
-                        {showScores && (
-                          <span className="word-trail__score" aria-label={item.score === 0 ? 'passed turn' : `${item.score} points`}>
-                            {item.score === 0 ? 'pass' : 
-                              item.scoreBreakdown ? 
-                                (() => {
-                                  const base = item.scoreBreakdown.addLetterPoints + item.scoreBreakdown.removeLetterPoints + item.scoreBreakdown.movePoints;
-                                  const keyBonus = item.scoreBreakdown.keyLetterUsagePoints;
+                        >
+                          {item.score === 0
+                            ? 'pass'
+                            : item.scoreBreakdown
+                              ? (() => {
+                                  const base =
+                                    item.scoreBreakdown.addLetterPoints +
+                                    item.scoreBreakdown.removeLetterPoints +
+                                    item.scoreBreakdown.movePoints;
+                                  const keyBonus =
+                                    item.scoreBreakdown.keyLetterUsagePoints;
                                   if (base > 0) {
-                                    return keyBonus > 0 ? `+${base} +${keyBonus}` : `+${base}`;
+                                    return keyBonus > 0
+                                      ? `+${base} +${keyBonus}`
+                                      : `+${base}`;
                                   } else if (keyBonus > 0) {
                                     return `+${keyBonus}`;
                                   }
                                   return '+0';
-                                })() : 
-                                `+${item.score}`
-                            }
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
+                                })()
+                              : `+${item.score}`}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              // Empty state - start and target words centered
+              <div className="word-trail__empty-space">
+                <div className="word-trail__start-word--empty">
+                  <span className="word-trail__word word-trail__word--start">
+                    {renderWordWithHighlights(startWord, [])}
+                  </span>
+                  <span className="word-trail__arrow word-trail__arrow--right">
+                    →
+                  </span>
                 </div>
-              ) : (
-                // Empty state - start and target words centered
-                <div className="word-trail__empty-space">
-                  <div className="word-trail__start-word--empty">
-                    <span className="word-trail__word word-trail__word--start">
-                      {renderWordWithHighlights(startWord, [])}
-                    </span>
-                    <span className="word-trail__arrow word-trail__arrow--right">→</span>
-                  </div>
-                  <div className="word-trail__target-word--empty">
-                    <span className="word-trail__arrow word-trail__arrow--left">←</span>
-                    <span className="word-trail__word word-trail__word--target">
-                      {renderWordWithHighlights(targetWord, [])}
-                    </span>
-                  </div>
+                <div className="word-trail__target-word--empty">
+                  <span className="word-trail__arrow word-trail__arrow--left">
+                    ←
+                  </span>
+                  <span className="word-trail__word word-trail__word--target">
+                    {renderWordWithHighlights(targetWord, [])}
+                  </span>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
-      );
+      </div>
+    );
   }
 
   // Early return for regular mode when no data
-      if (displayData.length === 0) {
-        return null;
+  if (displayData.length === 0) {
+    return null;
   }
 
   // Regular mode - with auto-scroll support
   return (
-    <div className={`word-trail ${className}`.trim()} role="region" aria-label="Game word history">
+    <div
+      className={`word-trail ${className}`.trim()}
+      role="region"
+      aria-label="Game word history"
+    >
       <div className="word-trail__container" ref={regularContainerRef}>
         {reversedDisplayData.map((item, index) => (
-          <div 
+          <div
             key={`${item.word}-${item.turnNumber}-${index}`}
             className={[
               'word-trail__line',
               onWordClick && 'word-trail__line--clickable',
-              item.player && `word-trail__line--player-${item.player}`
-            ].filter(Boolean).join(' ')}
+              item.player && `word-trail__line--player-${item.player}`,
+            ]
+              .filter(Boolean)
+              .join(' ')}
             role="listitem"
           >
-            <span 
+            <span
               className="word-trail__word"
-              onClick={onWordClick ? () => handleWordClick(item.word, index) : undefined}
+              onClick={
+                onWordClick
+                  ? () => handleWordClick(item.word, index)
+                  : undefined
+              }
               role={onWordClick ? 'button' : undefined}
               tabIndex={onWordClick ? 0 : undefined}
               aria-label={`Word: ${item.word}${showScores ? `, ${item.score} points` : ''}`}
             >
-              {renderWordWithHighlights(item.word, item.keyLetters, item.maskWord)}
+              {renderWordWithHighlights(
+                item.word,
+                item.keyLetters,
+                item.maskWord
+              )}
             </span>
-            
+
             {showScores && (
-              <span className="word-trail__score" aria-label={item.score === 0 ? 'passed turn' : `${item.score} points`}>
-                {item.score === 0 ? 'pass' : 
-                  item.scoreBreakdown ? 
-                    (() => {
-                      const base = item.scoreBreakdown.addLetterPoints + item.scoreBreakdown.removeLetterPoints + item.scoreBreakdown.movePoints;
-                      const keyBonus = item.scoreBreakdown.keyLetterUsagePoints;
-                      if (base > 0) {
-                        return keyBonus > 0 ? `+${base} +${keyBonus}` : `+${base}`;
-                      } else if (keyBonus > 0) {
-                        return `+${keyBonus}`;
-                      }
-                      // Breakdown has no detail to show (e.g. a synced
-                      // multiplayer turn only carries the total earned
-                      // score, not the add/remove/move/key split) - fall
-                      // back to the actual total instead of a misleading "+0".
-                      return `+${item.score}`;
-                    })() : 
-                    `+${item.score}`
+              <span
+                className="word-trail__score"
+                aria-label={
+                  item.score === 0 ? 'passed turn' : `${item.score} points`
                 }
+              >
+                {item.score === 0
+                  ? 'pass'
+                  : item.scoreBreakdown
+                    ? (() => {
+                        const base =
+                          item.scoreBreakdown.addLetterPoints +
+                          item.scoreBreakdown.removeLetterPoints +
+                          item.scoreBreakdown.movePoints;
+                        const keyBonus =
+                          item.scoreBreakdown.keyLetterUsagePoints;
+                        if (base > 0) {
+                          return keyBonus > 0
+                            ? `+${base} +${keyBonus}`
+                            : `+${base}`;
+                        } else if (keyBonus > 0) {
+                          return `+${keyBonus}`;
+                        }
+                        // Breakdown has no detail to show (e.g. a synced
+                        // multiplayer turn only carries the total earned
+                        // score, not the add/remove/move/key split) - fall
+                        // back to the actual total instead of a misleading "+0".
+                        return `+${item.score}`;
+                      })()
+                    : `+${item.score}`}
               </span>
             )}
           </div>
@@ -396,4 +502,4 @@ export const WordTrail: React.FC<WordTrailProps> = ({
       </div>
     </div>
   );
-}; 
+};

@@ -1,10 +1,14 @@
 /**
  * Challenge Engine Tests
- * 
+ *
  * Tests for the daily word transformation puzzle system.
  */
 
-import { createChallengeEngine, hashString, type ChallengeState } from './challenge';
+import {
+  createChallengeEngine,
+  hashString,
+  type ChallengeState,
+} from './challenge';
 import type { DictionaryEngine, UtilityDependencies } from './interfaces';
 
 // Mock dictionary for testing with call counter
@@ -15,13 +19,82 @@ let mockCallCounter = 0;
 // getWordsByLength (must be deterministic - same list every call, which is
 // what the daily challenge generator relies on).
 const MOCK_WORDS_BY_LENGTH: Record<number, string[]> = {
-  4: ['GAME', 'NAME', 'SAME', 'CAME', 'MAKE', 'TAKE', 'FAKE', 'TIME', 'LIME', 'LIFE', 'FILE', 'PILE', 'MILE'],
-  5: ['GAMES', 'GAMER', 'NAMES', 'MAKES', 'TAKES', 'TIMES', 'LIMES', 'FILES', 'PILES', 'MILES',
-      'QUICK', 'JUMPY', 'FRIZZ', 'BLITZ', 'WALTZ', 'QUIRK', 'ZINGY', 'PROXY', 'FUZZY', 'WHISK',
-      'JERKY', 'MIXED', 'VINYL', 'ZEBRA', 'HAPPY', 'WORLD', 'HOUSE', 'MOUSE', 'BROWN', 'CROWN'],
-  6: ['QUARTZ', 'FRIZZY', 'JOCKEY', 'WHISKY', 'ZEPHYR', 'OXYGEN', 'PYTHON', 'RHYTHM', 'SPHINX',
-      'FLYWAY', 'GIZMOS', 'HIJACK', 'JAUNTY', 'HOUSES', 'MOUSES', 'BROWNS', 'CROWNS'],
-  7: ['QUICKLY', 'FIZZING', 'JOCKEYS', 'WHISKEY', 'ZEPHYRS', 'PYTHONS', 'RHYTHMS', 'FLYWAYS']
+  4: [
+    'GAME',
+    'NAME',
+    'SAME',
+    'CAME',
+    'MAKE',
+    'TAKE',
+    'FAKE',
+    'TIME',
+    'LIME',
+    'LIFE',
+    'FILE',
+    'PILE',
+    'MILE',
+  ],
+  5: [
+    'GAMES',
+    'GAMER',
+    'NAMES',
+    'MAKES',
+    'TAKES',
+    'TIMES',
+    'LIMES',
+    'FILES',
+    'PILES',
+    'MILES',
+    'QUICK',
+    'JUMPY',
+    'FRIZZ',
+    'BLITZ',
+    'WALTZ',
+    'QUIRK',
+    'ZINGY',
+    'PROXY',
+    'FUZZY',
+    'WHISK',
+    'JERKY',
+    'MIXED',
+    'VINYL',
+    'ZEBRA',
+    'HAPPY',
+    'WORLD',
+    'HOUSE',
+    'MOUSE',
+    'BROWN',
+    'CROWN',
+  ],
+  6: [
+    'QUARTZ',
+    'FRIZZY',
+    'JOCKEY',
+    'WHISKY',
+    'ZEPHYR',
+    'OXYGEN',
+    'PYTHON',
+    'RHYTHM',
+    'SPHINX',
+    'FLYWAY',
+    'GIZMOS',
+    'HIJACK',
+    'JAUNTY',
+    'HOUSES',
+    'MOUSES',
+    'BROWNS',
+    'CROWNS',
+  ],
+  7: [
+    'QUICKLY',
+    'FIZZING',
+    'JOCKEYS',
+    'WHISKEY',
+    'ZEPHYRS',
+    'PYTHONS',
+    'RHYTHMS',
+    'FLYWAYS',
+  ],
 };
 
 const mockDictionary: DictionaryEngine = {
@@ -29,16 +102,77 @@ const mockDictionary: DictionaryEngine = {
   isValidDictionaryWord: (word: string) => {
     const testWords = [
       // 4-letter words
-      'GAME', 'NAME', 'SAME', 'CAME', 'MAKE', 'TAKE', 'FAKE', 'TIME', 'LIME', 'LIFE', 'FILE', 'PILE', 'MILE',
+      'GAME',
+      'NAME',
+      'SAME',
+      'CAME',
+      'MAKE',
+      'TAKE',
+      'FAKE',
+      'TIME',
+      'LIME',
+      'LIFE',
+      'FILE',
+      'PILE',
+      'MILE',
       // 5-letter words (expanded for new constraints)
-      'GAMES', 'GAMER', 'NAMES', 'MAKES', 'TAKES', 'TIMES', 'LIMES', 'FILES', 'PILES', 'MILES',
-      'QUICK', 'JUMPY', 'FRIZZ', 'BLITZ', 'WALTZ', 'QUIRK', 'ZINGY', 'PROXY', 'FUZZY', 'WHISK',
-      'JERKY', 'MIXED', 'VINYL', 'ZEBRA', 'HAPPY', 'WORLD', 'HOUSE', 'MOUSE', 'BROWN', 'CROWN',
+      'GAMES',
+      'GAMER',
+      'NAMES',
+      'MAKES',
+      'TAKES',
+      'TIMES',
+      'LIMES',
+      'FILES',
+      'PILES',
+      'MILES',
+      'QUICK',
+      'JUMPY',
+      'FRIZZ',
+      'BLITZ',
+      'WALTZ',
+      'QUIRK',
+      'ZINGY',
+      'PROXY',
+      'FUZZY',
+      'WHISK',
+      'JERKY',
+      'MIXED',
+      'VINYL',
+      'ZEBRA',
+      'HAPPY',
+      'WORLD',
+      'HOUSE',
+      'MOUSE',
+      'BROWN',
+      'CROWN',
       // 6-letter words
-      'QUARTZ', 'FRIZZY', 'JOCKEY', 'WHISKY', 'ZEPHYR', 'OXYGEN', 'PYTHON', 'RHYTHM', 'SPHINX',
-      'FLYWAY', 'GIZMOS', 'HIJACK', 'JAUNTY', 'HOUSES', 'MOUSES', 'BROWNS', 'CROWNS',
+      'QUARTZ',
+      'FRIZZY',
+      'JOCKEY',
+      'WHISKY',
+      'ZEPHYR',
+      'OXYGEN',
+      'PYTHON',
+      'RHYTHM',
+      'SPHINX',
+      'FLYWAY',
+      'GIZMOS',
+      'HIJACK',
+      'JAUNTY',
+      'HOUSES',
+      'MOUSES',
+      'BROWNS',
+      'CROWNS',
       // 7-letter words
-      'QUICKLY', 'FIZZING', 'JOCKEYS', 'WHISKEY', 'ZEPHYRS', 'PYTHONS', 'RHYTHMS', 'FLYWAYS'
+      'QUICKLY',
+      'FIZZING',
+      'JOCKEYS',
+      'WHISKEY',
+      'ZEPHYRS',
+      'PYTHONS',
+      'RHYTHMS',
+      'FLYWAYS',
     ];
     return testWords.includes(word.toUpperCase());
   },
@@ -47,21 +181,23 @@ const mockDictionary: DictionaryEngine = {
     // Use a counter to vary word selection - mimics the real adapter's
     // Math.random()-backed selection being non-deterministic across calls.
     mockCallCounter++;
-    return wordList.length > 0 ? wordList[mockCallCounter % wordList.length] : null;
+    return wordList.length > 0
+      ? wordList[mockCallCounter % wordList.length]
+      : null;
   },
   // Deterministic: same length always returns the same list, which is what
   // the daily challenge generator now relies on for cross-client consistency.
   getWordsByLength: (length: number) => {
     return [...(MOCK_WORDS_BY_LENGTH[length] || [])];
   },
-  getDictionaryInfo: () => ({ wordCount: 50, isLoaded: true, loadTime: 100 })
+  getDictionaryInfo: () => ({ wordCount: 50, isLoaded: true, loadTime: 100 }),
 };
 
 // Mock utilities
 const mockUtilities: UtilityDependencies = {
   getTimestamp: () => 1640995200000, // Fixed timestamp for consistent tests
   random: () => 0.5, // Fixed random for deterministic tests
-  log: (msg: string) => console.log(msg)
+  log: (msg: string) => console.log(msg),
 };
 
 // Mock storage
@@ -82,13 +218,13 @@ describe('Challenge Engine', () => {
     // Clear storage and reset counter
     mockStorage.clear();
     mockCallCounter = 0;
-    
+
     // Create challenge engine
     challengeEngine = createChallengeEngine({
       dictionary: mockDictionary,
       utilities: mockUtilities,
       loadState: mockLoadState,
-      saveState: mockSaveState
+      saveState: mockSaveState,
     });
 
     await challengeEngine.initialize();
@@ -97,10 +233,10 @@ describe('Challenge Engine', () => {
   describe('Daily Challenge Generation', () => {
     test('should generate consistent challenges for the same date', async () => {
       const date = '2024-01-15';
-      
+
       const challenge1 = await challengeEngine.getDailyChallengeState(date);
       const challenge2 = await challengeEngine.getDailyChallengeState(date);
-      
+
       expect(challenge1.startWord).toBe(challenge2.startWord);
       expect(challenge1.targetWord).toBe(challenge2.targetWord);
       expect(challenge1.date).toBe(date);
@@ -122,13 +258,17 @@ describe('Challenge Engine', () => {
         dictionary: mockDictionary,
         utilities: mockUtilities,
         loadState: async (d: string) => storageA.get(d) || null,
-        saveState: async (s: ChallengeState) => { storageA.set(s.date, s); }
+        saveState: async (s: ChallengeState) => {
+          storageA.set(s.date, s);
+        },
       });
       const engineB = createChallengeEngine({
         dictionary: mockDictionary,
         utilities: mockUtilities,
         loadState: async (d: string) => storageB.get(d) || null,
-        saveState: async (s: ChallengeState) => { storageB.set(s.date, s); }
+        saveState: async (s: ChallengeState) => {
+          storageB.set(s.date, s);
+        },
       });
 
       await engineA.initialize();
@@ -142,23 +282,26 @@ describe('Challenge Engine', () => {
     });
 
     test('should generate different challenges for different dates', async () => {
-      const challenge1 = await challengeEngine.getDailyChallengeState('2024-01-01');
-      const challenge2 = await challengeEngine.getDailyChallengeState('2024-06-01');
-      
+      const challenge1 =
+        await challengeEngine.getDailyChallengeState('2024-01-01');
+      const challenge2 =
+        await challengeEngine.getDailyChallengeState('2024-06-01');
+
       // Different dates should produce different seeds and potentially different words
       // At minimum, they should have different dates and the challenges should be independently generated
       expect(challenge1.date).not.toBe(challenge2.date);
       expect(challenge1.date).toBe('2024-01-01');
       expect(challenge2.date).toBe('2024-06-01');
-      
+
       // The words may be the same due to small mock dictionary, but the challenges are independently generated
       expect(challenge1.stepCount).toBe(0);
       expect(challenge2.stepCount).toBe(0);
     });
 
     test('should create valid initial challenge state', async () => {
-      const challenge = await challengeEngine.getDailyChallengeState('2024-01-15');
-      
+      const challenge =
+        await challengeEngine.getDailyChallengeState('2024-01-15');
+
       expect(challenge.startWord).toBeTruthy();
       expect(challenge.targetWord).toBeTruthy();
       expect(challenge.startWord).not.toBe(challenge.targetWord);
@@ -172,7 +315,7 @@ describe('Challenge Engine', () => {
     test('should enforce minimum target word length constraint (≥5 letters)', async () => {
       // Test multiple dates to ensure constraint is consistently applied
       const dates = ['2024-01-15', '2024-02-20', '2024-03-25', '2024-04-30'];
-      
+
       for (const date of dates) {
         const challenge = await challengeEngine.getDailyChallengeState(date);
         expect(challenge.targetWord.length).toBeGreaterThanOrEqual(5);
@@ -181,8 +324,14 @@ describe('Challenge Engine', () => {
 
     test('should enforce 5-letter start words constraint', async () => {
       // Test multiple dates to ensure constraint is consistently applied
-      const dates = ['2024-01-15', '2024-02-20', '2024-03-25', '2024-04-30', '2024-05-10'];
-      
+      const dates = [
+        '2024-01-15',
+        '2024-02-20',
+        '2024-03-25',
+        '2024-04-30',
+        '2024-05-10',
+      ];
+
       for (const date of dates) {
         const challenge = await challengeEngine.getDailyChallengeState(date);
         expect(challenge.startWord.length).toBe(5);
@@ -202,8 +351,14 @@ describe('Challenge Engine', () => {
       };
 
       // Test multiple dates to ensure constraint is consistently applied
-      const dates = ['2024-01-15', '2024-02-20', '2024-03-25', '2024-04-30', '2024-05-10'];
-      
+      const dates = [
+        '2024-01-15',
+        '2024-02-20',
+        '2024-03-25',
+        '2024-04-30',
+        '2024-05-10',
+      ];
+
       for (const date of dates) {
         const challenge = await challengeEngine.getDailyChallengeState(date);
         expect(hasRepeatingLetters(challenge.startWord)).toBe(false);
@@ -223,8 +378,15 @@ describe('Challenge Engine', () => {
       };
 
       // Test multiple dates to ensure constraint is consistently applied
-      const dates = ['2024-01-15', '2024-02-20', '2024-03-25', '2024-04-30', '2024-05-10', '2024-06-15'];
-      
+      const dates = [
+        '2024-01-15',
+        '2024-02-20',
+        '2024-03-25',
+        '2024-04-30',
+        '2024-05-10',
+        '2024-06-15',
+      ];
+
       for (const date of dates) {
         const challenge = await challengeEngine.getDailyChallengeState(date);
         expect(hasRepeatingLetters(challenge.targetWord)).toBe(false);
@@ -236,54 +398,57 @@ describe('Challenge Engine', () => {
       const countCommonLetters = (word1: string, word2: string): number => {
         const freq1 = new Map<string, number>();
         const freq2 = new Map<string, number>();
-        
+
         for (const char of word1.toUpperCase()) {
           freq1.set(char, (freq1.get(char) || 0) + 1);
         }
-        
+
         for (const char of word2.toUpperCase()) {
           freq2.set(char, (freq2.get(char) || 0) + 1);
         }
-        
+
         let commonCount = 0;
         for (const [char, count1] of freq1) {
           const count2 = freq2.get(char) || 0;
           commonCount += Math.min(count1, count2);
         }
-        
+
         return commonCount;
       };
 
       // Test multiple dates to ensure constraint is consistently applied
       const dates = ['2024-01-15', '2024-02-20', '2024-03-25', '2024-04-30'];
-      
+
       for (const date of dates) {
         const challenge = await challengeEngine.getDailyChallengeState(date);
-        const commonLetters = countCommonLetters(challenge.startWord, challenge.targetWord);
+        const commonLetters = countCommonLetters(
+          challenge.startWord,
+          challenge.targetWord
+        );
         expect(commonLetters).toBeLessThanOrEqual(2);
       }
     });
 
     test('should maintain deterministic generation with new constraints', async () => {
       const date = '2024-05-01';
-      
+
       // Reset mock counter to ensure consistent state
       mockCallCounter = 0;
-      
+
       // Generate the same challenge multiple times
       const challenge1 = await challengeEngine.getDailyChallengeState(date);
-      
+
       // Reset mock counter again to match the initial state
       mockCallCounter = 0;
-      
+
       // Reset and generate again
       await challengeEngine.resetDailyChallenge(date);
       const challenge2 = await challengeEngine.getDailyChallengeState(date);
-      
+
       // Should be identical (same deterministic seed should produce same results)
       expect(challenge1.startWord).toBe(challenge2.startWord);
       expect(challenge1.targetWord).toBe(challenge2.targetWord);
-      
+
       // Both should meet new constraints
       expect(challenge1.targetWord.length).toBeGreaterThanOrEqual(5);
       expect(challenge2.targetWord.length).toBeGreaterThanOrEqual(5);
@@ -292,10 +457,11 @@ describe('Challenge Engine', () => {
 
   describe('Word Submission', () => {
     test('should accept valid word moves', async () => {
-      const challenge = await challengeEngine.getDailyChallengeState('2024-01-15');
-      
+      const challenge =
+        await challengeEngine.getDailyChallengeState('2024-01-15');
+
       const result = await challengeEngine.submitWord('GAMES', challenge);
-      
+
       expect(result.isValid).toBe(true);
       expect(result.newState.wordSequence).toContain('GAMES');
       expect(result.newState.stepCount).toBe(1);
@@ -303,29 +469,38 @@ describe('Challenge Engine', () => {
     });
 
     test('should reject invalid dictionary words', async () => {
-      const challenge = await challengeEngine.getDailyChallengeState('2024-01-15');
-      
+      const challenge =
+        await challengeEngine.getDailyChallengeState('2024-01-15');
+
       const result = await challengeEngine.submitWord('INVALID', challenge);
-      
+
       expect(result.isValid).toBe(false);
       expect(result.error).toBeTruthy();
     });
 
     test('should reject already used words', async () => {
-      const challenge = await challengeEngine.getDailyChallengeState('2024-01-15');
-      
+      const challenge =
+        await challengeEngine.getDailyChallengeState('2024-01-15');
+
       // Use the start word again
-      const result = await challengeEngine.submitWord(challenge.startWord, challenge);
-      
+      const result = await challengeEngine.submitWord(
+        challenge.startWord,
+        challenge
+      );
+
       expect(result.isValid).toBe(false);
       expect(result.error).toBe('Word already used');
     });
 
     test('should detect completion when target word is reached', async () => {
-      const challenge = await challengeEngine.getDailyChallengeState('2024-01-15');
-      
-      const result = await challengeEngine.submitWord(challenge.targetWord, challenge);
-      
+      const challenge =
+        await challengeEngine.getDailyChallengeState('2024-01-15');
+
+      const result = await challengeEngine.submitWord(
+        challenge.targetWord,
+        challenge
+      );
+
       if (result.isValid) {
         expect(result.isComplete).toBe(true);
         expect(result.newState.completed).toBe(true);
@@ -344,10 +519,11 @@ describe('Challenge Engine', () => {
 
   describe('Challenge Forfeiting', () => {
     test('should mark challenge as failed when forfeited', async () => {
-      const challenge = await challengeEngine.getDailyChallengeState('2024-01-15');
-      
+      const challenge =
+        await challengeEngine.getDailyChallengeState('2024-01-15');
+
       const result = await challengeEngine.forfeitChallenge(challenge);
-      
+
       expect(result.failed).toBe(true);
       expect(result.failedAtWord).toBe(challenge.currentWord);
     });
@@ -357,24 +533,29 @@ describe('Challenge Engine', () => {
     test('should generate sharing patterns', () => {
       const wordSequence = ['GAME', 'GAMES', 'GAMER'];
       const patterns = challengeEngine.generateSharingPattern(wordSequence);
-      
+
       expect(patterns).toHaveLength(2); // Two transformations
       expect(patterns[0]).toMatch(/[◼◻]+/u); // Should contain filled/empty squares
     });
 
     test('should generate complete sharing text with checkmark for completed challenges', async () => {
-      const challenge = await challengeEngine.getDailyChallengeState('2024-01-15');
-      
+      const challenge =
+        await challengeEngine.getDailyChallengeState('2024-01-15');
+
       // Complete a challenge to test step count format
-      const result = await challengeEngine.submitWord(challenge.targetWord, challenge);
+      const result = await challengeEngine.submitWord(
+        challenge.targetWord,
+        challenge
+      );
       const completedChallenge = result.isValid ? result.newState : challenge;
-      
-      const sharingText = challengeEngine.generateSharingText(completedChallenge);
-      
+
+      const sharingText =
+        challengeEngine.generateSharingText(completedChallenge);
+
       expect(sharingText).toContain('Challenge #');
       expect(sharingText).toContain(challenge.startWord);
       expect(sharingText).toContain(challenge.targetWord);
-      
+
       // Verify step count format without parentheses for completed challenges
       if (completedChallenge.completed) {
         expect(sharingText).toContain(' ✓\n'); // Should have checkmark on the challenge # line, words on their own line
@@ -384,12 +565,13 @@ describe('Challenge Engine', () => {
     });
 
     test('should generate sharing text with red X for failed challenges', async () => {
-      const challenge = await challengeEngine.getDailyChallengeState('2024-01-15');
-      
+      const challenge =
+        await challengeEngine.getDailyChallengeState('2024-01-15');
+
       // Forfeit the challenge
       const failedChallenge = await challengeEngine.forfeitChallenge(challenge);
       const sharingText = challengeEngine.generateSharingText(failedChallenge);
-      
+
       expect(sharingText).toContain('Challenge #');
       expect(sharingText).toContain(' ❌\n'); // Should have red X on the challenge # line, words on their own line
       expect(sharingText).toContain(challenge.startWord);
@@ -403,7 +585,7 @@ describe('Challenge Engine', () => {
       const hash1 = hashString('2024-01-15');
       const hash2 = hashString('2024-01-15');
       const hash3 = hashString('2024-01-16');
-      
+
       expect(hash1).toBe(hash2);
       expect(hash1).not.toBe(hash3);
     });
@@ -413,10 +595,10 @@ describe('Challenge Engine', () => {
     test('should reset daily challenge', async () => {
       const date = '2024-01-15';
       await challengeEngine.getDailyChallengeState(date);
-      
+
       await challengeEngine.resetDailyChallenge(date);
       const challenge2 = await challengeEngine.getDailyChallengeState(date);
-      
+
       // Should be same words (deterministic) but reset state
       expect(challenge2.stepCount).toBe(0);
       expect(challenge2.completed).toBe(false);
@@ -425,7 +607,7 @@ describe('Challenge Engine', () => {
 
     test('should generate random challenges', async () => {
       const challenge = await challengeEngine.generateRandomChallenge();
-      
+
       expect(challenge.startWord).toBeTruthy();
       expect(challenge.targetWord).toBeTruthy();
       expect(challenge.date).toContain('random-');
@@ -436,21 +618,21 @@ describe('Challenge Engine', () => {
       const countCommonLetters = (word1: string, word2: string): number => {
         const freq1 = new Map<string, number>();
         const freq2 = new Map<string, number>();
-        
+
         for (const char of word1.toUpperCase()) {
           freq1.set(char, (freq1.get(char) || 0) + 1);
         }
-        
+
         for (const char of word2.toUpperCase()) {
           freq2.set(char, (freq2.get(char) || 0) + 1);
         }
-        
+
         let commonCount = 0;
         for (const [char, count1] of freq1) {
           const count2 = freq2.get(char) || 0;
           commonCount += Math.min(count1, count2);
         }
-        
+
         return commonCount;
       };
 
@@ -468,26 +650,29 @@ describe('Challenge Engine', () => {
       // Test multiple random challenges
       for (let i = 0; i < 5; i++) {
         const challenge = await challengeEngine.generateRandomChallenge();
-        
+
         // Should meet minimum target word length
         expect(challenge.targetWord.length).toBeGreaterThanOrEqual(5);
-        
+
         // Should meet maximum common letters constraint
-        const commonLetters = countCommonLetters(challenge.startWord, challenge.targetWord);
+        const commonLetters = countCommonLetters(
+          challenge.startWord,
+          challenge.targetWord
+        );
         expect(commonLetters).toBeLessThanOrEqual(2);
-        
+
         // Should have no repeating letters in start word
         expect(hasRepeatingLetters(challenge.startWord)).toBe(false);
-        
+
         // Should have no repeating letters in target word
         expect(hasRepeatingLetters(challenge.targetWord)).toBe(false);
-        
+
         // Should be exactly 5 letters
         expect(challenge.startWord.length).toBe(5);
-        
+
         // Should be different words
         expect(challenge.startWord).not.toBe(challenge.targetWord);
       }
     });
   });
-}); 
+});

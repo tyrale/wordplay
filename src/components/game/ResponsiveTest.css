@@ -15,11 +15,11 @@
   z-index: 9999;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
-  
+
   /* Ensure it meets touch target requirements */
   min-width: 44px;
   min-height: 44px;
-  
+
   /* Accessibility */
   outline: none;
   -webkit-tap-highlight-color: transparent;
@@ -126,7 +126,7 @@
     height: 44px;
     font-size: 18px;
   }
-  
+
   .responsive-test__panel {
     top: 70px;
     right: 15px;
@@ -136,22 +136,22 @@
     padding: 16px;
     font-size: 13px;
   }
-  
+
   .responsive-test__panel h3 {
     font-size: 16px;
     margin-bottom: 12px;
   }
-  
+
   .responsive-test__panel h4 {
     font-size: 12px;
     margin: 12px 0 6px 0;
   }
-  
+
   .responsive-test__section {
     margin-bottom: 16px;
     padding-bottom: 12px;
   }
-  
+
   .responsive-test__section p {
     flex-direction: column;
     align-items: flex-start;
@@ -173,13 +173,13 @@
     background-color: black;
     border: 2px solid white;
   }
-  
+
   .responsive-test__panel {
     background-color: white;
     border: 2px solid black;
     box-shadow: 0 0 0 1px black;
   }
-  
+
   .responsive-test__color-swatch {
     border: 2px solid black;
   }
@@ -190,9 +190,9 @@
   .responsive-test__toggle {
     transition: none;
   }
-  
+
   /* Removed hover styles */
-  
+
   .responsive-test__toggle:active {
     transform: none;
   }
@@ -205,25 +205,25 @@
     color: #f9fafb;
     border-color: rgba(255, 255, 255, 0.1);
   }
-  
+
   .responsive-test__panel h3 {
     color: #60a5fa;
     border-bottom-color: #3b82f6;
   }
-  
+
   .responsive-test__panel h4 {
     color: #d1d5db;
   }
-  
+
   .responsive-test__section {
     border-bottom-color: rgba(255, 255, 255, 0.1);
   }
-  
+
   .responsive-test__section strong {
     color: #f3f4f6;
   }
-  
+
   .responsive-test__info {
     color: #9ca3af;
   }
-} 
+}

@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { saveActiveGame, loadActiveGame, clearActiveGame } from './browserGameSaveAdapter';
+import {
+  saveActiveGame,
+  loadActiveGame,
+  clearActiveGame,
+} from './browserGameSaveAdapter';
 import type { GameState } from '../../packages/engine/interfaces';
 
 function makeGameState(overrides: Partial<GameState> = {}): GameState {
@@ -10,8 +14,20 @@ function makeGameState(overrides: Partial<GameState> = {}): GameState {
     lockedLetters: [],
     lockedKeyLetters: [],
     players: [
-      { id: 'human', name: 'Player', isBot: false, score: 5, isCurrentPlayer: true },
-      { id: 'bot', name: 'Bot AI', isBot: true, score: 3, isCurrentPlayer: false }
+      {
+        id: 'human',
+        name: 'Player',
+        isBot: false,
+        score: 5,
+        isCurrentPlayer: true,
+      },
+      {
+        id: 'bot',
+        name: 'Bot AI',
+        isBot: true,
+        score: 3,
+        isCurrentPlayer: false,
+      },
     ],
     currentPlayerIndex: 0,
     currentTurn: 2,
@@ -23,8 +39,13 @@ function makeGameState(overrides: Partial<GameState> = {}): GameState {
     lastMoveTime: Date.now(),
     winner: null,
     totalMoves: 1,
-    config: { maxTurns: 10, allowBotPlayer: true, enableKeyLetters: true, enableLockedLetters: true },
-    ...overrides
+    config: {
+      maxTurns: 10,
+      allowBotPlayer: true,
+      enableKeyLetters: true,
+      enableLockedLetters: true,
+    },
+    ...overrides,
   };
 }
 
@@ -51,7 +72,9 @@ describe('browserGameSaveAdapter', () => {
 
   it('overwrites the previous save with the latest state', async () => {
     await saveActiveGame(makeGameState({ currentWord: 'WORD' }));
-    await saveActiveGame(makeGameState({ currentWord: 'WORDS', currentTurn: 3 }));
+    await saveActiveGame(
+      makeGameState({ currentWord: 'WORDS', currentTurn: 3 })
+    );
 
     const result = await loadActiveGame();
     expect(result?.state.currentWord).toBe('WORDS');

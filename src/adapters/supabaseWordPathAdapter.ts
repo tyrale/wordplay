@@ -15,7 +15,9 @@ import { ensureAnonymousSession } from './supabaseAuthAdapter';
  * server's master word path graph. Returns true if the sync succeeded (or
  * there was nothing to sync), false if it failed and should be retried later.
  */
-export async function syncWordPathEdges(edges: Array<[string, string]>): Promise<boolean> {
+export async function syncWordPathEdges(
+  edges: Array<[string, string]>
+): Promise<boolean> {
   if (edges.length === 0) return true;
   if (!isSupabaseConfigured()) return false;
 
@@ -23,7 +25,9 @@ export async function syncWordPathEdges(edges: Array<[string, string]>): Promise
     const userId = await ensureAnonymousSession();
     if (!userId) return false;
 
-    const { error } = await supabase.rpc('sync_word_path_edges', { p_edges: edges });
+    const { error } = await supabase.rpc('sync_word_path_edges', {
+      p_edges: edges,
+    });
     if (error) {
       console.warn('Failed to sync word path edges:', error);
       return false;

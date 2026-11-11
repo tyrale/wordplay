@@ -137,20 +137,20 @@
   .debug-dialog-overlay {
     padding: var(--spacing-sm);
   }
-  
+
   .debug-dialog {
     max-height: 90vh;
   }
-  
+
   .debug-dialog__header {
     padding: var(--spacing-sm);
   }
-  
+
   .debug-dialog__content {
     padding: var(--spacing-sm);
   }
-  
+
   .debug-dialog__section {
     margin-bottom: var(--spacing-md);
   }
-} 
+}

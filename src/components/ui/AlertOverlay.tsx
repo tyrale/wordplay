@@ -22,7 +22,13 @@ export interface AlertOverlayAction {
   onClick: () => void;
 }
 
-export type AlertOverlayVariant = 'default' | 'win' | 'lose' | 'unlock' | 'error' | 'start';
+export type AlertOverlayVariant =
+  | 'default'
+  | 'win'
+  | 'lose'
+  | 'unlock'
+  | 'error'
+  | 'start';
 
 export interface AlertOverlayProps {
   isVisible: boolean;
@@ -50,7 +56,11 @@ const MAX_FONT_SIZE_VH_FRACTION = 0.3;
  * of the viewport — independent per line, so a 2-letter and 8-letter line
  * both fill (and slightly overlap) the screen edges as designed.
  */
-function useFitLineFontSizes(lines: string[], containerRef: React.RefObject<HTMLDivElement | null>, isVisible: boolean): number[] {
+function useFitLineFontSizes(
+  lines: string[],
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  isVisible: boolean
+): number[] {
   const [fontSizes, setFontSizes] = useState<number[]>([]);
 
   useLayoutEffect(() => {
@@ -88,7 +98,7 @@ function useFitLineFontSizes(lines: string[], containerRef: React.RefObject<HTML
       const targetWidthPx = frameWidth * TARGET_WIDTH_VW;
       const maxFontSizePx = frameHeight * MAX_FONT_SIZE_VH_FRACTION;
 
-      const sizes = lines.map(line => {
+      const sizes = lines.map((line) => {
         const measuredWidth = ctx.measureText(line).width;
         if (measuredWidth === 0) return MIN_FONT_SIZE;
         const fitSize = (targetWidthPx / measuredWidth) * MEASURE_FONT_SIZE;
@@ -114,16 +124,17 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({
   variant = 'default',
   meta,
   actions,
-  renderLine
+  renderLine,
 }) => {
   const linesContainerRef = useRef<HTMLDivElement>(null);
   const fontSizes = useFitLineFontSizes(lines, linesContainerRef, isVisible);
 
   useEffect(() => {
     if (isVisible) {
-      const pattern = variant === 'unlock' || variant === 'win' || variant === 'lose'
-        ? variant
-        : 'overlay';
+      const pattern =
+        variant === 'unlock' || variant === 'win' || variant === 'lose'
+          ? variant
+          : 'overlay';
       triggerHapticFeedback(pattern);
       triggerSoundFeedback(pattern);
     }
@@ -142,7 +153,11 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({
           <div
             key={index}
             className="alert-overlay__line"
-            style={fontSizes[index] ? { fontSize: `${fontSizes[index]}px` } : undefined}
+            style={
+              fontSizes[index]
+                ? { fontSize: `${fontSizes[index]}px` }
+                : undefined
+            }
           >
             {renderLine ? renderLine(line, index) : line}
           </div>
@@ -153,7 +168,7 @@ export const AlertOverlay: React.FC<AlertOverlayProps> = ({
 
       {actions && actions.length > 0 && (
         <div className="alert-overlay__actions">
-          {actions.map(action => (
+          {actions.map((action) => (
             <button
               key={action.label}
               className="alert-overlay__action"

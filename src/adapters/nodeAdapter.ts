@@ -1,9 +1,9 @@
 /**
  * Node.js Adapter for WordPlay Game Engine
- * 
+ *
  * Platform-specific implementation for Node.js environments that provides
  * dictionary loading via file system, along with scoring and bot AI functions.
- * 
+ *
  * Key Features:
  * - File system-based dictionary loading (ENABLE1 word list)
  * - Platform-optimized scoring calculations
@@ -16,7 +16,7 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-import type { 
+import type {
   GameStateDependencies,
   GameStateDictionaryDependencies,
   GameStateScoringDependencies,
@@ -28,11 +28,14 @@ import type {
   ScoringOptions,
   BotResult,
   BotOptions,
-  BotDependencies
+  BotDependencies,
 } from '../../packages/engine/interfaces';
 
 import { validateWordWithDependencies } from '../../packages/engine/dictionary';
-import { calculateScoreWithDependencies, getScoreForMoveWithDependencies } from '../../packages/engine/scoring';
+import {
+  calculateScoreWithDependencies,
+  getScoreForMoveWithDependencies,
+} from '../../packages/engine/scoring';
 import { generateBotMoveWithDependencies } from '../../packages/engine/bot';
 
 /**
@@ -61,17 +64,17 @@ class NodeWordData implements WordDataDependencies {
     try {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = dirname(__filename);
-      
+
       // Try different possible paths for the dictionary file
       const dictionaryPaths = [
         join(__dirname, '../../packages/engine/enable1.txt'),
         join(__dirname, '../../public/enable1.txt'),
         join(__dirname, '../../../packages/engine/enable1.txt'),
-        join(__dirname, '../../../public/enable1.txt')
+        join(__dirname, '../../../public/enable1.txt'),
       ];
 
       let dictionaryText: string | null = null;
-      
+
       for (const path of dictionaryPaths) {
         try {
           dictionaryText = readFileSync(path, 'utf-8');
@@ -89,8 +92,8 @@ class NodeWordData implements WordDataDependencies {
       // Parse dictionary
       const wordList = dictionaryText
         .split('\n')
-        .map(word => word.trim().toUpperCase())
-        .filter(word => word.length > 0);
+        .map((word) => word.trim().toUpperCase())
+        .filter((word) => word.length > 0);
 
       // Build word sets
       this.enableWords = new Set(wordList);
@@ -107,7 +110,12 @@ class NodeWordData implements WordDataDependencies {
 
       // Load slang words from shared data file
       try {
-        const slangData = JSON.parse(readFileSync(join(__dirname, '../../public/data/slang-words.json'), 'utf-8'));
+        const slangData = JSON.parse(
+          readFileSync(
+            join(__dirname, '../../public/data/slang-words.json'),
+            'utf-8'
+          )
+        );
         this.slangWords = new Set(slangData.words || []);
         console.log(`Slang words loaded: ${this.slangWords.size} words`);
       } catch (slangError) {
@@ -117,9 +125,16 @@ class NodeWordData implements WordDataDependencies {
 
       // Load profanity words from shared data file
       try {
-        const profanityData = JSON.parse(readFileSync(join(__dirname, '../../public/data/profanity-words.json'), 'utf-8'));
+        const profanityData = JSON.parse(
+          readFileSync(
+            join(__dirname, '../../public/data/profanity-words.json'),
+            'utf-8'
+          )
+        );
         this.profanityWords = new Set(profanityData.words || []);
-        console.log(`Profanity words loaded: ${this.profanityWords.size} words`);
+        console.log(
+          `Profanity words loaded: ${this.profanityWords.size} words`
+        );
       } catch (profanityError) {
         console.warn('Error loading profanity words:', profanityError);
         this.profanityWords = new Set();
@@ -127,9 +142,16 @@ class NodeWordData implements WordDataDependencies {
 
       // Load common proper nouns (months, days, common names) from shared data file
       try {
-        const properNounData = JSON.parse(readFileSync(join(__dirname, '../../public/data/common-proper-nouns.json'), 'utf-8'));
+        const properNounData = JSON.parse(
+          readFileSync(
+            join(__dirname, '../../public/data/common-proper-nouns.json'),
+            'utf-8'
+          )
+        );
         this.properNounWords = new Set(properNounData.words || []);
-        console.log(`Common proper nouns loaded: ${this.properNounWords.size} words`);
+        console.log(
+          `Common proper nouns loaded: ${this.properNounWords.size} words`
+        );
       } catch (properNounError) {
         console.warn('Error loading common proper nouns:', properNounError);
         this.properNounWords = new Set();
@@ -137,27 +159,45 @@ class NodeWordData implements WordDataDependencies {
 
       // Load canonical Dr. Seuss words from shared data file
       try {
-        const seussCanonicalData = JSON.parse(readFileSync(join(__dirname, '../../public/data/seuss-words-canonical.json'), 'utf-8'));
+        const seussCanonicalData = JSON.parse(
+          readFileSync(
+            join(__dirname, '../../public/data/seuss-words-canonical.json'),
+            'utf-8'
+          )
+        );
         this.seussCanonicalWords = new Set(seussCanonicalData.words || []);
-        console.log(`Seuss canonical words loaded: ${this.seussCanonicalWords.size} words`);
+        console.log(
+          `Seuss canonical words loaded: ${this.seussCanonicalWords.size} words`
+        );
       } catch (seussCanonicalError) {
-        console.warn('Error loading Seuss canonical words:', seussCanonicalError);
+        console.warn(
+          'Error loading Seuss canonical words:',
+          seussCanonicalError
+        );
         this.seussCanonicalWords = new Set();
       }
 
       // Load invented Dr. Seuss-style words from shared data file
       try {
-        const seussInventedData = JSON.parse(readFileSync(join(__dirname, '../../public/data/seuss-words-invented.json'), 'utf-8'));
+        const seussInventedData = JSON.parse(
+          readFileSync(
+            join(__dirname, '../../public/data/seuss-words-invented.json'),
+            'utf-8'
+          )
+        );
         this.seussInventedWords = new Set(seussInventedData.words || []);
-        console.log(`Seuss invented words loaded: ${this.seussInventedWords.size} words`);
+        console.log(
+          `Seuss invented words loaded: ${this.seussInventedWords.size} words`
+        );
       } catch (seussInventedError) {
         console.warn('Error loading Seuss invented words:', seussInventedError);
         this.seussInventedWords = new Set();
       }
 
       this.loaded = true;
-      console.log(`✅ Dictionary loaded: ${this.enableWords.size} words, ${this.slangWords.size} slang words, ${this.profanityWords.size} profanity words, ${this.seussCanonicalWords.size} Seuss canonical words`);
-
+      console.log(
+        `✅ Dictionary loaded: ${this.enableWords.size} words, ${this.slangWords.size} slang words, ${this.profanityWords.size} profanity words, ${this.seussCanonicalWords.size} Seuss canonical words`
+      );
     } catch (error) {
       console.error('❌ Failed to load dictionary:', error);
       throw error;
@@ -169,14 +209,20 @@ class NodeWordData implements WordDataDependencies {
     if (!words || words.length === 0) {
       return null;
     }
-    const nonProfaneWords = words.filter(word => !this.profanityWords.has(word));
+    const nonProfaneWords = words.filter(
+      (word) => !this.profanityWords.has(word)
+    );
     const pool = nonProfaneWords.length > 0 ? nonProfaneWords : words;
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
   public hasWord(word: string): boolean {
     const upperWord = word.toUpperCase();
-    return this.enableWords.has(upperWord) || this.slangWords.has(upperWord) || this.properNounWords.has(upperWord);
+    return (
+      this.enableWords.has(upperWord) ||
+      this.slangWords.has(upperWord) ||
+      this.properNounWords.has(upperWord)
+    );
   }
 
   public get wordCount(): number {
@@ -195,7 +241,10 @@ const nodeWordData = new NodeWordData();
  * Node.js dictionary dependencies implementation
  */
 const nodeDictionaryDependencies: GameStateDictionaryDependencies = {
-  validateWord: (word: string, options?: ValidationOptions): ValidationResult => {
+  validateWord: (
+    word: string,
+    options?: ValidationOptions
+  ): ValidationResult => {
     return validateWordWithDependencies(word, nodeWordData, options);
   },
 
@@ -206,11 +255,11 @@ const nodeDictionaryDependencies: GameStateDictionaryDependencies = {
   getRandomSeussCanonicalWord: (length?: number): string | null => {
     let words = Array.from(nodeWordData.seussCanonicalWords);
     if (length !== undefined) {
-      words = words.filter(w => w.length === length);
+      words = words.filter((w) => w.length === length);
     }
     if (words.length === 0) return null;
     return words[Math.floor(Math.random() * words.length)];
-  }
+  },
 };
 
 /**
@@ -218,25 +267,36 @@ const nodeDictionaryDependencies: GameStateDictionaryDependencies = {
  * Uses direct imports from scoring module since it's platform-agnostic
  */
 const nodeScoringDependencies: GameStateScoringDependencies = {
-  calculateScore: (fromWord: string, toWord: string, options?: ScoringOptions): ScoringResult => {
+  calculateScore: (
+    fromWord: string,
+    toWord: string,
+    options?: ScoringOptions
+  ): ScoringResult => {
     return calculateScoreWithDependencies(fromWord, toWord, options);
   },
 
-  getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]): number => {
+  getScoreForMove: (
+    fromWord: string,
+    toWord: string,
+    keyLetters?: string[]
+  ): number => {
     return getScoreForMoveWithDependencies(fromWord, toWord, keyLetters);
   },
 
   isValidMove: (fromWord: string, toWord: string): boolean => {
     // Simple move validation - length change max 1
     return Math.abs(fromWord.length - toWord.length) <= 1;
-  }
+  },
 };
 
 /**
  * Node.js bot dependencies implementation
  */
 const nodeBotDependencies: GameStateBotDependencies = {
-  generateBotMove: async (word: string, options?: BotOptions): Promise<BotResult> => {
+  generateBotMove: async (
+    word: string,
+    options?: BotOptions
+  ): Promise<BotResult> => {
     // Create complete BotDependencies with all required interfaces
     const botDeps: BotDependencies = {
       // DictionaryDependencies
@@ -246,16 +306,16 @@ const nodeBotDependencies: GameStateBotDependencies = {
       },
       getRandomWordByLength: nodeDictionaryDependencies.getRandomWordByLength,
       getWordCount: (): number => nodeWordData.wordCount,
-      
+
       // UtilityDependencies
       getTimestamp: (): number => Date.now(),
       random: (): number => Math.random(),
       log: (message: string): void => console.log(`[NodeBot] ${message}`),
-      
+
       // ScoringDependencies
       getScoreForMove: nodeScoringDependencies.getScoreForMove,
       calculateScore: nodeScoringDependencies.calculateScore,
-      
+
       // Bot-specific profanity checking
       isProfanity: (word: string): boolean => {
         return nodeWordData.profanityWords.has(word.toUpperCase());
@@ -264,16 +324,19 @@ const nodeBotDependencies: GameStateBotDependencies = {
       // Bot-specific Seuss dictionary checking (used by grinch-bot strategy)
       isSeussWord: (word: string): boolean => {
         const w = word.toUpperCase();
-        return nodeWordData.seussCanonicalWords.has(w) || nodeWordData.seussInventedWords.has(w);
+        return (
+          nodeWordData.seussCanonicalWords.has(w) ||
+          nodeWordData.seussInventedWords.has(w)
+        );
       },
 
       isSeussCanonicalWord: (word: string): boolean => {
         return nodeWordData.seussCanonicalWords.has(word.toUpperCase());
-      }
+      },
     };
 
     return await generateBotMoveWithDependencies(word, botDeps, options);
-  }
+  },
 };
 
 /**
@@ -282,7 +345,7 @@ const nodeBotDependencies: GameStateBotDependencies = {
 const nodeGameDependencies: GameStateDependencies = {
   ...nodeDictionaryDependencies,
   ...nodeScoringDependencies,
-  ...nodeBotDependencies
+  ...nodeBotDependencies,
 };
 
 // =============================================================================
@@ -365,7 +428,7 @@ export class NodeAdapter {
   getDictionaryStatus(): { loaded: boolean; wordCount: number } {
     return {
       loaded: this.wordData.isLoaded(),
-      wordCount: this.wordData.wordCount
+      wordCount: this.wordData.wordCount,
     };
   }
 
@@ -409,7 +472,10 @@ export function getNodeGameDependencies(): GameStateDependencies {
 /**
  * Validate word using Node.js adapter (convenience function)
  */
-export function validateWordNode(word: string, options?: ValidationOptions): ValidationResult {
+export function validateWordNode(
+  word: string,
+  options?: ValidationOptions
+): ValidationResult {
   return nodeDictionaryDependencies.validateWord(word, options);
 }
 
@@ -421,5 +487,5 @@ export {
   nodeGameDependencies,
   nodeDictionaryDependencies,
   nodeScoringDependencies,
-  nodeBotDependencies
-}; 
+  nodeBotDependencies,
+};

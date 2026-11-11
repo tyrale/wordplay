@@ -8,4 +8,4 @@ console.log('Breakdown:', result.breakdown);
 console.log('Actions:', result.actions);
 
 // Expected: 1 point (remove P)
-// Actual: Let's see what we get 
+// Actual: Let's see what we get

@@ -1,7 +1,10 @@
 import React from 'react';
 import type { Player } from '../../../packages/engine/interfaces';
 import { getBotDisplayName } from '../../data/botRegistry';
-import { getDisplayName as getVanityName, hasConfirmedDisplayName } from '../../adapters/supabaseAuthAdapter';
+import {
+  getDisplayName as getVanityName,
+  hasConfirmedDisplayName,
+} from '../../adapters/supabaseAuthAdapter';
 import './ScoreBar.css';
 
 export interface ScoreBarProps {
@@ -23,14 +26,25 @@ export interface ScoreBarProps {
   className?: string;
 }
 
-function getDisplayName(player: Player, humanIndex: number, isSelf: boolean, botId?: string, isMultiplayer?: boolean): string {
+function getDisplayName(
+  player: Player,
+  humanIndex: number,
+  isSelf: boolean,
+  botId?: string,
+  isMultiplayer?: boolean
+): string {
   if (player.isBot) {
-    return player.id === 'bot' && botId ? getBotDisplayName(botId) : player.name;
+    return player.id === 'bot' && botId
+      ? getBotDisplayName(botId)
+      : player.name;
   }
   // Own display name always comes from local storage (kept in sync with the
   // server in multiplayer via setDisplayName), so a rename is reflected
   // immediately without waiting on a server refetch.
-  if (hasConfirmedDisplayName() && (isMultiplayer ? isSelf : humanIndex === 0)) {
+  if (
+    hasConfirmedDisplayName() &&
+    (isMultiplayer ? isSelf : humanIndex === 0)
+  ) {
     return getVanityName();
   }
   if (isMultiplayer) {
@@ -39,7 +53,12 @@ function getDisplayName(player: Player, humanIndex: number, isSelf: boolean, bot
   return `P${humanIndex + 1}`;
 }
 
-const PlayerRow: React.FC<{ displayName: string; player: Player; isSelf: boolean; onTap?: () => void }> = ({ displayName, player, isSelf, onTap }) => (
+const PlayerRow: React.FC<{
+  displayName: string;
+  player: Player;
+  isSelf: boolean;
+  onTap?: () => void;
+}> = ({ displayName, player, isSelf, onTap }) => (
   <div
     className={`score-bar__player ${player.isCurrentPlayer ? 'score-bar__player--active' : ''} ${isSelf && onTap ? 'score-bar__player--self' : ''}`}
     onClick={isSelf ? onTap : undefined}
@@ -47,11 +66,21 @@ const PlayerRow: React.FC<{ displayName: string; player: Player; isSelf: boolean
     tabIndex={isSelf && onTap ? 0 : undefined}
   >
     <span className="score-bar__name">{displayName}</span>
-    <span className="score-bar__score">{player.score === 0 ? '-' : player.score}</span>
+    <span className="score-bar__score">
+      {player.score === 0 ? '-' : player.score}
+    </span>
   </div>
 );
 
-export const ScoreBar: React.FC<ScoreBarProps> = ({ players, botId, isMultiplayer = false, currentRound, localPlayerId, onOwnNameTap, className = '' }) => {
+export const ScoreBar: React.FC<ScoreBarProps> = ({
+  players,
+  botId,
+  isMultiplayer = false,
+  currentRound,
+  localPlayerId,
+  onOwnNameTap,
+  className = '',
+}) => {
   if (players.length === 0) return null;
 
   // All players stacked together on the left, in a single column.
@@ -60,11 +89,19 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({ players, botId, isMultiplaye
   return (
     <div className={`score-bar ${className}`.trim()}>
       <div className="score-bar__stack">
-        {players.map(player => {
+        {players.map((player) => {
           // In multiplayer, "self" is the authenticated localPlayerId; in
           // vs-bot/tutorial play, the first non-bot player is always self.
-          const isSelf = !player.isBot && (localPlayerId ? player.id === localPlayerId : humanIndex === 0);
-          const displayName = getDisplayName(player, humanIndex, isSelf, botId, isMultiplayer);
+          const isSelf =
+            !player.isBot &&
+            (localPlayerId ? player.id === localPlayerId : humanIndex === 0);
+          const displayName = getDisplayName(
+            player,
+            humanIndex,
+            isSelf,
+            botId,
+            isMultiplayer
+          );
           if (!player.isBot) humanIndex += 1;
           return (
             <PlayerRow

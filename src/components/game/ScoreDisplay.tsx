@@ -28,8 +28,8 @@ export interface ScoreDisplayProps {
   timerSeconds?: number | null;
 }
 
-export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({ 
-  score, 
+export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
+  score,
   actions,
   isValid,
   isPassConfirming,
@@ -40,11 +40,11 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
   validationError = null,
   showValidationError = false,
   isChallengeMode = false,
-  timerSeconds = null
+  timerSeconds = null,
 }) => {
   // Build action icons based on what actions were taken (like image)
   const actionIcons = [];
-  
+
   if (actions.move) {
     actionIcons.push('~');
   }
@@ -61,18 +61,22 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
   let leftContent = '';
   if (showValidationError) {
     // Show validation error on the left, or default message if no specific error
-            leftContent = validationError || 'current word';
+    leftContent = validationError || 'current word';
   } else if (!isEmpty) {
     // Show action icons when there are actions
     leftContent = actionIcons.join(' ');
   }
-  
+
   // Build center content (checkmark/pass/error)
-  const centerContent = isPassMode ? 'pass turn' : (isValid && !isEmpty) ? '✓' : '✗';
-  
+  const centerContent = isPassMode
+    ? 'pass turn'
+    : isValid && !isEmpty
+      ? '✓'
+      : '✗';
+
   // Build right side content (scores or pass instruction)
   let rightContent = '';
-  
+
   if (showValidationError) {
     // Show pass instruction on the right when showing validation error
     rightContent = 'tap to pass';
@@ -83,7 +87,7 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
     } else {
       rightContent = '0';
     }
-    
+
     if (score.keyBonus > 0) {
       rightContent += ` +${score.keyBonus}`;
     }
@@ -105,7 +109,10 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
 
   if (isPassConfirming) {
     return (
-      <div className={`score-display score-display--pass-confirm ${className || ''}`} onClick={onClick}>
+      <div
+        className={`score-display score-display--pass-confirm ${className || ''}`}
+        onClick={onClick}
+      >
         <span className="score-display__reason">{passReason}</span>
         <span className="score-display__pass-x">×</span>
         <span className="score-display__pass-prompt">tap again to pass</span>
@@ -114,10 +121,14 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
   }
 
   return (
-    <div 
-      className={`score-display ${isPassMode ? 'score-display--pass' : isValid && !isEmpty ? 'score-display--valid' : 'score-display--invalid'} ${isClickable ? 'score-display--clickable' : ''} ${isEmpty ? 'score-display--empty' : ''} ${showValidationError ? 'score-display--error' : ''} ${className}`.trim()} 
+    <div
+      className={`score-display ${isPassMode ? 'score-display--pass' : isValid && !isEmpty ? 'score-display--valid' : 'score-display--invalid'} ${isClickable ? 'score-display--clickable' : ''} ${isEmpty ? 'score-display--empty' : ''} ${showValidationError ? 'score-display--error' : ''} ${className}`.trim()}
       role={isClickable ? 'button' : 'status'}
-      aria-label={isClickable ? `Submit word: ${leftContent} ${centerContent} ${rightContent}` : `Score: ${leftContent} ${centerContent} ${rightContent}`}
+      aria-label={
+        isClickable
+          ? `Submit word: ${leftContent} ${centerContent} ${rightContent}`
+          : `Score: ${leftContent} ${centerContent} ${rightContent}`
+      }
       onClick={isClickable ? handleClick : undefined}
       style={{ cursor: isClickable ? 'pointer' : 'default' }}
     >
@@ -126,4 +137,4 @@ export const ScoreDisplay: React.FC<ScoreDisplayProps> = ({
       <span className="score-display__right">{rightContent}</span>
     </div>
   );
-}; 
+};

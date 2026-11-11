@@ -7,7 +7,18 @@
  * called together for consistent tactile + audible feedback.
  */
 
-export type SoundPattern = 'add' | 'remove' | 'move' | 'submit' | 'overlay' | 'unlock' | 'click' | 'yourTurn' | 'win' | 'lose' | 'pass';
+export type SoundPattern =
+  | 'add'
+  | 'remove'
+  | 'move'
+  | 'submit'
+  | 'overlay'
+  | 'unlock'
+  | 'click'
+  | 'yourTurn'
+  | 'win'
+  | 'lose'
+  | 'pass';
 
 interface ToneStep {
   frequency: number;
@@ -61,7 +72,10 @@ function getAudioContext(): AudioContext | null {
     return null;
   }
 
-  const AudioContextClass = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  const AudioContextClass =
+    window.AudioContext ??
+    (window as unknown as { webkitAudioContext?: typeof AudioContext })
+      .webkitAudioContext;
   if (!AudioContextClass) {
     return null;
   }

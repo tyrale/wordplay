@@ -12,8 +12,18 @@
  */
 
 import React, { createContext, useCallback, useContext, useState } from 'react';
-import { AlertOverlay, type AlertOverlayAction, type AlertOverlayVariant } from './AlertOverlay';
-import { alertCopy, resolveAlertLines, resolveAlertMeta, type AlertCategory, type AlertCopyEntry } from '../../content/alertCopy';
+import {
+  AlertOverlay,
+  type AlertOverlayAction,
+  type AlertOverlayVariant,
+} from './AlertOverlay';
+import {
+  alertCopy,
+  resolveAlertLines,
+  resolveAlertMeta,
+  type AlertCategory,
+  type AlertCopyEntry,
+} from '../../content/alertCopy';
 
 interface AlertRequest {
   id: string;
@@ -42,7 +52,11 @@ export interface ShowCustomAlertOptions {
 }
 
 interface AlertContextType {
-  showAlert: <C extends AlertCategory>(category: C, key: keyof (typeof alertCopy)[C], options?: ShowAlertOptions) => void;
+  showAlert: <C extends AlertCategory>(
+    category: C,
+    key: keyof (typeof alertCopy)[C],
+    options?: ShowAlertOptions
+  ) => void;
   showCustomAlert: (lines: string[], options?: ShowCustomAlertOptions) => void;
   dismissAlert: () => void;
 }
@@ -68,42 +82,58 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ children }) => {
     return `alert-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
   }, []);
 
-  const enqueue = useCallback((request: Omit<AlertRequest, 'id'>) => {
-    setQueue(prev => [...prev, { ...request, id: generateId() }]);
-  }, [generateId]);
+  const enqueue = useCallback(
+    (request: Omit<AlertRequest, 'id'>) => {
+      setQueue((prev) => [...prev, { ...request, id: generateId() }]);
+    },
+    [generateId]
+  );
 
-  const showAlert = useCallback(<C extends AlertCategory>(
-    category: C,
-    key: keyof (typeof alertCopy)[C],
-    options?: ShowAlertOptions
-  ) => {
-    const categoryEntries = alertCopy[category] as Record<string, AlertCopyEntry>;
-    const entry = categoryEntries[key as string];
-    if (!entry) {
-      console.warn(`AlertProvider: no copy found for ${category}.${String(key)}`);
-      return;
-    }
-    enqueue({
-      lines: resolveAlertLines(entry, options?.params),
-      variant: options?.variant,
-      meta: options?.meta ?? resolveAlertMeta(entry, options?.params, options?.itemId),
-      actions: options?.actions,
-      onCloseExtra: options?.onClose
-    });
-  }, [enqueue]);
+  const showAlert = useCallback(
+    <C extends AlertCategory>(
+      category: C,
+      key: keyof (typeof alertCopy)[C],
+      options?: ShowAlertOptions
+    ) => {
+      const categoryEntries = alertCopy[category] as Record<
+        string,
+        AlertCopyEntry
+      >;
+      const entry = categoryEntries[key as string];
+      if (!entry) {
+        console.warn(
+          `AlertProvider: no copy found for ${category}.${String(key)}`
+        );
+        return;
+      }
+      enqueue({
+        lines: resolveAlertLines(entry, options?.params),
+        variant: options?.variant,
+        meta:
+          options?.meta ??
+          resolveAlertMeta(entry, options?.params, options?.itemId),
+        actions: options?.actions,
+        onCloseExtra: options?.onClose,
+      });
+    },
+    [enqueue]
+  );
 
-  const showCustomAlert = useCallback((lines: string[], options?: ShowCustomAlertOptions) => {
-    enqueue({
-      lines,
-      variant: options?.variant,
-      meta: options?.meta,
-      actions: options?.actions,
-      onCloseExtra: options?.onClose
-    });
-  }, [enqueue]);
+  const showCustomAlert = useCallback(
+    (lines: string[], options?: ShowCustomAlertOptions) => {
+      enqueue({
+        lines,
+        variant: options?.variant,
+        meta: options?.meta,
+        actions: options?.actions,
+        onCloseExtra: options?.onClose,
+      });
+    },
+    [enqueue]
+  );
 
   const dismissAlert = useCallback(() => {
-    setQueue(prev => {
+    setQueue((prev) => {
       const [closing, ...rest] = prev;
       closing?.onCloseExtra?.();
       return rest;

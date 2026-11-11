@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { 
-  BOT_REGISTRY, 
-  getBotDisplayName, 
-  getBotById, 
-  getAllBots, 
-  getBotsByCategory, 
-  getBotDisplayNamesMapping 
+import {
+  BOT_REGISTRY,
+  getBotDisplayName,
+  getBotById,
+  getAllBots,
+  getBotsByCategory,
+  getBotDisplayNamesMapping,
 } from '../botRegistry';
 
 describe('Bot Registry', () => {
@@ -46,7 +46,9 @@ describe('Bot Registry', () => {
   it('should filter bots by category', () => {
     const progressionBots = getBotsByCategory('progression');
     expect(progressionBots.length).toBeGreaterThan(0);
-    expect(progressionBots.every(bot => bot.category === 'progression')).toBe(true);
+    expect(progressionBots.every((bot) => bot.category === 'progression')).toBe(
+      true
+    );
   });
 
   it('should create display names mapping', () => {
@@ -58,8 +60,8 @@ describe('Bot Registry', () => {
 
   it('should have all required bots from the original system', () => {
     const allBots = getAllBots();
-    const botIds = allBots.map(bot => bot.id);
-    
+    const botIds = allBots.map((bot) => bot.id);
+
     // Check for key original bots
     expect(botIds).toContain('basicBot');
     expect(botIds).toContain('easy-bot');
@@ -70,4 +72,4 @@ describe('Bot Registry', () => {
     expect(botIds).toContain('noob-bot');
     expect(botIds).toContain('bruh-bot');
   });
-}); 
+});

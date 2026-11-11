@@ -7,19 +7,19 @@ import './DebugDialog.css';
 // Hook to get dictionary size using pure dependency injection
 function useDictionarySize(): number {
   const [wordCount, setWordCount] = useState(0);
-  
+
   useEffect(() => {
     let mounted = true;
-    
+
     const initializeAdapter = async () => {
       try {
         const adapter = await createBrowserAdapter();
         const wordData = adapter.getWordData();
-        
+
         if (wordData && typeof wordData.waitForLoad === 'function') {
           await wordData.waitForLoad();
         }
-        
+
         if (mounted && wordData) {
           setWordCount(wordData.wordCount);
         }
@@ -27,14 +27,14 @@ function useDictionarySize(): number {
         console.error('Failed to initialize dictionary for debug:', error);
       }
     };
-    
+
     initializeAdapter();
-    
+
     return () => {
       mounted = false;
     };
   }, []);
-  
+
   return wordCount;
 }
 
@@ -65,10 +65,10 @@ export const DebugDialog: React.FC<DebugDialogProps> = ({
   isBotThinking,
   generateWordSuggestions,
   onWordChange,
-  isProcessingMove
+  isProcessingMove,
 }) => {
   const dictionarySize = useDictionarySize();
-  
+
   if (!isOpen) {
     return null;
   }
@@ -78,7 +78,7 @@ export const DebugDialog: React.FC<DebugDialogProps> = ({
       <div className="debug-dialog__modal" onClick={(e) => e.stopPropagation()}>
         <div className="debug-dialog__header">
           <h2>Debug Information</h2>
-          <button 
+          <button
             className="debug-dialog__close"
             onClick={onClose}
             aria-label="Close debug dialog"
@@ -86,20 +86,29 @@ export const DebugDialog: React.FC<DebugDialogProps> = ({
             ×
           </button>
         </div>
-        
+
         <div className="debug-dialog__content">
           <div className="debug-dialog__section">
             <h3>Dictionary Status</h3>
-            <p><strong>Total words available:</strong> {dictionarySize}</p>
-            <p><strong>Current word:</strong> {wordState.currentWord}</p>
-            <p><strong>Used words:</strong> {wordState.usedWords.join(', ')}</p>
+            <p>
+              <strong>Total words available:</strong> {dictionarySize}
+            </p>
+            <p>
+              <strong>Current word:</strong> {wordState.currentWord}
+            </p>
+            <p>
+              <strong>Used words:</strong> {wordState.usedWords.join(', ')}
+            </p>
           </div>
-          
+
           <div className="debug-dialog__section">
             <h3>Suggested Words to Try</h3>
-            <p>Based on current word "{wordState.currentWord}", try these valid words:</p>
+            <p>
+              Based on current word "{wordState.currentWord}", try these valid
+              words:
+            </p>
             <div className="debug-dialog__word-suggestions">
-              {generateWordSuggestions(wordState.currentWord).map(word => (
+              {generateWordSuggestions(wordState.currentWord).map((word) => (
                 <button
                   key={word}
                   onClick={() => onWordChange(word)}
@@ -111,32 +120,38 @@ export const DebugDialog: React.FC<DebugDialogProps> = ({
               ))}
             </div>
           </div>
-          
+
           <div className="debug-dialog__section">
             <h3>Game State</h3>
             <pre className="debug-dialog__state">
-              {JSON.stringify({ 
-                gameStats, 
-                wordState: {
-                  currentWord: wordState.currentWord,
-                  keyLetters: wordState.keyLetters,
-                  lockedLetters: wordState.lockedLetters,
-                  usedWords: wordState.usedWords
+              {JSON.stringify(
+                {
+                  gameStats,
+                  wordState: {
+                    currentWord: wordState.currentWord,
+                    keyLetters: wordState.keyLetters,
+                    lockedLetters: wordState.lockedLetters,
+                    usedWords: wordState.usedWords,
+                  },
+                  pendingWord,
+                  pendingMoveAttempt: pendingMoveAttempt
+                    ? {
+                        isValid: pendingMoveAttempt.isValid,
+                        canApply: pendingMoveAttempt.canApply,
+                        reason: pendingMoveAttempt.reason,
+                      }
+                    : null,
+                  isPlayerTurn,
+                  isBotTurn,
+                  isBotThinking,
                 },
-                pendingWord,
-                pendingMoveAttempt: pendingMoveAttempt ? {
-                  isValid: pendingMoveAttempt.isValid,
-                  canApply: pendingMoveAttempt.canApply,
-                  reason: pendingMoveAttempt.reason
-                } : null,
-                isPlayerTurn,
-                isBotTurn,
-                isBotThinking
-              }, null, 2)}
+                null,
+                2
+              )}
             </pre>
           </div>
         </div>
       </div>
     </div>
   );
-}; 
+};

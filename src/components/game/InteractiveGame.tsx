@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useGameState, useGameStats, useWordState } from '../../hooks/useGameState';
+import {
+  useGameState,
+  useGameStats,
+  useWordState,
+} from '../../hooks/useGameState';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
 import { useWordPathGraph } from '../../hooks/useWordPathGraph';
@@ -14,7 +18,11 @@ import { WordBuilder } from './WordBuilder';
 import { DebugDialog } from './DebugDialog';
 import { Menu } from '../ui/Menu';
 import { getBotDisplayName } from '../../data/botRegistry';
-import { getDisplayName as getVanityName, setDisplayName, markDisplayNameConfirmed } from '../../adapters/supabaseAuthAdapter';
+import {
+  getDisplayName as getVanityName,
+  setDisplayName,
+  markDisplayNameConfirmed,
+} from '../../adapters/supabaseAuthAdapter';
 import { NamePromptOverlay } from '../multiplayer/NamePromptOverlay';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import {
@@ -23,32 +31,42 @@ import {
   isPlayableWord,
   isSeussWord,
   isSeussInventedWord,
-  fetchWordDefinition
+  fetchWordDefinition,
 } from '../../utils/wordHelp';
 import { triggerHapticFeedback } from '../../utils/haptics';
 import { triggerSoundFeedback } from '../../utils/sound';
-import { hasSeenClearHint, markClearHintSeen } from '../../utils/tutorialStorage';
+import {
+  hasSeenClearHint,
+  markClearHintSeen,
+} from '../../utils/tutorialStorage';
 import { useTheme } from '../theme/ThemeProvider';
 import type { BossStage } from '../../data/bossBattle';
-import type { WordDataDependencies, ScoringAction, GameConfig, MoveAttempt, GameState, IGameStateManager } from '../../../packages/engine/interfaces';
+import type {
+  WordDataDependencies,
+  ScoringAction,
+  GameConfig,
+  MoveAttempt,
+  GameState,
+  IGameStateManager,
+} from '../../../packages/engine/interfaces';
 
 // Dictionary validation using pure dependency injection
 function useDictionaryValidation() {
   const [wordData, setWordData] = useState<WordDataDependencies | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  
+
   useEffect(() => {
     let mounted = true;
-    
+
     const initializeAdapter = async () => {
       try {
         const adapter = await createBrowserAdapter();
         const data = adapter.getWordData();
-        
+
         if (data && typeof data.waitForLoad === 'function') {
           await data.waitForLoad();
         }
-        
+
         if (mounted) {
           setWordData(data);
           setIsLoaded(true);
@@ -57,33 +75,44 @@ function useDictionaryValidation() {
         console.error('Failed to initialize dictionary validation:', error);
       }
     };
-    
+
     initializeAdapter();
-    
+
     return () => {
       mounted = false;
     };
   }, []);
-  
-  const isValidDictionaryWord = useCallback((word: string): boolean => {
-    if (!wordData || !isLoaded) {
-      console.warn('Dictionary not loaded yet, validation failed');
-      return false;
-    }
-    
-    try {
-      // Use the dependency injection pattern
-      return wordData.enableWords.has(word.toUpperCase()) || wordData.slangWords.has(word.toUpperCase());
-    } catch (error) {
-      console.warn('Dictionary validation error:', error);
-      return false;
-    }
-  }, [wordData, isLoaded]);
-  
+
+  const isValidDictionaryWord = useCallback(
+    (word: string): boolean => {
+      if (!wordData || !isLoaded) {
+        console.warn('Dictionary not loaded yet, validation failed');
+        return false;
+      }
+
+      try {
+        // Use the dependency injection pattern
+        return (
+          wordData.enableWords.has(word.toUpperCase()) ||
+          wordData.slangWords.has(word.toUpperCase())
+        );
+      } catch (error) {
+        console.warn('Dictionary validation error:', error);
+        return false;
+      }
+    },
+    [wordData, isLoaded]
+  );
+
   return { isValidDictionaryWord, wordData, isLoaded };
 }
 
-import type { LetterState, ScoreBreakdown, LetterHighlight, WordMove } from '../index';
+import type {
+  LetterState,
+  ScoreBreakdown,
+  LetterHighlight,
+  WordMove,
+} from '../index';
 import type { ActionState } from './ScoreDisplay';
 import './InteractiveGame.css';
 
@@ -92,11 +121,17 @@ const TURN_TIME_LIMIT_SECONDS = 7;
 
 export interface InteractiveGameProps {
   config?: GameConfig;
-  onGameEnd?: (winner: string | null, finalScores: { human: number; bot: number }) => void;
+  onGameEnd?: (
+    winner: string | null,
+    finalScores: { human: number; bot: number }
+  ) => void;
   onResign?: () => void;
   onNavigateHome?: () => void;
   currentGameMode?: string;
-  onStartGame?: (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => void;
+  onStartGame?: (
+    gameType: 'bot' | 'challenge' | 'tutorial',
+    botId?: string
+  ) => void;
   onGameStateChange?: (gameState: GameState) => void;
   disableLetterRemoval?: boolean;
   /**
@@ -138,15 +173,23 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   localPlayerId,
   onGameTimeout,
   onBossTrigger,
-  bossStage
+  bossStage,
 }) => {
   // Initialize dictionary validation hook
   const { isValidDictionaryWord, wordData } = useDictionaryValidation();
-  
+
   // Unlock system integration
-  const { handleWordSubmission, handleGameCompletion, handleWordPathChange, getUnlockedItems } = useUnlockSystem();
+  const {
+    handleWordSubmission,
+    handleGameCompletion,
+    handleWordPathChange,
+    getUnlockedItems,
+  } = useUnlockSystem();
   const { recordMove, recordGameResult } = usePlayerStats();
-  const { recordTransition: recordWordPathTransition, syncToServer: syncWordPathGraph } = useWordPathGraph();
+  const {
+    recordTransition: recordWordPathTransition,
+    syncToServer: syncWordPathGraph,
+  } = useWordPathGraph();
 
   // Tracks how many turnHistory entries have already been sent to recordMove,
   // so word/letter stats update live per move instead of only at game end.
@@ -159,8 +202,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // replaces the per-turn time-pressure timer, and the per-turn pressure
   // auto-pass is disabled so the boss fight is governed solely by its own
   // countdown + the 20-turn round.
-  const isBossBattle = currentGameMode === 'boss' && typeof config?.gameTimeLimitSeconds === 'number';
-  const bossTimeLimitSeconds = isBossBattle ? (config!.gameTimeLimitSeconds as number) : null;
+  const isBossBattle =
+    currentGameMode === 'boss' &&
+    typeof config?.gameTimeLimitSeconds === 'number';
+  const bossTimeLimitSeconds = isBossBattle
+    ? (config!.gameTimeLimitSeconds as number)
+    : null;
 
   // Boss-theme visual effect tier, derived from the active theme name so it
   // also applies correctly if a boss theme is selected from the menu after
@@ -168,19 +215,26 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // 'megaboss' = red letter outlines, 'gigaboss' = red outlines + animated
   // monster-shadow background + escalating music.
   const bossEffectTier: 'none' | 'mega' | 'giga' =
-    currentTheme.name === 'gigaboss' ? 'giga'
-      : currentTheme.name === 'megaboss' ? 'mega'
+    currentTheme.name === 'gigaboss'
+      ? 'giga'
+      : currentTheme.name === 'megaboss'
+        ? 'mega'
         : 'none';
 
   // Determine starting word length from unlocked + enabled starting-word mechanics.
   // If multiple lengths are unlocked and on, pick one at random for variety.
   const unlockedMechanics = getUnlockedItems('mechanic');
-  const availableStartLengths = [3, 5, 6, 7, 8, 9, 10].filter(len =>
-    unlockedMechanics.includes(`${len}-letter-start`) && isMechanicOn(`${len}-letter-start`)
+  const availableStartLengths = [3, 5, 6, 7, 8, 9, 10].filter(
+    (len) =>
+      unlockedMechanics.includes(`${len}-letter-start`) &&
+      isMechanicOn(`${len}-letter-start`)
   );
-  const startingWordLength = availableStartLengths.length > 0
-    ? availableStartLengths[Math.floor(Math.random() * availableStartLengths.length)]
-    : undefined;
+  const startingWordLength =
+    availableStartLengths.length > 0
+      ? availableStartLengths[
+          Math.floor(Math.random() * availableStartLengths.length)
+        ]
+      : undefined;
 
   // Time-pressure mechanic: unlocked via the "time" word and toggled on in the mechanics menu.
   // Suppressed during a boss battle - the boss has its own whole-game countdown
@@ -189,20 +243,27 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // time (GameState.config.timePressureEnabled, hydrated from the shared
   // remote game) rather than each player's own toggle - see the override
   // below, once `gameState` is available.
-  const isTimePressureOnLocal = !isBossBattle && unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
+  const isTimePressureOnLocal =
+    !isBossBattle &&
+    unlockedMechanics.includes('time-pressure') &&
+    isMechanicOn('time-pressure');
 
   // Gravity mechanic: unlocked via the "gravity" word and toggled on in the mechanics menu.
   // Makes the alphabet grid letters fall and roll freely around the viewport.
-  const isGravityOn = unlockedMechanics.includes('gravity') && isMechanicOn('gravity');
+  const isGravityOn =
+    unlockedMechanics.includes('gravity') && isMechanicOn('gravity');
 
   // Drunk mechanic: unlocked via the "drunk" word and toggled on in the mechanics menu.
   // Makes the whole game view hazy and wobbly, like looking at it drunk.
-  const isDrunkOn = unlockedMechanics.includes('drunk') && isMechanicOn('drunk');
+  const isDrunkOn =
+    unlockedMechanics.includes('drunk') && isMechanicOn('drunk');
 
   // Seuss canonical words: unlocked by beating the Grinchbot. Allows the
   // player to play canonical Dr. Seuss words (LORAX, GRINCH, WOCKET, etc.)
   // as valid words in any game mode. No toggle — once unlocked, always on.
-  const allowSeussCanonical = unlockedMechanics.includes('seuss-canonical-words');
+  const allowSeussCanonical = unlockedMechanics.includes(
+    'seuss-canonical-words'
+  );
 
   // Ninjabot gimmick: while playing against it, its own word trail plays are
   // shown as dashes and every alphabet grid letter is invisible (opacity 0,
@@ -228,19 +289,22 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     isBotThinking,
     isProcessingMove,
     lastError,
-    clearError
+    clearError,
   } = useGameState({
     config: { ...config, startingWordLength, allowSeussCanonical },
     externalManager,
     localPlayerId,
-    skipSavedGamePersistence: currentGameMode === 'tutorial' || currentGameMode === 'boss',
+    skipSavedGamePersistence:
+      currentGameMode === 'tutorial' || currentGameMode === 'boss',
     onGameStateChange: (state) => {
       // Record each of the local player's newly-completed moves live, so
       // word/letter stats update as the game is played rather than only
       // once it reaches a terminal state (which may never happen if the
       // player force-quits, crashes, or otherwise abandons the game).
       if (state.turnHistory.length > recordedMoveCountRef.current) {
-        const newEntries = state.turnHistory.slice(recordedMoveCountRef.current);
+        const newEntries = state.turnHistory.slice(
+          recordedMoveCountRef.current
+        );
         recordedMoveCountRef.current = state.turnHistory.length;
         const localId = localPlayerId ?? 'human';
         for (const entry of newEntries) {
@@ -251,10 +315,14 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
           // than waiting for the game to finish.
           recordWordPathTransition(entry.previousWord, entry.newWord)
             .then(() => syncWordPathGraph())
-            .catch(err => console.warn('Failed to record/sync word path transition:', err));
+            .catch((err) =>
+              console.warn('Failed to record/sync word path transition:', err)
+            );
 
           if (entry.playerId === localId) {
-            recordMove(entry).catch(err => console.warn('Failed to record move stats:', err));
+            recordMove(entry).catch((err) =>
+              console.warn('Failed to record move stats:', err)
+            );
           } else {
             // The local player's own submissions are checked for unlocks in
             // the submit handler (handleWordSubmission). For any OTHER
@@ -265,9 +333,16 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
             // grants the unlock into its own storage. isLocalMove=false
             // ensures a bot/opponent playing "RESET" can't wipe the local
             // player's unlocks.
-            const isProfane = !!wordData?.profanityWords.has(entry.newWord.toUpperCase());
-            handleWordSubmission(entry.newWord, isProfane, { isLocalMove: false }).catch(err =>
-              console.warn('Failed to check non-local move unlock triggers:', err)
+            const isProfane = !!wordData?.profanityWords.has(
+              entry.newWord.toUpperCase()
+            );
+            handleWordSubmission(entry.newWord, isProfane, {
+              isLocalMove: false,
+            }).catch((err) =>
+              console.warn(
+                'Failed to check non-local move unlock triggers:',
+                err
+              )
             );
           }
         }
@@ -287,7 +362,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         }
         // Only check when we have at least 3 words (the shortest sequence trigger)
         if (wordPath.length >= 3) {
-          handleWordPathChange(wordPath).catch(err =>
+          handleWordPathChange(wordPath).catch((err) =>
             console.warn('Failed to check word sequence unlock triggers:', err)
           );
         }
@@ -296,17 +371,22 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       if (state.gameStatus === 'finished' && onGameEnd) {
         const localId = localPlayerId ?? 'human';
         const opponentId = localPlayerId
-          ? state.players.find(p => p.id !== localId)?.id
+          ? state.players.find((p) => p.id !== localId)?.id
           : 'bot';
-        const humanScore = state.players.find(p => p.id === localId)?.score || 0;
-        const botScore = state.players.find(p => p.id === opponentId)?.score || 0;
+        const humanScore =
+          state.players.find((p) => p.id === localId)?.score || 0;
+        const botScore =
+          state.players.find((p) => p.id === opponentId)?.score || 0;
 
         // Show the win/loss overlay immediately - don't block it on unlock
         // checks, which may involve slow/unreliable network calls (community
         // unlock recording via Supabase) and would otherwise leave the board
         // blank (it unmounts as soon as the game is no longer active) for an
         // indeterminate amount of time before the overlay appears.
-        onGameEnd(state.winner?.id || null, { human: humanScore, bot: botScore });
+        onGameEnd(state.winner?.id || null, {
+          human: humanScore,
+          bot: botScore,
+        });
 
         // Check for unlock triggers on game completion in the background;
         // any resulting unlock notification will show over the overlay once ready.
@@ -315,24 +395,27 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         // boss unlocks only fire on a real win, not on a tie the engine might
         // otherwise award to the human via sortedPlayers[0].
         const completionWinner = isBossBattle
-          ? (humanScore > botScore ? 'human' : null)
-          : (state.winner?.id || null);
-        handleGameCompletion(completionWinner, config?.botId).catch(err =>
+          ? humanScore > botScore
+            ? 'human'
+            : null
+          : state.winner?.id || null;
+        handleGameCompletion(completionWinner, config?.botId).catch((err) =>
           console.warn('Failed to check game completion unlock triggers:', err)
         );
 
         // Upload any newly-discovered word path edges to the server's
         // master graph, also in the background.
-        syncWordPathGraph().catch(err =>
+        syncWordPathGraph().catch((err) =>
           console.warn('Failed to sync word path graph:', err)
         );
 
         // Record this game into the player's lifetime stats log, also in the background
         const won = state.winner?.id === localId;
         const tied = humanScore === botScore;
-        const gameDurationMs = state.gameStartTime && state.lastMoveTime
-          ? state.lastMoveTime - state.gameStartTime
-          : null;
+        const gameDurationMs =
+          state.gameStartTime && state.lastMoveTime
+            ? state.lastMoveTime - state.gameStartTime
+            : null;
         recordGameResult({
           playerId: localId,
           botId: config?.botId,
@@ -342,40 +425,48 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
           totalTurns: state.totalMoves,
           finalScore: humanScore,
           gameDurationMs,
-          timestamp: Date.now()
-        }).catch(err => console.warn('Failed to record game result stats:', err));
+          timestamp: Date.now(),
+        }).catch((err) =>
+          console.warn('Failed to record game result stats:', err)
+        );
       }
-    }
+    },
   });
 
   // Multiplayer: the host's time-pressure choice for this game (hydrated
   // from the shared remote state) applies to every player, overriding each
   // player's own local mechanic toggle above.
-  const isTimePressureOn = currentGameMode === 'multiplayer'
-    ? !!gameState.config.timePressureEnabled
-    : isTimePressureOnLocal;
+  const isTimePressureOn =
+    currentGameMode === 'multiplayer'
+      ? !!gameState.config.timePressureEnabled
+      : isTimePressureOnLocal;
 
   // Derived state
   const gameStats = useGameStats(gameState);
   const wordState = useWordState(gameState);
-  
+
   // Local UI state
   const [pendingWord, setPendingWord] = useState('');
-  
+
   // Track pendingWord changes
   useEffect(() => {
     // Clean, no debug logs
   }, [pendingWord]);
-  const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
+  const [pendingMoveAttempt, setPendingMoveAttempt] =
+    useState<MoveAttempt | null>(null);
   const [showGameEnd, setShowGameEnd] = useState(false);
   const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [showValidationError, setShowValidationError] = useState(false);
-  const [turnTimeRemaining, setTurnTimeRemaining] = useState<number | null>(null);
+  const [turnTimeRemaining, setTurnTimeRemaining] = useState<number | null>(
+    null
+  );
   // Whole-game boss countdown (seconds remaining). Null outside a boss battle.
-  const [bossTimeRemaining, setBossTimeRemaining] = useState<number | null>(null);
+  const [bossTimeRemaining, setBossTimeRemaining] = useState<number | null>(
+    null
+  );
   // Guards against firing onGameTimeout more than once per boss battle.
   const bossTimeoutFiredRef = useRef(false);
   const [isRenamingSelf, setIsRenamingSelf] = useState(false);
@@ -405,10 +496,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     let timeoutId: NodeJS.Timeout;
 
     if (isBotTurn && isGameActive && !isBotThinking) {
-            // Add delay for better UX
+      // Add delay for better UX
       timeoutId = setTimeout(async () => {
-                const botMove = await makeBotMove();
-                if (botMove) {
+        const botMove = await makeBotMove();
+        if (botMove) {
           // setBotMoveHistory(prev => [...prev, botMove]);
         }
       }, 1000); // 1 second delay to show bot is "thinking"
@@ -416,7 +507,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
     return () => {
       if (timeoutId) {
-                clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
       }
     };
   }, [isBotTurn, isGameActive, isBotThinking, makeBotMove]); // Removed gameState.players to prevent retriggering
@@ -432,7 +523,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     setTurnTimeRemaining(TURN_TIME_LIMIT_SECONDS);
 
     const intervalId = setInterval(() => {
-      setTurnTimeRemaining(prev => (prev !== null ? Math.max(prev - 1, 0) : null));
+      setTurnTimeRemaining((prev) =>
+        prev !== null ? Math.max(prev - 1, 0) : null
+      );
     }, 1000);
 
     return () => {
@@ -442,14 +535,26 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   // Auto-pass the player's turn when the countdown reaches zero
   useEffect(() => {
-    if (turnTimeRemaining === 0 && isTimePressureOn && isPlayerTurn && isGameActive) {
+    if (
+      turnTimeRemaining === 0 &&
+      isTimePressureOn &&
+      isPlayerTurn &&
+      isGameActive
+    ) {
       actions.passTurn();
       setPendingWord(wordState.currentWord);
       setPendingMoveAttempt(null);
       setShowValidationError(false);
       setTurnTimeRemaining(null);
     }
-  }, [turnTimeRemaining, isTimePressureOn, isPlayerTurn, isGameActive, actions, wordState.currentWord]);
+  }, [
+    turnTimeRemaining,
+    isTimePressureOn,
+    isPlayerTurn,
+    isGameActive,
+    actions,
+    wordState.currentWord,
+  ]);
 
   // Boss battle whole-game countdown: starts ticking from bossTimeLimitSeconds
   // the moment the boss game becomes active, and fires onGameTimeout once it
@@ -464,7 +569,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     setBossTimeRemaining(bossTimeLimitSeconds);
 
     const intervalId = setInterval(() => {
-      setBossTimeRemaining(prev => (prev !== null ? Math.max(prev - 1, 0) : null));
+      setBossTimeRemaining((prev) =>
+        prev !== null ? Math.max(prev - 1, 0) : null
+      );
     }, 1000);
 
     return () => {
@@ -474,7 +581,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
 
   // Fire onGameTimeout exactly once when the boss countdown reaches zero.
   useEffect(() => {
-    if (bossTimeRemaining === 0 && isBossBattle && isGameActive && !bossTimeoutFiredRef.current) {
+    if (
+      bossTimeRemaining === 0 &&
+      isBossBattle &&
+      isGameActive &&
+      !bossTimeoutFiredRef.current
+    ) {
       bossTimeoutFiredRef.current = true;
       onGameTimeout?.();
     }
@@ -483,51 +595,66 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   // Letter grid state
   const letterStates: LetterState[] = React.useMemo(() => {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    const states = alphabet.map(letter => {
+    const states = alphabet.map((letter) => {
       // Only current key letters get accent color styling
       if (wordState.keyLetters.includes(letter)) {
         return { letter, state: 'key' as const };
       }
       // Both regular locked letters and locked key letters get lock icon with normal background
-      if (wordState.lockedLetters.includes(letter) || wordState.lockedKeyLetters.includes(letter)) {
+      if (
+        wordState.lockedLetters.includes(letter) ||
+        wordState.lockedKeyLetters.includes(letter)
+      ) {
         return { letter, state: 'locked' as const };
       }
       // Normal letters
       return { letter, state: 'normal' as const };
     });
-    
+
     return states;
-  }, [wordState.keyLetters, wordState.lockedLetters, wordState.lockedKeyLetters]);
+  }, [
+    wordState.keyLetters,
+    wordState.lockedLetters,
+    wordState.lockedKeyLetters,
+  ]);
 
   // Pending word highlights (for word builder)
   const pendingWordHighlights: LetterHighlight[] = React.useMemo(() => {
-    return pendingWord.split('').map((letter, index) => {
-      // Locked key letters take priority (they were key letters that became locked)
-      if (wordState.lockedKeyLetters.includes(letter)) {
-        return { index, type: 'lockedKey' as const };
-      }
-      if (wordState.keyLetters.includes(letter)) {
-        return { index, type: 'key' as const };
-      }
-      if (wordState.lockedLetters.includes(letter)) {
-        return { index, type: 'locked' as const };
-      }
-      return null;
-    }).filter((highlight): highlight is LetterHighlight => highlight !== null);
-  }, [pendingWord, wordState.keyLetters, wordState.lockedLetters, wordState.lockedKeyLetters]);
+    return pendingWord
+      .split('')
+      .map((letter, index) => {
+        // Locked key letters take priority (they were key letters that became locked)
+        if (wordState.lockedKeyLetters.includes(letter)) {
+          return { index, type: 'lockedKey' as const };
+        }
+        if (wordState.keyLetters.includes(letter)) {
+          return { index, type: 'key' as const };
+        }
+        if (wordState.lockedLetters.includes(letter)) {
+          return { index, type: 'locked' as const };
+        }
+        return null;
+      })
+      .filter((highlight): highlight is LetterHighlight => highlight !== null);
+  }, [
+    pendingWord,
+    wordState.keyLetters,
+    wordState.lockedLetters,
+    wordState.lockedKeyLetters,
+  ]);
 
   // Action indicators based on pending move
   const actionState: ActionState = React.useMemo(() => {
     if (!pendingMoveAttempt?.scoringResult) {
       return { add: false, remove: false, move: false };
     }
-    
+
     const actions: ScoringAction[] = pendingMoveAttempt.scoringResult.actions;
 
     return {
       add: actions.some((action) => action.type === 'add'),
       remove: actions.some((action) => action.type === 'remove'),
-      move: actions.some((action) => action.type === 'rearrange')
+      move: actions.some((action) => action.type === 'rearrange'),
     };
   }, [pendingMoveAttempt]);
 
@@ -536,13 +663,13 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     if (!pendingMoveAttempt?.scoringResult) {
       return { base: 0, keyBonus: 0, total: 0 };
     }
-    
+
     const result = pendingMoveAttempt.scoringResult;
 
     return {
       base: result.baseScore,
       keyBonus: result.keyLetterScore,
-      total: result.totalScore
+      total: result.totalScore,
     };
   }, [pendingMoveAttempt]);
 
@@ -557,19 +684,30 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         word: turn.newWord,
         score: turn.score,
         player: turn.playerId,
-        opponentName: turn.playerId === 'bot' && config?.botId ? getBotDisplayName(config.botId) : undefined,
+        opponentName:
+          turn.playerId === 'bot' && config?.botId
+            ? getBotDisplayName(config.botId)
+            : undefined,
         turnNumber: turn.turnNumber,
         keyLetters: scoringBreakdown.keyLettersUsed || [],
         scoreBreakdown: scoringBreakdown.breakdown,
         // Ninjabot's own moves are masked during the fight; the local
         // player's own moves are masked permanently once ninja-word-trail
         // is unlocked.
-        maskWord: (isNinjaBotOpponent && !isOwnMove) || (ninjaWordTrailUnlocked && isOwnMove)
+        maskWord:
+          (isNinjaBotOpponent && !isOwnMove) ||
+          (ninjaWordTrailUnlocked && isOwnMove),
       };
     });
-    
-        return moves;
-  }, [gameState, config?.botId, localPlayerId, isNinjaBotOpponent, ninjaWordTrailUnlocked]); // Use full gameState instead of just turnHistory
+
+    return moves;
+  }, [
+    gameState,
+    config?.botId,
+    localPlayerId,
+    isNinjaBotOpponent,
+    ninjaWordTrailUnlocked,
+  ]); // Use full gameState instead of just turnHistory
 
   // Event handlers
   const handleHelp = useCallback(async () => {
@@ -581,9 +719,12 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     const grinchBotUnlocked = getUnlockedItems('bot').includes('grinch-bot');
     if (grinchBotUnlocked && isSeussWord(word, wordData)) {
       // Invented Seuss words get a sassy Grinch response when playing the grinchbot
-      if (config?.botId === 'grinch-bot' && isSeussInventedWord(word, wordData)) {
+      if (
+        config?.botId === 'grinch-bot' &&
+        isSeussInventedWord(word, wordData)
+      ) {
         showCustomAlert(['DONT', 'QUESTION', 'ME!'], {
-          meta: "Im the Grinch I can say what i want."
+          meta: 'Im the Grinch I can say what i want.',
         });
       } else {
         showCustomAlert([word], {
@@ -591,7 +732,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
             <div className="alert-overlay__meta-definition">
               This is a Dr. Seuss word and it's fantastic.
             </div>
-          )
+          ),
         });
       }
       return;
@@ -605,17 +746,21 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     showCustomAlert([word], {
       meta: (
         <>
-          <div className={isInvalid ? 'alert-overlay__meta-reason--invalid' : ''}>
+          <div
+            className={isInvalid ? 'alert-overlay__meta-reason--invalid' : ''}
+          >
             {reason}
           </div>
           {variantNote && (
-            <div className="alert-overlay__meta-variant-note">{variantNote}</div>
+            <div className="alert-overlay__meta-variant-note">
+              {variantNote}
+            </div>
           )}
           <div className="alert-overlay__meta-definition">
             {definition || 'No definition available'}
           </div>
         </>
-      )
+      ),
     });
   }, [pendingWord, wordData, showCustomAlert, getUnlockedItems, config?.botId]);
 
@@ -623,114 +768,151 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     setIsMenuOpen(true);
   }, []);
 
-  const handleActionClick = useCallback((action: string) => {
-    // The menu, home navigation, and dictionary/help lookup should always be
-    // reachable, even when it's not the player's turn (e.g. waiting on an
-    // opponent in async multiplayer) - unlike letter/word edits, these
-    // aren't turn actions.
-    if (action === '≡') {
-      handleSettings();
-      return;
-    }
+  const handleActionClick = useCallback(
+    (action: string) => {
+      // The menu, home navigation, and dictionary/help lookup should always be
+      // reachable, even when it's not the player's turn (e.g. waiting on an
+      // opponent in async multiplayer) - unlike letter/word edits, these
+      // aren't turn actions.
+      if (action === '≡') {
+        handleSettings();
+        return;
+      }
 
-    if (action === '←') { // Leave the board and return to the home screen
-      onNavigateHome?.();
-      return;
-    }
+      if (action === '←') {
+        // Leave the board and return to the home screen
+        onNavigateHome?.();
+        return;
+      }
 
-    if (action === '?') { // Help / dictionary lookup
-      handleHelp();
-      return;
-    }
+      if (action === '?') {
+        // Help / dictionary lookup
+        handleHelp();
+        return;
+      }
 
-    if (!isPlayerTurn || isProcessingMove) return;
-    
-    switch (action) {
-      case '↻': // Reset word (reset to current word)
-        setPendingWord(wordState.currentWord);
+      if (!isPlayerTurn || isProcessingMove) return;
+
+      switch (action) {
+        case '↻': // Reset word (reset to current word)
+          setPendingWord(wordState.currentWord);
+          setPendingMoveAttempt(null);
+          break;
+      }
+    },
+    [
+      isPlayerTurn,
+      isProcessingMove,
+      wordState.currentWord,
+      handleHelp,
+      handleSettings,
+      onNavigateHome,
+    ]
+  );
+
+  const handleWordChange = useCallback(
+    (newWord: string) => {
+      if (!isPlayerTurn || isProcessingMove) {
+        return;
+      }
+
+      setPendingWord(newWord);
+      setShowValidationError(false); // Reset error display when word changes
+
+      // Validate the move attempt
+      if (newWord !== wordState.currentWord) {
+        const attempt = actions.attemptMove(newWord);
+        setPendingMoveAttempt(attempt);
+      } else {
         setPendingMoveAttempt(null);
-        break;
-    }
-  }, [isPlayerTurn, isProcessingMove, wordState.currentWord, handleHelp, handleSettings, onNavigateHome]);
+      }
+    },
+    [isPlayerTurn, isProcessingMove, wordState.currentWord, actions]
+  );
 
-  const handleWordChange = useCallback((newWord: string) => {
-    if (!isPlayerTurn || isProcessingMove) {
-      return;
-    }
-    
-    setPendingWord(newWord);
-    setShowValidationError(false); // Reset error display when word changes
-    
-    // Validate the move attempt
-    if (newWord !== wordState.currentWord) {
-      const attempt = actions.attemptMove(newWord);
-      setPendingMoveAttempt(attempt);
-    } else {
-      setPendingMoveAttempt(null);
-    }
-  }, [isPlayerTurn, isProcessingMove, wordState.currentWord, actions]);
+  const handleLetterClick = useCallback(
+    (letter: string) => {
+      if (!isPlayerTurn || isProcessingMove) return;
 
-  const handleLetterClick = useCallback((letter: string) => {
-    if (!isPlayerTurn || isProcessingMove) return;
-    
-    // Add letter to pending word
-    if (pendingWord.length < 10) { // Max word length
-      triggerHapticFeedback('add');
-      triggerSoundFeedback('add');
-      const newWord = pendingWord + letter;
-      handleWordChange(newWord);
-    }
-  }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
+      // Add letter to pending word
+      if (pendingWord.length < 10) {
+        // Max word length
+        triggerHapticFeedback('add');
+        triggerSoundFeedback('add');
+        const newWord = pendingWord + letter;
+        handleWordChange(newWord);
+      }
+    },
+    [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]
+  );
 
-  const handleLetterDragStart = useCallback((letter: string) => {
-    if (!isPlayerTurn || isProcessingMove) return;
-    setDraggedLetter(letter);
-  }, [isPlayerTurn, isProcessingMove]);
+  const handleLetterDragStart = useCallback(
+    (letter: string) => {
+      if (!isPlayerTurn || isProcessingMove) return;
+      setDraggedLetter(letter);
+    },
+    [isPlayerTurn, isProcessingMove]
+  );
 
   const handleLetterDragEnd = useCallback(() => {
     setDraggedLetter(null);
   }, []);
 
-  const handleWordBuilderMouseUp = useCallback((_e: React.MouseEvent) => {
-    if (draggedLetter && pendingWord.length < 10) {
-      triggerHapticFeedback('add');
-      triggerSoundFeedback('add');
-      const newWord = pendingWord + draggedLetter;
-      handleWordChange(newWord);
-    }
-    setDraggedLetter(null);
-  }, [draggedLetter, pendingWord, handleWordChange]);
+  const handleWordBuilderMouseUp = useCallback(
+    (_e: React.MouseEvent) => {
+      if (draggedLetter && pendingWord.length < 10) {
+        triggerHapticFeedback('add');
+        triggerSoundFeedback('add');
+        const newWord = pendingWord + draggedLetter;
+        handleWordChange(newWord);
+      }
+      setDraggedLetter(null);
+    },
+    [draggedLetter, pendingWord, handleWordChange]
+  );
 
-  const handleWordBuilderTouchEnd = useCallback((_e: React.TouchEvent) => {
-    if (draggedLetter && pendingWord.length < 10) {
-      triggerHapticFeedback('add');
-      triggerSoundFeedback('add');
-      const newWord = pendingWord + draggedLetter;
-      handleWordChange(newWord);
-    }
-    setDraggedLetter(null);
-  }, [draggedLetter, pendingWord, handleWordChange]);
+  const handleWordBuilderTouchEnd = useCallback(
+    (_e: React.TouchEvent) => {
+      if (draggedLetter && pendingWord.length < 10) {
+        triggerHapticFeedback('add');
+        triggerSoundFeedback('add');
+        const newWord = pendingWord + draggedLetter;
+        handleWordChange(newWord);
+      }
+      setDraggedLetter(null);
+    },
+    [draggedLetter, pendingWord, handleWordChange]
+  );
 
-  const handleLetterRemove = useCallback((info: { letter: string; index: number }) => {
-    if (!isPlayerTurn || isProcessingMove) {
-      return;
-    }
-    
-    if (disableLetterRemoval) {
-      console.log('[Tutorial] Letter removal disabled in Step 3');
-      return;
-    }
-    
-    if (info.index < 0 || info.index >= pendingWord.length) {
-      return;
-    }
-    
-    const letters = pendingWord.split('');
-    letters.splice(info.index, 1);
-    const newWord = letters.join('');
-    
-    handleWordChange(newWord);
-  }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange, disableLetterRemoval]);
+  const handleLetterRemove = useCallback(
+    (info: { letter: string; index: number }) => {
+      if (!isPlayerTurn || isProcessingMove) {
+        return;
+      }
+
+      if (disableLetterRemoval) {
+        console.log('[Tutorial] Letter removal disabled in Step 3');
+        return;
+      }
+
+      if (info.index < 0 || info.index >= pendingWord.length) {
+        return;
+      }
+
+      const letters = pendingWord.split('');
+      letters.splice(info.index, 1);
+      const newWord = letters.join('');
+
+      handleWordChange(newWord);
+    },
+    [
+      isPlayerTurn,
+      isProcessingMove,
+      pendingWord,
+      handleWordChange,
+      disableLetterRemoval,
+    ]
+  );
 
   // Determine if submit is valid
   const isValidSubmit = pendingMoveAttempt?.canApply || false;
@@ -740,7 +922,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   const showInvalidX = !isValidSubmit;
 
   const handleSubmit = useCallback(async () => {
-    
     if (!isPlayerTurn || isProcessingMove) return;
 
     // Shortcut: tapping the X while the word in play is unchanged from the
@@ -761,7 +942,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       handleWordChange('');
       return;
     }
-    
+
     // Handle clicking X to pass turn (valid for any non-winning move)
     if (!isValidSubmit) {
       if (!showValidationError) {
@@ -777,7 +958,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         return;
       }
     }
-    
+
     // Handle normal valid submission
     if (pendingMoveAttempt?.canApply) {
       const success = actions.applyMove(pendingMoveAttempt);
@@ -786,13 +967,18 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         triggerSoundFeedback('submit');
         // Check for unlock triggers when word is successfully submitted
         // (the vanity filter mechanic unlock is handled here via UNLOCK_DEFINITIONS)
-        const isProfane = !!wordData?.profanityWords.has(pendingMoveAttempt.newWord.toUpperCase());
+        const isProfane = !!wordData?.profanityWords.has(
+          pendingMoveAttempt.newWord.toUpperCase()
+        );
         await handleWordSubmission(pendingMoveAttempt.newWord, isProfane);
 
         // "GUS" boss trigger: report the submitted word to the parent so it can
         // decide whether to start the boss encounter. Only fires for the local
         // player's own submissions in a normal bot game (gated by App).
-        if (onBossTrigger && pendingMoveAttempt.newWord.toUpperCase() === 'GUS') {
+        if (
+          onBossTrigger &&
+          pendingMoveAttempt.newWord.toUpperCase() === 'GUS'
+        ) {
           onBossTrigger(pendingMoveAttempt.newWord);
         }
 
@@ -801,7 +987,21 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         setShowValidationError(false);
       }
     }
-  }, [isPlayerTurn, isProcessingMove, pendingWord, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, wordData, handleWordChange, showAlert, onBossTrigger, isValidSubmit]);
+  }, [
+    isPlayerTurn,
+    isProcessingMove,
+    pendingWord,
+    pendingMoveAttempt,
+    actions,
+    wordState.currentWord,
+    showValidationError,
+    handleWordSubmission,
+    wordData,
+    handleWordChange,
+    showAlert,
+    onBossTrigger,
+    isValidSubmit,
+  ]);
 
   const handleStartGame = useCallback(async () => {
     await actions.startGame();
@@ -823,39 +1023,60 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
   }, [actions]);
 
   // Helper function to generate word suggestions
-  const generateWordSuggestions = useCallback((currentWord: string): string[] => {
-    const currentWordUpper = currentWord.toUpperCase();
-    
-    // Common variations to try
-    const commonVariations = [
-      // Add S
-      currentWordUpper + 'S',
-      // Add common endings
-      currentWordUpper + 'ED',
-      currentWordUpper + 'ING',
-      currentWordUpper + 'ER',
-      currentWordUpper + 'LY',
-      // Remove last letter if word is long enough
-      ...(currentWordUpper.length > 3 ? [currentWordUpper.slice(0, -1)] : []),
-      // Common word transformations based on current word
-      ...(currentWordUpper === 'CAT' ? ['CATS', 'BAT', 'HAT', 'MAT', 'RAT'] : []),
-      ...(currentWordUpper === 'CATS' ? ['CAT', 'BATS', 'HATS', 'MATS', 'RATS'] : []),
-      ...(currentWordUpper === 'PLAY' ? ['PLAYS', 'PLAN', 'PLAT', 'CLAY', 'SLAY'] : []),
-      ...(currentWordUpper === 'WORD' ? ['WORDS', 'WORK', 'WORN', 'CORD', 'LORD'] : []),
-      // Some always valid backup words
-      'CAT', 'CATS', 'DOG', 'DOGS', 'PLAY', 'PLAYS', 'GAME', 'GAMES', 'WORD', 'WORDS'
-    ];
-    
-    // Filter to only valid dictionary words and not already used
-    const validSuggestions = commonVariations.filter(word => 
-      isValidDictionaryWord(word) && 
-      !wordState.usedWords.includes(word) &&
-      word !== currentWordUpper
-    );
-    
-    // Remove duplicates and return first 8
-    return [...new Set(validSuggestions)].slice(0, 8);
-  }, [wordState.usedWords, isValidDictionaryWord]);
+  const generateWordSuggestions = useCallback(
+    (currentWord: string): string[] => {
+      const currentWordUpper = currentWord.toUpperCase();
+
+      // Common variations to try
+      const commonVariations = [
+        // Add S
+        currentWordUpper + 'S',
+        // Add common endings
+        currentWordUpper + 'ED',
+        currentWordUpper + 'ING',
+        currentWordUpper + 'ER',
+        currentWordUpper + 'LY',
+        // Remove last letter if word is long enough
+        ...(currentWordUpper.length > 3 ? [currentWordUpper.slice(0, -1)] : []),
+        // Common word transformations based on current word
+        ...(currentWordUpper === 'CAT'
+          ? ['CATS', 'BAT', 'HAT', 'MAT', 'RAT']
+          : []),
+        ...(currentWordUpper === 'CATS'
+          ? ['CAT', 'BATS', 'HATS', 'MATS', 'RATS']
+          : []),
+        ...(currentWordUpper === 'PLAY'
+          ? ['PLAYS', 'PLAN', 'PLAT', 'CLAY', 'SLAY']
+          : []),
+        ...(currentWordUpper === 'WORD'
+          ? ['WORDS', 'WORK', 'WORN', 'CORD', 'LORD']
+          : []),
+        // Some always valid backup words
+        'CAT',
+        'CATS',
+        'DOG',
+        'DOGS',
+        'PLAY',
+        'PLAYS',
+        'GAME',
+        'GAMES',
+        'WORD',
+        'WORDS',
+      ];
+
+      // Filter to only valid dictionary words and not already used
+      const validSuggestions = commonVariations.filter(
+        (word) =>
+          isValidDictionaryWord(word) &&
+          !wordState.usedWords.includes(word) &&
+          word !== currentWordUpper
+      );
+
+      // Remove duplicates and return first 8
+      return [...new Set(validSuggestions)].slice(0, 8);
+    },
+    [wordState.usedWords, isValidDictionaryWord]
+  );
 
   const handleMenuClose = useCallback(() => {
     setIsMenuOpen(false);
@@ -867,7 +1088,8 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
     // would otherwise leave no trace at all.
     if (gameState.gameStatus === 'playing') {
       const localId = localPlayerId ?? 'human';
-      const humanScore = gameState.players.find(p => p.id === localId)?.score || 0;
+      const humanScore =
+        gameState.players.find((p) => p.id === localId)?.score || 0;
       const gameDurationMs = gameState.gameStartTime
         ? Date.now() - gameState.gameStartTime
         : null;
@@ -880,8 +1102,10 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         totalTurns: gameState.totalMoves,
         finalScore: humanScore,
         gameDurationMs,
-        timestamp: Date.now()
-      }).catch(err => console.warn('Failed to record resigned game stats:', err));
+        timestamp: Date.now(),
+      }).catch((err) =>
+        console.warn('Failed to record resigned game stats:', err)
+      );
     }
 
     // Call the parent's resign handler to show quitter overlay
@@ -909,7 +1133,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       className={
         'interactive-game' +
         (isDrunkOn ? ' interactive-game--drunk' : '') +
-        (bossEffectTier !== 'none' ? ` interactive-game--boss-${bossEffectTier}` : '') +
+        (bossEffectTier !== 'none'
+          ? ` interactive-game--boss-${bossEffectTier}`
+          : '') +
         (isBossBattle ? ' interactive-game--boss-battle' : '')
       }
       data-boss-stage={isBossBattle ? bossStage : undefined}
@@ -950,7 +1176,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         players={gameState.players}
         botId={config?.botId}
         isMultiplayer={currentGameMode === 'multiplayer'}
-        currentRound={Math.ceil(gameState.currentTurn / gameState.players.length)}
+        currentRound={Math.ceil(
+          gameState.currentTurn / gameState.players.length
+        )}
         localPlayerId={localPlayerId}
         onOwnNameTap={handleOwnNameTap}
       />
@@ -971,7 +1199,9 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
       {lastError && (
         <div className="interactive-game__error" role="alert">
           <span>{lastError}</span>
-          <button onClick={clearError} aria-label="Dismiss error">×</button>
+          <button onClick={clearError} aria-label="Dismiss error">
+            ×
+          </button>
         </div>
       )}
 
@@ -982,15 +1212,21 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
             <div className="interactive-game__end">
               <h2>Game Over!</h2>
               <div className="interactive-game__winner">
-                {gameState.winner ? `${gameState.winner.name} Wins!` : "It's a Tie!"}
+                {gameState.winner
+                  ? `${gameState.winner.name} Wins!`
+                  : "It's a Tie!"}
               </div>
               <div className="interactive-game__final-scores">
                 <div>You: {gameStats.humanScore}</div>
                 <div>Bot: {gameStats.botScore}</div>
               </div>
-              <button 
+              <button
                 className="interactive-game__reset-btn"
-                onClick={currentGameMode === 'tutorial' ? onNavigateHome : handleResetGame}
+                onClick={
+                  currentGameMode === 'tutorial'
+                    ? onNavigateHome
+                    : handleResetGame
+                }
                 type="button"
               >
                 {currentGameMode === 'tutorial' ? 'Home' : 'New Game'}
@@ -1012,15 +1248,21 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 isValid={!showInvalidX}
                 isPassConfirming={false}
                 passReason={null}
-                onClick={!isProcessingMove && isPlayerTurn ? handleSubmit : undefined}
+                onClick={
+                  !isProcessingMove && isPlayerTurn ? handleSubmit : undefined
+                }
                 className="interactive-game__score"
                 isPassMode={false}
-                validationError={pendingMoveAttempt?.validationResult?.userMessage || null}
+                validationError={
+                  pendingMoveAttempt?.validationResult?.userMessage || null
+                }
                 showValidationError={showValidationError}
                 timerSeconds={
                   isBossBattle
                     ? bossTimeRemaining
-                    : (isTimePressureOn && isPlayerTurn ? turnTimeRemaining : null)
+                    : isTimePressureOn && isPlayerTurn
+                      ? turnTimeRemaining
+                      : null
                 }
               />
             </div>
@@ -1034,7 +1276,7 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
                 maxVisible={5}
               />
             </div>
-            
+
             {/* Word builder positioned below submit anchor. In vs-human
                 multiplayer the word in play must stay visible even when
                 it's the opponent's turn (unlike vs-bot, where the bot's
@@ -1108,7 +1350,6 @@ export const InteractiveGame: React.FC<InteractiveGameProps> = ({
         isInGame={true}
         currentGameMode={currentGameMode}
       />
-
     </div>
   );
-}; 
+};
