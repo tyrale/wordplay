@@ -6,17 +6,30 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createWordPathGraphEngine, getInitialWordPathGraph, edgeKey, coerceWordPathGraph } from '../word-path-graph';
-import type { WordPathGraphDependencies, WordPathGraphEngine, WordPathGraph } from '../word-path-graph';
+import {
+  createWordPathGraphEngine,
+  getInitialWordPathGraph,
+  edgeKey,
+  coerceWordPathGraph,
+} from '../word-path-graph';
+import type {
+  WordPathGraphDependencies,
+  WordPathGraphEngine,
+  WordPathGraph,
+} from '../word-path-graph';
 
-function createTestWordPathGraphDependencies(initial?: WordPathGraph): WordPathGraphDependencies {
+function createTestWordPathGraphDependencies(
+  initial?: WordPathGraph
+): WordPathGraphDependencies {
   let state: WordPathGraph = initial ?? getInitialWordPathGraph();
   const now = 1_700_000_000_000; // fixed base timestamp
 
   return {
     loadState: async () => state,
-    saveState: async (newState: WordPathGraph) => { state = newState; },
-    getTimestamp: () => now
+    saveState: async (newState: WordPathGraph) => {
+      state = newState;
+    },
+    getTimestamp: () => now,
   };
 }
 
@@ -110,7 +123,9 @@ describe('Word Path Graph Engine', () => {
 
       const unsynced = engine.getUnsyncedEdges();
       expect(unsynced).toHaveLength(1);
-      expect(edgeKey(unsynced[0][0], unsynced[0][1])).toBe(edgeKey('CATS', 'BATS'));
+      expect(edgeKey(unsynced[0][0], unsynced[0][1])).toBe(
+        edgeKey('CATS', 'BATS')
+      );
     });
 
     it('re-marks a new occurrence of a previously-synced edge as already synced', async () => {
@@ -151,11 +166,17 @@ describe('Word Path Graph Engine', () => {
   describe('coerceWordPathGraph', () => {
     it('returns a fresh graph for invalid input', () => {
       expect(coerceWordPathGraph(null)).toEqual(getInitialWordPathGraph());
-      expect(coerceWordPathGraph({ foo: 'bar' })).toEqual(getInitialWordPathGraph());
+      expect(coerceWordPathGraph({ foo: 'bar' })).toEqual(
+        getInitialWordPathGraph()
+      );
     });
 
     it('fills in missing fields on partially-valid input with defaults', () => {
-      const coerced = coerceWordPathGraph({ nodes: { CAT: true }, edges: {}, totalWordsSeen: 1 });
+      const coerced = coerceWordPathGraph({
+        nodes: { CAT: true },
+        edges: {},
+        totalWordsSeen: 1,
+      });
       expect(coerced.nodes).toEqual({ CAT: true });
       expect(coerced.syncedEdgeKeys).toEqual({});
     });

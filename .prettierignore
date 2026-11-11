@@ -1,0 +1,7 @@
+# Generated / vendored output
+dist
+coverage
+storybook-static
+temp-build
+node_modules
+package-lock.json

@@ -13,7 +13,13 @@
  * instead, for mechanics disruptive enough that the player should opt in.
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 import type { ReactNode } from 'react';
 
 export interface MechanicsSettingsContextValue {
@@ -21,7 +27,8 @@ export interface MechanicsSettingsContextValue {
   toggleMechanic: (mechanicId: string) => void;
 }
 
-const MechanicsSettingsContext = createContext<MechanicsSettingsContextValue | null>(null);
+const MechanicsSettingsContext =
+  createContext<MechanicsSettingsContextValue | null>(null);
 
 const STORAGE_KEY = 'wordplay-mechanics-settings';
 
@@ -32,13 +39,18 @@ interface MechanicsSettingsProviderProps {
   children: ReactNode;
 }
 
-export const MechanicsSettingsProvider: React.FC<MechanicsSettingsProviderProps> = ({ children }) => {
+export const MechanicsSettingsProvider: React.FC<
+  MechanicsSettingsProviderProps
+> = ({ children }) => {
   const [settings, setSettings] = useState<Record<string, boolean>>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       return stored ? JSON.parse(stored) : {};
     } catch (error) {
-      console.warn('Failed to load mechanics settings from localStorage:', error);
+      console.warn(
+        'Failed to load mechanics settings from localStorage:',
+        error
+      );
       return {};
     }
   });
@@ -51,28 +63,34 @@ export const MechanicsSettingsProvider: React.FC<MechanicsSettingsProviderProps>
     }
   }, [settings]);
 
-  const isMechanicOn = useCallback((mechanicId: string): boolean => {
-    // Respect any explicit choice the player has made
-    if (mechanicId in settings) {
-      return settings[mechanicId];
-    }
-    // Otherwise fall back to the mechanic's default (on, unless listed in DEFAULT_OFF_MECHANICS)
-    return !DEFAULT_OFF_MECHANICS.has(mechanicId);
-  }, [settings]);
+  const isMechanicOn = useCallback(
+    (mechanicId: string): boolean => {
+      // Respect any explicit choice the player has made
+      if (mechanicId in settings) {
+        return settings[mechanicId];
+      }
+      // Otherwise fall back to the mechanic's default (on, unless listed in DEFAULT_OFF_MECHANICS)
+      return !DEFAULT_OFF_MECHANICS.has(mechanicId);
+    },
+    [settings]
+  );
 
   const toggleMechanic = useCallback((mechanicId: string): void => {
-    setSettings(prev => {
-      const currentlyOn = mechanicId in prev ? prev[mechanicId] : !DEFAULT_OFF_MECHANICS.has(mechanicId);
+    setSettings((prev) => {
+      const currentlyOn =
+        mechanicId in prev
+          ? prev[mechanicId]
+          : !DEFAULT_OFF_MECHANICS.has(mechanicId);
       return {
         ...prev,
-        [mechanicId]: !currentlyOn
+        [mechanicId]: !currentlyOn,
       };
     });
   }, []);
 
   const contextValue: MechanicsSettingsContextValue = {
     isMechanicOn,
-    toggleMechanic
+    toggleMechanic,
   };
 
   return (
@@ -85,7 +103,9 @@ export const MechanicsSettingsProvider: React.FC<MechanicsSettingsProviderProps>
 export const useMechanicsSettings = (): MechanicsSettingsContextValue => {
   const context = useContext(MechanicsSettingsContext);
   if (!context) {
-    throw new Error('useMechanicsSettings must be used within a MechanicsSettingsProvider');
+    throw new Error(
+      'useMechanicsSettings must be used within a MechanicsSettingsProvider'
+    );
   }
   return context;
 };

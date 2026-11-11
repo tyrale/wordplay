@@ -23,16 +23,23 @@ export interface RecordCommunityUnlockResult {
  * unlocks this particular item (de-duped server-side), regardless of how
  * many times this is called for the same unlock.
  */
-export async function recordCommunityUnlock(unlockId: string): Promise<RecordCommunityUnlockResult | null> {
+export async function recordCommunityUnlock(
+  unlockId: string
+): Promise<RecordCommunityUnlockResult | null> {
   if (!isSupabaseConfigured()) return null;
 
   try {
     const userId = await ensureAnonymousSession();
     if (!userId) return null;
 
-    const { data, error } = await supabase.rpc('record_community_unlock', { p_unlock_id: unlockId });
+    const { data, error } = await supabase.rpc('record_community_unlock', {
+      p_unlock_id: unlockId,
+    });
     if (error) {
-      console.warn(`Failed to record community unlock for "${unlockId}":`, error);
+      console.warn(
+        `Failed to record community unlock for "${unlockId}":`,
+        error
+      );
       return null;
     }
 
@@ -62,13 +69,24 @@ export async function fetchCommunityUnlockStats(): Promise<CommunityUnlockStats>
   if (!isSupabaseConfigured()) return { counts: {}, totalPlayers: 0 };
 
   try {
-    const [{ data: countRows, error: countsError }, { data: statsRow, error: statsError }] = await Promise.all([
-      supabase.from('community_unlock_counts').select('unlock_id, unlock_count'),
-      supabase.from('community_stats').select('total_players').eq('id', true).maybeSingle()
+    const [
+      { data: countRows, error: countsError },
+      { data: statsRow, error: statsError },
+    ] = await Promise.all([
+      supabase
+        .from('community_unlock_counts')
+        .select('unlock_id, unlock_count'),
+      supabase
+        .from('community_stats')
+        .select('total_players')
+        .eq('id', true)
+        .maybeSingle(),
     ]);
 
-    if (countsError) console.warn('Failed to fetch community unlock counts:', countsError);
-    if (statsError) console.warn('Failed to fetch community stats:', statsError);
+    if (countsError)
+      console.warn('Failed to fetch community unlock counts:', countsError);
+    if (statsError)
+      console.warn('Failed to fetch community stats:', statsError);
 
     const counts: Record<string, number> = {};
     for (const row of countRows ?? []) {
@@ -83,7 +101,10 @@ export async function fetchCommunityUnlockStats(): Promise<CommunityUnlockStats>
 }
 
 /** Rounds a count/total into a whole-number percentage, floored at 1% for any nonzero count so rare unlocks don't display as "0% found". */
-export function computeUnlockPercentage(count: number, totalPlayers: number): number {
+export function computeUnlockPercentage(
+  count: number,
+  totalPlayers: number
+): number {
   if (totalPlayers <= 0 || count <= 0) return 0;
   return Math.max(1, Math.round((count / totalPlayers) * 100));
 }

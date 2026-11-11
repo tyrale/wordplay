@@ -6,7 +6,17 @@
  * Safari, iOS Safari which does not implement the Vibration API).
  */
 
-export type HapticPattern = 'add' | 'remove' | 'move' | 'submit' | 'overlay' | 'unlock' | 'yourTurn' | 'win' | 'lose' | 'pass';
+export type HapticPattern =
+  | 'add'
+  | 'remove'
+  | 'move'
+  | 'submit'
+  | 'overlay'
+  | 'unlock'
+  | 'yourTurn'
+  | 'win'
+  | 'lose'
+  | 'pass';
 
 const OVERLAY_DURATION_MS = 12;
 
@@ -30,7 +40,10 @@ const HAPTIC_PATTERNS: Record<HapticPattern, number | number[]> = {
 };
 
 export function triggerHapticFeedback(pattern: HapticPattern = 'move'): void {
-  if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') {
+  if (
+    typeof navigator === 'undefined' ||
+    typeof navigator.vibrate !== 'function'
+  ) {
     return;
   }
 

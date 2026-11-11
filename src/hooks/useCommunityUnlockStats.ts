@@ -19,31 +19,38 @@ export interface CommunityUnlockProgress {
   isLoading: boolean;
 }
 
-export function useCommunityUnlockStats(enabled: boolean): CommunityUnlockProgress {
+export function useCommunityUnlockStats(
+  enabled: boolean
+): CommunityUnlockProgress {
   const [progress, setProgress] = useState<CommunityUnlockProgress>({
     unlocked: 0,
     total: UNLOCK_DEFINITIONS.length,
-    isLoading: enabled
+    isLoading: enabled,
   });
 
   useEffect(() => {
     if (!enabled) return;
 
     let cancelled = false;
-    setProgress(prev => ({ ...prev, isLoading: true }));
+    setProgress((prev) => ({ ...prev, isLoading: true }));
 
     fetchCommunityUnlockStats()
-      .then(stats => {
+      .then((stats) => {
         if (cancelled) return;
         const unlocked = UNLOCK_DEFINITIONS.reduce(
-          (count, def) => (def.id && (stats.counts[def.id] ?? 0) > 0 ? count + 1 : count),
+          (count, def) =>
+            def.id && (stats.counts[def.id] ?? 0) > 0 ? count + 1 : count,
           0
         );
-        setProgress({ unlocked, total: UNLOCK_DEFINITIONS.length, isLoading: false });
+        setProgress({
+          unlocked,
+          total: UNLOCK_DEFINITIONS.length,
+          isLoading: false,
+        });
       })
-      .catch(error => {
+      .catch((error) => {
         console.warn('Failed to fetch community unlock stats:', error);
-        if (!cancelled) setProgress(prev => ({ ...prev, isLoading: false }));
+        if (!cancelled) setProgress((prev) => ({ ...prev, isLoading: false }));
       });
 
     return () => {

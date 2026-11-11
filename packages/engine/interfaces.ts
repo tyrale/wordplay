@@ -1,6 +1,6 @@
 /**
  * WordPlay Engine Interfaces
- * 
+ *
  * This module defines all the dependency contracts between engine components
  * and platform adapters. These interfaces ensure type safety and enable
  * dependency injection for platform-agnostic engine design.
@@ -14,7 +14,19 @@ export type GameStatus = 'ready' | 'waiting' | 'playing' | 'finished';
 
 export interface ValidationResult {
   isValid: boolean;
-  reason?: 'NOT_IN_DICTIONARY' | 'ALREADY_PLAYED' | 'TOO_MANY_ADDS' | 'TOO_MANY_REMOVES' | 'INVALID_CHARACTERS' | 'TOO_SHORT' | 'EMPTY_WORD' | 'GAME_NOT_PLAYING' | 'NO_PLAYER' | 'LENGTH_CHANGE_TOO_LARGE' | 'INVALID_MOVE' | string;
+  reason?:
+    | 'NOT_IN_DICTIONARY'
+    | 'ALREADY_PLAYED'
+    | 'TOO_MANY_ADDS'
+    | 'TOO_MANY_REMOVES'
+    | 'INVALID_CHARACTERS'
+    | 'TOO_SHORT'
+    | 'EMPTY_WORD'
+    | 'GAME_NOT_PLAYING'
+    | 'NO_PLAYER'
+    | 'LENGTH_CHANGE_TOO_LARGE'
+    | 'INVALID_MOVE'
+    | string;
   word: string;
   userMessage?: string;
   censored?: string;
@@ -102,21 +114,21 @@ export interface DictionaryDependencies {
    * @returns Validation result with success/failure and reason
    */
   validateWord(word: string, options?: ValidationOptions): ValidationResult;
-  
+
   /**
    * Check if word exists in dictionary (synchronous)
    * @param word - Word to check
    * @returns true if word exists in dictionary
    */
   isValidDictionaryWord(word: string): boolean;
-  
+
   /**
    * Get random word of specified length (for game initialization)
    * @param length - Desired word length
    * @returns Random word or null if none available
    */
   getRandomWordByLength(length: number): string | null;
-  
+
   /**
    * Get total number of words in dictionary (for debugging)
    * @returns Total word count
@@ -134,13 +146,13 @@ export interface UtilityDependencies {
    * @returns Timestamp in milliseconds
    */
   getTimestamp(): number;
-  
+
   /**
    * Generate random number (for deterministic testing)
    * @returns Random number between 0 and 1
    */
   random(): number;
-  
+
   /**
    * Log message (optional, for debugging)
    * @param message - Message to log
@@ -156,28 +168,39 @@ export interface ScoringDependencies {
   /**
    * Calculate score for a move (usually platform-agnostic)
    * @param fromWord - Starting word
-   * @param toWord - Ending word  
+   * @param toWord - Ending word
    * @param options - Scoring options (key letters, locked letters, etc.)
    * @returns Scoring result with breakdown
    */
-  calculateScore?(fromWord: string, toWord: string, options?: ScoringOptions): ScoringResult;
-  
+  calculateScore?(
+    fromWord: string,
+    toWord: string,
+    options?: ScoringOptions
+  ): ScoringResult;
+
   /**
    * Get simple numeric score for a move (used by bot AI)
    */
-  getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]) => number;
+  getScoreForMove: (
+    fromWord: string,
+    toWord: string,
+    keyLetters?: string[]
+  ) => number;
 }
 
 /**
  * Combined dependencies for bot AI
  * All dependencies the bot needs to generate moves
  */
-export interface BotDependencies extends DictionaryDependencies, UtilityDependencies, ScoringDependencies {
+export interface BotDependencies
+  extends DictionaryDependencies,
+    UtilityDependencies,
+    ScoringDependencies {
   // Bot-specific dependencies can be added here
   getWordCount: () => number;
   getTimestamp: () => number;
   random: () => number;
-  
+
   /**
    * Check if a word is profanity
    * @param word - Word to check for profanity
@@ -204,9 +227,14 @@ export interface BotDependencies extends DictionaryDependencies, UtilityDependen
  * Combined dependencies for complete game engine
  * All dependencies needed for full game functionality
  */
-export interface GameEngineDependencies extends BotDependencies, ScoringDependencies {
-  // Game engine specific bot functions  
-  generateBotMove?: (currentWord: string, options?: BotOptions) => Promise<BotResult>;
+export interface GameEngineDependencies
+  extends BotDependencies,
+    ScoringDependencies {
+  // Game engine specific bot functions
+  generateBotMove?: (
+    currentWord: string,
+    options?: BotOptions
+  ) => Promise<BotResult>;
 }
 
 // =============================================================================
@@ -230,8 +258,16 @@ export interface GameStateDictionaryDependencies {
  * CONSOLIDATED: Matches adapter expectations with consistent signatures
  */
 export interface GameStateScoringDependencies {
-  calculateScore: (fromWord: string, toWord: string, options?: ScoringOptions) => ScoringResult;
-  getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]) => number;
+  calculateScore: (
+    fromWord: string,
+    toWord: string,
+    options?: ScoringOptions
+  ) => ScoringResult;
+  getScoreForMove: (
+    fromWord: string,
+    toWord: string,
+    keyLetters?: string[]
+  ) => number;
   isValidMove: (fromWord: string, toWord: string) => boolean;
 }
 
@@ -247,11 +283,10 @@ export interface GameStateBotDependencies {
  * Complete dependencies interface for game state
  * CONSOLIDATED: Unified flat structure that adapters actually use
  */
-export interface GameStateDependencies extends 
-  GameStateDictionaryDependencies, 
-  GameStateScoringDependencies, 
-  GameStateBotDependencies {
-}
+export interface GameStateDependencies
+  extends GameStateDictionaryDependencies,
+    GameStateScoringDependencies,
+    GameStateBotDependencies {}
 
 // =============================================================================
 // OPTIONS INTERFACES
@@ -304,19 +339,22 @@ export interface BotEngine {
    * @returns Bot result with move and analysis
    */
   generateBotMove(currentWord: string, options?: BotOptions): BotResult;
-  
+
   /**
    * Explain bot's decision making process
    * @param currentWord - Current word in game
    * @param options - Bot options
    * @returns Analysis of bot's reasoning
    */
-  explainBotMove(currentWord: string, options?: BotOptions): {
+  explainBotMove(
+    currentWord: string,
+    options?: BotOptions
+  ): {
     analysis: string;
     topMoves: BotMove[];
     reasoning: string[];
   };
-  
+
   /**
    * Generate specific types of moves
    * @param currentWord - Current word
@@ -343,8 +381,13 @@ export interface ScoringEngine {
    * @param lockedLetters - Locked letters
    * @returns Scoring result
    */
-  calculateScore(fromWord: string, toWord: string, keyLetters: string[], lockedLetters: string[]): ScoringResult;
-  
+  calculateScore(
+    fromWord: string,
+    toWord: string,
+    keyLetters: string[],
+    lockedLetters: string[]
+  ): ScoringResult;
+
   /**
    * Analyze what changed between two words
    * @param fromWord - Starting word
@@ -352,14 +395,17 @@ export interface ScoringEngine {
    * @returns Analysis of changes
    */
   analyzeWordChange(fromWord: string, toWord: string): WordAnalysis;
-  
+
   /**
    * Get score for a specific move candidate
    * @param move - Move candidate to score
    * @param context - Scoring context
    * @returns Numerical score
    */
-  getScoreForMove(move: MoveCandidate, context: { currentWord: string; keyLetters: string[] }): number;
+  getScoreForMove(
+    move: MoveCandidate,
+    context: { currentWord: string; keyLetters: string[] }
+  ): number;
 }
 
 /**
@@ -374,14 +420,14 @@ export interface DictionaryEngine {
    * @returns Validation result
    */
   validateWord(word: string, options?: ValidationOptions): ValidationResult;
-  
+
   /**
    * Check if word is in dictionary
    * @param word - Word to check
    * @returns true if valid dictionary word
    */
   isValidDictionaryWord(word: string): boolean;
-  
+
   /**
    * Get random word for game initialization
    * @param length - Desired length
@@ -425,13 +471,13 @@ export interface GameEngine extends BotEngine, ScoringEngine, DictionaryEngine {
    * @returns Promise that resolves when engine is ready
    */
   initialize(): Promise<void>;
-  
+
   /**
    * Check if engine is ready to use
    * @returns true if engine is initialized and ready
    */
   isReady(): boolean;
-  
+
   /**
    * Get engine information and status
    * @returns Engine status and configuration
@@ -477,107 +523,131 @@ export interface CrossPlatformConfig {
  * Test configuration factory
  * Creates consistent test configurations across platforms
  */
-export function createTestConfig(overrides?: Partial<GameEngineOptions>): GameEngineOptions {
+export function createTestConfig(
+  overrides?: Partial<GameEngineOptions>
+): GameEngineOptions {
   const validWords = ['CAT', 'CATS', 'DOG', 'DOGS'];
-  
+
   // Mock implementation for testing
   const defaultConfig: GameEngineOptions = {
     validation: {
       customValidator: (word: string) => {
         return validWords.includes(word.toUpperCase());
-      }
+      },
     },
     scoring: {
       keyLetters: [],
-      lockedLetters: []
+      lockedLetters: [],
     },
     bot: {
       difficulty: 'easy' as const,
-      maxCandidates: 10
-    }
+      maxCandidates: 10,
+    },
   };
 
   return { ...defaultConfig, ...overrides };
 }
 
 /**
- * Mock dependencies factory  
+ * Mock dependencies factory
  * Creates mock dependencies for testing
  */
 export function createMockDependencies(): GameEngineDependencies {
   const testWords = new Set(['CAT', 'CATS', 'DOG', 'DOGS', 'BAT', 'BATS']);
-  
+
   return {
     validateWord: (word: string, _options?: ValidationOptions) => {
       const normalizedWord = word.trim().toUpperCase();
-      
+
       if (normalizedWord.length === 0) {
         return { isValid: false, reason: 'EMPTY_WORD', word: normalizedWord };
       }
-      
+
       if (testWords.has(normalizedWord)) {
         return { isValid: true, word: normalizedWord };
       }
-      
-      return { isValid: false, reason: 'NOT_IN_DICTIONARY', word: normalizedWord };
+
+      return {
+        isValid: false,
+        reason: 'NOT_IN_DICTIONARY',
+        word: normalizedWord,
+      };
     },
-    
+
     isValidDictionaryWord: (word: string) => {
       return testWords.has(word.toUpperCase());
     },
-    
+
     getRandomWordByLength: (length: number) => {
-      const words = Array.from(testWords).filter(w => w.length === length);
+      const words = Array.from(testWords).filter((w) => w.length === length);
       return words.length > 0 ? words[0] : null;
     },
-    
+
     getWordCount: () => testWords.size,
-    
+
     getTimestamp: () => Date.now(),
     random: () => Math.random(),
-    
-    calculateScore: (_fromWord: string, _toWord: string, _options: ScoringOptions = {}) => {
+
+    calculateScore: (
+      _fromWord: string,
+      _toWord: string,
+      _options: ScoringOptions = {}
+    ) => {
       return {
         score: 1,
         totalScore: 1,
-        breakdown: { addLetterPoints: 1, removeLetterPoints: 0, movePoints: 0, keyLetterUsagePoints: 0 },
+        breakdown: {
+          addLetterPoints: 1,
+          removeLetterPoints: 0,
+          movePoints: 0,
+          keyLetterUsagePoints: 0,
+        },
         actions: [],
         keyLetterScore: 0,
         baseScore: 1,
-        keyLettersUsed: []
+        keyLettersUsed: [],
       };
     },
-    
-    getScoreForMove: (_fromWord: string, _toWord: string, _keyLetters: string[] = []) => {
+
+    getScoreForMove: (
+      _fromWord: string,
+      _toWord: string,
+      _keyLetters: string[] = []
+    ) => {
       return 1; // Simple scoring for tests
     },
-    
+
     generateBotMove: async (currentWord: string, _options: BotOptions = {}) => {
       // Simple bot that tries to add 'S'
       const candidate = currentWord + 'S';
-      const candidateMove = { word: candidate, score: 1, confidence: 0.8, reasoning: ['Added S'] };
-      
+      const candidateMove = {
+        word: candidate,
+        score: 1,
+        confidence: 0.8,
+        reasoning: ['Added S'],
+      };
+
       if (testWords.has(candidate)) {
         return {
           move: candidateMove,
           candidates: [candidateMove],
           processingTime: 5,
-          totalCandidatesGenerated: 1
+          totalCandidatesGenerated: 1,
         };
       }
-      
+
       return {
         move: null,
         candidates: [],
         processingTime: 5,
-        totalCandidatesGenerated: 0
+        totalCandidatesGenerated: 0,
       };
-    }
+    },
   };
 }
 
 // =============================================================================
-// GAME STATE INTERFACES  
+// GAME STATE INTERFACES
 // =============================================================================
 
 export interface Player {
@@ -788,17 +858,17 @@ export interface IGameStateManager {
 
 /**
  * Unlock System Interfaces
- * 
+ *
  * Platform-agnostic unlock system that tracks user progress
  * and manages feature unlocks across themes, mechanics, and bots.
  */
 
 export interface UnlockState {
-  themes: string[];        // Theme names that are unlocked (e.g., ['red', 'blue'])
-  mechanics: string[];     // Mechanic IDs that are unlocked (e.g., ['5-letter-start'])
-  bots: string[];         // Bot IDs that are unlocked (e.g., ['easy-bot', 'pirate-bot'])
+  themes: string[]; // Theme names that are unlocked (e.g., ['red', 'blue'])
+  mechanics: string[]; // Mechanic IDs that are unlocked (e.g., ['5-letter-start'])
+  bots: string[]; // Bot IDs that are unlocked (e.g., ['easy-bot', 'pirate-bot'])
   achievements: string[]; // Achievement IDs that are earned (e.g., ['beat-basicBot'])
-  reveals: string[];      // Menu-preview reveals unlocked (e.g., ['bots', 'themes', 'mechanics'])
+  reveals: string[]; // Menu-preview reveals unlocked (e.g., ['bots', 'themes', 'mechanics'])
   /**
    * Whether this player has ever used the "RESET" word cheat to wipe their
    * unlocks. Once true, playing "RESET" again is treated as a normal word -
@@ -866,13 +936,15 @@ export interface UnlockDependencies {
    * backend is unavailable/unconfigured, so unlocks still work fully
    * offline/local-only.
    */
-  recordCommunityUnlock?(unlockId: string): Promise<{ count: number; totalPlayers: number } | null>;
+  recordCommunityUnlock?(
+    unlockId: string
+  ): Promise<{ count: number; totalPlayers: number } | null>;
 }
 
 export interface UnlockEngine {
   // Initialization
   initialize(): Promise<void>;
-  
+
   // Trigger checking
   checkWordTriggers(word: string): Promise<UnlockResult[]>;
   checkAchievementTriggers(achievement: string): Promise<UnlockResult[]>;
@@ -881,10 +953,13 @@ export interface UnlockEngine {
 
   // State queries
   getUnlockedItems(category: 'theme' | 'mechanic' | 'bot' | 'reveal'): string[];
-  isUnlocked(category: 'theme' | 'mechanic' | 'bot' | 'reveal', itemId: string): boolean;
+  isUnlocked(
+    category: 'theme' | 'mechanic' | 'bot' | 'reveal',
+    itemId: string
+  ): boolean;
   getCurrentState(): UnlockState;
   getUnlockProgress(): { unlocked: number; total: number };
-  
+
   // Admin/Debug
   /**
    * Wipe unlock state back to the initial fresh-user state.

@@ -42,10 +42,10 @@ export class KeyLetterLogger {
     try {
       // Read current counts
       const counts = await this.readCounts();
-      
+
       // Increment the count for this letter
       counts[letter] = (counts[letter] || 0) + 1;
-      
+
       // Write back to file
       await this.writeCounts(counts);
     } catch (error) {
@@ -63,23 +63,23 @@ export class KeyLetterLogger {
   private static async readCounts(): Promise<{ [key: string]: number }> {
     try {
       const fs = await import('fs');
-      
+
       if (!fs.existsSync(this.logFilePath)) {
         return {};
       }
-      
+
       const content = fs.readFileSync(this.logFilePath, 'utf-8');
       const counts: { [key: string]: number } = {};
-      
+
       // Parse the simple format: "A: 5"
-      const lines = content.split('\n').filter(line => line.trim());
+      const lines = content.split('\n').filter((line) => line.trim());
       for (const line of lines) {
         const match = line.match(/^([A-Z]):\s*(\d+)$/);
         if (match) {
           counts[match[1]] = parseInt(match[2], 10);
         }
       }
-      
+
       return counts;
     } catch (error) {
       console.warn('Failed to read counts file:', error);
@@ -87,17 +87,21 @@ export class KeyLetterLogger {
     }
   }
 
-  private static async writeCounts(counts: { [key: string]: number }): Promise<void> {
+  private static async writeCounts(counts: {
+    [key: string]: number;
+  }): Promise<void> {
     try {
       const fs = await import('fs');
-      
+
       // Sort letters alphabetically
       const sortedLetters = Object.keys(counts).sort();
-      
+
       // Create content in simple format
-      const lines = sortedLetters.map(letter => `${letter}: ${counts[letter]}`);
+      const lines = sortedLetters.map(
+        (letter) => `${letter}: ${counts[letter]}`
+      );
       const content = lines.join('\n') + '\n';
-      
+
       // Write to file
       fs.writeFileSync(this.logFilePath, content);
     } catch (error) {
@@ -161,9 +165,9 @@ export class KeyLetterLogger {
     const stats = {
       totalEntries: 0,
       letterFrequency: {} as { [key: string]: number },
-      platformBreakdown: { 'all_platforms': 0 } as { [key: string]: number },
+      platformBreakdown: { all_platforms: 0 } as { [key: string]: number },
       fileEntries: 0,
-      needsSync: false
+      needsSync: false,
     };
 
     // Try to read file data (Node.js only)
@@ -171,7 +175,10 @@ export class KeyLetterLogger {
       try {
         const counts = await this.readCounts();
         stats.letterFrequency = counts;
-        stats.totalEntries = Object.values(counts).reduce((sum, count) => sum + count, 0);
+        stats.totalEntries = Object.values(counts).reduce(
+          (sum, count) => sum + count,
+          0
+        );
         stats.fileEntries = stats.totalEntries;
         stats.platformBreakdown['all_platforms'] = stats.totalEntries;
       } catch (error) {
@@ -181,4 +188,4 @@ export class KeyLetterLogger {
 
     return stats;
   }
-} 
+}

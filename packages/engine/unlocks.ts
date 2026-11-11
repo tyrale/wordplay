@@ -1,29 +1,31 @@
 /**
  * Unlock Engine - Core Logic
- * 
+ *
  * Platform-agnostic unlock system that manages feature unlocks
  * through dependency injection. Follows WordPlay's established
  * architecture pattern for cross-platform compatibility.
  */
 
-import type { 
-  UnlockEngine, 
-  UnlockDependencies, 
-  UnlockState, 
-  UnlockResult 
+import type {
+  UnlockEngine,
+  UnlockDependencies,
+  UnlockState,
+  UnlockResult,
 } from './interfaces';
 import {
   UNLOCK_DEFINITIONS,
   INITIAL_UNLOCK_STATE,
   getInitialUnlockState,
   findUnlockByTrigger,
-  findUnlockBySequenceTrigger
+  findUnlockBySequenceTrigger,
 } from './unlock-definitions';
 
 /**
  * Creates an unlock engine instance with dependency injection
  */
-export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngine {
+export function createUnlockEngine(
+  dependencies: UnlockDependencies
+): UnlockEngine {
   let currentState: UnlockState | null = null;
 
   /**
@@ -43,7 +45,10 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
         currentState = await dependencies.loadState();
       } catch (error) {
         // If loading fails, start with initial state
-        console.warn('Failed to load unlock state, using initial state:', error);
+        console.warn(
+          'Failed to load unlock state, using initial state:',
+          error
+        );
         currentState = { ...INITIAL_UNLOCK_STATE };
         // Try to save the initial state
         try {
@@ -71,15 +76,20 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
   async function checkWordTriggers(word: string): Promise<UnlockResult[]> {
     const state = await ensureStateLoaded();
     const wordUnlocks = findUnlockByTrigger('word', word);
-    console.log(`[Unlock] Checking word "${word}" for unlocks, found ${wordUnlocks.length} potential unlocks:`, wordUnlocks);
+    console.log(
+      `[Unlock] Checking word "${word}" for unlocks, found ${wordUnlocks.length} potential unlocks:`,
+      wordUnlocks
+    );
     const results: UnlockResult[] = [];
 
     for (const unlock of wordUnlocks) {
       // Check if this unlock is already achieved
       const target = unlock.target || unlock.itemId || '';
       const wasAlreadyUnlocked = isItemUnlocked(state, unlock.category, target);
-      console.log(`[Unlock] Unlock "${unlock.id}" (${unlock.category}:${target}) - already unlocked: ${wasAlreadyUnlocked}`);
-      
+      console.log(
+        `[Unlock] Unlock "${unlock.id}" (${unlock.category}:${target}) - already unlocked: ${wasAlreadyUnlocked}`
+      );
+
       if (!wasAlreadyUnlocked && target) {
         // Add to appropriate category
         if (unlock.category === 'theme') {
@@ -102,7 +112,7 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
           isNew: true,
           target: unlock.target,
           immediateEffect: unlock.immediate_effect,
-          wasAlreadyUnlocked
+          wasAlreadyUnlocked,
         };
 
         results.push(result);
@@ -122,9 +132,11 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
   /**
    * Check for achievement-triggered unlocks
    */
-  async function checkAchievementTriggers(achievement: string): Promise<UnlockResult[]> {
+  async function checkAchievementTriggers(
+    achievement: string
+  ): Promise<UnlockResult[]> {
     const state = await ensureStateLoaded();
-    
+
     // First, add the achievement if not already present
     if (!state.achievements.includes(achievement)) {
       state.achievements.push(achievement);
@@ -138,7 +150,7 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
       // Check if this unlock is already achieved
       const target = unlock.target || unlock.itemId || '';
       const wasAlreadyUnlocked = isItemUnlocked(state, unlock.category, target);
-      
+
       if (!wasAlreadyUnlocked && target) {
         // Add to appropriate category
         if (unlock.category === 'theme') {
@@ -161,7 +173,7 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
           isNew: true,
           target: unlock.target,
           immediateEffect: unlock.immediate_effect,
-          wasAlreadyUnlocked
+          wasAlreadyUnlocked,
         };
 
         results.push(result);
@@ -183,16 +195,23 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
    * Fires when the tail of the word path matches a defined sequence
    * (e.g. STINK → STANK → STUNK unlocks the Grinch theme + Grinchbot).
    */
-  async function checkWordSequenceTriggers(wordPath: string[]): Promise<UnlockResult[]> {
+  async function checkWordSequenceTriggers(
+    wordPath: string[]
+  ): Promise<UnlockResult[]> {
     const state = await ensureStateLoaded();
     const sequenceUnlocks = findUnlockBySequenceTrigger(wordPath);
-    console.log(`[Unlock] Checking word sequence (length ${wordPath.length}) for unlocks, found ${sequenceUnlocks.length} potential unlocks:`, sequenceUnlocks);
+    console.log(
+      `[Unlock] Checking word sequence (length ${wordPath.length}) for unlocks, found ${sequenceUnlocks.length} potential unlocks:`,
+      sequenceUnlocks
+    );
     const results: UnlockResult[] = [];
 
     for (const unlock of sequenceUnlocks) {
       const target = unlock.target || unlock.itemId || '';
       const wasAlreadyUnlocked = isItemUnlocked(state, unlock.category, target);
-      console.log(`[Unlock] Sequence unlock "${unlock.id}" (${unlock.category}:${target}) - already unlocked: ${wasAlreadyUnlocked}`);
+      console.log(
+        `[Unlock] Sequence unlock "${unlock.id}" (${unlock.category}:${target}) - already unlocked: ${wasAlreadyUnlocked}`
+      );
 
       if (!wasAlreadyUnlocked && target) {
         if (unlock.category === 'theme') {
@@ -214,7 +233,7 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
           isNew: true,
           target: unlock.target,
           immediateEffect: unlock.immediate_effect,
-          wasAlreadyUnlocked
+          wasAlreadyUnlocked,
         };
 
         results.push(result);
@@ -237,20 +256,26 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
    * without a second round trip. Failures are swallowed so unlocks keep
    * working fully offline/local-only.
    */
-  async function recordCommunityUnlocks(results: UnlockResult[]): Promise<void> {
+  async function recordCommunityUnlocks(
+    results: UnlockResult[]
+  ): Promise<void> {
     if (!dependencies.recordCommunityUnlock) return;
 
     for (const result of results) {
       const communityUnlockId = result.unlockId;
       if (!communityUnlockId) continue;
       try {
-        const stats = await dependencies.recordCommunityUnlock(communityUnlockId);
+        const stats =
+          await dependencies.recordCommunityUnlock(communityUnlockId);
         if (stats) {
           result.communityUnlockCount = stats.count;
           result.communityTotalPlayers = stats.totalPlayers;
         }
       } catch (error) {
-        console.warn(`Failed to record community unlock for "${communityUnlockId}":`, error);
+        console.warn(
+          `Failed to record community unlock for "${communityUnlockId}":`,
+          error
+        );
       }
     }
   }
@@ -258,7 +283,9 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
   /**
    * Get all unlocked items for a specific category
    */
-  function getUnlockedItems(category: 'theme' | 'mechanic' | 'bot' | 'reveal'): string[] {
+  function getUnlockedItems(
+    category: 'theme' | 'mechanic' | 'bot' | 'reveal'
+  ): string[] {
     if (!currentState) {
       // Return initial state items if state not loaded yet
       if (category === 'theme') return [...INITIAL_UNLOCK_STATE.themes];
@@ -267,7 +294,7 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
       if (category === 'reveal') return [...INITIAL_UNLOCK_STATE.reveals];
       return [];
     }
-    
+
     if (category === 'theme') return [...currentState.themes];
     if (category === 'mechanic') return [...currentState.mechanics];
     if (category === 'bot') return [...currentState.bots];
@@ -278,16 +305,22 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
   /**
    * Check if a specific item is unlocked
    */
-  function isUnlocked(category: 'theme' | 'mechanic' | 'bot' | 'reveal', itemId: string): boolean {
+  function isUnlocked(
+    category: 'theme' | 'mechanic' | 'bot' | 'reveal',
+    itemId: string
+  ): boolean {
     if (!currentState) {
       // Check against initial state if state not loaded yet
-      if (category === 'theme') return INITIAL_UNLOCK_STATE.themes.includes(itemId);
-      if (category === 'mechanic') return INITIAL_UNLOCK_STATE.mechanics.includes(itemId);
+      if (category === 'theme')
+        return INITIAL_UNLOCK_STATE.themes.includes(itemId);
+      if (category === 'mechanic')
+        return INITIAL_UNLOCK_STATE.mechanics.includes(itemId);
       if (category === 'bot') return INITIAL_UNLOCK_STATE.bots.includes(itemId);
-      if (category === 'reveal') return INITIAL_UNLOCK_STATE.reveals.includes(itemId);
+      if (category === 'reveal')
+        return INITIAL_UNLOCK_STATE.reveals.includes(itemId);
       return false;
     }
-    
+
     if (category === 'theme') return currentState.themes.includes(itemId);
     if (category === 'mechanic') return currentState.mechanics.includes(itemId);
     if (category === 'bot') return currentState.bots.includes(itemId);
@@ -306,7 +339,7 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
         bots: [...INITIAL_UNLOCK_STATE.bots],
         achievements: [...INITIAL_UNLOCK_STATE.achievements],
         reveals: [...INITIAL_UNLOCK_STATE.reveals],
-        hasUsedReset: INITIAL_UNLOCK_STATE.hasUsedReset
+        hasUsedReset: INITIAL_UNLOCK_STATE.hasUsedReset,
       };
     }
     return {
@@ -315,7 +348,7 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
       bots: [...currentState.bots],
       achievements: [...currentState.achievements],
       reveals: [...currentState.reveals],
-      hasUsedReset: currentState.hasUsedReset
+      hasUsedReset: currentState.hasUsedReset,
     };
   }
 
@@ -326,14 +359,15 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
   function getUnlockProgress(): { unlocked: number; total: number } {
     const state = currentState ?? INITIAL_UNLOCK_STATE;
     const unlocked =
-      (state.themes.length - INITIAL_UNLOCK_STATE.themes.length) +
+      state.themes.length -
+      INITIAL_UNLOCK_STATE.themes.length +
       (state.bots.length - INITIAL_UNLOCK_STATE.bots.length) +
       state.mechanics.length +
       state.reveals.length;
 
     return {
       unlocked: Math.max(0, unlocked),
-      total: UNLOCK_DEFINITIONS.length
+      total: UNLOCK_DEFINITIONS.length,
     };
   }
 
@@ -345,10 +379,12 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
    * debug/test full resets (call with no options, which also clears the
    * one-time-use flag so devs/tests can reset repeatedly).
    */
-  async function resetState(options?: { markResetUsed?: boolean }): Promise<void> {
+  async function resetState(options?: {
+    markResetUsed?: boolean;
+  }): Promise<void> {
     currentState = {
       ...getInitialUnlockState(),
-      hasUsedReset: options?.markResetUsed ?? false
+      hasUsedReset: options?.markResetUsed ?? false,
     };
     await saveState();
   }
@@ -362,7 +398,7 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
     isUnlocked,
     getCurrentState,
     getUnlockProgress,
-    resetState
+    resetState,
   };
 }
 
@@ -370,8 +406,8 @@ export function createUnlockEngine(dependencies: UnlockDependencies): UnlockEngi
  * Helper function to check if an item is unlocked in a given state
  */
 function isItemUnlocked(
-  state: UnlockState, 
-  category: 'theme' | 'mechanic' | 'bot' | 'reveal', 
+  state: UnlockState,
+  category: 'theme' | 'mechanic' | 'bot' | 'reveal',
   itemId: string
 ): boolean {
   if (category === 'theme') return state.themes.includes(itemId);
@@ -391,7 +427,10 @@ export function generateBotDefeatAchievement(botId: string): string {
 /**
  * Utility function to get all possible unlock triggers for debugging
  */
-export function getAllUnlockTriggers(): { word: string[], achievement: string[] } {
+export function getAllUnlockTriggers(): {
+  word: string[];
+  achievement: string[];
+} {
   const wordTriggers: string[] = [];
   const achievementTriggers: string[] = [];
 
@@ -400,15 +439,15 @@ export function getAllUnlockTriggers(): { word: string[], achievement: string[] 
       if (unlock.trigger.value) {
         wordTriggers.push(unlock.trigger.value);
       }
-          } else if (unlock.trigger.type === 'achievement') {
-        if (unlock.trigger.value) {
-          achievementTriggers.push(unlock.trigger.value);
-        }
+    } else if (unlock.trigger.type === 'achievement') {
+      if (unlock.trigger.value) {
+        achievementTriggers.push(unlock.trigger.value);
+      }
     }
   }
 
   return {
     word: [...new Set(wordTriggers)].sort(),
-    achievement: [...new Set(achievementTriggers)].sort()
+    achievement: [...new Set(achievementTriggers)].sort(),
   };
-} 
+}

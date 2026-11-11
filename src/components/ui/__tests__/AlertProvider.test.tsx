@@ -16,7 +16,9 @@ function TestAlertComponent() {
     <div>
       <button
         data-testid="show-unlock-alert"
-        onClick={() => showAlert('unlocks', 'theme', { params: { item: 'RED' } })}
+        onClick={() =>
+          showAlert('unlocks', 'theme', { params: { item: 'RED' } })
+        }
       >
         Show Unlock Alert
       </button>

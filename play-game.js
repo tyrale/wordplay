@@ -2,7 +2,7 @@
 
 /**
  * WordPlay Terminal Game Runner
- * 
+ *
  * This script dynamically loads and runs the terminal game
  */
 
@@ -19,9 +19,10 @@ console.log('🎮 Starting WordPlay Terminal Game...\n');
 async function runGame() {
   try {
     console.log('📦 Compiling TypeScript for terminal game...');
-    
+
     // Compile just the necessary files with proper ES module output
-    const compileCmd = `npx tsc ` +
+    const compileCmd =
+      `npx tsc ` +
       `packages/engine/terminal-game.ts ` +
       `packages/engine/gamestate.ts ` +
       `packages/engine/bot.ts ` +
@@ -35,16 +36,15 @@ async function runGame() {
       `--strict ` +
       `--skipLibCheck ` +
       `--outDir temp-build`;
-    
+
     await execAsync(compileCmd);
     console.log('✅ Compilation complete!\n');
-    
+
     console.log('🚀 Launching game...\n');
-    
+
     // Import and run the compiled game
     const { startTerminalGame } = await import('./temp-build/terminal-game.js');
     await startTerminalGame();
-    
   } catch (error) {
     console.error('❌ Error:', error.message);
     process.exit(1);
@@ -58,9 +58,11 @@ async function runGame() {
   }
 }
 
-runGame().then(() => {
-  console.log('\n👋 Thanks for playing WordPlay!');
-}).catch(error => {
-  console.error('❌ Game failed:', error.message);
-  process.exit(1);
-}); 
+runGame()
+  .then(() => {
+    console.log('\n👋 Thanks for playing WordPlay!');
+  })
+  .catch((error) => {
+    console.error('❌ Game failed:', error.message);
+    process.exit(1);
+  });

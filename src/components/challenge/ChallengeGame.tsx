@@ -1,16 +1,26 @@
 /**
  * Challenge Game Component
- * 
+ *
  * Uses only the agnostic challenge engine for state management.
  * Maintains architectural purity by avoiding web-specific useGameState hook.
  */
 
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from 'react';
 import { AlphabetGrid, type LetterState } from '../game/AlphabetGrid';
 import { WordTrail, type WordMove } from '../game/WordTrail';
 import { WordBuilder } from '../game/WordBuilder';
 import { type LetterHighlight } from '../game/CurrentWord';
-import { ScoreDisplay, type ScoreBreakdown, type ActionState } from '../game/ScoreDisplay';
+import {
+  ScoreDisplay,
+  type ScoreBreakdown,
+  type ActionState,
+} from '../game/ScoreDisplay';
 import { Menu } from '../ui/Menu';
 import { AlertOverlay } from '../ui/AlertOverlay';
 import { alertCopy } from '../../content/alertCopy';
@@ -19,7 +29,10 @@ import { usePlayerStats } from '../../hooks/usePlayerStats';
 import { useWordPathGraph } from '../../hooks/useWordPathGraph';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import { recordChallengeCompletion } from '../../adapters/supabaseChallengeLeaderboardAdapter';
-import { shareChallengeResult, getShareResultMessage } from '../../utils/shareUtils';
+import {
+  shareChallengeResult,
+  getShareResultMessage,
+} from '../../utils/shareUtils';
 import { useAlert } from '../ui/AlertProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
@@ -28,11 +41,14 @@ import {
   getVariantDefinitionNote,
   isPlayableWord,
   isSeussWord,
-  fetchWordDefinition
+  fetchWordDefinition,
 } from '../../utils/wordHelp';
 import { triggerHapticFeedback } from '../../utils/haptics';
 import { triggerSoundFeedback } from '../../utils/sound';
-import { hasSeenChallengeIntro, markChallengeIntroSeen } from '../../utils/tutorialStorage';
+import {
+  hasSeenChallengeIntro,
+  markChallengeIntroSeen,
+} from '../../utils/tutorialStorage';
 import { ChallengeIntroOverlay } from './ChallengeIntroOverlay';
 import type { GameStateDependencies } from '../../../packages/engine/gamestate';
 import type { WordDataDependencies } from '../../../packages/engine/interfaces';
@@ -55,7 +71,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   onBack,
   onNavigateHome,
   onStartGame,
-  onBossTrigger
+  onBossTrigger,
 }) => {
   // Interface for validation result (compatible with existing UI components)
   interface ValidationResult {
@@ -76,26 +92,31 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     submitWord,
     forfeitChallenge,
     generateSharingText,
-    error: challengeError
+    error: challengeError,
   } = useChallenge();
 
   // Alert notifications
   const { showAlert, showCustomAlert } = useAlert();
 
   // Unlock system integration
-  const { handleWordSubmission, handleWordPathChange, getUnlockedItems } = useUnlockSystem();
+  const { handleWordSubmission, handleWordPathChange, getUnlockedItems } =
+    useUnlockSystem();
 
   // Player stats integration - the daily challenge is tracked via its own
   // separate challengesPlayed/Completed/Failed counters (see recordChallengeResult),
   // not folded into gamesWon/gamesLost or the bot win streak.
   const { recordMove, recordChallengeResult } = usePlayerStats();
-  const { recordTransition: recordWordPathTransition, syncToServer: syncWordPathGraph } = useWordPathGraph();
+  const {
+    recordTransition: recordWordPathTransition,
+    syncToServer: syncWordPathGraph,
+  } = useWordPathGraph();
   const { isMechanicOn } = useMechanicsSettings();
 
   // Drunk mechanic: unlocked via the "drunk" word and toggled on in the mechanics menu.
   // Makes the whole game view hazy and wobbly, like looking at it drunk. Must apply
   // in every game mode (bot, challenge, multiplayer), not just vs-bot games.
-  const isDrunkOn = getUnlockedItems('mechanic').includes('drunk') && isMechanicOn('drunk');
+  const isDrunkOn =
+    getUnlockedItems('mechanic').includes('drunk') && isMechanicOn('drunk');
   const interactiveGameClassName = `interactive-game${isDrunkOn ? ' interactive-game--drunk' : ''}`;
 
   // First-time "vs world" intro banner
@@ -107,14 +128,16 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
 
   // Local UI state
   const [pendingWord, setPendingWord] = useState('');
-  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const [validationResult, setValidationResult] =
+    useState<ValidationResult | null>(null);
   const [showValidationError, setShowValidationError] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   const [isProcessingMove, setIsProcessingMove] = useState(false);
-  const [gameDependencies, setGameDependencies] = useState<GameStateDependencies | null>(null);
+  const [gameDependencies, setGameDependencies] =
+    useState<GameStateDependencies | null>(null);
   const [wordData, setWordData] = useState<WordDataDependencies | null>(null);
-  
+
   // Overlay state
   const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
   const [overlayData, setOverlayData] = useState<{
@@ -129,11 +152,11 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         const adapter = await createBrowserAdapter();
         const dependencies = adapter.getGameDependencies();
         const data = adapter.getWordData();
-        
+
         if (data && typeof data.waitForLoad === 'function') {
           await data.waitForLoad();
         }
-        
+
         setGameDependencies(dependencies);
         setWordData(data);
       } catch (err) {
@@ -167,84 +190,99 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     if (!seq || seq.length <= lastCheckedSeqLenRef.current) return;
     lastCheckedSeqLenRef.current = seq.length;
     if (seq.length >= 3) {
-      handleWordPathChange(seq).catch(err =>
+      handleWordPathChange(seq).catch((err) =>
         console.warn('Failed to check word sequence unlock triggers:', err)
       );
     }
   }, [challengeState?.wordSequence, handleWordPathChange]);
 
   // Validate pending word using agnostic game engine
-  const validatePendingWord = useCallback((word: string): ValidationResult => {
-    if (!challengeState || !word || word === challengeState.currentWord || !gameDependencies) {
-      return { isValid: false, canApply: false };
-    }
+  const validatePendingWord = useCallback(
+    (word: string): ValidationResult => {
+      if (
+        !challengeState ||
+        !word ||
+        word === challengeState.currentWord ||
+        !gameDependencies
+      ) {
+        return { isValid: false, canApply: false };
+      }
 
-    // Check if word was already used in challenge
-    if (challengeState.wordSequence.includes(word)) {
-      return {
-        isValid: false,
-        canApply: false,
-        userMessage: 'already used',
-        reason: 'Word already used in challenge'
+      // Check if word was already used in challenge
+      if (challengeState.wordSequence.includes(word)) {
+        return {
+          isValid: false,
+          canApply: false,
+          userMessage: 'already used',
+          reason: 'Word already used in challenge',
+        };
+      }
+
+      // Use agnostic game engine validation (same as vs-bot mode)
+      const validationResult = gameDependencies.validateWord(word, {
+        isBot: false,
+        previousWord: challengeState.currentWord,
+      });
+
+      if (!validationResult.isValid) {
+        return {
+          isValid: false,
+          canApply: false,
+          userMessage: validationResult.userMessage || 'invalid word',
+          reason: validationResult.reason || 'Invalid word',
+        };
+      }
+
+      // Additional validation: use agnostic engine's move validation
+      const isMoveValid = gameDependencies.isValidMove(
+        challengeState.currentWord,
+        word
+      );
+
+      if (!isMoveValid) {
+        return {
+          isValid: false,
+          canApply: false,
+          userMessage: 'illegal action',
+          reason: 'Invalid move transformation',
+        };
+      }
+
+      // Calculate action states using agnostic engine's scoring system
+      // Even though we don't show scores in challenge mode, we need action analysis for UI feedback
+      const scoringResult = gameDependencies.calculateScore(
+        challengeState.currentWord,
+        word,
+        { keyLetters: [] } // No key letters in challenge mode
+      );
+
+      // Extract action states from scoring result
+      const actionState: ActionState = {
+        add: scoringResult.actions.some((action) => action.type === 'add'),
+        remove: scoringResult.actions.some(
+          (action) => action.type === 'remove'
+        ),
+        move: scoringResult.actions.some(
+          (action) => action.type === 'rearrange'
+        ),
       };
-    }
 
-    // Use agnostic game engine validation (same as vs-bot mode)
-    const validationResult = gameDependencies.validateWord(word, {
-      isBot: false,
-      previousWord: challengeState.currentWord
-    });
-
-    if (!validationResult.isValid) {
-      return {
-        isValid: false,
-        canApply: false,
-        userMessage: validationResult.userMessage || 'invalid word',
-        reason: validationResult.reason || 'Invalid word'
+      // Create score breakdown (not displayed but needed for consistency)
+      const scoreBreakdown: ScoreBreakdown = {
+        base: scoringResult.baseScore || 0,
+        keyBonus: scoringResult.keyLetterScore || 0,
+        total: 0, // Don't show total score in challenge mode
       };
-    }
 
-    // Additional validation: use agnostic engine's move validation
-    const isMoveValid = gameDependencies.isValidMove(challengeState.currentWord, word);
-    
-    if (!isMoveValid) {
       return {
-        isValid: false,
-        canApply: false,
-        userMessage: 'illegal action',
-        reason: 'Invalid move transformation'
+        isValid: true,
+        canApply: true,
+        actionState,
+        scoreBreakdown,
       };
-    }
-
-    // Calculate action states using agnostic engine's scoring system
-    // Even though we don't show scores in challenge mode, we need action analysis for UI feedback
-    const scoringResult = gameDependencies.calculateScore(
-      challengeState.currentWord,
-      word,
-      { keyLetters: [] } // No key letters in challenge mode
-    );
-
-    // Extract action states from scoring result
-    const actionState: ActionState = {
-      add: scoringResult.actions.some((action) => action.type === 'add'),
-      remove: scoringResult.actions.some((action) => action.type === 'remove'),
-      move: scoringResult.actions.some((action) => action.type === 'rearrange')
-    };
-
-    // Create score breakdown (not displayed but needed for consistency)
-    const scoreBreakdown: ScoreBreakdown = {
-      base: scoringResult.baseScore || 0,
-      keyBonus: scoringResult.keyLetterScore || 0,
-      total: 0 // Don't show total score in challenge mode
-    };
-
-    return {
-      isValid: true,
-      canApply: true,
-      actionState,
-      scoreBreakdown
-    };
-  }, [challengeState, gameDependencies]);
+    },
+    [challengeState, gameDependencies]
+  );
 
   // Update validation when pending word changes
   useEffect(() => {
@@ -262,50 +300,66 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     setShowValidationError(false);
   }, []);
 
-  const handleLetterClick = useCallback((letter: string) => {
-    if (isProcessingMove || !challengeState) return;
-    
-    const newWord = pendingWord + letter;
-    if (newWord.length <= 10) {
-      triggerHapticFeedback('add');
-      triggerSoundFeedback('add');
+  const handleLetterClick = useCallback(
+    (letter: string) => {
+      if (isProcessingMove || !challengeState) return;
+
+      const newWord = pendingWord + letter;
+      if (newWord.length <= 10) {
+        triggerHapticFeedback('add');
+        triggerSoundFeedback('add');
+        handleWordChange(newWord);
+      }
+    },
+    [pendingWord, isProcessingMove, challengeState, handleWordChange]
+  );
+
+  const handleLetterRemove = useCallback(
+    (info: { letter: string; index: number }) => {
+      if (isProcessingMove) return;
+
+      const newWord =
+        pendingWord.slice(0, info.index) + pendingWord.slice(info.index + 1);
       handleWordChange(newWord);
-    }
-  }, [pendingWord, isProcessingMove, challengeState, handleWordChange]);
+    },
+    [pendingWord, isProcessingMove, handleWordChange]
+  );
 
-  const handleLetterRemove = useCallback((info: { letter: string; index: number }) => {
-    if (isProcessingMove) return;
-    
-    const newWord = pendingWord.slice(0, info.index) + pendingWord.slice(info.index + 1);
-    handleWordChange(newWord);
-  }, [pendingWord, isProcessingMove, handleWordChange]);
-
-  const handleLetterDragStart = useCallback((letter: string) => {
-    if (isProcessingMove) return;
-    setDraggedLetter(letter);
-  }, [isProcessingMove]);
+  const handleLetterDragStart = useCallback(
+    (letter: string) => {
+      if (isProcessingMove) return;
+      setDraggedLetter(letter);
+    },
+    [isProcessingMove]
+  );
 
   const handleLetterDragEnd = useCallback(() => {
     setDraggedLetter(null);
   }, []);
 
-  const handleWordBuilderMouseUp = useCallback((_e: React.MouseEvent) => {
-    if (draggedLetter && pendingWord.length < 10) {
-      triggerHapticFeedback('add');
-      triggerSoundFeedback('add');
-      handleWordChange(pendingWord + draggedLetter);
-    }
-    setDraggedLetter(null);
-  }, [draggedLetter, pendingWord, handleWordChange]);
+  const handleWordBuilderMouseUp = useCallback(
+    (_e: React.MouseEvent) => {
+      if (draggedLetter && pendingWord.length < 10) {
+        triggerHapticFeedback('add');
+        triggerSoundFeedback('add');
+        handleWordChange(pendingWord + draggedLetter);
+      }
+      setDraggedLetter(null);
+    },
+    [draggedLetter, pendingWord, handleWordChange]
+  );
 
-  const handleWordBuilderTouchEnd = useCallback((_e: React.TouchEvent) => {
-    if (draggedLetter && pendingWord.length < 10) {
-      triggerHapticFeedback('add');
-      triggerSoundFeedback('add');
-      handleWordChange(pendingWord + draggedLetter);
-    }
-    setDraggedLetter(null);
-  }, [draggedLetter, pendingWord, handleWordChange]);
+  const handleWordBuilderTouchEnd = useCallback(
+    (_e: React.TouchEvent) => {
+      if (draggedLetter && pendingWord.length < 10) {
+        triggerHapticFeedback('add');
+        triggerSoundFeedback('add');
+        handleWordChange(pendingWord + draggedLetter);
+      }
+      setDraggedLetter(null);
+    },
+    [draggedLetter, pendingWord, handleWordChange]
+  );
 
   const handleHelp = useCallback(async () => {
     const word = pendingWord.trim().toUpperCase();
@@ -320,7 +374,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
           <div className="alert-overlay__meta-definition">
             This is a Dr. Seuss word and it's fantastic.
           </div>
-        )
+        ),
       });
       return;
     }
@@ -333,43 +387,51 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     showCustomAlert([word], {
       meta: (
         <>
-          <div className={isInvalid ? 'alert-overlay__meta-reason--invalid' : ''}>
+          <div
+            className={isInvalid ? 'alert-overlay__meta-reason--invalid' : ''}
+          >
             {reason}
           </div>
           {variantNote && (
-            <div className="alert-overlay__meta-variant-note">{variantNote}</div>
+            <div className="alert-overlay__meta-variant-note">
+              {variantNote}
+            </div>
           )}
           <div className="alert-overlay__meta-definition">
             {definition || 'No definition available'}
           </div>
         </>
-      )
+      ),
     });
   }, [pendingWord, wordData, showCustomAlert, getUnlockedItems]);
 
-  const handleActionClick = useCallback((action: string) => {
-    // Home navigation should always be reachable, even mid-move.
-    if (action === '←') { // Leave the board and return to the home screen
-      onNavigateHome?.();
-      return;
-    }
+  const handleActionClick = useCallback(
+    (action: string) => {
+      // Home navigation should always be reachable, even mid-move.
+      if (action === '←') {
+        // Leave the board and return to the home screen
+        onNavigateHome?.();
+        return;
+      }
 
-    if (isProcessingMove) return;
-    
-    switch (action) {
-      case '↻': // Reset word
-        setPendingWord(challengeState?.currentWord || '');
-        setValidationResult(null);
-        setShowValidationError(false);
-        break;
-      case '?': // Help
-        handleHelp();
-        break;
-      case '≡': // Settings
-        setIsMenuOpen(true);
-        break;
-    }
-  }, [isProcessingMove, challengeState?.currentWord, handleHelp, onNavigateHome]);
+      if (isProcessingMove) return;
+
+      switch (action) {
+        case '↻': // Reset word
+          setPendingWord(challengeState?.currentWord || '');
+          setValidationResult(null);
+          setShowValidationError(false);
+          break;
+        case '?': // Help
+          handleHelp();
+          break;
+        case '≡': // Settings
+          setIsMenuOpen(true);
+          break;
+      }
+    },
+    [isProcessingMove, challengeState?.currentWord, handleHelp, onNavigateHome]
+  );
 
   const handleSubmit = useCallback(async () => {
     if (isProcessingMove) return;
@@ -413,7 +475,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       try {
         setIsProcessingMove(true);
         const result = await submitWord(pendingWord);
-        
+
         if (result.success) {
           triggerHapticFeedback('submit');
           triggerSoundFeedback('submit');
@@ -422,10 +484,12 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
           setPendingWord(pendingWord); // Keep the word that was just submitted
           setValidationResult(null);
           setShowValidationError(false);
-          
+
           // Check for unlocks triggered by this word
           // (the vanity filter mechanic unlock is handled here via UNLOCK_DEFINITIONS)
-          const isProfane = !!wordData?.profanityWords.has(pendingWord.trim().toUpperCase());
+          const isProfane = !!wordData?.profanityWords.has(
+            pendingWord.trim().toUpperCase()
+          );
           await handleWordSubmission(pendingWord, isProfane);
 
           // "GUS" triggers the boss battle encounter from the challenge too.
@@ -447,14 +511,23 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
           // waiting for the challenge to finish.
           recordWordPathTransition(previousWord, pendingWord)
             .then(() => syncWordPathGraph())
-            .catch(err => console.warn('Failed to record/sync challenge word path transition:', err));
+            .catch((err) =>
+              console.warn(
+                'Failed to record/sync challenge word path transition:',
+                err
+              )
+            );
 
           // Record this move live for word/letter stats - challenge mode has
           // no bot opponent or turn-based win condition, so only the shared
           // Words/Key Letters stats apply here (see recordChallengeResult
           // for the separate challengesPlayed/Completed/Failed counters).
           if (gameDependencies) {
-            const moveScoring = gameDependencies.calculateScore(previousWord, pendingWord, { keyLetters: [] });
+            const moveScoring = gameDependencies.calculateScore(
+              previousWord,
+              pendingWord,
+              { keyLetters: [] }
+            );
             recordMove({
               turnNumber: (challengeState?.wordSequence.length || 0) + 1,
               playerId: 'human',
@@ -463,10 +536,12 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
               score: moveScoring.totalScore,
               keyLettersUsed: moveScoring.keyLettersUsed || [],
               scoringBreakdown: moveScoring,
-              timestamp: Date.now()
-            }).catch(err => console.warn('Failed to record challenge move stats:', err));
+              timestamp: Date.now(),
+            }).catch((err) =>
+              console.warn('Failed to record challenge move stats:', err)
+            );
           }
-          
+
           // Check if challenge is complete (challengeState will be updated by useChallenge)
           // The completion check will happen in the next render cycle
         } else {
@@ -478,7 +553,24 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         setIsProcessingMove(false);
       }
     }
-  }, [isProcessingMove, validationResult, showValidationError, forfeitChallenge, onComplete, challengeState, submitWord, pendingWord, handleWordSubmission, wordData, handleWordChange, gameDependencies, recordMove, recordWordPathTransition, syncWordPathGraph, onBossTrigger]);
+  }, [
+    isProcessingMove,
+    validationResult,
+    showValidationError,
+    forfeitChallenge,
+    onComplete,
+    challengeState,
+    submitWord,
+    pendingWord,
+    handleWordSubmission,
+    wordData,
+    handleWordChange,
+    gameDependencies,
+    recordMove,
+    recordWordPathTransition,
+    syncWordPathGraph,
+    onBossTrigger,
+  ]);
 
   const handleMenuClose = useCallback(() => {
     setIsMenuOpen(false);
@@ -489,14 +581,14 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     try {
       setIsProcessingMove(true);
       await forfeitChallenge();
-      
+
       // Generate sharing text for failed challenge
       const shareText = generateSharingText();
-      
+
       // Show completion overlay immediately
       setOverlayData({
         isWinner: false,
-        shareText
+        shareText,
       });
       setShowCompletionOverlay(true);
     } catch (err) {
@@ -512,37 +604,50 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     setOverlayData(null);
     // Call onBack to navigate to main menu, then onComplete for any cleanup
     onBack?.();
-    onComplete?.(challengeState?.completed || false, challengeState?.wordSequence.length || 0);
-  }, [onBack, onComplete, challengeState?.completed, challengeState?.wordSequence.length]);
+    onComplete?.(
+      challengeState?.completed || false,
+      challengeState?.wordSequence.length || 0
+    );
+  }, [
+    onBack,
+    onComplete,
+    challengeState?.completed,
+    challengeState?.wordSequence.length,
+  ]);
 
-  const handleOverlayShare = useCallback(async (shareText: string) => {
-    try {
-      const result = await shareChallengeResult(shareText);
-      getShareResultMessage(result); // Preserve message computation for potential future logging
+  const handleOverlayShare = useCallback(
+    async (shareText: string) => {
+      try {
+        const result = await shareChallengeResult(shareText);
+        getShareResultMessage(result); // Preserve message computation for potential future logging
 
-      showAlert('generic', result.success ? 'shareSuccess' : 'shareError');
-    } catch {
-      showAlert('generic', 'shareError');
-    }
-  }, [showAlert]);
+        showAlert('generic', result.success ? 'shareSuccess' : 'shareError');
+      } catch {
+        showAlert('generic', 'shareError');
+      }
+    },
+    [showAlert]
+  );
 
   // Check for challenge completion or failure
   useEffect(() => {
     if (challengeState?.completed || challengeState?.failed) {
       const isWinner = challengeState.completed;
       const shareText = generateSharingText();
-      
+
       setOverlayData({
         isWinner,
-        shareText
+        shareText,
       });
       setShowCompletionOverlay(true);
 
       recordChallengeResult({
         completed: isWinner,
         stepCount: challengeState.wordSequence.length,
-        timestamp: Date.now()
-      }).catch(err => console.warn('Failed to record challenge result stats:', err));
+        timestamp: Date.now(),
+      }).catch((err) =>
+        console.warn('Failed to record challenge result stats:', err)
+      );
 
       // Upload the completion to the server-side leaderboard histogram. Only
       // completions count (forfeitures are excluded), and the backend de-dupes
@@ -550,22 +655,38 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
       // double-count. Uses stepCount (number of word-change moves), which is
       // the value the leaderboard highlights against.
       if (challengeState.completed) {
-        recordChallengeCompletion(challengeState.date, challengeState.stepCount)
-          .catch(err => console.warn('Failed to record challenge completion to leaderboard:', err));
+        recordChallengeCompletion(
+          challengeState.date,
+          challengeState.stepCount
+        ).catch((err) =>
+          console.warn(
+            'Failed to record challenge completion to leaderboard:',
+            err
+          )
+        );
       }
 
-      syncWordPathGraph().catch(err =>
+      syncWordPathGraph().catch((err) =>
         console.warn('Failed to sync word path graph:', err)
       );
     }
-  }, [challengeState?.completed, challengeState?.failed, challengeState?.wordSequence.length, generateSharingText, recordChallengeResult, syncWordPathGraph, challengeState?.date, challengeState?.stepCount]);
+  }, [
+    challengeState?.completed,
+    challengeState?.failed,
+    challengeState?.wordSequence.length,
+    generateSharingText,
+    recordChallengeResult,
+    syncWordPathGraph,
+    challengeState?.date,
+    challengeState?.stepCount,
+  ]);
 
   // Generate letter states (no special states in challenge mode)
   const letterStates: LetterState[] = useMemo(() => {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    return alphabet.split('').map(letter => ({
+    return alphabet.split('').map((letter) => ({
       letter,
-      state: 'normal' as const
+      state: 'normal' as const,
     }));
   }, []);
 
@@ -574,7 +695,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
     if (!challengeState) return [];
 
     const moves: WordMove[] = [];
-    
+
     // Add played words in chronological order (excluding start word to avoid duplication)
     challengeState.wordSequence.forEach((word, index) => {
       // Skip start word if it appears in sequence to avoid duplication
@@ -582,7 +703,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         moves.push({
           word,
           score: 0, // No scoring in challenge mode
-          turnNumber: index + 1
+          turnNumber: index + 1,
         });
       }
     });
@@ -597,12 +718,20 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
 
   // Score breakdown from validation result (not displayed but needed for action analysis)
   const scoreBreakdown: ScoreBreakdown = useMemo(() => {
-    return validationResult?.scoreBreakdown || { base: 0, keyBonus: 0, total: 0 };
+    return (
+      validationResult?.scoreBreakdown || { base: 0, keyBonus: 0, total: 0 }
+    );
   }, [validationResult]);
 
   // Action states from validation result (needed for checkmark/X display)
   const actionState: ActionState = useMemo(() => {
-    return validationResult?.actionState || { add: false, remove: false, move: false };
+    return (
+      validationResult?.actionState || {
+        add: false,
+        remove: false,
+        move: false,
+      }
+    );
   }, [validationResult]);
 
   // Determine if submit is valid
@@ -642,12 +771,20 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
   // The trailing "N turns" line is only appended by generateSharingText for
   // completed challenges - forfeited/in-progress share text ends with a real
   // pattern row, which must not be sliced off (or it loses its pattern styling).
-  const shareLines = (overlayData?.shareText || '').split('\n').filter(line => line.trim());
-  const shareContent = overlayData?.isWinner ? shareLines.slice(0, -1) : shareLines;
-  const stepCount = overlayData?.isWinner ? shareLines[shareLines.length - 1] : null;
+  const shareLines = (overlayData?.shareText || '')
+    .split('\n')
+    .filter((line) => line.trim());
+  const shareContent = overlayData?.isWinner
+    ? shareLines.slice(0, -1)
+    : shareLines;
+  const stepCount = overlayData?.isWinner
+    ? shareLines[shareLines.length - 1]
+    : null;
   // For the win screen, the headline already shows "start → finish", so drop the
   // redundant words line (always the 2nd line) from the meta content below it.
-  const winMetaContent = shareContent.filter((line, index) => !(index === 1 && !isPatternLine(line)));
+  const winMetaContent = shareContent.filter(
+    (line, index) => !(index === 1 && !isPatternLine(line))
+  );
 
   if (isLoading) {
     return (
@@ -671,7 +808,6 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
 
   return (
     <div className={interactiveGameClassName}>
-
       {/* Error display */}
       {challengeError && (
         <div className="interactive-game__error" role="alert">
@@ -712,7 +848,7 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
                 targetWord={challengeState.targetWord}
               />
             </div>
-            
+
             {/* Word builder positioned below submit anchor */}
             <div className="interactive-game__word-builder-positioned">
               <div
@@ -777,20 +913,29 @@ export const ChallengeGame: React.FC<ChallengeGameProps> = ({
         isVisible={showCompletionOverlay}
         lines={
           overlayData?.isWinner
-            ? [challengeState.startWord.toUpperCase(), challengeState.targetWord.toUpperCase()]
+            ? [
+                challengeState.startWord.toUpperCase(),
+                challengeState.targetWord.toUpperCase(),
+              ]
             : [...alertCopy.challenge.lose.lines]
         }
         variant={overlayData?.isWinner ? 'win' : 'lose'}
         onClose={handleOverlayHome}
         meta={
           <>
-            {(overlayData?.isWinner ? winMetaContent : shareContent).map(renderShareLine)}
+            {(overlayData?.isWinner ? winMetaContent : shareContent).map(
+              renderShareLine
+            )}
             {stepCount && <div>{stepCount}</div>}
           </>
         }
-        actions={[{ label: 'share', onClick: () => handleOverlayShare(overlayData?.shareText || '') }]}
+        actions={[
+          {
+            label: 'share',
+            onClick: () => handleOverlayShare(overlayData?.shareText || ''),
+          },
+        ]}
       />
-
     </div>
   );
-}; 
+};

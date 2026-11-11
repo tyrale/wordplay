@@ -75,4 +75,4 @@ export const AllStates: Story = {
       <GridCell content="?" state="normal" type="action" />
     </div>
   ),
-}; 
+};

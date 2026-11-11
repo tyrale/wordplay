@@ -16,20 +16,20 @@ export interface GameBoardProps {
   wordHighlights?: LetterHighlight[];
   /** Whether the current word is being actively edited (affects vanity filtering) */
   isEditingWord?: boolean;
-  
+
   // Actions and scoring
   actions: ActionState;
   score: ScoreBreakdown;
   isValidWord: boolean;
-  
+
   // Grid state
   letterStates: LetterState[];
-  
+
   // Event handlers
   onLetterClick?: (letter: string) => void;
   onActionClick?: (action: string) => void;
   onSubmit?: () => void;
-  
+
   // State
   disabled?: boolean;
   className?: string;
@@ -48,7 +48,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onActionClick,
   onSubmit,
   disabled = false,
-  className = ''
+  className = '',
 }) => {
   return (
     <div className={`game-board ${className}`.trim()}>
@@ -59,23 +59,27 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
       {/* Current Word Display */}
       <div className="game-board__word">
-        <CurrentWord word={currentWord} highlights={wordHighlights} isEditing={isEditingWord} />
+        <CurrentWord
+          word={currentWord}
+          highlights={wordHighlights}
+          isEditing={isEditingWord}
+        />
       </div>
 
       {/* Action Controls - Centered Layout */}
       <div className="game-board__controls">
         <div className="game-board__controls-content">
-          <ScoreDisplay 
-            score={score} 
+          <ScoreDisplay
+            score={score}
             actions={actions}
             isValid={isValidWord}
             isPassConfirming={false}
             passReason={null}
             onClick={onSubmit}
           />
-          <SubmitButton 
-            isValid={isValidWord} 
-            onClick={onSubmit} 
+          <SubmitButton
+            isValid={isValidWord}
+            onClick={onSubmit}
             disabled={disabled}
             isInvalid={!isValidWord}
             isPassConfirming={false}
@@ -94,4 +98,4 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       </div>
     </div>
   );
-}; 
+};

@@ -9,14 +9,17 @@ Common issues and solutions for the WordPlay project. This guide helps resolve d
 **Problem**: One remaining known category of tests fails due to an interface mismatch, not a functional regression. As of the latest fixes (see `docs/project/PROJECT_STATUS_AUDIT.md` steps 8/8a), only `packages/engine/scoring.test.ts` remains failing — dictionary, unlocks, and Storybook browser-mode failures documented in earlier revisions of this guide have all been fixed. Run `npm test` for the current count; don't trust a hardcoded ratio here.
 
 **Verified failure category**:
-1. **`packages/engine/scoring.test.ts`**: The test file expects `ScoringResult.breakdown` to be a structured `{addLetterPoints, removeLetterPoints, movePoints, keyLetterUsagePoints}` object, but `calculateScore()` in `packages/engine/scoring.ts` actually returns `breakdown` as a `string[]` of action descriptions. This is a real, unresolved shape mismatch (tracked in `docs/project/PROJECT_STATUS_AUDIT.md` step 7a) — total point *values* are still correct, only the breakdown object shape differs from what the tests assert. This is also why `npm run build` currently fails (`tsc -b` catches the same shape mismatch as a type error).
+
+1. **`packages/engine/scoring.test.ts`**: The test file expects `ScoringResult.breakdown` to be a structured `{addLetterPoints, removeLetterPoints, movePoints, keyLetterUsagePoints}` object, but `calculateScore()` in `packages/engine/scoring.ts` actually returns `breakdown` as a `string[]` of action descriptions. This is a real, unresolved shape mismatch (tracked in `docs/project/PROJECT_STATUS_AUDIT.md` step 7a) — total point _values_ are still correct, only the breakdown object shape differs from what the tests assert. This is also why `npm run build` currently fails (`tsc -b` catches the same shape mismatch as a type error).
 
 **Fixed since previous revisions of this guide** (kept here for history):
+
 - `packages/engine/dictionary.test.ts`: `'SHIT'` was missing from the test adapter's word list — fixed.
 - `packages/engine/__tests__/unlocks.test.ts` / `unlocks-integration.test.ts`: tests expected a `wasAlreadyUnlocked` field that didn't exist on `UnlockResult` — added to the interface and both result-construction sites.
 - Storybook component tests (`WordBuilder.stories.tsx`, `GridCell.stories.tsx`, `ThemeShowcase.stories.tsx`): fixed a `setupFiles` config-merging bug that ran Node-only polyfills inside the real browser test environment.
 
 **Solutions**:
+
 ```bash
 # Run tests to see current status
 npm test
@@ -51,6 +54,7 @@ npm test -- --reporter=verbose
 **Problem**: `Error: listen EADDRINUSE: address already in use :::5173`
 
 **Solutions**:
+
 ```bash
 # Option 1: Kill the process using the port
 lsof -ti:5173 | xargs kill -9
@@ -68,6 +72,7 @@ kill -9 <PID>
 **Problem**: Changes not reflecting in browser
 
 **Solutions**:
+
 1. **Hard refresh**: Ctrl+Shift+R (Windows/Linux) or Cmd+Shift+R (Mac)
 2. **Clear browser cache**: Dev tools → Network → Disable cache
 3. **Restart dev server**: Stop with Ctrl+C, then `npm run dev`
@@ -78,6 +83,7 @@ kill -9 <PID>
 **Problem**: Server fails to start with various errors
 
 **Solutions**:
+
 ```bash
 # Check Node.js version (requires v18+)
 node --version
@@ -100,6 +106,7 @@ netstat -tulpn | grep :5173
 **Problem**: `tsc` command fails with type errors
 
 **Common Solutions**:
+
 ```bash
 # Check for type errors
 npm run build
@@ -116,6 +123,7 @@ rm -rf node_modules/.cache
 ```
 
 **Specific Type Errors**:
+
 - **Module not found**: Check import paths and file extensions
 - **Property does not exist**: Verify interface definitions
 - **Cannot find declaration file**: Install missing @types packages
@@ -125,6 +133,7 @@ rm -rf node_modules/.cache
 **Problem**: Linting fails with rule violations
 
 **Solutions**:
+
 ```bash
 # Auto-fix ESLint issues
 npm run lint -- --fix
@@ -141,6 +150,7 @@ npx eslint src/components/MyComponent.tsx
 **Problem**: Bundle size exceeds limits
 
 **Solutions**:
+
 1. **Analyze bundle**: Use `npm run build` and check output
 2. **Remove unused imports**: Clean up import statements
 3. **Code splitting**: Implement lazy loading for large components
@@ -153,6 +163,7 @@ npx eslint src/components/MyComponent.tsx
 **Problem**: `npm test` shows failing tests
 
 **Debugging Steps**:
+
 ```bash
 # Run tests in watch mode for debugging
 npm run test:watch
@@ -168,6 +179,7 @@ npm test -- --coverage
 ```
 
 **Common Test Failures**:
+
 - **Import errors**: Check file paths and module resolution
 - **Async test timeouts**: Increase timeout or fix async handling
 - **Mock issues**: Verify mock implementations match interfaces
@@ -177,6 +189,7 @@ npm test -- --coverage
 **Problem**: Tests pass locally but fail in CI
 
 **Solutions**:
+
 1. **Check Node.js version**: Ensure CI uses same version as local
 2. **Environment variables**: Verify test environment setup
 3. **File system differences**: Check for case-sensitive path issues
@@ -189,6 +202,7 @@ npm test -- --coverage
 **Problem**: Dictionary fails to load or words not recognized
 
 **Solutions**:
+
 ```bash
 # Check dictionary file exists (single source of truth)
 ls -la public/enable1.txt
@@ -201,6 +215,7 @@ wc -l public/enable1.txt
 ```
 
 **Browser Dictionary Issues**:
+
 - **HTTP fetch fails**: Check network tab in dev tools
 - **CORS errors**: Ensure dictionary is served correctly
 - **Fallback not working**: Verify fallback word list is loaded
@@ -210,6 +225,7 @@ wc -l public/enable1.txt
 **Problem**: Bot doesn't make moves or crashes
 
 **Debugging**:
+
 ```bash
 # Test bot in terminal game
 npm run play
@@ -222,6 +238,7 @@ DEBUG=bot npm run play
 ```
 
 **Common Bot Issues**:
+
 - **No valid moves**: Bot correctly passes when no moves available
 - **Performance issues**: Check if dictionary is loaded properly
 - **Infinite loops**: Verify move generation logic
@@ -231,6 +248,7 @@ DEBUG=bot npm run play
 **Problem**: Scores don't match expected values
 
 **Debugging**:
+
 ```bash
 # Test scoring module
 npm test -- scoring.test.ts
@@ -252,12 +270,14 @@ console.log(calculateScore('CAT', 'CATS', { keyLetters: ['T'] }));
 **Problem**: Letters can't be dragged or dropped
 
 **Solutions**:
+
 1. **Mobile devices**: Ensure touch events are properly handled
 2. **Browser compatibility**: Test in different browsers
 3. **Event conflicts**: Check for event.preventDefault() issues
 4. **CSS interference**: Verify drag-related CSS properties
 
 **Debug Steps**:
+
 ```javascript
 // Check in browser console
 console.log('Touch events supported:', 'ontouchstart' in window);
@@ -269,6 +289,7 @@ console.log('Drag events supported:', 'ondragstart' in window);
 **Problem**: Themes not applying or switching
 
 **Solutions**:
+
 1. **CSS custom properties**: Check if browser supports CSS variables
 2. **Theme context**: Verify ThemeProvider is wrapping components
 3. **CSS specificity**: Ensure theme styles have proper specificity
@@ -279,6 +300,7 @@ console.log('Drag events supported:', 'ondragstart' in window);
 **Problem**: Layout breaks on certain screen sizes
 
 **Debugging**:
+
 1. **Use browser dev tools**: Test different viewport sizes
 2. **Check breakpoints**: Verify CSS media queries
 3. **Touch targets**: Ensure minimum 44px touch targets
@@ -291,6 +313,7 @@ console.log('Drag events supported:', 'ondragstart' in window);
 **Problem**: App takes too long to load
 
 **Solutions**:
+
 1. **Bundle analysis**: Check bundle size with `npm run build`
 2. **Network throttling**: Test with slow network in dev tools
 3. **Image optimization**: Ensure images are properly optimized
@@ -301,6 +324,7 @@ console.log('Drag events supported:', 'ondragstart' in window);
 **Problem**: Browser memory usage increases over time
 
 **Debugging**:
+
 1. **React DevTools**: Check for unnecessary re-renders
 2. **Memory tab**: Use browser dev tools memory profiler
 3. **Event listeners**: Ensure proper cleanup in useEffect
@@ -311,6 +335,7 @@ console.log('Drag events supported:', 'ondragstart' in window);
 **Problem**: Animations are choppy or slow
 
 **Solutions**:
+
 1. **Use CSS transforms**: Prefer transform over changing layout properties
 2. **Hardware acceleration**: Use `will-change` CSS property
 3. **Reduce motion**: Respect user's reduced motion preferences
@@ -321,11 +346,13 @@ console.log('Drag events supported:', 'ondragstart' in window);
 ### Safari-Specific Issues
 
 **Common Problems**:
+
 - **Date handling**: Safari has stricter date parsing
 - **CSS features**: Some modern CSS features not supported
 - **Touch events**: Different touch event handling
 
 **Solutions**:
+
 ```css
 /* Safari-specific CSS */
 @supports (-webkit-touch-callout: none) {
@@ -336,14 +363,19 @@ console.log('Drag events supported:', 'ondragstart' in window);
 ### Mobile Browser Issues
 
 **Common Problems**:
+
 - **Viewport scaling**: Zoom behavior on input focus
 - **Touch events**: Different touch event implementations
 - **Performance**: Slower JavaScript execution
 
 **Solutions**:
+
 ```html
 <!-- Prevent zoom on input focus -->
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, maximum-scale=1"
+/>
 ```
 
 ## Environment and Setup Issues
@@ -353,6 +385,7 @@ console.log('Drag events supported:', 'ondragstart' in window);
 **Problem**: Features not working due to old Node.js
 
 **Solution**:
+
 ```bash
 # Check current version
 node --version
@@ -369,6 +402,7 @@ nvm use 23.4.0
 **Problem**: `npm install` fails
 
 **Solutions**:
+
 ```bash
 # Clear npm cache
 npm cache clean --force
@@ -389,6 +423,7 @@ sudo chown -R $(whoami) ~/.npm
 **Problem**: Git-related development issues
 
 **Solutions**:
+
 ```bash
 # Reset to clean state
 git stash
@@ -408,6 +443,7 @@ git clean -fd
 ### Browser Developer Tools
 
 **Essential Tabs**:
+
 1. **Console**: JavaScript errors and logs
 2. **Network**: HTTP requests and responses
 3. **Elements**: DOM inspection and CSS debugging
@@ -418,16 +454,19 @@ git clean -fd
 ### React Developer Tools
 
 **Installation**:
+
 - Chrome: Install React Developer Tools extension
 - Firefox: Install React Developer Tools add-on
 
 **Usage**:
+
 - **Components tab**: Inspect React component tree
 - **Profiler tab**: Performance profiling for React
 
 ### Terminal Debugging
 
 **Useful Commands**:
+
 ```bash
 # Check running processes
 ps aux | grep node
@@ -461,12 +500,14 @@ top -p $(pgrep node)
 ### Reporting Issues
 
 **Before Reporting**:
+
 1. Check this troubleshooting guide
 2. Search existing issues
 3. Try to reproduce the problem
 4. Gather relevant information
 
 **Information to Include**:
+
 - Operating system and version
 - Node.js version (`node --version`)
 - Browser and version
@@ -476,4 +517,4 @@ top -p $(pgrep node)
 
 ---
 
-*If you can't find a solution here, check the other documentation files or create a detailed issue report.* 
+_If you can't find a solution here, check the other documentation files or create a detailed issue report._

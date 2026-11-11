@@ -53,9 +53,15 @@
 }
 
 @keyframes pulse {
-  0% { opacity: 0.5; }
-  50% { opacity: 1; }
-  100% { opacity: 0.5; }
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
 }
 
 /* Responsive Design */
@@ -63,15 +69,15 @@
   .word-builder {
     padding: var(--spacing-sm);
   }
-  
+
   .word-builder__letter {
     font-size: 48px;
   }
-  
+
   .word-builder__drop-indicator {
     font-size: 48px;
   }
-  
+
   .word-builder__lock-badge {
     font-size: 12px;
   }
@@ -81,11 +87,11 @@
   .word-builder__letter {
     font-size: 40px;
   }
-  
+
   .word-builder__drop-indicator {
     font-size: 40px;
   }
-  
+
   .word-builder__lock-badge {
     font-size: 10px;
   }
@@ -103,8 +109,8 @@
   .word-builder__letter {
     transition: none;
   }
-  
+
   .word-builder__drop-indicator {
     animation: none;
   }
-} 
+}

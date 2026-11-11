@@ -1,13 +1,21 @@
 /**
  * Unlock Engine Tests
- * 
+ *
  * Comprehensive tests for the unlock system including word triggers,
  * achievement triggers, state persistence, and error handling.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createUnlockEngine, generateBotDefeatAchievement, getAllUnlockTriggers } from '../unlocks';
-import { createTestUnlockDependencies, createFailingTestUnlockDependencies, createControlledTestUnlockDependencies } from './testUnlockAdapters';
+import {
+  createUnlockEngine,
+  generateBotDefeatAchievement,
+  getAllUnlockTriggers,
+} from '../unlocks';
+import {
+  createTestUnlockDependencies,
+  createFailingTestUnlockDependencies,
+  createControlledTestUnlockDependencies,
+} from './testUnlockAdapters';
 import type { UnlockEngine, UnlockState } from '../interfaces';
 import { INITIAL_UNLOCK_STATE } from '../unlock-definitions';
 
@@ -46,13 +54,13 @@ describe('Unlock Engine', () => {
   describe('Word Triggers', () => {
     it('should unlock red theme when playing "red"', async () => {
       const results = await unlockEngine.checkWordTriggers('red');
-      
+
       expect(results).toHaveLength(1);
       expect(results[0]).toMatchObject({
         category: 'theme',
         target: 'red',
         wasAlreadyUnlocked: false,
-        immediateEffect: { type: 'apply_theme', value: 'red' }
+        immediateEffect: { type: 'apply_theme', value: 'red' },
       });
 
       expect(unlockEngine.isUnlocked('theme', 'red')).toBe(true);
@@ -66,7 +74,7 @@ describe('Unlock Engine', () => {
       expect(unlockEngine.isUnlocked('theme', 'red')).toBe(true);
       expect(unlockEngine.isUnlocked('theme', 'blue')).toBe(true);
       expect(unlockEngine.isUnlocked('theme', 'green')).toBe(true);
-      
+
       const unlockedThemes = unlockEngine.getUnlockedItems('theme');
       expect(unlockedThemes).toContain('red');
       expect(unlockedThemes).toContain('blue');
@@ -75,12 +83,12 @@ describe('Unlock Engine', () => {
 
     it('should unlock mechanics with word triggers', async () => {
       const results = await unlockEngine.checkWordTriggers('five');
-      
+
       expect(results).toHaveLength(1);
       expect(results[0]).toMatchObject({
         category: 'mechanic',
         target: '5-letter-start',
-        wasAlreadyUnlocked: false
+        wasAlreadyUnlocked: false,
       });
 
       expect(unlockEngine.isUnlocked('mechanic', '5-letter-start')).toBe(true);
@@ -93,7 +101,7 @@ describe('Unlock Engine', () => {
       expect(results[0]).toMatchObject({
         category: 'mechanic',
         target: 'gravity',
-        wasAlreadyUnlocked: false
+        wasAlreadyUnlocked: false,
       });
 
       expect(unlockEngine.isUnlocked('mechanic', 'gravity')).toBe(true);
@@ -106,7 +114,7 @@ describe('Unlock Engine', () => {
       expect(results[0]).toMatchObject({
         category: 'mechanic',
         target: 'drunk',
-        wasAlreadyUnlocked: false
+        wasAlreadyUnlocked: false,
       });
 
       expect(unlockEngine.isUnlocked('mechanic', 'drunk')).toBe(true);
@@ -117,25 +125,30 @@ describe('Unlock Engine', () => {
       ['thirty', 'round-length-30'],
       ['forty', 'round-length-40'],
       ['fifty', 'round-length-50'],
-      ['hundred', 'round-length-100']
-    ])('should unlock the %s round length mechanic with the "%s" word trigger', async (word, target) => {
-      const results = await unlockEngine.checkWordTriggers(word);
+      ['hundred', 'round-length-100'],
+    ])(
+      'should unlock the %s round length mechanic with the "%s" word trigger',
+      async (word, target) => {
+        const results = await unlockEngine.checkWordTriggers(word);
 
-      expect(results).toHaveLength(1);
-      expect(results[0]).toMatchObject({
-        category: 'mechanic',
-        target,
-        wasAlreadyUnlocked: false
-      });
+        expect(results).toHaveLength(1);
+        expect(results[0]).toMatchObject({
+          category: 'mechanic',
+          target,
+          wasAlreadyUnlocked: false,
+        });
 
-      expect(unlockEngine.isUnlocked('mechanic', target)).toBe(true);
-    });
+        expect(unlockEngine.isUnlocked('mechanic', target)).toBe(true);
+      }
+    );
 
     it('should unlock both the 10-turn round length and 10-letter starting word mechanics with the "ten" word trigger', async () => {
       const results = await unlockEngine.checkWordTriggers('ten');
 
       expect(results).toHaveLength(2);
-      expect(results.map(r => r.target).sort()).toEqual(['10-letter-start', 'round-length-10'].sort());
+      expect(results.map((r) => r.target).sort()).toEqual(
+        ['10-letter-start', 'round-length-10'].sort()
+      );
 
       expect(unlockEngine.isUnlocked('mechanic', 'round-length-10')).toBe(true);
       expect(unlockEngine.isUnlocked('mechanic', '10-letter-start')).toBe(true);
@@ -145,28 +158,31 @@ describe('Unlock Engine', () => {
       ['three', '3-letter-start'],
       ['seven', '7-letter-start'],
       ['eight', '8-letter-start'],
-      ['nine', '9-letter-start']
-    ])('should unlock the %s letter starting word mechanic with the "%s" word trigger', async (word, target) => {
-      const results = await unlockEngine.checkWordTriggers(word);
+      ['nine', '9-letter-start'],
+    ])(
+      'should unlock the %s letter starting word mechanic with the "%s" word trigger',
+      async (word, target) => {
+        const results = await unlockEngine.checkWordTriggers(word);
 
-      expect(results).toHaveLength(1);
-      expect(results[0]).toMatchObject({
-        category: 'mechanic',
-        target,
-        wasAlreadyUnlocked: false
-      });
+        expect(results).toHaveLength(1);
+        expect(results[0]).toMatchObject({
+          category: 'mechanic',
+          target,
+          wasAlreadyUnlocked: false,
+        });
 
-      expect(unlockEngine.isUnlocked('mechanic', target)).toBe(true);
-    });
+        expect(unlockEngine.isUnlocked('mechanic', target)).toBe(true);
+      }
+    );
 
     it('should unlock bots with word triggers', async () => {
       const results = await unlockEngine.checkWordTriggers('pirate');
-      
+
       expect(results).toHaveLength(1);
       expect(results[0]).toMatchObject({
         category: 'bot',
         target: 'pirate-bot',
-        wasAlreadyUnlocked: false
+        wasAlreadyUnlocked: false,
       });
 
       expect(unlockEngine.isUnlocked('bot', 'pirate-bot')).toBe(true);
@@ -179,7 +195,7 @@ describe('Unlock Engine', () => {
       expect(results[0]).toMatchObject({
         category: 'mechanic',
         target: 'dark-mode',
-        wasAlreadyUnlocked: false
+        wasAlreadyUnlocked: false,
       });
 
       expect(unlockEngine.isUnlocked('mechanic', 'dark-mode')).toBe(true);
@@ -203,7 +219,7 @@ describe('Unlock Engine', () => {
       expect(results1).toHaveLength(1);
       expect(results2).toHaveLength(1);
       expect(results3).toHaveLength(1);
-      
+
       expect(unlockEngine.isUnlocked('theme', 'red')).toBe(true);
       expect(unlockEngine.isUnlocked('theme', 'blue')).toBe(true);
       expect(unlockEngine.isUnlocked('theme', 'green')).toBe(true);
@@ -212,7 +228,7 @@ describe('Unlock Engine', () => {
     it('should return empty array for non-trigger words', async () => {
       const results = await unlockEngine.checkWordTriggers('hello');
       expect(results).toHaveLength(0);
-      
+
       const state = unlockEngine.getCurrentState();
       expect(state).toEqual(INITIAL_UNLOCK_STATE);
     });
@@ -220,17 +236,18 @@ describe('Unlock Engine', () => {
 
   describe('Achievement Triggers', () => {
     it('should unlock easy bot when beating basicBot', async () => {
-      const results = await unlockEngine.checkAchievementTriggers('beat_basicBot');
-      
+      const results =
+        await unlockEngine.checkAchievementTriggers('beat_basicBot');
+
       expect(results).toHaveLength(1);
       expect(results[0]).toMatchObject({
         category: 'bot',
         target: 'easy-bot',
-        wasAlreadyUnlocked: false
+        wasAlreadyUnlocked: false,
       });
 
       expect(unlockEngine.isUnlocked('bot', 'easy-bot')).toBe(true);
-      
+
       const state = unlockEngine.getCurrentState();
       expect(state.achievements).toContain('beat_basicBot');
     });
@@ -251,7 +268,7 @@ describe('Unlock Engine', () => {
 
     it('should track achievements even if no unlocks triggered', async () => {
       await unlockEngine.checkAchievementTriggers('custom_achievement');
-      
+
       const state = unlockEngine.getCurrentState();
       expect(state.achievements).toContain('custom_achievement');
     });
@@ -259,9 +276,11 @@ describe('Unlock Engine', () => {
     it('should not duplicate achievements', async () => {
       await unlockEngine.checkAchievementTriggers('beat_basicBot');
       await unlockEngine.checkAchievementTriggers('beat_basicBot');
-      
+
       const state = unlockEngine.getCurrentState();
-      const achievementCount = state.achievements.filter(a => a === 'beat_basicBot').length;
+      const achievementCount = state.achievements.filter(
+        (a) => a === 'beat_basicBot'
+      ).length;
       expect(achievementCount).toBe(1);
     });
   });
@@ -274,23 +293,24 @@ describe('Unlock Engine', () => {
         mechanics: [],
         bots: ['basicBot'],
         achievements: [],
-        reveals: []
+        reveals: [],
       };
-      
+
       // Create shared dependencies
-      const sharedDependencies = createControlledTestUnlockDependencies(sharedState);
+      const sharedDependencies =
+        createControlledTestUnlockDependencies(sharedState);
       const firstEngine = createUnlockEngine(sharedDependencies);
-      
+
       // First engine instance makes unlocks
       await firstEngine.checkWordTriggers('red');
       await firstEngine.checkAchievementTriggers('beat_basicBot');
 
       // Create new engine instance with same dependencies
       const newEngine = createUnlockEngine(sharedDependencies);
-      
+
       // Initialize the new engine to load shared state
       await newEngine.initialize();
-      
+
       // State should be loaded from dependencies
       expect(newEngine.isUnlocked('theme', 'red')).toBe(true);
       expect(newEngine.isUnlocked('bot', 'easy-bot')).toBe(true);
@@ -333,11 +353,11 @@ describe('Unlock Engine', () => {
     it('should return copies of state to prevent mutation', () => {
       const state1 = unlockEngine.getCurrentState();
       const state2 = unlockEngine.getCurrentState();
-      
+
       // Should be equal but not the same object
       expect(state1).toEqual(state2);
       expect(state1).not.toBe(state2);
-      
+
       // Mutating one shouldn't affect the other
       state1.themes.push('mutated');
       expect(state2.themes).not.toContain('mutated');
@@ -346,10 +366,10 @@ describe('Unlock Engine', () => {
     it('should return copies of unlocked items to prevent mutation', () => {
       const themes1 = unlockEngine.getUnlockedItems('theme');
       const themes2 = unlockEngine.getUnlockedItems('theme');
-      
+
       expect(themes1).toEqual(themes2);
       expect(themes1).not.toBe(themes2);
-      
+
       themes1.push('mutated');
       expect(themes2).not.toContain('mutated');
     });
@@ -359,11 +379,11 @@ describe('Unlock Engine', () => {
     it('should handle load failures gracefully', async () => {
       const failingDeps = createFailingTestUnlockDependencies(true, false);
       const engine = createUnlockEngine(failingDeps);
-      
+
       // Should fall back to initial state
       const state = engine.getCurrentState();
       expect(state).toEqual(INITIAL_UNLOCK_STATE);
-      
+
       // Should still be able to make unlocks
       const results = await engine.checkWordTriggers('red');
       expect(results).toHaveLength(1);
@@ -372,39 +392,47 @@ describe('Unlock Engine', () => {
     it('should handle save failures gracefully', async () => {
       const failingDeps = createFailingTestUnlockDependencies(false, true);
       const engine = createUnlockEngine(failingDeps);
-      
+
       // Initialize the engine first (this should succeed)
       await engine.initialize();
-      
+
       // Verify the theme is not unlocked initially (should be clean state)
       expect(engine.isUnlocked('theme', 'red')).toBe(false);
-      
+
       // This should trigger an unlock and then fail on save
-      await expect(engine.checkWordTriggers('red')).rejects.toThrow('Simulated save failure');
+      await expect(engine.checkWordTriggers('red')).rejects.toThrow(
+        'Simulated save failure'
+      );
     });
   });
 
   describe('Utility Functions', () => {
     it('should generate correct bot defeat achievement IDs', () => {
       expect(generateBotDefeatAchievement('easy-bot')).toBe('beat_easy_bot');
-      expect(generateBotDefeatAchievement('medium-bot')).toBe('beat_medium_bot');
-      expect(generateBotDefeatAchievement('pirate-bot')).toBe('beat_pirate_bot');
+      expect(generateBotDefeatAchievement('medium-bot')).toBe(
+        'beat_medium_bot'
+      );
+      expect(generateBotDefeatAchievement('pirate-bot')).toBe(
+        'beat_pirate_bot'
+      );
     });
 
     it('should return all unlock triggers', () => {
       const triggers = getAllUnlockTriggers();
-      
+
       expect(triggers.word).toContain('red');
       expect(triggers.word).toContain('blue');
       expect(triggers.word).toContain('five');
       expect(triggers.word).toContain('pirate');
-      
+
       expect(triggers.achievement).toContain('beat_basicBot');
       expect(triggers.achievement).toContain('beat_easy_bot');
-      
+
       // Should be sorted and unique
       expect(triggers.word).toEqual([...new Set(triggers.word)].sort());
-      expect(triggers.achievement).toEqual([...new Set(triggers.achievement)].sort());
+      expect(triggers.achievement).toEqual(
+        [...new Set(triggers.achievement)].sort()
+      );
     });
   });
 
@@ -415,20 +443,20 @@ describe('Unlock Engine', () => {
         themes: ['classic blue'],
         mechanics: [],
         bots: ['basicBot'],
-        achievements: []
+        achievements: [],
       });
       const freshEngine = createUnlockEngine(freshDeps);
-      
+
       // Initialize the fresh engine
       await freshEngine.initialize();
-      
+
       // Verify initial state
       expect(freshEngine.isUnlocked('theme', 'red')).toBe(false);
-      
+
       // If a word triggers multiple unlocks (edge case)
       const results = await freshEngine.checkWordTriggers('red');
       expect(results).toHaveLength(1); // Only red theme should unlock
-      
+
       // Verify unlock worked
       expect(freshEngine.isUnlocked('theme', 'red')).toBe(true);
     });
@@ -437,10 +465,10 @@ describe('Unlock Engine', () => {
       // Word unlock
       await unlockEngine.checkWordTriggers('red');
       await unlockEngine.checkWordTriggers('pirate');
-      
+
       // Achievement unlock
       await unlockEngine.checkAchievementTriggers('beat_basicBot');
-      
+
       const state = unlockEngine.getCurrentState();
       expect(state.themes).toContain('red');
       expect(state.bots).toContain('pirate-bot');
@@ -450,17 +478,21 @@ describe('Unlock Engine', () => {
 
     it('should maintain state consistency across many operations', async () => {
       const words = ['red', 'blue', 'green', 'yellow', 'orange'];
-      const achievements = ['beat_basicBot', 'beat_easy_bot', 'custom_achievement'];
-      
+      const achievements = [
+        'beat_basicBot',
+        'beat_easy_bot',
+        'custom_achievement',
+      ];
+
       // Perform many unlock operations
       for (const word of words) {
         await unlockEngine.checkWordTriggers(word);
       }
-      
+
       for (const achievement of achievements) {
         await unlockEngine.checkAchievementTriggers(achievement);
       }
-      
+
       // Verify final state
       const state = unlockEngine.getCurrentState();
       expect(state.themes).toContain('red');
@@ -468,13 +500,13 @@ describe('Unlock Engine', () => {
       expect(state.themes).toContain('green');
       expect(state.themes).toContain('yellow');
       expect(state.themes).toContain('orange');
-      
+
       expect(state.bots).toContain('easy-bot');
       expect(state.bots).toContain('medium-bot');
-      
+
       expect(state.achievements).toContain('beat_basicBot');
       expect(state.achievements).toContain('beat_easy_bot');
       expect(state.achievements).toContain('custom_achievement');
     });
   });
-}); 
+});

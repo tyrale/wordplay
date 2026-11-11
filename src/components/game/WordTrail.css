@@ -116,11 +116,11 @@
   .word-trail__container {
     gap: calc(var(--spacing-xs) / 2);
   }
-  
+
   .word-trail__word {
     font-size: var(--theme-font-size-md);
   }
-  
+
   .word-trail__score {
     font-size: 12px;
     padding: 1px 4px;
@@ -137,9 +137,9 @@
   .word-trail__score {
     border: 1px solid var(--theme-accent);
   }
-  
+
   /* Removed hover styles */
-  
+
   .word-trail__letter--key {
     text-shadow: 0 0 1px var(--theme-accent);
   }
@@ -149,7 +149,7 @@
   .word-trail__word {
     transition: none;
   }
-  
+
   .word-trail__letter {
     transition: none;
   }
@@ -171,8 +171,6 @@
   margin: 0; /* Ensure no margin */
   box-sizing: border-box; /* Include padding in width calculation */
 }
-
-
 
 /* Empty state: start word positioned at bottom left */
 .word-trail__start-word--empty {
@@ -288,8 +286,6 @@
   opacity: 0.6;
 }
 
-
-
 /* Empty state: target word positioned at bottom right */
 .word-trail__target-word--empty {
   display: flex;
@@ -336,15 +332,15 @@
   .word-trail__challenge-container {
     padding: 0; /* No padding needed with calc() positioning */
   }
-  
+
   .word-trail__letter--first .word-trail__start-word {
     right: calc(100% + 10px); /* Same positioning as desktop */
   }
-  
+
   .word-trail__letter--last .word-trail__target-word {
     left: calc(100% + 10px); /* Same positioning as desktop */
   }
-  
+
   .word-trail__arrow {
     font-size: var(--theme-font-size-lg);
   }
@@ -354,20 +350,20 @@
   .word-trail__challenge-container {
     padding: 0; /* No padding needed with calc() positioning */
   }
-  
+
   /* On mobile, use same calc() positioning but allow clipping */
   .word-trail__letter--first .word-trail__start-word {
     right: calc(100% + 10px);
     top: 50%;
     transform: translateY(-50%);
   }
-  
+
   .word-trail__letter--last .word-trail__target-word {
     left: calc(100% + 10px);
     top: 50%;
     transform: translateY(-50%);
   }
-  
+
   .word-trail__start-word--empty,
   .word-trail__target-word--empty {
     position: static; /* Use normal flow on mobile for empty state */
@@ -375,14 +371,14 @@
     justify-content: center;
     margin: var(--spacing-xs) 0;
   }
-  
+
   .word-trail__empty-space {
     min-height: 20px;
   }
-  
+
   .word-trail__played-words {
     max-height: 40vh;
     max-height: calc(var(--vh, 1vh) * 40);
     max-height: 40dvh;
   }
-} 
+}

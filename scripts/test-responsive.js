@@ -2,7 +2,7 @@
 
 /**
  * Responsive Design Test Script
- * 
+ *
  * This script helps verify that the WordPlay game works correctly
  * across different browsers and screen sizes.
  */
@@ -23,16 +23,11 @@ const SCREEN_SIZES = [
   { name: 'iPad Pro', width: 1024, height: 1366, type: 'tablet' },
   { name: 'Desktop Small', width: 1280, height: 720, type: 'desktop' },
   { name: 'Desktop Large', width: 1920, height: 1080, type: 'desktop' },
-  { name: 'Ultrawide', width: 2560, height: 1440, type: 'desktop' }
+  { name: 'Ultrawide', width: 2560, height: 1440, type: 'desktop' },
 ];
 
 // Browsers to test
-const BROWSERS = [
-  'Chrome',
-  'Firefox', 
-  'Safari',
-  'Edge'
-];
+const BROWSERS = ['Chrome', 'Firefox', 'Safari', 'Edge'];
 
 // Test checklist
 const TEST_CHECKLIST = {
@@ -41,33 +36,33 @@ const TEST_CHECKLIST = {
     'No horizontal scrolling',
     'All elements visible without scrolling',
     'Touch targets meet 44px minimum',
-    'Text remains readable at all sizes'
+    'Text remains readable at all sizes',
   ],
   interaction: [
     'Grid cells respond to touch/click',
     'Theme selector works',
     'Submit button responds correctly',
     'No keyboard navigation (mouse/touch only)',
-    'Drag and drop works on touch devices'
+    'Drag and drop works on touch devices',
   ],
   visual: [
     'Theme colors apply correctly',
     'Typography scales appropriately',
     'Inter Black font loads and displays',
     'High contrast mode supported',
-    'Reduced motion preferences respected'
+    'Reduced motion preferences respected',
   ],
   performance: [
     'Page loads in under 3 seconds',
     'Smooth animations and transitions',
     'No layout shifts during load',
-    'Responsive to orientation changes'
-  ]
+    'Responsive to orientation changes',
+  ],
 };
 
 function generateTestReport() {
   const timestamp = new Date().toISOString();
-  
+
   const report = `# Responsive Design Test Report
 
 Generated: ${timestamp}
@@ -81,31 +76,33 @@ Generated: ${timestamp}
 
 | Device | Width | Height | Type | Status |
 |--------|-------|--------|------|--------|
-${SCREEN_SIZES.map(size => 
-  `| ${size.name} | ${size.width}px | ${size.height}px | ${size.type} | ⏳ Pending |`
+${SCREEN_SIZES.map(
+  (size) =>
+    `| ${size.name} | ${size.width}px | ${size.height}px | ${size.type} | ⏳ Pending |`
 ).join('\n')}
 
 ## Browser Compatibility Matrix
 
 | Browser | Desktop | Tablet | Mobile | Notes |
 |---------|---------|--------|--------|-------|
-${BROWSERS.map(browser => 
-  `| ${browser} | ⏳ Pending | ⏳ Pending | ⏳ Pending | Manual testing required |`
+${BROWSERS.map(
+  (browser) =>
+    `| ${browser} | ⏳ Pending | ⏳ Pending | ⏳ Pending | Manual testing required |`
 ).join('\n')}
 
 ## Test Checklist
 
 ### Layout Tests
-${TEST_CHECKLIST.layout.map(test => `- [ ] ${test}`).join('\n')}
+${TEST_CHECKLIST.layout.map((test) => `- [ ] ${test}`).join('\n')}
 
 ### Interaction Tests  
-${TEST_CHECKLIST.interaction.map(test => `- [ ] ${test}`).join('\n')}
+${TEST_CHECKLIST.interaction.map((test) => `- [ ] ${test}`).join('\n')}
 
 ### Visual Tests
-${TEST_CHECKLIST.visual.map(test => `- [ ] ${test}`).join('\n')}
+${TEST_CHECKLIST.visual.map((test) => `- [ ] ${test}`).join('\n')}
 
 ### Performance Tests
-${TEST_CHECKLIST.performance.map(test => `- [ ] ${test}`).join('\n')}
+${TEST_CHECKLIST.performance.map((test) => `- [ ] ${test}`).join('\n')}
 
 ## Manual Testing Instructions
 
@@ -195,18 +192,23 @@ If any tests fail, please document:
 
 function main() {
   console.log('🧪 Generating Responsive Design Test Report...\n');
-  
+
   const report = generateTestReport();
-  const outputPath = path.join(__dirname, '..', 'docs', 'responsive-test-report.md');
-  
+  const outputPath = path.join(
+    __dirname,
+    '..',
+    'docs',
+    'responsive-test-report.md'
+  );
+
   // Ensure docs directory exists
   const docsDir = path.dirname(outputPath);
   if (!fs.existsSync(docsDir)) {
     fs.mkdirSync(docsDir, { recursive: true });
   }
-  
+
   fs.writeFileSync(outputPath, report);
-  
+
   console.log(`✅ Test report generated: ${outputPath}`);
   console.log('\n📋 Next Steps:');
   console.log('1. Start the development server: npm run dev');
@@ -214,7 +216,7 @@ function main() {
   console.log('3. Use the 📱 debug button to check responsive behavior');
   console.log('4. Test on actual mobile devices if available');
   console.log('5. Update the test report with results');
-  
+
   console.log('\n🎯 Key Areas to Test:');
   console.log('- Touch targets are at least 44px');
   console.log('- No horizontal scrolling on any device');
@@ -226,4 +228,4 @@ function main() {
 // Run if this is the main module
 if (import.meta.url === `file://${process.argv[1]}`) {
   main();
-} 
+}

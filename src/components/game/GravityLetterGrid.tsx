@@ -25,7 +25,7 @@ const ALPHABET_GRID = [
   ['G', 'H', 'I', 'J', 'K', 'L'],
   ['M', 'N', 'O', 'P', 'Q', 'R'],
   ['S', 'T', 'U', 'V', 'W', 'X'],
-  ['←', '↻', 'Y', 'Z', '?', '≡']
+  ['←', '↻', 'Y', 'Z', '?', '≡'],
 ];
 
 const ACTION_BUTTONS = ['←', '↻', '?', '≡'];
@@ -60,7 +60,9 @@ const FLOOR_MARGIN_RATIO = 0.06; // keep this fraction of viewport height clear 
 // `getBoundingClientRect()` is the ground truth for "what's visible", since
 // it's `position: fixed; inset: 0`, i.e. exactly the visible viewport as
 // resolved by the browser itself - no API discrepancies possible.
-const getViewportSizeFromEl = (el: HTMLElement | null): { width: number; height: number } => {
+const getViewportSizeFromEl = (
+  el: HTMLElement | null
+): { width: number; height: number } => {
   if (el) {
     const rect = el.getBoundingClientRect();
     if (rect.width > 0 && rect.height > 0) {
@@ -70,7 +72,7 @@ const getViewportSizeFromEl = (el: HTMLElement | null): { width: number; height:
   const vv = window.visualViewport;
   return {
     width: vv?.width ?? window.innerWidth,
-    height: vv?.height ?? window.innerHeight
+    height: vv?.height ?? window.innerHeight,
   };
 };
 
@@ -79,7 +81,7 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
   onLetterClick,
   onActionClick,
   disabled = false,
-  lettersHidden = false
+  lettersHidden = false,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const tileRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -88,10 +90,13 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
   const initializedRef = useRef(false);
 
   const stateMap = useMemo(() => {
-    return letterStates.reduce((acc, { letter, state }) => {
-      acc[letter] = state;
-      return acc;
-    }, {} as Record<string, GridCellState>);
+    return letterStates.reduce(
+      (acc, { letter, state }) => {
+        acc[letter] = state;
+        return acc;
+      },
+      {} as Record<string, GridCellState>
+    );
   }, [letterStates]);
 
   const applyTransform = useCallback((body: TileBody) => {
@@ -108,13 +113,19 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
     initializedRef.current = true;
 
     const bodies: TileBody[] = [];
-    const { width: viewportWidth } = getViewportSizeFromEl(containerRef.current);
+    const { width: viewportWidth } = getViewportSizeFromEl(
+      containerRef.current
+    );
     const gap = 8;
     let rowY = 90;
 
     ALPHABET_GRID.forEach((row) => {
-      const rowSizes = row.map(content => tileRefs.current[content]?.getBoundingClientRect().width || 60);
-      const rowWidth = rowSizes.reduce((sum, size) => sum + size, 0) + gap * (row.length - 1);
+      const rowSizes = row.map(
+        (content) =>
+          tileRefs.current[content]?.getBoundingClientRect().width || 60
+      );
+      const rowWidth =
+        rowSizes.reduce((sum, size) => sum + size, 0) + gap * (row.length - 1);
       let colX = Math.max(EDGE_PADDING, (viewportWidth - rowWidth) / 2);
       const rowHeight = Math.max(...rowSizes);
 
@@ -129,7 +140,7 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
           rotation: 0,
           vr: (Math.random() - 0.5) * 30,
           size,
-          settled: false
+          settled: false,
         });
         colX += size + gap;
       });
@@ -150,7 +161,8 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
       lastTime = time;
 
       const bodies = bodiesRef.current;
-      const { width: viewportWidth, height: viewportHeight } = getViewportSizeFromEl(containerRef.current);
+      const { width: viewportWidth, height: viewportHeight } =
+        getViewportSizeFromEl(containerRef.current);
       let anyActive = false;
 
       for (const body of bodies) {
@@ -163,7 +175,8 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
         body.y += body.vy * dt;
         body.rotation += body.vr * dt;
 
-        const floor = viewportHeight * (1 - FLOOR_MARGIN_RATIO) - body.size - EDGE_PADDING;
+        const floor =
+          viewportHeight * (1 - FLOOR_MARGIN_RATIO) - body.size - EDGE_PADDING;
         const rightWall = viewportWidth - body.size - EDGE_PADDING;
         const leftWall = EDGE_PADDING;
 
@@ -202,8 +215,8 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
           const b = bodies[j];
           const ar = a.size / 2;
           const br = b.size / 2;
-          const dx = (b.x + br) - (a.x + ar);
-          const dy = (b.y + br) - (a.y + ar);
+          const dx = b.x + br - (a.x + ar);
+          const dy = b.y + br - (a.y + ar);
           const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
           const minDist = ar + br;
 
@@ -246,11 +259,14 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
     // wake up any tile now resting below the new floor so it settles back
     // into view instead of staying stuck off-screen.
     const wakeIfOffscreen = () => {
-      const { height: viewportHeight } = getViewportSizeFromEl(containerRef.current);
+      const { height: viewportHeight } = getViewportSizeFromEl(
+        containerRef.current
+      );
       let needsRestart = false;
 
       for (const body of bodiesRef.current) {
-        const floor = viewportHeight * (1 - FLOOR_MARGIN_RATIO) - body.size - EDGE_PADDING;
+        const floor =
+          viewportHeight * (1 - FLOOR_MARGIN_RATIO) - body.size - EDGE_PADDING;
         if (body.settled && body.y > floor) {
           body.settled = false;
           needsRestart = true;
@@ -276,26 +292,34 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
     };
   }, [applyTransform]);
 
-  const handleTileClick = useCallback((content: string) => {
-    // The menu and dictionary/help buttons should always be reachable, even
-    // when it's not the player's turn (e.g. waiting on an opponent in async
-    // multiplayer).
-    if (disabled && content !== '≡' && content !== '?') return;
-    if (ACTION_BUTTONS.includes(content)) {
-      onActionClick?.(content);
-    } else {
-      onLetterClick?.(content);
-    }
-  }, [disabled, onActionClick, onLetterClick]);
+  const handleTileClick = useCallback(
+    (content: string) => {
+      // The menu and dictionary/help buttons should always be reachable, even
+      // when it's not the player's turn (e.g. waiting on an opponent in async
+      // multiplayer).
+      if (disabled && content !== '≡' && content !== '?') return;
+      if (ACTION_BUTTONS.includes(content)) {
+        onActionClick?.(content);
+      } else {
+        onLetterClick?.(content);
+      }
+    },
+    [disabled, onActionClick, onLetterClick]
+  );
 
   const getAriaLabel = (content: string, state: GridCellState): string => {
     if (ACTION_BUTTONS.includes(content)) {
       switch (content) {
-        case '←': return 'Return to home screen';
-        case '↻': return 'Reset word';
-        case '?': return 'Help';
-        case '≡': return 'Settings menu';
-        default: return content;
+        case '←':
+          return 'Return to home screen';
+        case '↻':
+          return 'Reset word';
+        case '?':
+          return 'Help';
+        case '≡':
+          return 'Settings menu';
+        default:
+          return content;
       }
     }
     if (state === 'key') return `Letter ${content} (key letter)`;
@@ -322,10 +346,17 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
   // viewport exactly as it did when portaled to `document.body`.
   const portalTarget = document.getElementById('root') ?? document.body;
   return createPortal(
-    <div ref={containerRef} className="gravity-letter-grid" role="grid" aria-label="Alphabet grid (gravity mode)">
+    <div
+      ref={containerRef}
+      className="gravity-letter-grid"
+      role="grid"
+      aria-label="Alphabet grid (gravity mode)"
+    >
       {ALL_TILES.map((content) => {
         const isAction = ACTION_BUTTONS.includes(content);
-        const state: GridCellState = isAction ? 'normal' : (stateMap[content] || 'normal');
+        const state: GridCellState = isAction
+          ? 'normal'
+          : stateMap[content] || 'normal';
         // The menu and dictionary/help buttons stay enabled even when the
         // rest of the grid is disabled (e.g. waiting on an opponent's turn).
         const isAlwaysEnabled = content === '≡' || content === '?';
@@ -334,13 +365,17 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
           `grid-cell--${state}`,
           `grid-cell--${isAction ? 'action' : 'letter'}`,
           disabled && !isAlwaysEnabled && 'grid-cell--disabled',
-          'grid-cell--gravity'
-        ].filter(Boolean).join(' ');
+          'grid-cell--gravity',
+        ]
+          .filter(Boolean)
+          .join(' ');
 
         return (
           <div
             key={content}
-            ref={(el) => { tileRefs.current[content] = el; }}
+            ref={(el) => {
+              tileRefs.current[content] = el;
+            }}
             className={cellClasses}
             onClick={() => handleTileClick(content)}
             role="button"
@@ -349,7 +384,11 @@ export const GravityLetterGrid: React.FC<GravityLetterGridProps> = ({
             data-letter={isAction ? undefined : content}
             data-type={isAction ? 'action' : 'letter'}
           >
-            <span className={`grid-cell__content${lettersHidden && !isAction ? ' grid-cell__content--hidden' : ''}`}>{content}</span>
+            <span
+              className={`grid-cell__content${lettersHidden && !isAction ? ' grid-cell__content--hidden' : ''}`}
+            >
+              {content}
+            </span>
             {(state === 'locked' || state === 'lockedKey') && (
               <span className="grid-cell__lock" aria-hidden="true">
                 <LockIcon size={12} />

@@ -7,12 +7,15 @@ A turn-based word game where players transform words by adding, removing, or rea
 ## 🎮 Play Now
 
 ### Web Game (Recommended)
+
 ```bash
 npm run dev
 ```
+
 Open http://localhost:5173/ in your browser
 
 ### Terminal Game
+
 ```bash
 npm run play
 ```
@@ -48,7 +51,7 @@ Requires Node.js v18+ and npm v8+. For full installation steps, all dev commands
    - Remove letter: +1 point
    - Rearrange letters: +1 point
    - Use key letter: +1 point (bonus)
-3. **Word Constraints**: 
+3. **Word Constraints**:
    - Must be valid English words
    - Maximum ±1 letter change per turn
    - No word repetition in same game
@@ -82,27 +85,32 @@ src/styles/         # CSS and themes
 See **[docs/README.md](docs/README.md)** for the full documentation index, organized by category (guides, architecture, features, deployment, project history).
 
 ### Getting Started
+
 - **[Quick Start Guide](docs/guides/QUICK_START.md)** - Get up and running in minutes
 - **[Troubleshooting](docs/guides/TROUBLESHOOTING.md)** - Common issues and solutions
 
 ### Development
+
 - **[Task Progress](docs/project/TASK_PROGRESS.md)** - Current development status
 - **[Architecture](docs/architecture/ARCHITECTURE.md)** - Technical design and decisions
 - **[API Reference](docs/architecture/API_REFERENCE.md)** - Engine interfaces and usage
 - **[Implementation History](docs/project/IMPLEMENTATION_HISTORY.md)** - Detailed development notes
 
 ### Testing & Quality
+
 - **[Testing Reports](docs/project/TESTING_REPORTS.md)** - Comprehensive test coverage
 - **[Game Rules](docs/guides/GAME_RULES.md)** - Complete gameplay mechanics
 - **[UI Design Spec](docs/architecture/WEB_UI_DESIGN_SPEC.md)** - Interface guidelines
 
 ### Project Management
+
 - **[Development Plan](docs/project/dev-plan.md)** - Roadmap and workflow
 - **[Changelog](docs/project/CHANGELOG.md)** - Version history
 
 ## 🧪 Testing
 
 ### Test Status
+
 See [PROJECT_STATUS_AUDIT.md](docs/project/PROJECT_STATUS_AUDIT.md) for the current, maintained pass/fail count — it changes frequently. As of 2026-11-11 the full suite passes (29 files / 441 tests). The Storybook tests run in a real browser, so run `npx playwright install chromium` once on a new machine.
 
 ```bash
@@ -117,6 +125,7 @@ npm test -- dictionary.test.ts
 ```
 
 ### Test Coverage
+
 - **Engine Tests**: Dictionary, scoring, bot AI, game state
 - **Component Tests**: React UI components
 - **Integration Tests**: Cross-platform adapter compatibility
@@ -125,6 +134,7 @@ npm test -- dictionary.test.ts
 ## 📊 Current Status
 
 ### ✅ **Live and building cleanly** (verified 2026-11-11)
+
 - **Web Application**: Deployed on Vercel from `master`; runs locally via `npm run dev`
 - **Production Build**: `npm run build` (`tsc -b && vite build`) succeeds
 - **Game Engine**: Complete; full test suite passing
@@ -133,40 +143,47 @@ npm test -- dictionary.test.ts
 - **Architecture**: Scalable foundation for future features
 
 ### 📈 **Metrics**
+
 - **Bundle Size**: Not independently re-verified in this pass — treat as approximate
 - **Accessibility**: WCAG AA compliant
 - **Browser Support**: Chrome, Firefox, Safari, Edge
 - **Test Coverage**: See [PROJECT_STATUS_AUDIT.md](docs/project/PROJECT_STATUS_AUDIT.md) for the current, maintained count
 
 ### 🎯 **Completed Phases**
+
 This section's phase numbering previously conflicted with [TASK_PROGRESS.md](docs/project/TASK_PROGRESS.md) (e.g. this file called multiplayer "Phase 3", while TASK_PROGRESS.md's Phase 3 is the already-completed Challenge Mode). Deferring to TASK_PROGRESS.md as the canonical phase list rather than maintaining a second, conflicting one here — see its [Phase Overview](docs/project/TASK_PROGRESS.md#-phase-overview-realistic-assessment) for current phase status.
 
 ### ⏳ **Next Steps**
-- **Code formatting**: one-time `npm run format` pass, then make the CI Prettier check blocking
+
+- **Code formatting**: enforced in CI; run `npm run format` before committing
 - **Enhanced accessibility and testing**: Ongoing
 - **Remaining cleanup**: see open items in [PROJECT_STATUS_AUDIT.md](docs/project/PROJECT_STATUS_AUDIT.md)
 
 ## 🛠️ Technology Stack
 
 ### Core Technologies
+
 - **React 19** - UI framework
 - **TypeScript** - Type safety and developer experience
 - **Vite** - Fast development and optimized builds
 - **Vitest** - Comprehensive testing framework
 
 ### Game Engine
+
 - **Platform-Agnostic Design** - Runs on web, terminal, future mobile
 - **Dependency Injection** - Clean separation of concerns
 - **172,819 Word Dictionary** - ENABLE word list + slang support
 - **Advanced Scoring Algorithm** - Accurate point calculation
 
 ### UI/UX
+
 - **CSS Custom Properties** - Dynamic theming system
 - **Mobile-First Design** - Responsive across all devices
 - **Touch Optimization** - Reliable drag-and-drop on mobile
 - **Accessibility** - WCAG AA compliance
 
 ### Development Tools
+
 - **ESLint + Prettier** - Code quality and formatting
 - **Storybook** - Component development and documentation
 - **GitHub Actions** - Automated CI/CD pipeline
@@ -175,18 +192,21 @@ This section's phase numbering previously conflicted with [TASK_PROGRESS.md](doc
 ## 🤝 Contributing
 
 ### Development Workflow
+
 1. Follow the [Development Plan](docs/project/dev-plan.md)
 2. Use "ShipHip" prefix in commit messages
 3. Run tests before committing: `npm test`
 4. Update documentation for significant changes
 
 ### Code Standards
+
 - TypeScript for all new code
 - Follow existing patterns and architecture
 - Maintain test coverage for new features
 - Ensure cross-platform compatibility
 
 ### Getting Help
+
 - Check [Troubleshooting Guide](docs/guides/TROUBLESHOOTING.md)
 - Review [API Reference](docs/architecture/API_REFERENCE.md)
 - Examine existing code patterns

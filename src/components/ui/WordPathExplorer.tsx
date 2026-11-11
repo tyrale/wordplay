@@ -25,9 +25,9 @@ import './WordPathExplorer.css';
 function getActionIcons(fromWord: string, toWord: string): string {
   const { actions } = calculateScore(fromWord, toWord);
   const icons: string[] = [];
-  if (actions.some(action => action.type === 'rearrange')) icons.push('~');
-  if (actions.some(action => action.type === 'remove')) icons.push('-');
-  if (actions.some(action => action.type === 'add')) icons.push('+');
+  if (actions.some((action) => action.type === 'rearrange')) icons.push('~');
+  if (actions.some((action) => action.type === 'remove')) icons.push('-');
+  if (actions.some((action) => action.type === 'add')) icons.push('+');
   return icons.join(' ');
 }
 
@@ -38,7 +38,10 @@ export interface WordPathExplorerProps {
 
 const MAX_WORD_LENGTH = 10;
 
-export const WordPathExplorer: React.FC<WordPathExplorerProps> = ({ isVisible, onClose }) => {
+export const WordPathExplorer: React.FC<WordPathExplorerProps> = ({
+  isVisible,
+  onClose,
+}) => {
   const { hasSeenWord, getConnectedWords } = useWordPathGraph();
   const [word, setWord] = useState('');
   const [mode, setMode] = useState<'typing' | 'browsing'>('typing');
@@ -50,10 +53,16 @@ export const WordPathExplorer: React.FC<WordPathExplorerProps> = ({ isVisible, o
     }
   }, [isVisible, mode]);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const sanitized = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, MAX_WORD_LENGTH);
-    setWord(sanitized);
-  }, []);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const sanitized = e.target.value
+        .toUpperCase()
+        .replace(/[^A-Z]/g, '')
+        .slice(0, MAX_WORD_LENGTH);
+      setWord(sanitized);
+    },
+    []
+  );
 
   const handleSelectConnectedWord = useCallback((connectedWord: string) => {
     setWord(connectedWord);
@@ -120,14 +129,18 @@ export const WordPathExplorer: React.FC<WordPathExplorerProps> = ({ isVisible, o
 
         <div className="word-path-explorer__results">
           {trimmedWord.length === 0 ? (
-            <p className="word-path-explorer__hint">type a word to see its path</p>
+            <p className="word-path-explorer__hint">
+              type a word to see its path
+            </p>
           ) : !seen ? (
-            <p className="word-path-explorer__hint">you haven't seen this yet</p>
+            <p className="word-path-explorer__hint">
+              you haven't seen this yet
+            </p>
           ) : connectedWords.length === 0 ? (
             <p className="word-path-explorer__hint">no connections yet</p>
           ) : (
             <ul className="word-path-explorer__connections">
-              {connectedWords.map(connectedWord => (
+              {connectedWords.map((connectedWord) => (
                 <li key={connectedWord}>
                   <button
                     className="word-path-explorer__connection"

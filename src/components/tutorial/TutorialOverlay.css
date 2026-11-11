@@ -82,66 +82,69 @@
 /* Scoped to the wrapper element App.tsx applies as `.tutorial-active[data-tutorial-step="N"]` */
 
 /* Step 1: add S to WORD -> WORDS */
-.tutorial-active[data-tutorial-step="1"] .grid-cell--action {
+.tutorial-active[data-tutorial-step='1'] .grid-cell--action {
   display: none;
 }
 
-.tutorial-active[data-tutorial-step="1"] .alphabet-grid .grid-cell--letter {
+.tutorial-active[data-tutorial-step='1'] .alphabet-grid .grid-cell--letter {
   opacity: 0.3;
   pointer-events: none;
   cursor: default;
 }
 
-.tutorial-active[data-tutorial-step="1"] .alphabet-grid .grid-cell[data-letter="S"] {
+.tutorial-active[data-tutorial-step='1']
+  .alphabet-grid
+  .grid-cell[data-letter='S'] {
   opacity: 1;
   pointer-events: auto;
   cursor: pointer;
 }
 
-.tutorial-active[data-tutorial-step="1"] .interactive-game__submit-anchor,
-.tutorial-active[data-tutorial-step="1"] .word-builder__letter {
+.tutorial-active[data-tutorial-step='1'] .interactive-game__submit-anchor,
+.tutorial-active[data-tutorial-step='1'] .word-builder__letter {
   pointer-events: none;
 }
 
 /* Step 2: remove D from WORDS -> WORS */
-.tutorial-active[data-tutorial-step="2"] .grid-cell--action {
+.tutorial-active[data-tutorial-step='2'] .grid-cell--action {
   display: none;
 }
 
-.tutorial-active[data-tutorial-step="2"] .alphabet-grid {
+.tutorial-active[data-tutorial-step='2'] .alphabet-grid {
   opacity: 0.3;
   pointer-events: none;
 }
 
-.tutorial-active[data-tutorial-step="2"] .interactive-game__submit-anchor {
+.tutorial-active[data-tutorial-step='2'] .interactive-game__submit-anchor {
   pointer-events: none;
 }
 
-.tutorial-active[data-tutorial-step="2"] .word-builder__letter {
+.tutorial-active[data-tutorial-step='2'] .word-builder__letter {
   opacity: 0.3;
   pointer-events: none;
 }
 
-.tutorial-active[data-tutorial-step="2"] .word-builder__letter[data-letter-index="3"] {
+.tutorial-active[data-tutorial-step='2']
+  .word-builder__letter[data-letter-index='3'] {
   opacity: 1;
   pointer-events: auto;
   cursor: pointer;
 }
 
 /* Step 3: rearrange WORS -> ROWS via drag, then submit */
-.tutorial-active[data-tutorial-step="3"] .grid-cell--action {
+.tutorial-active[data-tutorial-step='3'] .grid-cell--action {
   display: none;
 }
 
-.tutorial-active[data-tutorial-step="3"] .alphabet-grid {
+.tutorial-active[data-tutorial-step='3'] .alphabet-grid {
   opacity: 0.3;
   pointer-events: none;
 }
 
 /* Steps 1-3: key letter styling stays neutral until Step 4 explains it */
-.tutorial-active[data-tutorial-step="1"] .grid-cell--key,
-.tutorial-active[data-tutorial-step="2"] .grid-cell--key,
-.tutorial-active[data-tutorial-step="3"] .grid-cell--key {
+.tutorial-active[data-tutorial-step='1'] .grid-cell--key,
+.tutorial-active[data-tutorial-step='2'] .grid-cell--key,
+.tutorial-active[data-tutorial-step='3'] .grid-cell--key {
   background-color: var(--theme-background);
   color: var(--theme-text);
 }

@@ -85,7 +85,10 @@ export function hasConfirmedDisplayName(): boolean {
   try {
     return localStorage.getItem(DISPLAY_NAME_CONFIRMED_KEY) === 'true';
   } catch (error) {
-    console.warn('Failed to read display name confirmation from localStorage:', error);
+    console.warn(
+      'Failed to read display name confirmation from localStorage:',
+      error
+    );
     return false;
   }
 }
@@ -95,7 +98,10 @@ export function markDisplayNameConfirmed(): void {
   try {
     localStorage.setItem(DISPLAY_NAME_CONFIRMED_KEY, 'true');
   } catch (error) {
-    console.warn('Failed to persist display name confirmation to localStorage:', error);
+    console.warn(
+      'Failed to persist display name confirmation to localStorage:',
+      error
+    );
   }
 }
 
@@ -107,7 +113,9 @@ export function markDisplayNameConfirmed(): void {
  */
 export async function ensureAnonymousSession(): Promise<string | null> {
   if (!isSupabaseConfigured()) {
-    console.warn('Supabase is not configured; multiplayer features are unavailable.');
+    console.warn(
+      'Supabase is not configured; multiplayer features are unavailable.'
+    );
     return null;
   }
 
@@ -124,7 +132,9 @@ export async function ensureAnonymousSession(): Promise<string | null> {
   } catch {
     // Supabase unreachable (e.g. local dev without a running Supabase
     // instance) - fail quietly instead of a noisy uncaught-fetch stack.
-    console.warn('Supabase is unreachable; multiplayer features are unavailable.');
+    console.warn(
+      'Supabase is unreachable; multiplayer features are unavailable.'
+    );
     return null;
   }
 
@@ -135,17 +145,15 @@ export async function ensureAnonymousSession(): Promise<string | null> {
   // Upsert (update-on-conflict) so the row `handle_new_user()` already
   // created gets our real email placeholder/username/display name, while
   // games_played/games_won/etc. are left untouched (not included here).
-  const { error: upsertError } = await supabase
-    .from('users')
-    .upsert(
-      {
-        id: userId,
-        email: `${userId}@anonymous.wordplay.local`,
-        username: displayName,
-        display_name: displayName
-      },
-      { onConflict: 'id' }
-    );
+  const { error: upsertError } = await supabase.from('users').upsert(
+    {
+      id: userId,
+      email: `${userId}@anonymous.wordplay.local`,
+      username: displayName,
+      display_name: displayName,
+    },
+    { onConflict: 'id' }
+  );
 
   if (upsertError) {
     console.warn('Failed to upsert anonymous user profile:', upsertError);

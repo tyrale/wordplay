@@ -1,11 +1,11 @@
 /**
  * Test Adapter for WordPlay Game Engine
- * 
+ *
  * Platform-specific implementation for testing environments that provides
  * predictable word data and deterministic behavior for test scenarios.
  */
 
-import type { 
+import type {
   WordDataDependencies,
   GameStateDependencies,
   GameStateDictionaryDependencies,
@@ -17,11 +17,15 @@ import type {
   ScoringOptions,
   BotResult,
   BotOptions,
-  BotDependencies
+  BotDependencies,
 } from '../../packages/engine/interfaces';
 
 import { isValidDictionaryWordWithDependencies } from '../../packages/engine/dictionary';
-import { calculateScore, getScoreForMove, isValidMove } from '../../packages/engine/scoring';
+import {
+  calculateScore,
+  getScoreForMove,
+  isValidMove,
+} from '../../packages/engine/scoring';
 import { generateBotMoveWithDependencies } from '../../packages/engine/bot';
 import fs from 'fs';
 import path from 'path';
@@ -47,7 +51,11 @@ class TestWordData implements WordDataDependencies {
 
   public hasWord(word: string): boolean {
     const upperWord = word.toUpperCase();
-    return this.enableWords.has(upperWord) || this.slangWords.has(upperWord) || this.properNounWords.has(upperWord);
+    return (
+      this.enableWords.has(upperWord) ||
+      this.slangWords.has(upperWord) ||
+      this.properNounWords.has(upperWord)
+    );
   }
 
   public getRandomWordByLength(length: number): string | null {
@@ -55,7 +63,9 @@ class TestWordData implements WordDataDependencies {
     if (!words || words.length === 0) {
       return null;
     }
-    const nonProfaneWords = words.filter(word => !this.profanityWords.has(word));
+    const nonProfaneWords = words.filter(
+      (word) => !this.profanityWords.has(word)
+    );
     const pool = nonProfaneWords.length > 0 ? nonProfaneWords : words;
     const randomIndex = Math.floor(Math.random() * pool.length);
     return pool[randomIndex];
@@ -69,23 +79,96 @@ class TestWordData implements WordDataDependencies {
     // Predictable test words for deterministic testing
     const testWords = [
       // 3-letter words
-      'CAT', 'DOG', 'BAT', 'RAT', 'HAT', 'MAT', 'SAT', 'FAT',
-      'COW', 'HOW', 'NOW', 'WOW', 'BOW', 'ROW', 'TOW', 'LOW',
-      
+      'CAT',
+      'DOG',
+      'BAT',
+      'RAT',
+      'HAT',
+      'MAT',
+      'SAT',
+      'FAT',
+      'COW',
+      'HOW',
+      'NOW',
+      'WOW',
+      'BOW',
+      'ROW',
+      'TOW',
+      'LOW',
+
       // 4-letter words
-      'CATS', 'DOGS', 'BATS', 'RATS', 'HATS', 'MATS', 'FAST', 'LAST',
-      'GAME', 'NAME', 'SAME', 'CAME', 'FAME', 'TAME', 'LAME', 'DAME',
-      'PLAY', 'CLAY', 'STAY', 'SLAY', 'GRAY', 'PRAY', 'FRAY', 'TRAY',
-      'TEST', 'BEST', 'REST', 'NEST', 'WEST', 'PEST', 'VEST', 'GUEST',
-      'WORD', 'CORD', 'LORD', 'FORD', 'WARD', 'HARD', 'CARD', 'YARD',
-      'HELLO', 'WORLD', 'HOUSE', 'MOUSE', 'HORSE', 'NURSE', 'PURSE', 'CURSE',
-      
-      // 5-letter words  
-      'GAMES', 'NAMES', 'TESTS', 'WORDS', 'PLAYS', 'HELLO', 'WORLD',
-      'HOUSE', 'MOUSE', 'HORSE', 'HEART', 'START', 'SMART', 'CHART', 
-      
+      'CATS',
+      'DOGS',
+      'BATS',
+      'RATS',
+      'HATS',
+      'MATS',
+      'FAST',
+      'LAST',
+      'GAME',
+      'NAME',
+      'SAME',
+      'CAME',
+      'FAME',
+      'TAME',
+      'LAME',
+      'DAME',
+      'PLAY',
+      'CLAY',
+      'STAY',
+      'SLAY',
+      'GRAY',
+      'PRAY',
+      'FRAY',
+      'TRAY',
+      'TEST',
+      'BEST',
+      'REST',
+      'NEST',
+      'WEST',
+      'PEST',
+      'VEST',
+      'GUEST',
+      'WORD',
+      'CORD',
+      'LORD',
+      'FORD',
+      'WARD',
+      'HARD',
+      'CARD',
+      'YARD',
+      'HELLO',
+      'WORLD',
+      'HOUSE',
+      'MOUSE',
+      'HORSE',
+      'NURSE',
+      'PURSE',
+      'CURSE',
+
+      // 5-letter words
+      'GAMES',
+      'NAMES',
+      'TESTS',
+      'WORDS',
+      'PLAYS',
+      'HELLO',
+      'WORLD',
+      'HOUSE',
+      'MOUSE',
+      'HORSE',
+      'HEART',
+      'START',
+      'SMART',
+      'CHART',
+
       // 6+ letter words
-      'TESTING', 'PLAYING', 'WORKING', 'TALKING', 'WALKING', 'RUNNING'
+      'TESTING',
+      'PLAYING',
+      'WORKING',
+      'TALKING',
+      'WALKING',
+      'RUNNING',
     ];
 
     this.enableWords = new Set(testWords);
@@ -103,41 +186,83 @@ class TestWordData implements WordDataDependencies {
 
     // Initialize test slang words
     this.slangWords = new Set([
-      'BRUH', 'YEAH', 'NOPE', 'YEET', 'FOMO', 'SELFIE', 'EMOJI', 'BLOG', 'SUS'
+      'BRUH',
+      'YEAH',
+      'NOPE',
+      'YEET',
+      'FOMO',
+      'SELFIE',
+      'EMOJI',
+      'BLOG',
+      'SUS',
     ]);
 
     // Initialize test common proper nouns (months, days, common names)
     this.properNounWords = new Set([
-      'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY',
-      'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER',
-      'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
-      'TYRALE'
+      'JANUARY',
+      'FEBRUARY',
+      'MARCH',
+      'APRIL',
+      'MAY',
+      'JUNE',
+      'JULY',
+      'AUGUST',
+      'SEPTEMBER',
+      'OCTOBER',
+      'NOVEMBER',
+      'DECEMBER',
+      'MONDAY',
+      'TUESDAY',
+      'WEDNESDAY',
+      'THURSDAY',
+      'FRIDAY',
+      'SATURDAY',
+      'SUNDAY',
+      'TYRALE',
     ]);
 
     // Load profanity words from shared data file for testing
     try {
       // In test environment, load from file system
-      const profanityPath = path.join(process.cwd(), 'public/data/profanity-words.json');
+      const profanityPath = path.join(
+        process.cwd(),
+        'public/data/profanity-words.json'
+      );
       const profanityData = JSON.parse(fs.readFileSync(profanityPath, 'utf-8'));
       this.profanityWords = new Set(profanityData.words || []);
     } catch {
-      console.warn('Test adapter: Failed to load profanity words, using test set');
+      console.warn(
+        'Test adapter: Failed to load profanity words, using test set'
+      );
       // Basic test profanity words for testing vanity filter functionality
       this.profanityWords = new Set([
-        'DAMN', 'HELL', 'CRAP', 'PISS', 'SHIT', 'FUCK', 'BITCH', 'ASSHOLE'
+        'DAMN',
+        'HELL',
+        'CRAP',
+        'PISS',
+        'SHIT',
+        'FUCK',
+        'BITCH',
+        'ASSHOLE',
       ]);
     }
 
     // Load Seuss words from shared data files for testing
     try {
-      const canonicalPath = path.join(process.cwd(), 'public/data/seuss-words-canonical.json');
+      const canonicalPath = path.join(
+        process.cwd(),
+        'public/data/seuss-words-canonical.json'
+      );
       const canonicalData = JSON.parse(fs.readFileSync(canonicalPath, 'utf-8'));
       this.seussCanonicalWords = new Set(canonicalData.words || []);
     } catch {
       this.seussCanonicalWords = new Set(['GRINCH', 'LORAX', 'WOCKET', 'NERD']);
     }
     try {
-      const inventedPath = path.join(process.cwd(), 'public/data/seuss-words-invented.json');
+      const inventedPath = path.join(
+        process.cwd(),
+        'public/data/seuss-words-invented.json'
+      );
       const inventedData = JSON.parse(fs.readFileSync(inventedPath, 'utf-8'));
       this.seussInventedWords = new Set(inventedData.words || []);
     } catch {
@@ -152,13 +277,13 @@ class TestWordData implements WordDataDependencies {
     const upperWord = word.toUpperCase();
     this.enableWords.add(upperWord);
     this.wordCount = this.enableWords.size;
-    
+
     const length = upperWord.length;
     if (!this.wordsByLength.has(length)) {
       this.wordsByLength.set(length, []);
     }
     if (!this.wordsByLength.get(length)!.includes(upperWord)) {
-    this.wordsByLength.get(length)!.push(upperWord);
+      this.wordsByLength.get(length)!.push(upperWord);
     }
   }
 
@@ -166,7 +291,7 @@ class TestWordData implements WordDataDependencies {
     const upperWord = word.toUpperCase();
     this.enableWords.delete(upperWord);
     this.wordCount = this.enableWords.size;
-    
+
     const length = upperWord.length;
     const wordsOfLength = this.wordsByLength.get(length);
     if (wordsOfLength) {
@@ -194,7 +319,10 @@ class TestWordData implements WordDataDependencies {
   public switchToComprehensiveProfanity(): void {
     // Reload from shared data file
     try {
-      const profanityPath = path.join(process.cwd(), 'public/data/profanity-words.json');
+      const profanityPath = path.join(
+        process.cwd(),
+        'public/data/profanity-words.json'
+      );
       const profanityData = JSON.parse(fs.readFileSync(profanityPath, 'utf-8'));
       this.profanityWords = new Set(profanityData.words || []);
     } catch {
@@ -205,10 +333,15 @@ class TestWordData implements WordDataDependencies {
   public switchToBasicProfanity(): void {
     // Load basic subset from shared data file
     try {
-      const profanityPath = path.join(process.cwd(), 'public/data/profanity-words.json');
+      const profanityPath = path.join(
+        process.cwd(),
+        'public/data/profanity-words.json'
+      );
       const profanityData = JSON.parse(fs.readFileSync(profanityPath, 'utf-8'));
       // Filter to 3-5 letter words for basic mode
-      const basicWords = (profanityData.words || []).filter((word: string) => word.length >= 3 && word.length <= 5);
+      const basicWords = (profanityData.words || []).filter(
+        (word: string) => word.length >= 3 && word.length <= 5
+      );
       this.profanityWords = new Set(basicWords);
     } catch {
       this.profanityWords = new Set();
@@ -239,11 +372,17 @@ const testDictionaryDependencies: GameStateDictionaryDependencies = {
     if (testWordData.hasWord(normalizedWord)) {
       return { isValid: true, word: normalizedWord };
     }
-    return { isValid: false, reason: 'NOT_IN_DICTIONARY', word: normalizedWord };
+    return {
+      isValid: false,
+      reason: 'NOT_IN_DICTIONARY',
+      word: normalizedWord,
+    };
   },
 
   getRandomWordByLength: (length: number): string | null => {
-    const words = Array.from(testWordData.enableWords).filter(w => w.length === length);
+    const words = Array.from(testWordData.enableWords).filter(
+      (w) => w.length === length
+    );
     if (words.length > 0) {
       return words[Math.floor(Math.random() * words.length)];
     }
@@ -253,13 +392,13 @@ const testDictionaryDependencies: GameStateDictionaryDependencies = {
   getRandomSeussCanonicalWord: (length?: number): string | null => {
     let words = Array.from(testWordData.seussCanonicalWords);
     if (length !== undefined) {
-      words = words.filter(w => w.length === length);
+      words = words.filter((w) => w.length === length);
     }
     if (words.length > 0) {
       return words[Math.floor(Math.random() * words.length)];
     }
     return null;
-  }
+  },
 };
 
 /**
@@ -267,24 +406,35 @@ const testDictionaryDependencies: GameStateDictionaryDependencies = {
  * Uses direct imports from scoring module since it's platform-agnostic
  */
 const testScoringDependencies: GameStateScoringDependencies = {
-  calculateScore: (fromWord: string, toWord: string, options?: ScoringOptions): ScoringResult => {
+  calculateScore: (
+    fromWord: string,
+    toWord: string,
+    options?: ScoringOptions
+  ): ScoringResult => {
     return calculateScore(fromWord, toWord, options);
   },
 
-  getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]): number => {
+  getScoreForMove: (
+    fromWord: string,
+    toWord: string,
+    keyLetters?: string[]
+  ): number => {
     return getScoreForMove(fromWord, toWord, keyLetters);
   },
 
   isValidMove: (fromWord: string, toWord: string): boolean => {
     return isValidMove(fromWord, toWord);
-  }
+  },
 };
 
 /**
  * Test bot dependencies implementation
  */
 const testBotDependencies: GameStateBotDependencies = {
-  generateBotMove: async (word: string, options?: BotOptions): Promise<BotResult> => {
+  generateBotMove: async (
+    word: string,
+    options?: BotOptions
+  ): Promise<BotResult> => {
     // Create complete BotDependencies with all required interfaces
     const botDeps: BotDependencies = {
       // DictionaryDependencies
@@ -296,20 +446,28 @@ const testBotDependencies: GameStateBotDependencies = {
       getWordCount: (): number => {
         return testWordData.wordCount;
       },
-      
-      // UtilityDependencies  
+
+      // UtilityDependencies
       getTimestamp: (): number => Date.now(),
       random: (): number => Math.random(),
       log: (message: string): void => console.log(`[TestBot] ${message}`),
-      
+
       // ScoringDependencies
-      getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]): number => {
+      getScoreForMove: (
+        fromWord: string,
+        toWord: string,
+        keyLetters?: string[]
+      ): number => {
         return getScoreForMove(fromWord, toWord, keyLetters || []);
       },
-      calculateScore: (fromWord: string, toWord: string, options?: ScoringOptions): ScoringResult => {
+      calculateScore: (
+        fromWord: string,
+        toWord: string,
+        options?: ScoringOptions
+      ): ScoringResult => {
         return calculateScore(fromWord, toWord, options);
       },
-      
+
       // Bot-specific profanity checking
       isProfanity: (word: string): boolean => {
         return testWordData.profanityWords.has(word.toUpperCase());
@@ -318,16 +476,19 @@ const testBotDependencies: GameStateBotDependencies = {
       // Bot-specific Seuss dictionary checking (used by grinch-bot strategy)
       isSeussWord: (word: string): boolean => {
         const w = word.toUpperCase();
-        return testWordData.seussCanonicalWords.has(w) || testWordData.seussInventedWords.has(w);
+        return (
+          testWordData.seussCanonicalWords.has(w) ||
+          testWordData.seussInventedWords.has(w)
+        );
       },
 
       isSeussCanonicalWord: (word: string): boolean => {
         return testWordData.seussCanonicalWords.has(word.toUpperCase());
-      }
+      },
     };
 
     return generateBotMoveWithDependencies(word, botDeps, options);
-  }
+  },
 };
 
 /**
@@ -336,7 +497,7 @@ const testBotDependencies: GameStateBotDependencies = {
 const testGameDependencies: GameStateDependencies = {
   ...testDictionaryDependencies,
   ...testScoringDependencies,
-  ...testBotDependencies
+  ...testBotDependencies,
 };
 
 // =============================================================================
@@ -414,7 +575,7 @@ export class TestAdapter {
   getDictionaryStatus(): { loaded: boolean; wordCount: number } {
     return {
       loaded: this.wordData.isLoaded(),
-      wordCount: this.wordData.enableWords.size
+      wordCount: this.wordData.enableWords.size,
     };
   }
 
@@ -491,24 +652,33 @@ export function getTestGameDependencies(): GameStateDependencies {
 /**
  * Quick validation using test dependencies
  */
-export function validateWordTest(word: string, _options?: ValidationOptions): ValidationResult {
+export function validateWordTest(
+  word: string,
+  _options?: ValidationOptions
+): ValidationResult {
   return testDictionaryDependencies.validateWord(word);
 }
 
 /**
  * Quick scoring using test dependencies
  */
-export function scoreMoveTest(fromWord: string, toWord: string, keyLetters?: string[]): number {
+export function scoreMoveTest(
+  fromWord: string,
+  toWord: string,
+  keyLetters?: string[]
+): number {
   return testScoringDependencies.getScoreForMove(fromWord, toWord, keyLetters);
 }
 
 /**
  * Create a test game dependencies with custom word list
  */
-export function createCustomTestDependencies(words: string[]): GameStateDependencies {
+export function createCustomTestDependencies(
+  words: string[]
+): GameStateDependencies {
   const customWordData = new TestWordData();
   customWordData.clearWords(); // Clear default words
-  
+
   // Add custom words
   for (const word of words) {
     customWordData.addWord(word);
@@ -523,58 +693,76 @@ export function createCustomTestDependencies(words: string[]): GameStateDependen
       if (customWordData.hasWord(normalizedWord)) {
         return { isValid: true, word: normalizedWord };
       }
-      return { isValid: false, reason: 'NOT_IN_DICTIONARY', word: normalizedWord };
+      return {
+        isValid: false,
+        reason: 'NOT_IN_DICTIONARY',
+        word: normalizedWord,
+      };
     },
 
     getRandomWordByLength: (length: number): string | null => {
-      const words = Array.from(customWordData.enableWords).filter(w => w.length === length);
+      const words = Array.from(customWordData.enableWords).filter(
+        (w) => w.length === length
+      );
       if (words.length > 0) {
         return words[Math.floor(Math.random() * words.length)];
       }
       return null;
-    }
+    },
   };
 
   const customBotDependencies: GameStateBotDependencies = {
-    generateBotMove: async (word: string, options?: BotOptions): Promise<BotResult> => {
+    generateBotMove: async (
+      word: string,
+      options?: BotOptions
+    ): Promise<BotResult> => {
       const botDeps: BotDependencies = {
         // DictionaryDependencies
         validateWord: customDictionaryDependencies.validateWord,
         isValidDictionaryWord: (word: string): boolean => {
           return isValidDictionaryWordWithDependencies(word, customWordData);
         },
-        getRandomWordByLength: customDictionaryDependencies.getRandomWordByLength,
+        getRandomWordByLength:
+          customDictionaryDependencies.getRandomWordByLength,
         getWordCount: (): number => {
           return customWordData.wordCount;
         },
-        
-        // UtilityDependencies  
+
+        // UtilityDependencies
         getTimestamp: (): number => Date.now(),
         random: (): number => Math.random(),
         log: (message: string): void => console.log(`[CustomBot] ${message}`),
-        
+
         // ScoringDependencies
-        getScoreForMove: (fromWord: string, toWord: string, keyLetters?: string[]): number => {
+        getScoreForMove: (
+          fromWord: string,
+          toWord: string,
+          keyLetters?: string[]
+        ): number => {
           return getScoreForMove(fromWord, toWord, keyLetters || []);
         },
-        calculateScore: (fromWord: string, toWord: string, options?: ScoringOptions): ScoringResult => {
+        calculateScore: (
+          fromWord: string,
+          toWord: string,
+          options?: ScoringOptions
+        ): ScoringResult => {
           return calculateScore(fromWord, toWord, options);
         },
-        
+
         // Bot-specific profanity checking
         isProfanity: (word: string): boolean => {
           return customWordData.profanityWords.has(word.toUpperCase());
-        }
+        },
       };
-      
+
       return generateBotMoveWithDependencies(word, botDeps, options);
-    }
+    },
   };
 
   return {
     ...customDictionaryDependencies,
     ...testScoringDependencies,
-    ...customBotDependencies
+    ...customBotDependencies,
   };
 }
 
@@ -587,7 +775,7 @@ export {
   testDictionaryDependencies,
   testScoringDependencies,
   testBotDependencies,
-  TestWordData
+  TestWordData,
 };
 
-export default TestAdapter; 
+export default TestAdapter;

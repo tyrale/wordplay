@@ -17,11 +17,14 @@ export interface TheGameOverlayProps {
 
 const PARAGRAPHS: string[] = [
   'reword is a word game about finding as many words as you can hiding inside one long word.',
-  'I built it because I wanted a quick, replayable word game I could play in a couple of minutes, and because I love watching people discover words they didn\'t know they knew.',
-  'It\'s a side project made in my spare time. Thanks for playing.'
+  "I built it because I wanted a quick, replayable word game I could play in a couple of minutes, and because I love watching people discover words they didn't know they knew.",
+  "It's a side project made in my spare time. Thanks for playing.",
 ];
 
-export const TheGameOverlay: React.FC<TheGameOverlayProps> = ({ isVisible, onClose }) => {
+export const TheGameOverlay: React.FC<TheGameOverlayProps> = ({
+  isVisible,
+  onClose,
+}) => {
   if (!isVisible) return null;
 
   return (

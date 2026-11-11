@@ -15,29 +15,36 @@ export interface CurrentWordProps {
   isEditing?: boolean;
 }
 
-export const CurrentWord: React.FC<CurrentWordProps> = ({ 
-  word, 
-  highlights = [], 
+export const CurrentWord: React.FC<CurrentWordProps> = ({
+  word,
+  highlights = [],
   className = '',
-  isEditing = false
+  isEditing = false,
 }) => {
   const { getDisplayWord } = useVanityFilter();
-  
+
   // Apply vanity filtering - show uncensored word when editing for user clarity
   const displayWord = getDisplayWord(word, { isEditing });
   const letters = displayWord.toUpperCase().split('');
-  
+
   // Create a map for quick lookup of highlights
-  const highlightMap = highlights.reduce((acc, { index, type }) => {
-    acc[index] = type;
-    return acc;
-  }, {} as Record<number, 'key' | 'locked' | 'lockedKey'>);
+  const highlightMap = highlights.reduce(
+    (acc, { index, type }) => {
+      acc[index] = type;
+      return acc;
+    },
+    {} as Record<number, 'key' | 'locked' | 'lockedKey'>
+  );
 
   return (
-    <div className={`current-word ${className}`.trim()} role="status" aria-label={`Current word: ${displayWord}`}>
+    <div
+      className={`current-word ${className}`.trim()}
+      role="status"
+      aria-label={`Current word: ${displayWord}`}
+    >
       {letters.map((letter, index) => {
         const highlightType = highlightMap[index];
-        
+
         return (
           <span
             key={index}
@@ -45,20 +52,18 @@ export const CurrentWord: React.FC<CurrentWordProps> = ({
               highlightType ? `current-word__letter--${highlightType}` : ''
             }`.trim()}
             aria-label={
-              highlightType 
-                ? `${letter} ${highlightType} letter` 
-                : letter
+              highlightType ? `${letter} ${highlightType} letter` : letter
             }
           >
             {letter}
-                    {(highlightType === 'locked' || highlightType === 'lockedKey') && (
-          <span className="current-word__lock" aria-hidden="true">
-            <LockIcon size={10} />
-          </span>
-        )}
+            {(highlightType === 'locked' || highlightType === 'lockedKey') && (
+              <span className="current-word__lock" aria-hidden="true">
+                <LockIcon size={10} />
+              </span>
+            )}
           </span>
         );
       })}
     </div>
   );
-}; 
+};

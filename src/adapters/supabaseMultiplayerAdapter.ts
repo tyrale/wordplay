@@ -11,7 +11,7 @@ import type {
   RemoteGameSnapshot,
   RemoteGameTurnRecord,
   RemoteGameUpdatedFields,
-  RemoteGamePlayerInfo
+  RemoteGamePlayerInfo,
 } from '../../packages/engine/interfaces';
 import { supabase } from '../lib/supabase';
 import { ensureAnonymousSession, getDisplayName } from './supabaseAuthAdapter';
@@ -22,7 +22,10 @@ const INVITE_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I t
 function generateInviteCode(length = 6): string {
   let code = '';
   for (let i = 0; i < length; i++) {
-    code += INVITE_CODE_ALPHABET[Math.floor(Math.random() * INVITE_CODE_ALPHABET.length)];
+    code +=
+      INVITE_CODE_ALPHABET[
+        Math.floor(Math.random() * INVITE_CODE_ALPHABET.length)
+      ];
   }
   return code;
 }
@@ -41,7 +44,10 @@ async function pickRandomStartingWord(length: number): Promise<string> {
     const dependencies = browserAdapter.getGameDependencies();
     return dependencies.getRandomWordByLength(length) || 'WORD';
   } catch (error) {
-    console.warn('Failed to pick random starting word, falling back to WORD:', error);
+    console.warn(
+      'Failed to pick random starting word, falling back to WORD:',
+      error
+    );
     return 'WORD';
   }
 }
@@ -54,7 +60,9 @@ async function pickRandomStartingWord(length: number): Promise<string> {
 function pickRandomKeyLetter(startingWord: string): string {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const wordLetters = new Set(startingWord.toUpperCase().split(''));
-  const available = alphabet.split('').filter(letter => !wordLetters.has(letter));
+  const available = alphabet
+    .split('')
+    .filter((letter) => !wordLetters.has(letter));
   const pool = available.length > 0 ? available : alphabet.split('');
   return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -84,7 +92,9 @@ async function fetchGameRow(gameId: string): Promise<GameRow> {
     .single();
 
   if (error || !data) {
-    throw new Error(`Failed to fetch game ${gameId}: ${error?.message ?? 'not found'}`);
+    throw new Error(
+      `Failed to fetch game ${gameId}: ${error?.message ?? 'not found'}`
+    );
   }
 
   return data as GameRow;
@@ -98,7 +108,9 @@ async function fetchPlayers(gameId: string): Promise<RemoteGamePlayerInfo[]> {
     .order('player_index', { ascending: true });
 
   if (error || !data) {
-    throw new Error(`Failed to fetch players for game ${gameId}: ${error?.message ?? 'unknown error'}`);
+    throw new Error(
+      `Failed to fetch players for game ${gameId}: ${error?.message ?? 'unknown error'}`
+    );
   }
 
   return data.map((row) => {
@@ -107,7 +119,7 @@ async function fetchPlayers(gameId: string): Promise<RemoteGamePlayerInfo[]> {
       id: row.user_id,
       name: userInfo?.display_name || userInfo?.username || 'Player',
       playerIndex: row.player_index,
-      score: row.score
+      score: row.score,
     };
   });
 }
@@ -115,26 +127,32 @@ async function fetchPlayers(gameId: string): Promise<RemoteGamePlayerInfo[]> {
 async function fetchTurns(gameId: string): Promise<RemoteGameTurnRecord[]> {
   const { data, error } = await supabase
     .from('turns')
-    .select('turn_number, player_id, previous_word, new_word, score_earned, key_letter_used, created_at')
+    .select(
+      'turn_number, player_id, previous_word, new_word, score_earned, key_letter_used, created_at'
+    )
     .eq('game_id', gameId)
     .order('turn_number', { ascending: true });
 
   if (error || !data) {
-    throw new Error(`Failed to fetch turns for game ${gameId}: ${error?.message ?? 'unknown error'}`);
+    throw new Error(
+      `Failed to fetch turns for game ${gameId}: ${error?.message ?? 'unknown error'}`
+    );
   }
 
-  return data.map(row => ({
+  return data.map((row) => ({
     turnNumber: row.turn_number,
     playerId: row.player_id,
     previousWord: row.previous_word,
     newWord: row.new_word,
     scoreEarned: row.score_earned,
     keyLetterUsed: row.key_letter_used,
-    timestamp: new Date(row.created_at).getTime()
+    timestamp: new Date(row.created_at).getTime(),
   }));
 }
 
-export function createSupabaseMultiplayerDependencies(localPlayerId: string): RemoteGameDependencies {
+export function createSupabaseMultiplayerDependencies(
+  localPlayerId: string
+): RemoteGameDependencies {
   return {
     getLocalPlayerId(): string {
       return localPlayerId;
@@ -144,7 +162,7 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
       const [row, players, turnHistory] = await Promise.all([
         fetchGameRow(gameId),
         fetchPlayers(gameId),
-        fetchTurns(gameId)
+        fetchTurns(gameId),
       ]);
 
       const snapshot: RemoteGameSnapshot = {
@@ -161,7 +179,7 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
         timePressureEnabled: row.time_pressure_enabled ?? false,
         players,
         turnHistory,
-        winnerId: row.winner_id
+        winnerId: row.winner_id,
       };
 
       return snapshot;
@@ -179,7 +197,7 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
         previous_word: turn.previousWord,
         new_word: turn.newWord,
         score_earned: turn.scoreEarned,
-        key_letter_used: turn.keyLetterUsed
+        key_letter_used: turn.keyLetterUsed,
       });
 
       if (turnError) {
@@ -198,7 +216,10 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
           current_player_index: updatedFields.currentPlayerIndex,
           status: updatedFields.status,
           winner_id: updatedFields.winnerId,
-          completed_at: updatedFields.status === 'completed' ? new Date().toISOString() : null
+          completed_at:
+            updatedFields.status === 'completed'
+              ? new Date().toISOString()
+              : null,
         })
         .eq('id', gameId);
 
@@ -207,11 +228,14 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
       }
 
       // Keep game_players.score in sync for the moving player.
-      const { error: scoreError } = await supabase.rpc('increment_player_score', {
-        p_game_id: gameId,
-        p_user_id: turn.playerId,
-        p_score_delta: turn.scoreEarned
-      });
+      const { error: scoreError } = await supabase.rpc(
+        'increment_player_score',
+        {
+          p_game_id: gameId,
+          p_user_id: turn.playerId,
+          p_score_delta: turn.scoreEarned,
+        }
+      );
       if (scoreError) {
         // Non-fatal: score display may lag, but turn history remains correct.
         console.warn('Failed to increment player score:', scoreError);
@@ -223,12 +247,22 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
         .channel(`game-${gameId}`)
         .on(
           'postgres_changes',
-          { event: '*', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
+          {
+            event: '*',
+            schema: 'public',
+            table: 'games',
+            filter: `id=eq.${gameId}`,
+          },
           () => onChange()
         )
         .on(
           'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'turns', filter: `game_id=eq.${gameId}` },
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'turns',
+            filter: `game_id=eq.${gameId}`,
+          },
           () => onChange()
         )
         // vsmany "waiting to start" games gain players one at a time via
@@ -237,7 +271,12 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
         // pick up newly-joined players until something else changed.
         .on(
           'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'game_players', filter: `game_id=eq.${gameId}` },
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'game_players',
+            filter: `game_id=eq.${gameId}`,
+          },
           () => onChange()
         )
         .subscribe();
@@ -247,7 +286,10 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
       };
     },
 
-    async abandonGame(gameId: string, resigningPlayerId: string): Promise<void> {
+    async abandonGame(
+      gameId: string,
+      resigningPlayerId: string
+    ): Promise<void> {
       // Award the win to whoever didn't resign, so the surviving player's
       // client (and any post-game stats) reflect a proper win rather than
       // a null/tied result.
@@ -255,17 +297,22 @@ export function createSupabaseMultiplayerDependencies(localPlayerId: string): Re
         .from('game_players')
         .select('user_id')
         .eq('game_id', gameId);
-      const winnerId = players?.find(p => p.user_id !== resigningPlayerId)?.user_id ?? null;
+      const winnerId =
+        players?.find((p) => p.user_id !== resigningPlayerId)?.user_id ?? null;
 
       const { error } = await supabase
         .from('games')
-        .update({ status: 'abandoned', winner_id: winnerId, completed_at: new Date().toISOString() })
+        .update({
+          status: 'abandoned',
+          winner_id: winnerId,
+          completed_at: new Date().toISOString(),
+        })
         .eq('id', gameId);
 
       if (error) {
         throw new Error(`Failed to abandon game: ${error.message}`);
       }
-    }
+    },
   };
 }
 
@@ -313,13 +360,15 @@ export async function createInviteGame(
       initial_word_length: wordLength,
       time_pressure_enabled: options.timePressureEnabled ?? false,
       current_word: startingWord,
-      key_letters: [pickRandomKeyLetter(startingWord)]
+      key_letters: [pickRandomKeyLetter(startingWord)],
     })
     .select('id')
     .single();
 
   if (gameError || !game) {
-    throw new Error(`Failed to create game: ${gameError?.message ?? 'unknown error'}`);
+    throw new Error(
+      `Failed to create game: ${gameError?.message ?? 'unknown error'}`
+    );
   }
 
   const { error: playerError } = await supabase
@@ -339,7 +388,9 @@ export async function createInviteGame(
  * called by a non-host or before 2 players have joined.
  */
 export async function startWaitingGame(gameId: string): Promise<void> {
-  const { error } = await supabase.rpc('start_waiting_game', { p_game_id: gameId });
+  const { error } = await supabase.rpc('start_waiting_game', {
+    p_game_id: gameId,
+  });
   if (error) {
     throw new Error(error.message || 'Failed to start game');
   }
@@ -353,7 +404,9 @@ export interface GameJoinInfo {
 
 /** Fetch the current join status of a game (used by vsmany waiting rooms to
  * show a live "X/Y joined" list before the host starts or it fills up). */
-export async function getGameJoinInfo(gameId: string): Promise<GameJoinInfo | null> {
+export async function getGameJoinInfo(
+  gameId: string
+): Promise<GameJoinInfo | null> {
   const { data: game, error: gameError } = await supabase
     .from('games')
     .select('status, max_players')
@@ -373,20 +426,25 @@ export async function getGameJoinInfo(gameId: string): Promise<GameJoinInfo | nu
   return {
     status: game.status,
     maxPlayers: game.max_players,
-    players: players.map(row => {
+    players: players.map((row) => {
       const userInfo = Array.isArray(row.users) ? row.users[0] : row.users;
-      return { id: row.user_id, name: userInfo?.display_name || userInfo?.username || 'Player' };
-    })
+      return {
+        id: row.user_id,
+        name: userInfo?.display_name || userInfo?.username || 'Player',
+      };
+    }),
   };
 }
 
 /** Join a waiting invite-created game by its shareable code. */
-export async function joinGameByInviteCode(inviteCode: string): Promise<string> {
+export async function joinGameByInviteCode(
+  inviteCode: string
+): Promise<string> {
   const userId = await ensureAnonymousSession();
   if (!userId) throw new Error('Unable to authenticate for multiplayer');
 
   const { data, error } = await supabase.rpc('join_game_by_invite_code', {
-    p_invite_code: inviteCode.trim().toUpperCase()
+    p_invite_code: inviteCode.trim().toUpperCase(),
   });
 
   if (error || !data) {
@@ -408,10 +466,12 @@ export async function getOpponentName(gameId: string): Promise<string | null> {
 
   if (error || !players) return null;
 
-  const opponent = players.find(p => p.user_id !== userId);
+  const opponent = players.find((p) => p.user_id !== userId);
   if (!opponent) return null;
 
-  const opponentInfo = Array.isArray(opponent.users) ? opponent.users[0] : opponent.users;
+  const opponentInfo = Array.isArray(opponent.users)
+    ? opponent.users[0]
+    : opponent.users;
   return opponentInfo?.display_name || opponentInfo?.username || null;
 }
 
@@ -445,7 +505,7 @@ export async function listMyActiveGames(): Promise<ActiveGameSummary[]> {
 
   if (myError || !myRows || myRows.length === 0) return [];
 
-  const gameIds = myRows.map(row => row.game_id);
+  const gameIds = myRows.map((row) => row.game_id);
 
   const { data: games, error: gamesError } = await supabase
     .from('games')
@@ -456,7 +516,7 @@ export async function listMyActiveGames(): Promise<ActiveGameSummary[]> {
 
   if (gamesError || !games || games.length === 0) return [];
 
-  const activeGameIds = games.map(game => game.id);
+  const activeGameIds = games.map((game) => game.id);
 
   const { data: players, error: playersError } = await supabase
     .from('game_players')
@@ -465,21 +525,24 @@ export async function listMyActiveGames(): Promise<ActiveGameSummary[]> {
 
   if (playersError || !players) return [];
 
-  return games.map(game => {
-    const gamePlayers = players.filter(p => p.game_id === game.id);
-    const me = gamePlayers.find(p => p.user_id === userId);
-    const opponents = gamePlayers.filter(p => p.user_id !== userId);
-    const opponentNames = opponents.map(opponent => {
-      const opponentInfo = Array.isArray(opponent.users) ? opponent.users[0] : opponent.users;
+  return games.map((game) => {
+    const gamePlayers = players.filter((p) => p.game_id === game.id);
+    const me = gamePlayers.find((p) => p.user_id === userId);
+    const opponents = gamePlayers.filter((p) => p.user_id !== userId);
+    const opponentNames = opponents.map((opponent) => {
+      const opponentInfo = Array.isArray(opponent.users)
+        ? opponent.users[0]
+        : opponent.users;
       return opponentInfo?.display_name || opponentInfo?.username || 'Player';
     });
 
     return {
       gameId: game.id,
-      opponentName: opponentNames.length > 0 ? opponentNames.join(', ') : 'Waiting',
+      opponentName:
+        opponentNames.length > 0 ? opponentNames.join(', ') : 'Waiting',
       opponentNames,
       isMyTurn: !!me && me.player_index === game.current_player_index,
-      status: game.status as 'waiting' | 'active'
+      status: game.status as 'waiting' | 'active',
     };
   });
 }
@@ -541,9 +604,15 @@ export async function findMatch(
 
   const displayName = getDisplayName();
 
-  const { error: queueError } = await supabase
-    .from('matchmaking_queue')
-    .upsert({ user_id: userId, display_name: displayName, mode, assigned_game_id: null }, { onConflict: 'user_id' });
+  const { error: queueError } = await supabase.from('matchmaking_queue').upsert(
+    {
+      user_id: userId,
+      display_name: displayName,
+      mode,
+      assigned_game_id: null,
+    },
+    { onConflict: 'user_id' }
+  );
 
   if (queueError) {
     throw new Error(`Failed to join matchmaking queue: ${queueError.message}`);
@@ -555,7 +624,7 @@ export async function findMatch(
     const attemptMatch = async () => {
       if (settled) return;
       const { data, error } = await supabase.rpc('try_match', {
-        p_time_pressure_enabled: timePressureEnabled
+        p_time_pressure_enabled: timePressureEnabled,
       });
       if (error) {
         console.warn('try_match() failed:', error);
@@ -569,7 +638,13 @@ export async function findMatch(
         // (see try_match() RPC) - give it a random starting word, same as
         // vs-bot games, instead of the DB's fixed default.
         const startingWord = await pickRandomStartingWord(4);
-        await supabase.from('games').update({ current_word: startingWord, key_letters: [pickRandomKeyLetter(startingWord)] }).eq('id', gameId);
+        await supabase
+          .from('games')
+          .update({
+            current_word: startingWord,
+            key_letters: [pickRandomKeyLetter(startingWord)],
+          })
+          .eq('id', gameId);
         onMatched(gameId);
       }
     };
@@ -581,9 +656,13 @@ export async function findMatch(
     // may have matched us, or we should re-attempt matching them).
     const channel = supabase
       .channel(`matchmaking-${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matchmaking_queue' }, () => {
-        attemptMatch();
-      })
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'matchmaking_queue' },
+        () => {
+          attemptMatch();
+        }
+      )
       .subscribe();
 
     const pollInterval = setInterval(attemptMatch, 4000);
@@ -598,7 +677,7 @@ export async function findMatch(
         settled = true;
         cleanup();
         await supabase.from('matchmaking_queue').delete().eq('user_id', userId);
-      }
+      },
     };
   }
 
@@ -625,7 +704,7 @@ export async function findMatch(
   const finalizeGroup = async () => {
     if (settled) return;
     const { data, error } = await supabase.rpc('finalize_vsmany_match', {
-      p_time_pressure_enabled: timePressureEnabled
+      p_time_pressure_enabled: timePressureEnabled,
     });
     if (error) {
       console.warn('finalize_vsmany_match() failed:', error);
@@ -634,7 +713,13 @@ export async function findMatch(
     if (data) {
       const gameId = data as string;
       const startingWord = await pickRandomStartingWord(4);
-      await supabase.from('games').update({ current_word: startingWord, key_letters: [pickRandomKeyLetter(startingWord)] }).eq('id', gameId);
+      await supabase
+        .from('games')
+        .update({
+          current_word: startingWord,
+          key_letters: [pickRandomKeyLetter(startingWord)],
+        })
+        .eq('id', gameId);
       await settle(gameId);
     }
   };
@@ -649,7 +734,12 @@ export async function findMatch(
     .channel(`matchmaking-${userId}`)
     .on(
       'postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'matchmaking_queue', filter: `user_id=eq.${userId}` },
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'matchmaking_queue',
+        filter: `user_id=eq.${userId}`,
+      },
       () => pollAssigned()
     )
     .subscribe();
@@ -668,6 +758,6 @@ export async function findMatch(
       settled = true;
       cleanup();
       await supabase.from('matchmaking_queue').delete().eq('user_id', userId);
-    }
+    },
   };
 }

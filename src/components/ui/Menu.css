@@ -1,5 +1,5 @@
 /* Bot names styling - force uppercase */
-.menu-tier2-list[id="menu-bots-submenu"] .menu-tier2-item {
+.menu-tier2-list[id='menu-bots-submenu'] .menu-tier2-item {
   text-transform: uppercase;
 }
 
@@ -85,24 +85,24 @@
   padding: var(--spacing-sm, 8px);
   cursor: pointer;
   pointer-events: all;
-  
+
   /* Typography - Same size as tier 1 items */
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
   font-size: 32px;
   color: var(--theme-text);
   line-height: 1;
-  
+
   /* Animation - slide in from right */
   transform: translateX(80px);
   opacity: 0;
   animation: slideInFromRight 0.3s ease-out 0.2s forwards;
-  
+
   /* Interaction */
   transition: opacity 0.2s ease;
   -webkit-tap-highlight-color: transparent;
   outline: none;
-  
+
   /* Touch target */
   min-height: 44px;
   min-width: 44px;
@@ -151,18 +151,18 @@
   cursor: pointer;
   text-align: right;
   width: auto;
-  
+
   /* Typography - Tier 1: 24px, base color */
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
   font-size: 24px;
   color: var(--theme-text);
-  
+
   /* Animation - slide in from right */
   transform: translateX(100px);
   opacity: 0;
   animation: slideInFromRight 0.4s ease-out forwards;
-  
+
   /* Interaction */
   transition: opacity 0.2s ease;
   -webkit-tap-highlight-color: transparent;
@@ -225,18 +225,18 @@
   cursor: pointer;
   text-align: right;
   width: auto;
-  
+
   /* Typography - Tier 2: 18px, accent color */
   font-family: var(--theme-font-family);
   font-weight: var(--theme-font-weight);
   font-size: 18px;
   color: var(--theme-accent);
-  
+
   /* Animation - slide in from right with delay */
   transform: translateX(60px);
   opacity: 0;
   animation: slideInFromRight 0.3s ease-out forwards;
-  
+
   /* Interaction */
   transition: opacity 0.2s ease;
   -webkit-tap-highlight-color: transparent;
@@ -299,8 +299,16 @@
 .menu-tier2-item--theme.menu-tier2-item--locked {
   color: var(--theme-text) !important;
   opacity: 1 !important;
-  border-color: color-mix(in srgb, var(--theme-accent) 40%, transparent) !important;
-  background-color: color-mix(in srgb, var(--theme-accent) 40%, transparent) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--theme-accent) 40%,
+    transparent
+  ) !important;
+  background-color: color-mix(
+    in srgb,
+    var(--theme-accent) 40%,
+    transparent
+  ) !important;
 }
 
 /* Dark mode toggle styling */
@@ -381,15 +389,15 @@
     padding: var(--spacing-sm, 8px);
     padding-bottom: var(--spacing-md, 20px);
   }
-  
+
   .menu-tier1-item {
     font-size: 22px;
   }
-  
+
   .menu-tier2-item {
     font-size: 16px; /* Responsive sizing */
   }
-  
+
   .menu-footer {
     bottom: var(--spacing-sm, 8px);
     right: var(--spacing-sm, 8px);
@@ -400,11 +408,11 @@
   .menu-tier1-item {
     font-size: 20px;
   }
-  
+
   .menu-tier2-item {
     font-size: 18px; /* Updated from 14px to 18px */
   }
-  
+
   .menu-close-button {
     font-size: 28px;
   }
@@ -415,7 +423,7 @@
   .menu-tier1-item {
     border-bottom: 1px solid var(--theme-text);
   }
-  
+
   .menu-tier2-item {
     border-bottom: 1px solid var(--theme-accent);
   }
@@ -432,4 +440,4 @@
     opacity: 1 !important;
     transition: none;
   }
-} 
+}

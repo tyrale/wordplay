@@ -42,7 +42,7 @@ export const NamePromptOverlay: React.FC<NamePromptOverlayProps> = ({
   title = 'Pick a name',
   subtitle = 'Opponents will see this',
   submitLabel = 'Continue',
-  onCancel
+  onCancel,
 }) => {
   const [name, setName] = useState(defaultName);
 
@@ -74,13 +74,20 @@ export const NamePromptOverlay: React.FC<NamePromptOverlayProps> = ({
             maxLength={10}
             autoFocus
           />
-          <button type="submit" className="tutorial-overlay__skip name-prompt-banner__submit">
+          <button
+            type="submit"
+            className="tutorial-overlay__skip name-prompt-banner__submit"
+          >
             {submitLabel}
           </button>
         </form>
 
         {onCancel && (
-          <button type="button" className="tutorial-overlay__skip" onClick={onCancel}>
+          <button
+            type="button"
+            className="tutorial-overlay__skip"
+            onClick={onCancel}
+          >
             Cancel
           </button>
         )}

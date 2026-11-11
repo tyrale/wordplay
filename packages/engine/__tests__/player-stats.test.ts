@@ -8,16 +8,27 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createPlayerStatsEngine } from '../player-stats';
 import { getInitialPlayerStats } from '../player-stats-definitions';
-import type { PlayerStatsDependencies, PlayerStatsEngine, PlayerStats, GameResultSummary, TurnHistory, ScoringResult } from '../interfaces';
+import type {
+  PlayerStatsDependencies,
+  PlayerStatsEngine,
+  PlayerStats,
+  GameResultSummary,
+  TurnHistory,
+  ScoringResult,
+} from '../interfaces';
 
-function createTestPlayerStatsDependencies(initial?: PlayerStats): PlayerStatsDependencies {
+function createTestPlayerStatsDependencies(
+  initial?: PlayerStats
+): PlayerStatsDependencies {
   let state: PlayerStats = initial ?? getInitialPlayerStats();
   const now = 1_700_000_000_000; // fixed base timestamp
 
   return {
     loadState: async () => state,
-    saveState: async (newState: PlayerStats) => { state = newState; },
-    getTimestamp: () => now
+    saveState: async (newState: PlayerStats) => {
+      state = newState;
+    },
+    getTimestamp: () => now,
   };
 }
 
@@ -25,11 +36,16 @@ function makeScoring(overrides: Partial<ScoringResult> = {}): ScoringResult {
   return {
     score: overrides.score ?? 1,
     totalScore: overrides.totalScore ?? 1,
-    breakdown: overrides.breakdown ?? { addLetterPoints: 1, removeLetterPoints: 0, movePoints: 0, keyLetterUsagePoints: 0 },
+    breakdown: overrides.breakdown ?? {
+      addLetterPoints: 1,
+      removeLetterPoints: 0,
+      movePoints: 0,
+      keyLetterUsagePoints: 0,
+    },
     actions: overrides.actions ?? [{ type: 'add', letters: ['S'], score: 1 }],
     keyLetterScore: overrides.keyLetterScore ?? 0,
     baseScore: overrides.baseScore ?? 1,
-    keyLettersUsed: overrides.keyLettersUsed ?? []
+    keyLettersUsed: overrides.keyLettersUsed ?? [],
   };
 }
 
@@ -41,26 +57,41 @@ function makeTurn(overrides: Partial<TurnHistory>): TurnHistory {
     newWord: overrides.newWord ?? 'CATS',
     score: overrides.score ?? 1,
     keyLettersUsed: overrides.keyLettersUsed ?? [],
-    scoringBreakdown: overrides.scoringBreakdown ?? makeScoring({ score: overrides.score ?? 1 }),
-    timestamp: overrides.timestamp ?? Date.now()
+    scoringBreakdown:
+      overrides.scoringBreakdown ??
+      makeScoring({ score: overrides.score ?? 1 }),
+    timestamp: overrides.timestamp ?? Date.now(),
   };
 }
 
-function makeGameResult(overrides: Partial<GameResultSummary> = {}): GameResultSummary {
+function makeGameResult(
+  overrides: Partial<GameResultSummary> = {}
+): GameResultSummary {
   return {
     playerId: 'human',
     botId: 'basicBot',
     won: true,
     tied: false,
     turnHistory: [
-      makeTurn({ turnNumber: 1, previousWord: 'CAT', newWord: 'CATS', score: 2 }),
-      makeTurn({ turnNumber: 2, playerId: 'basicBot', previousWord: 'CATS', newWord: 'SCAT', score: 1 })
+      makeTurn({
+        turnNumber: 1,
+        previousWord: 'CAT',
+        newWord: 'CATS',
+        score: 2,
+      }),
+      makeTurn({
+        turnNumber: 2,
+        playerId: 'basicBot',
+        previousWord: 'CATS',
+        newWord: 'SCAT',
+        score: 1,
+      }),
     ],
     totalTurns: 2,
     finalScore: 2,
     gameDurationMs: 10_000,
     timestamp: 1_700_000_000_000,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -85,8 +116,12 @@ describe('Player Stats Engine', () => {
 
   describe('Word Stats (recorded live via recordMove)', () => {
     it('counts words played and passes as each move happens', async () => {
-      await engine.recordMove(makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' }));
-      await engine.recordMove(makeTurn({ playerId: 'human', previousWord: 'CATS', newWord: 'CATS' })); // pass
+      await engine.recordMove(
+        makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' })
+      );
+      await engine.recordMove(
+        makeTurn({ playerId: 'human', previousWord: 'CATS', newWord: 'CATS' })
+      ); // pass
 
       const stats = engine.getStats();
       expect(stats.totalWordsPlayed).toBe(1);
@@ -94,13 +129,25 @@ describe('Player Stats Engine', () => {
     });
 
     it('does not double-count word stats when recordGameResult runs afterwards', async () => {
-      await engine.recordMove(makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' }));
-      await engine.recordGameResult(makeGameResult({
-        turnHistory: [
-          makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' }),
-          makeTurn({ playerId: 'basicBot', previousWord: 'CATS', newWord: 'SCAT' })
-        ]
-      }));
+      await engine.recordMove(
+        makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' })
+      );
+      await engine.recordGameResult(
+        makeGameResult({
+          turnHistory: [
+            makeTurn({
+              playerId: 'human',
+              previousWord: 'CAT',
+              newWord: 'CATS',
+            }),
+            makeTurn({
+              playerId: 'basicBot',
+              previousWord: 'CATS',
+              newWord: 'SCAT',
+            }),
+          ],
+        })
+      );
 
       const stats = engine.getStats();
       expect(stats.totalWordsPlayed).toBe(1);
@@ -108,9 +155,19 @@ describe('Player Stats Engine', () => {
     });
 
     it('tracks longest and shortest word played', async () => {
-      await engine.recordMove(makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CAT' }));
-      await engine.recordMove(makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' }));
-      await engine.recordMove(makeTurn({ playerId: 'human', previousWord: 'CATS', newWord: 'SCATTER' }));
+      await engine.recordMove(
+        makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CAT' })
+      );
+      await engine.recordMove(
+        makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' })
+      );
+      await engine.recordMove(
+        makeTurn({
+          playerId: 'human',
+          previousWord: 'CATS',
+          newWord: 'SCATTER',
+        })
+      );
 
       const stats = engine.getStats();
       expect(stats.longestWordPlayed).toBe('SCATTER');
@@ -120,18 +177,26 @@ describe('Player Stats Engine', () => {
     });
 
     it('accumulates letter usage counts from add actions', async () => {
-      await engine.recordMove(makeTurn({
-        playerId: 'human',
-        previousWord: 'CAT',
-        newWord: 'CATS',
-        scoringBreakdown: makeScoring({ actions: [{ type: 'add', letters: ['S'], score: 1 }] })
-      }));
-      await engine.recordMove(makeTurn({
-        playerId: 'human',
-        previousWord: 'CATS',
-        newWord: 'SCATS',
-        scoringBreakdown: makeScoring({ actions: [{ type: 'add', letters: ['S'], score: 1 }] })
-      }));
+      await engine.recordMove(
+        makeTurn({
+          playerId: 'human',
+          previousWord: 'CAT',
+          newWord: 'CATS',
+          scoringBreakdown: makeScoring({
+            actions: [{ type: 'add', letters: ['S'], score: 1 }],
+          }),
+        })
+      );
+      await engine.recordMove(
+        makeTurn({
+          playerId: 'human',
+          previousWord: 'CATS',
+          newWord: 'SCATS',
+          scoringBreakdown: makeScoring({
+            actions: [{ type: 'add', letters: ['S'], score: 1 }],
+          }),
+        })
+      );
 
       const stats = engine.getStats();
       expect(stats.letterUsageCounts.S).toBe(2);
@@ -139,13 +204,18 @@ describe('Player Stats Engine', () => {
     });
 
     it('tracks key letter usage and points', async () => {
-      await engine.recordMove(makeTurn({
-        playerId: 'human',
-        previousWord: 'CAT',
-        newWord: 'CATS',
-        keyLettersUsed: ['S'],
-        scoringBreakdown: makeScoring({ keyLetterScore: 3, keyLettersUsed: ['S'] })
-      }));
+      await engine.recordMove(
+        makeTurn({
+          playerId: 'human',
+          previousWord: 'CAT',
+          newWord: 'CATS',
+          keyLettersUsed: ['S'],
+          scoringBreakdown: makeScoring({
+            keyLetterScore: 3,
+            keyLettersUsed: ['S'],
+          }),
+        })
+      );
 
       const stats = engine.getStats();
       expect(stats.keyLetterUsageCounts.S).toBe(1);
@@ -165,7 +235,9 @@ describe('Player Stats Engine', () => {
 
     it('resets win streak on a loss and increments gamesLost', async () => {
       await engine.recordGameResult(makeGameResult({ won: true, tied: false }));
-      await engine.recordGameResult(makeGameResult({ won: false, tied: false }));
+      await engine.recordGameResult(
+        makeGameResult({ won: false, tied: false })
+      );
 
       const stats = engine.getStats();
       expect(stats.gamesLost).toBe(1);
@@ -182,33 +254,58 @@ describe('Player Stats Engine', () => {
     });
 
     it('tracks a perfect game (win with zero passes)', async () => {
-      await engine.recordGameResult(makeGameResult({
-        won: true,
-        turnHistory: [makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' })]
-      }));
+      await engine.recordGameResult(
+        makeGameResult({
+          won: true,
+          turnHistory: [
+            makeTurn({
+              playerId: 'human',
+              previousWord: 'CAT',
+              newWord: 'CATS',
+            }),
+          ],
+        })
+      );
 
       expect(engine.getStats().perfectGames).toBe(1);
     });
 
     it('does not count a perfect game if the player passed', async () => {
-      await engine.recordGameResult(makeGameResult({
-        won: true,
-        turnHistory: [
-          makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CAT' }), // pass
-          makeTurn({ playerId: 'human', previousWord: 'CAT', newWord: 'CATS' })
-        ]
-      }));
+      await engine.recordGameResult(
+        makeGameResult({
+          won: true,
+          turnHistory: [
+            makeTurn({
+              playerId: 'human',
+              previousWord: 'CAT',
+              newWord: 'CAT',
+            }), // pass
+            makeTurn({
+              playerId: 'human',
+              previousWord: 'CAT',
+              newWord: 'CATS',
+            }),
+          ],
+        })
+      );
 
       expect(engine.getStats().perfectGames).toBe(0);
     });
 
     it('tracks highest game score and highest single move score', async () => {
-      const turn = makeTurn({ playerId: 'human', score: 9, previousWord: 'CAT', newWord: 'SCATTER' });
+      const turn = makeTurn({
+        playerId: 'human',
+        score: 9,
+        previousWord: 'CAT',
+        newWord: 'SCATTER',
+      });
       await engine.recordMove(turn);
-      await engine.recordGameResult(makeGameResult({
-        finalScore: 15,
-        turnHistory: [turn]
-      }));
+      await engine.recordGameResult(
+        makeGameResult({
+          finalScore: 15,
+          turnHistory: [turn],
+        })
+      );
 
       const stats = engine.getStats();
       expect(stats.highestGameScore).toBe(15);
@@ -216,8 +313,12 @@ describe('Player Stats Engine', () => {
     });
 
     it('tracks total, longest, and fastest game durations', async () => {
-      await engine.recordGameResult(makeGameResult({ won: true, gameDurationMs: 5_000 }));
-      await engine.recordGameResult(makeGameResult({ won: true, gameDurationMs: 20_000 }));
+      await engine.recordGameResult(
+        makeGameResult({ won: true, gameDurationMs: 5_000 })
+      );
+      await engine.recordGameResult(
+        makeGameResult({ won: true, gameDurationMs: 20_000 })
+      );
 
       const stats = engine.getStats();
       expect(stats.totalPlayTimeMs).toBe(25_000);
@@ -228,19 +329,37 @@ describe('Player Stats Engine', () => {
 
   describe('Bot Records', () => {
     it('tracks per-bot wins, losses, and games played', async () => {
-      await engine.recordGameResult(makeGameResult({ botId: 'easy-bot', won: true }));
-      await engine.recordGameResult(makeGameResult({ botId: 'easy-bot', won: false }));
-      await engine.recordGameResult(makeGameResult({ botId: 'pirate-bot', won: true }));
+      await engine.recordGameResult(
+        makeGameResult({ botId: 'easy-bot', won: true })
+      );
+      await engine.recordGameResult(
+        makeGameResult({ botId: 'easy-bot', won: false })
+      );
+      await engine.recordGameResult(
+        makeGameResult({ botId: 'pirate-bot', won: true })
+      );
 
       const stats = engine.getStats();
-      expect(stats.botRecords['easy-bot']).toEqual({ wins: 1, losses: 1, gamesPlayed: 2 });
-      expect(stats.botRecords['pirate-bot']).toEqual({ wins: 1, losses: 0, gamesPlayed: 1 });
+      expect(stats.botRecords['easy-bot']).toEqual({
+        wins: 1,
+        losses: 1,
+        gamesPlayed: 2,
+      });
+      expect(stats.botRecords['pirate-bot']).toEqual({
+        wins: 1,
+        losses: 0,
+        gamesPlayed: 1,
+      });
       expect(stats.botsBeaten.sort()).toEqual(['easy-bot', 'pirate-bot']);
     });
 
     it('does not duplicate a bot in botsBeaten across multiple wins', async () => {
-      await engine.recordGameResult(makeGameResult({ botId: 'easy-bot', won: true }));
-      await engine.recordGameResult(makeGameResult({ botId: 'easy-bot', won: true }));
+      await engine.recordGameResult(
+        makeGameResult({ botId: 'easy-bot', won: true })
+      );
+      await engine.recordGameResult(
+        makeGameResult({ botId: 'easy-bot', won: true })
+      );
 
       expect(engine.getStats().botsBeaten).toEqual(['easy-bot']);
     });
@@ -248,8 +367,12 @@ describe('Player Stats Engine', () => {
 
   describe('Meta / Streaks', () => {
     it('sets firstPlayedAt on the first game and updates lastPlayedAt each time', async () => {
-      await engine.recordGameResult(makeGameResult({ timestamp: 1_700_000_000_000 }));
-      await engine.recordGameResult(makeGameResult({ timestamp: 1_700_000_100_000 }));
+      await engine.recordGameResult(
+        makeGameResult({ timestamp: 1_700_000_000_000 })
+      );
+      await engine.recordGameResult(
+        makeGameResult({ timestamp: 1_700_000_100_000 })
+      );
 
       const stats = engine.getStats();
       expect(stats.firstPlayedAt).toBe(1_700_000_000_000);
@@ -276,14 +399,22 @@ describe('Player Stats Engine', () => {
 
   describe('recordChallengeResult', () => {
     it('increments challengesPlayed/Completed on a successful challenge', async () => {
-      const stats = await engine.recordChallengeResult({ completed: true, stepCount: 4, timestamp: 1_700_000_000_000 });
+      const stats = await engine.recordChallengeResult({
+        completed: true,
+        stepCount: 4,
+        timestamp: 1_700_000_000_000,
+      });
       expect(stats.challengesPlayed).toBe(1);
       expect(stats.challengesCompleted).toBe(1);
       expect(stats.challengesFailed).toBe(0);
     });
 
     it('increments challengesPlayed/Failed on a forfeited/failed challenge', async () => {
-      const stats = await engine.recordChallengeResult({ completed: false, stepCount: 2, timestamp: 1_700_000_000_000 });
+      const stats = await engine.recordChallengeResult({
+        completed: false,
+        stepCount: 2,
+        timestamp: 1_700_000_000_000,
+      });
       expect(stats.challengesPlayed).toBe(1);
       expect(stats.challengesCompleted).toBe(0);
       expect(stats.challengesFailed).toBe(1);
@@ -291,7 +422,11 @@ describe('Player Stats Engine', () => {
 
     it('does not affect gamesPlayed/won/lost or the bot win streak', async () => {
       await engine.recordGameResult(makeGameResult({ won: true }));
-      await engine.recordChallengeResult({ completed: false, stepCount: 1, timestamp: 1_700_000_000_000 });
+      await engine.recordChallengeResult({
+        completed: false,
+        stepCount: 1,
+        timestamp: 1_700_000_000_000,
+      });
 
       const stats = engine.getStats();
       expect(stats.gamesPlayed).toBe(1);
@@ -304,26 +439,46 @@ describe('Player Stats Engine', () => {
       const day1 = new Date(2025, 0, 1, 10, 0, 0).getTime();
       const day2 = new Date(2025, 0, 2, 10, 0, 0).getTime();
 
-      await engine.recordChallengeResult({ completed: true, stepCount: 3, timestamp: day1 });
+      await engine.recordChallengeResult({
+        completed: true,
+        stepCount: 3,
+        timestamp: day1,
+      });
       expect(engine.getStats().currentDailyStreak).toBe(1);
 
-      await engine.recordChallengeResult({ completed: true, stepCount: 3, timestamp: day2 });
+      await engine.recordChallengeResult({
+        completed: true,
+        stepCount: 3,
+        timestamp: day2,
+      });
       expect(engine.getStats().currentDailyStreak).toBe(2);
     });
 
     it('tracks shortest/longest challenge steps across every challenge played', async () => {
-      await engine.recordChallengeResult({ completed: true, stepCount: 5, timestamp: 1_700_000_000_000 });
+      await engine.recordChallengeResult({
+        completed: true,
+        stepCount: 5,
+        timestamp: 1_700_000_000_000,
+      });
       let stats = engine.getStats();
       expect(stats.shortestChallengeSteps).toBe(5);
       expect(stats.longestChallengeSteps).toBe(5);
 
-      await engine.recordChallengeResult({ completed: true, stepCount: 3, timestamp: 1_700_000_000_001 });
+      await engine.recordChallengeResult({
+        completed: true,
+        stepCount: 3,
+        timestamp: 1_700_000_000_001,
+      });
       stats = engine.getStats();
       expect(stats.shortestChallengeSteps).toBe(3);
       expect(stats.longestChallengeSteps).toBe(5);
 
       // A failed challenge still counts toward step-count extremes.
-      await engine.recordChallengeResult({ completed: false, stepCount: 8, timestamp: 1_700_000_000_002 });
+      await engine.recordChallengeResult({
+        completed: false,
+        stepCount: 8,
+        timestamp: 1_700_000_000_002,
+      });
       stats = engine.getStats();
       expect(stats.shortestChallengeSteps).toBe(3);
       expect(stats.longestChallengeSteps).toBe(8);
@@ -331,39 +486,71 @@ describe('Player Stats Engine', () => {
 
     it('tracks fewestStepsToComplete only among completed challenges', async () => {
       // A failed challenge must not set fewestStepsToComplete.
-      await engine.recordChallengeResult({ completed: false, stepCount: 2, timestamp: 1_700_000_000_000 });
+      await engine.recordChallengeResult({
+        completed: false,
+        stepCount: 2,
+        timestamp: 1_700_000_000_000,
+      });
       expect(engine.getStats().fewestStepsToComplete).toBe(0);
 
-      await engine.recordChallengeResult({ completed: true, stepCount: 6, timestamp: 1_700_000_000_001 });
+      await engine.recordChallengeResult({
+        completed: true,
+        stepCount: 6,
+        timestamp: 1_700_000_000_001,
+      });
       expect(engine.getStats().fewestStepsToComplete).toBe(6);
 
-      await engine.recordChallengeResult({ completed: true, stepCount: 4, timestamp: 1_700_000_000_002 });
+      await engine.recordChallengeResult({
+        completed: true,
+        stepCount: 4,
+        timestamp: 1_700_000_000_002,
+      });
       expect(engine.getStats().fewestStepsToComplete).toBe(4);
 
       // A later longer completion must not overwrite the fewest.
-      await engine.recordChallengeResult({ completed: true, stepCount: 9, timestamp: 1_700_000_000_003 });
+      await engine.recordChallengeResult({
+        completed: true,
+        stepCount: 9,
+        timestamp: 1_700_000_000_003,
+      });
       expect(engine.getStats().fewestStepsToComplete).toBe(4);
     });
 
     it('increments the completion streak on wins and resets it on failures', async () => {
-      await engine.recordChallengeResult({ completed: true, stepCount: 3, timestamp: 1_700_000_000_000 });
+      await engine.recordChallengeResult({
+        completed: true,
+        stepCount: 3,
+        timestamp: 1_700_000_000_000,
+      });
       let stats = engine.getStats();
       expect(stats.currentChallengeStreak).toBe(1);
       expect(stats.longestChallengeStreak).toBe(1);
 
-      await engine.recordChallengeResult({ completed: true, stepCount: 3, timestamp: 1_700_000_000_001 });
+      await engine.recordChallengeResult({
+        completed: true,
+        stepCount: 3,
+        timestamp: 1_700_000_000_001,
+      });
       stats = engine.getStats();
       expect(stats.currentChallengeStreak).toBe(2);
       expect(stats.longestChallengeStreak).toBe(2);
 
       // A failure resets the current streak but preserves the longest.
-      await engine.recordChallengeResult({ completed: false, stepCount: 1, timestamp: 1_700_000_000_002 });
+      await engine.recordChallengeResult({
+        completed: false,
+        stepCount: 1,
+        timestamp: 1_700_000_000_002,
+      });
       stats = engine.getStats();
       expect(stats.currentChallengeStreak).toBe(0);
       expect(stats.longestChallengeStreak).toBe(2);
 
       // A new win starts a fresh streak.
-      await engine.recordChallengeResult({ completed: true, stepCount: 3, timestamp: 1_700_000_000_003 });
+      await engine.recordChallengeResult({
+        completed: true,
+        stepCount: 3,
+        timestamp: 1_700_000_000_003,
+      });
       stats = engine.getStats();
       expect(stats.currentChallengeStreak).toBe(1);
       expect(stats.longestChallengeStreak).toBe(2);

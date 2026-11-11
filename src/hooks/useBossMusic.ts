@@ -30,7 +30,8 @@ function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
   const AudioContextClass =
     window.AudioContext ??
-    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    (window as unknown as { webkitAudioContext?: typeof AudioContext })
+      .webkitAudioContext;
   if (!AudioContextClass) return null;
   if (!sharedAudioContext) sharedAudioContext = new AudioContextClass();
   return sharedAudioContext;
@@ -44,26 +45,26 @@ const MOTIF_NOTES: number[] = [
   // Bar 1: descending A minor arpeggio
   69, 64, 60, 57,
   // Bar 2: rising resolution back to the tonic
-  60, 64, 67, 69
+  60, 64, 67, 69,
 ];
 
 // Seconds per note at each stage (loop gets tighter as the bosses escalate).
 const NOTE_DURATIONS: Record<BossStage, number> = {
   boss: 0.28,
   mega: 0.24,
-  giga: 0.2
+  giga: 0.2,
 };
 
 const OCTAVE_VOICES: Record<BossStage, boolean> = {
   boss: false,
   mega: true,
-  giga: true
+  giga: true,
 };
 
 const WAVEFORMS: Record<BossStage, OscillatorType> = {
   boss: 'sawtooth',
   mega: 'sawtooth',
-  giga: 'square'
+  giga: 'square',
 };
 
 function midiToFreq(midi: number): number {
@@ -131,7 +132,11 @@ function startBossMusic(ctx: AudioContext, stage: BossStage): () => void {
     master.gain.setValueAtTime(master.gain.value, now);
     master.gain.linearRampToValueAtTime(0, now + 0.08);
     window.setTimeout(() => {
-      try { master.disconnect(); } catch { /* already gone */ }
+      try {
+        master.disconnect();
+      } catch {
+        /* already gone */
+      }
     }, 120);
   };
 }
@@ -187,7 +192,9 @@ export function useBossMusic({ enabled, stage }: UseBossMusicOptions): void {
     // alert), so resume lazily here. Always call resume() (not just when
     // suspended) - it's a no-op if already running and avoids edge cases where
     // the context is in the "interrupted" state on some browsers.
-    void ctx.resume().catch(() => { /* resume can reject if no gesture yet */ });
+    void ctx.resume().catch(() => {
+      /* resume can reject if no gesture yet */
+    });
 
     // (Re)start the motif for the current stage.
     if (stopRef.current) {

@@ -33,7 +33,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-md, 20px);
-  
+
   /* Centered layout with submit button as anchor */
   position: relative;
 }
@@ -148,4 +148,4 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-} 
+}

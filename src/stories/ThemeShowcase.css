@@ -33,7 +33,9 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .theme-showcase__card:hover {
@@ -115,15 +117,15 @@
   .theme-showcase {
     background: #0f172a;
   }
-  
+
   .theme-showcase__title {
     color: #f8fafc;
   }
-  
+
   .theme-showcase__subtitle {
     color: #94a3b8;
   }
-  
+
   .theme-showcase__card {
     background: #1e293b;
   }
@@ -134,21 +136,19 @@
   .theme-showcase {
     padding: 1rem;
   }
-  
+
   .theme-showcase__grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
-  
+
   .theme-showcase__title {
     font-size: 2rem;
   }
-  
+
   .theme-showcase__word .grid-cell {
     width: 40px;
     height: 40px;
     font-size: 1.25rem;
   }
 }
-
-
