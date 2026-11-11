@@ -30,10 +30,9 @@ This folder is organized by category so it's clear where to find (or add) inform
 
 ## 🚀 deployment/ — Where and how the app ships
 
-| File                                                        | Purpose                                                                       |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| [DEPLOYMENT.md](deployment/DEPLOYMENT.md)                   | Current deployment setup (Vercel) — the active target.                        |
-| [MIGRATION_TO_RENDER.md](deployment/MIGRATION_TO_RENDER.md) | Optional future migration guide (Vercel → Render), **not** the current setup. |
+| File                                      | Purpose                                         |
+| ----------------------------------------- | ----------------------------------------------- |
+| [DEPLOYMENT.md](deployment/DEPLOYMENT.md) | Production deployment on Vercel, the only host. |
 
 ## 📋 project/ — Status, history, and planning
 
