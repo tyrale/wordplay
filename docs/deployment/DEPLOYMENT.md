@@ -6,7 +6,7 @@
 
 **Verification**: Deployment instructions below are accurate and current for the existing Vercel setup.
 
-> **Known issue**: `npm run build` (`tsc -b && vite build`) currently **fails** at the `tsc -b` step due to the `ScoringResult.breakdown` shape inconsistency tracked in [PROJECT_STATUS_AUDIT.md](../project/PROJECT_STATUS_AUDIT.md) step 7a. If Vercel's build step also runs `tsc -b` (per `vercel.json`/`package.json`), new deployments will fail until that's fixed — verify before relying on the checklist below.
+> **Build status (2026-11-11)**: `npm run build` succeeds; the old `tsc -b` failure (audit step 7a) was fixed in July 2026. Production deploys from `master`.
 
 ## Vercel Deployment Setup
 
@@ -50,7 +50,7 @@ Later (when connecting to production Supabase):
 3. Get the live URL (e.g., `https://wordplay-xyz.vercel.app`)
 
 ### Step 6: Automatic Deployments
-- Every push to `main` branch will trigger automatic deployment
+- Every push to `master` branch will trigger automatic deployment
 - Preview deployments for other branches
 - Deployment status in GitHub PRs
 
@@ -58,7 +58,7 @@ Later (when connecting to production Supabase):
 - [x] Live URL accessible
 - [x] App loads without errors
 - [ ] Build completes successfully — currently **failing** locally via `npm run build`, see known issue above; re-check before trusting this line
-- [x] Automatic deployment from main branch working
+- [x] Automatic deployment from `master` branch working
 - [x] Single-player game functional
 - [x] Challenge mode functional
 - [x] Theme system working

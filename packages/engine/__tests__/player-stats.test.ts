@@ -12,7 +12,7 @@ import type { PlayerStatsDependencies, PlayerStatsEngine, PlayerStats, GameResul
 
 function createTestPlayerStatsDependencies(initial?: PlayerStats): PlayerStatsDependencies {
   let state: PlayerStats = initial ?? getInitialPlayerStats();
-  let now = 1_700_000_000_000; // fixed base timestamp
+  const now = 1_700_000_000_000; // fixed base timestamp
 
   return {
     loadState: async () => state,
