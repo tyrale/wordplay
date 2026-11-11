@@ -19,7 +19,10 @@ npm run play
 
 ## ✨ Features
 
-- **Single-Player Game**: Play against an intelligent bot opponent
+- **Single-Player Game**: Play against a roster of bot opponents (unlockable)
+- **Online Multiplayer**: vs-human and multi-player games via invite code or random match (Supabase), with host-configured time pressure and round length
+- **Daily Challenge, Zen Mode & Boss Battle**: Alternate modes with a shared daily leaderboard
+- **Unlocks & Player Stats**: Themes, mechanics, and bots unlocked through play, with community-wide unlock counts
 - **75 Themes**: Extensive theme system with dark mode support (53 unlockable via gameplay, rest available by default; see `docs/features/UNLOCKS.md`)
 - **Responsive Design**: Works perfectly on desktop, tablet, and mobile
 - **Accessibility**: WCAG AA compliant with full touch support
@@ -100,7 +103,7 @@ See **[docs/README.md](docs/README.md)** for the full documentation index, organ
 ## 🧪 Testing
 
 ### Test Status
-See [PROJECT_STATUS_AUDIT.md](docs/project/PROJECT_STATUS_AUDIT.md) for the current, maintained pass/fail count — it changes frequently. As of this writing, one test file (`scoring.test.ts`) has known failures due to a tracked interface mismatch (audit step 7a), which also currently blocks `npm run build`.
+See [PROJECT_STATUS_AUDIT.md](docs/project/PROJECT_STATUS_AUDIT.md) for the current, maintained pass/fail count — it changes frequently. As of 2026-11-11 the full suite passes (29 files / 441 tests). The Storybook tests run in a real browser, so run `npx playwright install chromium` once on a new machine.
 
 ```bash
 # Run all tests
@@ -121,10 +124,11 @@ npm test -- dictionary.test.ts
 
 ## 📊 Current Status
 
-### ⚠️ **Playable, but `npm run build` currently fails**
-- **Web Application**: Fully functional single-player game via `npm run dev` (Vite dev server doesn't type-check, so this is unaffected)
-- **Production Build**: `npm run build` (`tsc -b && vite build`) currently **fails** at the `tsc -b` step — see [PROJECT_STATUS_AUDIT.md](docs/project/PROJECT_STATUS_AUDIT.md) step 7a
-- **Game Engine**: Complete with substantial test coverage; one test file currently has known failures (same root cause as the build failure)
+### ✅ **Live and building cleanly** (verified 2026-11-11)
+- **Web Application**: Deployed on Vercel from `master`; runs locally via `npm run dev`
+- **Production Build**: `npm run build` (`tsc -b && vite build`) succeeds
+- **Game Engine**: Complete; full test suite passing
+- **Multiplayer**: Requires `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` in `.env.local` (see `.env.example`); without them the app fails quietly and single-player still works
 - **UI/UX**: Polished interface with mobile support
 - **Architecture**: Scalable foundation for future features
 
@@ -138,9 +142,9 @@ npm test -- dictionary.test.ts
 This section's phase numbering previously conflicted with [TASK_PROGRESS.md](docs/project/TASK_PROGRESS.md) (e.g. this file called multiplayer "Phase 3", while TASK_PROGRESS.md's Phase 3 is the already-completed Challenge Mode). Deferring to TASK_PROGRESS.md as the canonical phase list rather than maintaining a second, conflicting one here — see its [Phase Overview](docs/project/TASK_PROGRESS.md#-phase-overview-realistic-assessment) for current phase status.
 
 ### ⏳ **Next Steps**
-- **Online multiplayer**: Not yet started
+- **Code formatting**: one-time `npm run format` pass, then make the CI Prettier check blocking
 - **Enhanced accessibility and testing**: Ongoing
-- **Production launch preparation**: Blocked on resolving the `npm run build` failure above
+- **Remaining cleanup**: see open items in [PROJECT_STATUS_AUDIT.md](docs/project/PROJECT_STATUS_AUDIT.md)
 
 ## 🛠️ Technology Stack
 

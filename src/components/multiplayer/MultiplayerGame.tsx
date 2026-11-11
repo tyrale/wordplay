@@ -169,20 +169,6 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ gameId, onExit
 
   const state = manager.getState();
 
-  // If the host enabled time-pressure for this game, it applies to every
-  // player once the game is actually underway - but a player who hasn't
-  // unlocked it themselves gets a heads-up first (once), since they'd
-  // otherwise be surprised by a 7s turn timer they never opted into. This
-  // doesn't unlock the mechanic for them; they still need to trigger it
-  // themselves to get the permanent toggle.
-  useEffect(() => {
-    if (state.gameStatus !== 'playing' || !state.config.timePressureEnabled) return;
-    if (hasShownTimePressureAlertRef.current) return;
-    if (getUnlockedItems('mechanic').includes('time-pressure')) return;
-    hasShownTimePressureAlertRef.current = true;
-    showAlert('multiplayer', 'hostToggledTime');
-  }, [state.gameStatus, state.config.timePressureEnabled, getUnlockedItems, showAlert]);
-
   // vsmany "Create" games stay 'waiting' until either the host manually
   // starts (once >= 2 players have joined) or the game fills up to
   // max_players - show a lobby-style screen instead of the board until then.
