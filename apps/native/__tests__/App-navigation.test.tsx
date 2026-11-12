@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import App from '../App';
 
@@ -10,6 +10,30 @@ import App from '../App';
  * Game screen push/pop rather than remounting it fresh (see App.tsx's
  * MainScreenRoute and MainScreen.tsx's own doc comment).
  */
+/**
+ * Waits for `assertion` to pass, then lets the app finish settling before
+ * the caller interacts with what it found.
+ *
+ * RNTL's `waitFor` polls with the act environment switched off, so it can
+ * observe a committed tree whose passive effects haven't run yet. On the
+ * Main screen that matters: React Navigation's initial/return `focus`
+ * event fires from those effects, and MainScreenRoute's useFocusEffect
+ * responds by remounting MainScreen (a changing `key`, see App.tsx). If
+ * the test presses "vs bot" in that window, the press's own act() flushes
+ * the pending remount first and the press lands on the discarded
+ * instance - the "bots" sub-view never opens and the following
+ * `waitFor(... 'basicbot' ...)` times out. That was the intermittent CI
+ * failure (no amount of extra timeout fixes it). Yielding one macrotask
+ * inside act() lets the scheduled effects (and the remount they trigger)
+ * run before the next interaction.
+ */
+async function waitForSettled(assertion: () => void): Promise<void> {
+  await waitFor(assertion);
+  await act(async () => {
+    await new Promise(resolve => setTimeout(resolve, 0));
+  });
+}
+
 describe('App navigation', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
@@ -18,14 +42,14 @@ describe('App navigation', () => {
   it('returns to the actual main menu (not the bot list) after exiting a bot game', async () => {
     render(<App />);
 
-    await waitFor(() => expect(screen.getByText('bot')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByText('bot')).toBeTruthy());
     fireEvent.press(screen.getByText('bot'));
 
-    await waitFor(() => expect(screen.getByText('basicbot')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByText('basicbot')).toBeTruthy());
     fireEvent.press(screen.getByText('basicbot'));
 
     // Now on the Game screen.
-    await waitFor(() => expect(screen.getByLabelText('Return to home screen')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByLabelText('Return to home screen')).toBeTruthy());
     fireEvent.press(screen.getByLabelText('Return to home screen'));
 
     // Back on Main - must show the actual main menu, not the "bots" sub-view.
@@ -48,14 +72,14 @@ describe('App navigation', () => {
   it('shows a real quitter AlertOverlay when resigning via the Menu (not the "←" button)', async () => {
     render(<App />);
 
-    await waitFor(() => expect(screen.getByText('bot')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByText('bot')).toBeTruthy());
     fireEvent.press(screen.getByText('bot'));
-    await waitFor(() => expect(screen.getByText('basicbot')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByText('basicbot')).toBeTruthy());
     fireEvent.press(screen.getByText('basicbot'));
 
-    await waitFor(() => expect(screen.getByLabelText('Settings menu')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByLabelText('Settings menu')).toBeTruthy());
     fireEvent.press(screen.getByLabelText('Settings menu'));
-    await waitFor(() => expect(screen.getByText('resign')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByText('resign')).toBeTruthy());
     fireEvent.press(screen.getByText('resign'));
 
     // alertCopy.quit's variants are all distinct multi-line phrases (e.g.
@@ -86,11 +110,11 @@ describe('App navigation', () => {
 
     render(<App />);
 
-    await waitFor(() => expect(screen.getByText('nobody')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByText('nobody')).toBeTruthy());
     fireEvent.press(screen.getByText('nobody'));
 
     // Now on the Zen screen - reachable, playable, and back navigation works.
-    await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
     fireEvent.press(screen.getByLabelText('Return to home screen'));
 
     // Zen mode has no resign ceremony - returns straight to the main menu.
@@ -101,21 +125,21 @@ describe('App navigation', () => {
   it('auto-triggers the tutorial the first time a bot game is ever started, and not on a second game', async () => {
     render(<App />);
 
-    await waitFor(() => expect(screen.getByText('bot')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByText('bot')).toBeTruthy());
     fireEvent.press(screen.getByText('bot'));
-    await waitFor(() => expect(screen.getByText('basicbot')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByText('basicbot')).toBeTruthy());
     fireEvent.press(screen.getByText('basicbot'));
 
-    await waitFor(() => expect(screen.getByText('Tap the S')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByText('Tap the S')).toBeTruthy());
     fireEvent.press(screen.getByLabelText('Skip tutorial'));
 
     // Leave and start a second bot game - the tutorial must not reappear.
-    await waitFor(() => expect(screen.getByLabelText('Return to home screen')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByLabelText('Return to home screen')).toBeTruthy());
     fireEvent.press(screen.getByLabelText('Return to home screen'));
 
-    await waitFor(() => expect(screen.getByText('bot')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByText('bot')).toBeTruthy());
     fireEvent.press(screen.getByText('bot'));
-    await waitFor(() => expect(screen.getByText('basicbot')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByText('basicbot')).toBeTruthy());
     fireEvent.press(screen.getByText('basicbot'));
 
     await waitFor(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
@@ -126,11 +150,11 @@ describe('App navigation', () => {
     await AsyncStorage.setItem('wordplay-tutorial-seen', 'true');
     render(<App />);
 
-    await waitFor(() => expect(screen.getByLabelText('Open menu')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByLabelText('Open menu')).toBeTruthy());
     fireEvent.press(screen.getByLabelText('Open menu'));
-    await waitFor(() => expect(screen.getByText('about')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByText('about')).toBeTruthy());
     fireEvent.press(screen.getByText('about'));
-    await waitFor(() => expect(screen.getByText('the basics')).toBeTruthy());
+    await waitForSettled(() => expect(screen.getByText('the basics')).toBeTruthy());
     fireEvent.press(screen.getByText('the basics'));
 
     await waitFor(() => expect(screen.getByText('Tap the S')).toBeTruthy());
