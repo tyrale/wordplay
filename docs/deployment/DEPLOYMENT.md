@@ -12,10 +12,10 @@
 | Config            | [`vercel.json`](../../vercel.json): build, SPA rewrites, asset caching |
 | Node.js           | Set in Vercel project settings (Node 22+); CI uses `.nvmrc`            |
 
-`vercel.json` sets:
+`vercel.json` lives at the **repo root**. The Vercel project's Root Directory is the repo root, so Vercel never reads a `vercel.json` inside `apps/web/`. It sets:
 
-- **Build command**: `npm run build` (`tsc -b && vite build`)
-- **Output directory**: `dist`
+- **Build command**: `npm run build` (root script → `apps/web`: `tsc -b && vite build`)
+- **Output directory**: `apps/web/dist`
 - **Install command**: `npm install --include=dev`. Dev dependencies (TypeScript, Vite) must be installed even if `NODE_ENV=production` is set in the dashboard, or the build fails with `tsc: command not found`.
 - **SPA rewrites**: all routes serve `/index.html`
 - **Asset caching**: `/assets/*` cached for 1 year (filenames are content-hashed)
@@ -29,7 +29,7 @@ Set in Vercel → Project Settings → Environment Variables, for **Production**
 | `VITE_SUPABASE_URL`      | `https://<project-ref>.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | the project's anon (public) key     |
 
-Without these, the build falls back to `https://placeholder.supabase.co` (see `src/lib/supabase.ts`). Single-player still works, but **multiplayer, the daily challenge leaderboard and community unlock counts don't**.
+Without these, the build falls back to `https://placeholder.supabase.co` (see `apps/web/src/lib/supabase.ts`). Single-player still works, but **multiplayer, the daily challenge leaderboard and community unlock counts don't**.
 
 `VITE_` variables are baked into the bundle at build time, so **redeploy after changing them**.
 
