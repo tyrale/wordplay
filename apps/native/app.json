@@ -13,7 +13,7 @@
     "android": {
       "package": "com.tyrale.wordplay",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#1e3a8a",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -35,6 +35,18 @@
     "updates": {
       "url": "https://u.expo.dev/5d0c1923-3eea-4d49-b76e-0878538eb58c"
     },
-    "plugins": ["expo-audio", "expo-status-bar"]
+    "plugins": [
+      "expo-audio",
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#1e3a8a"
+        }
+      ]
+    ]
   }
 }

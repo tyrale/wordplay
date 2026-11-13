@@ -1,0 +1,8 @@
+[
+  { "file": "icon.png", "size": 1024, "bg": "#1e3a8a", "word": "reword", "fontSize": 520, "tracking": -0.01, "left": 80, "top": 200, "colors": ["#ffffff", "#ffffff", "#3b82f6", "#ffffff", "#ffffff", "#ffffff"] },
+  { "file": "android-icon-background.png", "size": 512, "bg": "#1e3a8a", "word": "", "fontSize": 10, "left": 0, "top": 0, "colors": ["#ffffff"] },
+  { "file": "android-icon-foreground.png", "size": 512, "bg": "transparent", "word": "reword", "fontSize": 173, "tracking": -0.01, "left": 112, "top": 152, "colors": ["#ffffff", "#ffffff", "#3b82f6", "#ffffff", "#ffffff", "#ffffff"] },
+  { "file": "android-icon-monochrome.png", "size": 432, "bg": "transparent", "word": "reword", "fontSize": 146, "tracking": -0.01, "left": 94, "top": 128, "colors": ["#ffffff"] },
+  { "file": "splash-icon.png", "size": 1024, "bg": "transparent", "word": "reword", "fontSize": 280, "tracking": -0.01, "center": true, "colors": ["#ffffff", "#ffffff", "#3b82f6", "#ffffff", "#ffffff", "#ffffff"] },
+  { "file": "favicon.png", "size": 48, "bg": "#1e3a8a", "word": "reword", "fontSize": 24.4, "tracking": -0.01, "left": 3.8, "top": 9.4, "colors": ["#ffffff", "#ffffff", "#3b82f6", "#ffffff", "#ffffff", "#ffffff"] }
+]
