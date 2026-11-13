@@ -2,16 +2,25 @@
 
 Testers can run the native app from anywhere. They don't need to be on the same Wi-Fi, and the dev machine doesn't need to be running.
 
-| Item         | Value                                                                |
-| ------------ | -------------------------------------------------------------------- |
-| Expo project | `@mohow/wordplay`, https://expo.dev/accounts/mohow/projects/wordplay |
-| Channel      | `preview` → branch `preview`                                         |
-| Runtime      | `exposdk:54.0.0` (`runtimeVersion.policy: "sdkVersion"`)             |
-| Backend      | Production ReWord Supabase. **Test data is real data.**              |
+| Item         | Value                                                                  |
+| ------------ | ---------------------------------------------------------------------- |
+| Expo project | `@reword/wordplay`, https://expo.dev/accounts/reword/projects/wordplay |
+| Testers      | Members of the `reword` Expo organization                              |
+| Channel      | `preview` → branch `preview`                                           |
+| Runtime      | `exposdk:54.0.0` (`runtimeVersion.policy: "sdkVersion"`)               |
+| Backend      | Production ReWord Supabase. **Test data is real data.**                |
+
+## Adding a tester
+
+Expo Go opens published updates only for people **signed in to Expo Go with an account that has access to the project**. Scanning without that access fails with "Something went wrong". Simulators aren't checked.
+
+1. The tester creates a free account at https://expo.dev/signup.
+2. An owner invites them at https://expo.dev/accounts/reword/members (**Invite**), using the lowest role that works (Viewer).
+3. The tester accepts the invite email.
 
 ## For testers
 
-1. Install **Expo Go** for SDK 54:
+1. Install **Expo Go** for SDK 54 and **sign in** with the Expo account that was invited:
    - **iPhone:** the App Store version.
    - **Android:** the Play Store version, or the SDK 54 build from https://expo.dev/go if the store version is newer.
 2. Scan this QR code. On iPhone, use the Camera app; on Android, scan from inside Expo Go.
@@ -36,5 +45,6 @@ npx eas-cli@latest update --branch preview --message "what changed"
 ## Limits and next steps
 
 - **Expo Go only**: the `sdkVersion` runtime policy is what lets Expo Go load these updates. Once the app has real builds (`eas build --profile preview`, or TestFlight), switch to the `appVersion` or `fingerprint` policy, rebuild, and publish updates against that runtime.
+- **Android sign-in bug**: some Expo Go Android versions don't send the signed-in session with update requests, so loading fails even for invited members (expo/expo#50498). iPhone isn't affected. The workaround is a preview APK (`eas build --profile preview --platform android`).
 - **SDK upgrades**: App Store Expo Go supports only the latest SDK. Upgrading past SDK 54 means iPhone testers need real builds (TestFlight).
 - **App IDs**: `com.tyrale.wordplay` (iOS `bundleIdentifier` and Android `package`). These are permanent once published to a store.
