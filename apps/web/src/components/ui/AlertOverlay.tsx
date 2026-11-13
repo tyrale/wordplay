@@ -23,12 +23,7 @@ export interface AlertOverlayAction {
 }
 
 export type AlertOverlayVariant =
-  | 'default'
-  | 'win'
-  | 'lose'
-  | 'unlock'
-  | 'error'
-  | 'start';
+  'default' | 'win' | 'lose' | 'unlock' | 'error' | 'start';
 
 export interface AlertOverlayProps {
   isVisible: boolean;

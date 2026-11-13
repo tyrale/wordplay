@@ -27,7 +27,9 @@ const WordPathGraphContext = createContext<UseWordPathGraphReturn | null>(null);
 export const useWordPathGraph = (): UseWordPathGraphReturn => {
   const context = useContext(WordPathGraphContext);
   if (!context) {
-    throw new Error('useWordPathGraph must be used within a WordPathGraphProvider');
+    throw new Error(
+      'useWordPathGraph must be used within a WordPathGraphProvider'
+    );
   }
   return context;
 };
@@ -36,7 +38,13 @@ interface WordPathGraphProviderProps {
   children: ReactNode;
 }
 
-export const WordPathGraphProvider: React.FC<WordPathGraphProviderProps> = ({ children }) => {
+export const WordPathGraphProvider: React.FC<WordPathGraphProviderProps> = ({
+  children,
+}) => {
   const state = useWordPathGraphState();
-  return <WordPathGraphContext.Provider value={state}>{children}</WordPathGraphContext.Provider>;
+  return (
+    <WordPathGraphContext.Provider value={state}>
+      {children}
+    </WordPathGraphContext.Provider>
+  );
 };

@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { RemoteGameStateManager, createRemoteGameStateManager } from '@wordplay/engine/remoteGamestate';
+import {
+  RemoteGameStateManager,
+  createRemoteGameStateManager,
+} from '@wordplay/engine/remoteGamestate';
 import { createBrowserAdapter } from '../adapters/browserAdapter';
 import { createSupabaseMultiplayerDependencies } from '../adapters/supabaseMultiplayerAdapter';
 import { ensureAnonymousSession } from '../adapters/supabaseAuthAdapter';
@@ -19,7 +22,9 @@ export interface UseMultiplayerManagerReturn {
  * multiplayer should look and behave identically, just driven by a
  * different state source.
  */
-export function useMultiplayerManager(gameId: string): UseMultiplayerManagerReturn {
+export function useMultiplayerManager(
+  gameId: string
+): UseMultiplayerManagerReturn {
   const managerRef = useRef<RemoteGameStateManager | null>(null);
   const [manager, setManager] = useState<RemoteGameStateManager | null>(null);
   const [localPlayerId, setLocalPlayerId] = useState<string | null>(null);
@@ -48,7 +53,11 @@ export function useMultiplayerManager(gameId: string): UseMultiplayerManagerRetu
 
         const remoteDeps = createSupabaseMultiplayerDependencies(userId);
         const dependencies = browserAdapter.getGameDependencies();
-        const created = await createRemoteGameStateManager(dependencies, remoteDeps, gameId);
+        const created = await createRemoteGameStateManager(
+          dependencies,
+          remoteDeps,
+          gameId
+        );
 
         if (!isMounted) {
           created.dispose();

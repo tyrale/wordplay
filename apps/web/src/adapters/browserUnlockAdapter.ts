@@ -1,12 +1,15 @@
 /**
  * Browser Unlock Adapter
- * 
+ *
  * Provides IndexedDB-based persistence for the unlock system.
  * Uses IndexedDB for better persistence than localStorage
  * (survives cache clears and browser restarts).
  */
 
-import type { UnlockDependencies, UnlockState } from '@wordplay/engine/interfaces';
+import type {
+  UnlockDependencies,
+  UnlockState,
+} from '@wordplay/engine/interfaces';
 import { INITIAL_UNLOCK_STATE } from '@wordplay/engine/unlock-definitions';
 import { recordCommunityUnlock } from './supabaseCommunityUnlocksAdapter';
 
@@ -21,18 +24,18 @@ const STATE_KEY = 'current-state';
 async function initializeDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
+
     request.onerror = () => {
       reject(new Error(`Failed to open IndexedDB: ${request.error}`));
     };
-    
+
     request.onsuccess = () => {
       resolve(request.result);
     };
-    
+
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      
+
       // Create object store if it doesn't exist
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME);
@@ -47,22 +50,27 @@ async function initializeDB(): Promise<IDBDatabase> {
 async function loadStateFromIndexedDB(): Promise<UnlockState> {
   try {
     const db = await initializeDB();
-    
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.get(STATE_KEY);
-      
+
       request.onerror = () => {
         reject(new Error(`Failed to load unlock state: ${request.error}`));
       };
-      
+
       request.onsuccess = () => {
         const result = request.result;
         if (result && result.data) {
           // Validate the loaded state has all required properties
           const state = result.data;
-          if (state.themes && state.mechanics && state.bots && state.achievements) {
+          if (
+            state.themes &&
+            state.mechanics &&
+            state.bots &&
+            state.achievements
+          ) {
             // Backward compatibility: default 'reveals'/'hasUsedReset' if missing from a state saved before those fields existed
             resolve({ reveals: [], hasUsedReset: false, ...state });
           } else {
@@ -74,7 +82,7 @@ async function loadStateFromIndexedDB(): Promise<UnlockState> {
           resolve({ ...INITIAL_UNLOCK_STATE });
         }
       };
-      
+
       transaction.oncomplete = () => {
         db.close();
       };
@@ -91,20 +99,23 @@ async function loadStateFromIndexedDB(): Promise<UnlockState> {
 async function saveStateToIndexedDB(state: UnlockState): Promise<void> {
   try {
     const db = await initializeDB();
-    
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
-      const request = store.put({ data: state, timestamp: Date.now() }, STATE_KEY);
-      
+      const request = store.put(
+        { data: state, timestamp: Date.now() },
+        STATE_KEY
+      );
+
       request.onerror = () => {
         reject(new Error(`Failed to save unlock state: ${request.error}`));
       };
-      
+
       request.onsuccess = () => {
         resolve();
       };
-      
+
       transaction.oncomplete = () => {
         db.close();
       };
@@ -123,7 +134,7 @@ export function createBrowserUnlockDependencies(): UnlockDependencies {
     loadState: loadStateFromIndexedDB,
     saveState: saveStateToIndexedDB,
     getTimestamp: () => Date.now(),
-    recordCommunityUnlock
+    recordCommunityUnlock,
   };
 }
 
@@ -132,7 +143,7 @@ export function createBrowserUnlockDependencies(): UnlockDependencies {
  */
 export function createLocalStorageUnlockDependencies(): UnlockDependencies {
   const STORAGE_KEY = 'wordplay-unlock-state';
-  
+
   return {
     loadState: async (): Promise<UnlockState> => {
       try {
@@ -140,7 +151,12 @@ export function createLocalStorageUnlockDependencies(): UnlockDependencies {
         if (stored) {
           const parsed = JSON.parse(stored);
           // Validate the loaded state
-          if (parsed.themes && parsed.mechanics && parsed.bots && parsed.achievements) {
+          if (
+            parsed.themes &&
+            parsed.mechanics &&
+            parsed.bots &&
+            parsed.achievements
+          ) {
             // Backward compatibility: default 'reveals'/'hasUsedReset' if missing from a state saved before those fields existed
             return { reveals: [], hasUsedReset: false, ...parsed };
           }
@@ -150,7 +166,7 @@ export function createLocalStorageUnlockDependencies(): UnlockDependencies {
       }
       return { ...INITIAL_UNLOCK_STATE };
     },
-    
+
     saveState: async (state: UnlockState): Promise<void> => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -159,8 +175,8 @@ export function createLocalStorageUnlockDependencies(): UnlockDependencies {
         throw error;
       }
     },
-    
-    getTimestamp: () => Date.now()
+
+    getTimestamp: () => Date.now(),
   };
 }
 
@@ -176,4 +192,4 @@ export function createBestBrowserUnlockDependencies(): UnlockDependencies {
     console.warn('IndexedDB not available, falling back to localStorage');
     return createLocalStorageUnlockDependencies();
   }
-} 
+}

@@ -3,10 +3,16 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../unlock/UnlockProvider';
 import { useVanityFilter } from '../../hooks/useVanityFilter';
 import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
-import { useRoundLength, DEFAULT_ROUND_LENGTH } from '../../contexts/RoundLengthContext';
+import {
+  useRoundLength,
+  DEFAULT_ROUND_LENGTH,
+} from '../../contexts/RoundLengthContext';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
 import { useCommunityUnlockStats } from '../../hooks/useCommunityUnlockStats';
-import { getVisibleBots, getBotDisplayNamesMapping } from '@wordplay/engine/botRegistry';
+import {
+  getVisibleBots,
+  getBotDisplayNamesMapping,
+} from '@wordplay/engine/botRegistry';
 import { availableThemes as ALL_THEMES } from '@wordplay/theme/theme';
 import type { GameTheme } from '@wordplay/theme/theme';
 import { DictionariesOverlay } from './DictionariesOverlay';
@@ -29,11 +35,36 @@ interface MenuTier2Item {
 }
 
 // Full list of mechanic ids that can exist (excludes 'dark-mode', which lives under the themes section)
-const ALL_MECHANIC_IDS = ['vanity-filter', '3-letter-start', '5-letter-start', '6-letter-start', '7-letter-start', '8-letter-start', '9-letter-start', '10-letter-start', 'time-pressure', 'gravity', 'drunk', 'round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100'];
+const ALL_MECHANIC_IDS = [
+  'vanity-filter',
+  '3-letter-start',
+  '5-letter-start',
+  '6-letter-start',
+  '7-letter-start',
+  '8-letter-start',
+  '9-letter-start',
+  '10-letter-start',
+  'time-pressure',
+  'gravity',
+  'drunk',
+  'round-length-10',
+  'round-length-15',
+  'round-length-30',
+  'round-length-40',
+  'round-length-50',
+  'round-length-100',
+];
 
 // Mechanic IDs that control the round length (number of turns) - mutually
 // exclusive, unlike other mechanics, so only one can be selected at a time
-const ROUND_LENGTH_MECHANIC_IDS = new Set(['round-length-10', 'round-length-15', 'round-length-30', 'round-length-40', 'round-length-50', 'round-length-100']);
+const ROUND_LENGTH_MECHANIC_IDS = new Set([
+  'round-length-10',
+  'round-length-15',
+  'round-length-30',
+  'round-length-40',
+  'round-length-50',
+  'round-length-100',
+]);
 
 // "dark-mode" is a mechanic-category unlock but lives under the themes
 // section instead of the mechanics section.
@@ -44,7 +75,13 @@ const DARK_MODE_MECHANIC_ID = 'dark-mode';
 // (non-toggle) items rather than as a switch. Order here controls their
 // display order under mechanics; player-stats and word-paths are listed
 // first since they also act as shortcuts to their own overlays.
-const PERMANENT_MECHANIC_IDS = ['player-stats', 'word-paths', 'zen-mode', 'unlock-counter', 'community-stats'];
+const PERMANENT_MECHANIC_IDS = [
+  'player-stats',
+  'word-paths',
+  'zen-mode',
+  'unlock-counter',
+  'community-stats',
+];
 
 // Mechanic IDs that are available to every player from the start - no
 // unlock word required, and not counted in the mechanics unlock progress
@@ -53,7 +90,8 @@ const PERMANENT_MECHANIC_IDS = ['player-stats', 'word-paths', 'zen-mode', 'unloc
 const ALWAYS_AVAILABLE_MECHANIC_IDS = ['type-to-clear'];
 
 // Extracts the numeric turn count from a round-length mechanic id (e.g. 'round-length-10' -> 10)
-const getRoundLengthValue = (mechanicId: string): number => parseInt(mechanicId.replace('round-length-', ''), 10);
+const getRoundLengthValue = (mechanicId: string): number =>
+  parseInt(mechanicId.replace('round-length-', ''), 10);
 
 // Masks a display name into '?' characters (one per non-space character), preserving spaces as gaps
 const maskName = (name: string): string => name.replace(/[^\s]/g, '?');
@@ -92,8 +130,8 @@ const mechanicDisplayNames: Record<string, string> = {
   '9-letter-start': '9 letters start',
   '10-letter-start': '10 letters start',
   'time-pressure': 'timer',
-  'gravity': 'gravity',
-  'drunk': 'drunk mode',
+  gravity: 'gravity',
+  drunk: 'drunk mode',
   'challenge-dictionary': 'challenge dictionary',
   'round-length-10': '10 rounds',
   'round-length-15': '15 rounds',
@@ -106,18 +144,20 @@ const mechanicDisplayNames: Record<string, string> = {
   'zen-mode': 'zen mode',
   'unlock-counter': 'unlock counter',
   'community-stats': 'community stats',
-  'type-to-clear': 'type to clear'
+  'type-to-clear': 'type to clear',
 };
 
 // Updated menu structure based on requirements and unlock state
 // Resolves a mechanic id's real display name (matches the logic used for real unlocked mechanic items)
 const getMechanicTitle = (mechanicId: string): string =>
-  mechanicId === 'vanity-filter' ? 'bad word filter' : (mechanicDisplayNames[mechanicId] || mechanicId);
+  mechanicId === 'vanity-filter'
+    ? 'bad word filter'
+    : mechanicDisplayNames[mechanicId] || mechanicId;
 
 const getMenuItems = (
-  availableThemes: GameTheme[], 
-  currentTheme: GameTheme, 
-  isInverted: boolean, 
+  availableThemes: GameTheme[],
+  currentTheme: GameTheme,
+  isInverted: boolean,
   isInGame: boolean = false,
   unlockedMechanics: string[] = [],
   availableBots: string[] = [],
@@ -132,28 +172,33 @@ const getMenuItems = (
   // the "unlock counter" mechanic by playing the word "unlock".
   const showUnlockCounts = unlockedMechanics.includes('unlock-counter');
   // Locked theme previews - only computed once 'themes' has been revealed
-  const lockedThemeItems: MenuTier2Item[] = revealedCategories.includes('themes')
+  const lockedThemeItems: MenuTier2Item[] = revealedCategories.includes(
+    'themes'
+  )
     ? shuffleLockedItems(
-        ALL_THEMES
-          .filter(theme => !availableThemes.some(unlocked => unlocked.name === theme.name))
-          .map(theme => ({
-            id: `locked-theme-${theme.name.toLowerCase().replace(/\s+/g, '-')}`,
-            title: maskName(theme.name.toLowerCase()),
-            isLocked: true
-          }))
+        ALL_THEMES.filter(
+          (theme) =>
+            !availableThemes.some((unlocked) => unlocked.name === theme.name)
+        ).map((theme) => ({
+          id: `locked-theme-${theme.name.toLowerCase().replace(/\s+/g, '-')}`,
+          title: maskName(theme.name.toLowerCase()),
+          isLocked: true,
+        }))
       )
     : [];
 
   // Locked mechanic previews - only computed once 'mechanics' has been revealed
-  const lockedMechanicItems: MenuTier2Item[] = revealedCategories.includes('mechanics')
+  const lockedMechanicItems: MenuTier2Item[] = revealedCategories.includes(
+    'mechanics'
+  )
     ? shuffleLockedItems(
-        ALL_MECHANIC_IDS
-          .filter(mechanicId => !unlockedMechanics.includes(mechanicId))
-          .map(mechanicId => ({
-            id: `locked-mechanic-${mechanicId}`,
-            title: maskName(getMechanicTitle(mechanicId)),
-            isLocked: true
-          }))
+        ALL_MECHANIC_IDS.filter(
+          (mechanicId) => !unlockedMechanics.includes(mechanicId)
+        ).map((mechanicId) => ({
+          id: `locked-mechanic-${mechanicId}`,
+          title: maskName(getMechanicTitle(mechanicId)),
+          isLocked: true,
+        }))
       )
     : [];
 
@@ -164,136 +209,180 @@ const getMenuItems = (
   const lockedBotItems: MenuTier2Item[] = revealedCategories.includes('bots')
     ? shuffleLockedItems(
         getVisibleBots()
-          .filter(bot => !availableBots.includes(bot.id))
-          .map(bot => ({
+          .filter((bot) => !availableBots.includes(bot.id))
+          .map((bot) => ({
             id: `locked-bot-${bot.id}`,
             title: maskName(getBotDisplayNamesMapping()[bot.id] || bot.id),
-            isLocked: true
+            isLocked: true,
           }))
       )
     : [];
 
   return [
-  // Only include resign if user is in an active game
-  ...(isInGame ? [{
-    id: 'resign',
-    title: 'resign'
-    // No children - this is a standalone tier 1 action item
-  }] : []),
-  {
-    id: 'vsworld',
-    title: 'vs world',
-    children: [
-      { id: 'challenge-mode', title: 'daily challenge' },
-      { id: 'leaderboard', title: 'leaderboard' },
-    ]
-  },
-  {
-    id: 'themes',
-    title: 'themes', 
-    ...(showUnlockCounts ? { count: { unlocked: availableThemes.length, total: ALL_THEMES.length } } : {}),
-    children: [
-      ...(unlockedMechanics.includes(DARK_MODE_MECHANIC_ID) ? [{ id: 'inverted', title: 'dark mode', isSelected: isInverted }] : []),
-      ...availableThemes.map(theme => ({
-        id: theme.name.toLowerCase().replace(/\s+/g, '-'),
-        title: theme.name.toLowerCase(),
-        isSelected: theme.name === currentTheme.name,
-        theme: theme
-      })),
-      ...lockedThemeItems
-    ]
-  },
-  // Show mechanics section if there are unlocked mechanics (excluding dark mode,
-  // which lives under the themes section instead), always-available mechanics,
-  // or if locked previews are revealed
-  ...(unlockedMechanics.filter(id => id !== DARK_MODE_MECHANIC_ID).length > 0 || lockedMechanicItems.length > 0 || ALWAYS_AVAILABLE_MECHANIC_IDS.length > 0 ? [{
-    id: 'mechanics',
-    title: 'mechanics',
-    ...(showUnlockCounts ? {
-      count: {
-        unlocked: unlockedMechanics.filter(id => id !== DARK_MODE_MECHANIC_ID).length,
-        total: ALL_MECHANIC_IDS.length + PERMANENT_MECHANIC_IDS.length
-      }
-    } : {}),
-    children: [
-      // Permanent unlocks (no on/off state) are listed first, plain - no toggle
-      ...PERMANENT_MECHANIC_IDS
-        .filter(mechanicId => unlockedMechanics.includes(mechanicId))
-        .map(mechanicId => ({
-          id: mechanicId,
-          title: getMechanicTitle(mechanicId),
-          isPermanentUnlock: true
+    // Only include resign if user is in an active game
+    ...(isInGame
+      ? [
+          {
+            id: 'resign',
+            title: 'resign',
+            // No children - this is a standalone tier 1 action item
+          },
+        ]
+      : []),
+    {
+      id: 'vsworld',
+      title: 'vs world',
+      children: [
+        { id: 'challenge-mode', title: 'daily challenge' },
+        { id: 'leaderboard', title: 'leaderboard' },
+      ],
+    },
+    {
+      id: 'themes',
+      title: 'themes',
+      ...(showUnlockCounts
+        ? {
+            count: {
+              unlocked: availableThemes.length,
+              total: ALL_THEMES.length,
+            },
+          }
+        : {}),
+      children: [
+        ...(unlockedMechanics.includes(DARK_MODE_MECHANIC_ID)
+          ? [{ id: 'inverted', title: 'dark mode', isSelected: isInverted }]
+          : []),
+        ...availableThemes.map((theme) => ({
+          id: theme.name.toLowerCase().replace(/\s+/g, '-'),
+          title: theme.name.toLowerCase(),
+          isSelected: theme.name === currentTheme.name,
+          theme: theme,
         })),
-      // Always-available mechanics (no unlock required) - shown as
-      // regular toggles, same as unlocked mechanics below.
-      ...ALWAYS_AVAILABLE_MECHANIC_IDS.map(mechanicId => ({
-        id: mechanicId,
-        title: mechanicDisplayNames[mechanicId] || mechanicId,
-        isSelected: isMechanicOn(mechanicId)
-      })),
-      ...unlockedMechanics
-        .filter(mechanicId => mechanicId !== DARK_MODE_MECHANIC_ID && !PERMANENT_MECHANIC_IDS.includes(mechanicId))
-        // Sort by ALL_MECHANIC_IDS' order (grouped logically: filter, letter-start
-        // lengths, gameplay modifiers, round lengths) instead of unlock order,
-        // so the menu doesn't reshuffle based on the order mechanics were found.
-        .sort((a, b) => ALL_MECHANIC_IDS.indexOf(a) - ALL_MECHANIC_IDS.indexOf(b))
-        .map(mechanicId => {
-        // Special handling for vanity filter - make it a toggle
-        if (mechanicId === 'vanity-filter') {
-          return {
-            id: mechanicId,
-            title: 'bad word filter',
-            isSelected: vanityFilterOn
-          };
-        }
-        // Round length options are mutually exclusive - only the currently
-        // selected round length is shown as selected, the rest are not
-        if (ROUND_LENGTH_MECHANIC_IDS.has(mechanicId)) {
-          return {
-            id: mechanicId,
-            title: mechanicDisplayNames[mechanicId] || mechanicId,
-            isSelected: getRoundLengthValue(mechanicId) === selectedRoundLength
-          };
-        }
-        return {
-          id: mechanicId,
-          title: mechanicDisplayNames[mechanicId] || mechanicId,
-          isSelected: isMechanicOn(mechanicId)
-        };
-      }),
-      ...lockedMechanicItems
-    ]
-  }] : []),
-  // Show bots section if there are available bots
-  ...(availableBots.length > 0 || lockedBotItems.length > 0 ? [{
-    id: 'bots',
-    title: 'bots',
-    ...(showUnlockCounts ? { count: { unlocked: availableBots.length, total: getVisibleBots().length } } : {}),
-    children: [
-      ...availableBots.map((botId: string) => ({
-        id: botId,
-        title: getBotDisplayNamesMapping()[botId] || botId
-      })),
-      ...lockedBotItems
-    ]
-  }] : []),
-  {
-    id: 'about',
-    title: 'about',
-    children: [
-      { id: 'the-basics', title: 'the basics' },
-      { id: 'the-game', title: 'the game' },
-      { id: 'dictionaries', title: 'dictionaries' },
-      { id: 'thoughts', title: 'thoughts' },
-      { id: 'reset-unlocks', title: 'reset unlocks (debug)' },
-    ]
-  },
-  // Home item - moved to bottom
-  {
-    id: 'home',
-    title: 'home'
-    // No children - this is a standalone tier 1 action item
-  },
+        ...lockedThemeItems,
+      ],
+    },
+    // Show mechanics section if there are unlocked mechanics (excluding dark mode,
+    // which lives under the themes section instead), always-available mechanics,
+    // or if locked previews are revealed
+    ...(unlockedMechanics.filter((id) => id !== DARK_MODE_MECHANIC_ID).length >
+      0 ||
+    lockedMechanicItems.length > 0 ||
+    ALWAYS_AVAILABLE_MECHANIC_IDS.length > 0
+      ? [
+          {
+            id: 'mechanics',
+            title: 'mechanics',
+            ...(showUnlockCounts
+              ? {
+                  count: {
+                    unlocked: unlockedMechanics.filter(
+                      (id) => id !== DARK_MODE_MECHANIC_ID
+                    ).length,
+                    total:
+                      ALL_MECHANIC_IDS.length + PERMANENT_MECHANIC_IDS.length,
+                  },
+                }
+              : {}),
+            children: [
+              // Permanent unlocks (no on/off state) are listed first, plain - no toggle
+              ...PERMANENT_MECHANIC_IDS.filter((mechanicId) =>
+                unlockedMechanics.includes(mechanicId)
+              ).map((mechanicId) => ({
+                id: mechanicId,
+                title: getMechanicTitle(mechanicId),
+                isPermanentUnlock: true,
+              })),
+              // Always-available mechanics (no unlock required) - shown as
+              // regular toggles, same as unlocked mechanics below.
+              ...ALWAYS_AVAILABLE_MECHANIC_IDS.map((mechanicId) => ({
+                id: mechanicId,
+                title: mechanicDisplayNames[mechanicId] || mechanicId,
+                isSelected: isMechanicOn(mechanicId),
+              })),
+              ...unlockedMechanics
+                .filter(
+                  (mechanicId) =>
+                    mechanicId !== DARK_MODE_MECHANIC_ID &&
+                    !PERMANENT_MECHANIC_IDS.includes(mechanicId)
+                )
+                // Sort by ALL_MECHANIC_IDS' order (grouped logically: filter, letter-start
+                // lengths, gameplay modifiers, round lengths) instead of unlock order,
+                // so the menu doesn't reshuffle based on the order mechanics were found.
+                .sort(
+                  (a, b) =>
+                    ALL_MECHANIC_IDS.indexOf(a) - ALL_MECHANIC_IDS.indexOf(b)
+                )
+                .map((mechanicId) => {
+                  // Special handling for vanity filter - make it a toggle
+                  if (mechanicId === 'vanity-filter') {
+                    return {
+                      id: mechanicId,
+                      title: 'bad word filter',
+                      isSelected: vanityFilterOn,
+                    };
+                  }
+                  // Round length options are mutually exclusive - only the currently
+                  // selected round length is shown as selected, the rest are not
+                  if (ROUND_LENGTH_MECHANIC_IDS.has(mechanicId)) {
+                    return {
+                      id: mechanicId,
+                      title: mechanicDisplayNames[mechanicId] || mechanicId,
+                      isSelected:
+                        getRoundLengthValue(mechanicId) === selectedRoundLength,
+                    };
+                  }
+                  return {
+                    id: mechanicId,
+                    title: mechanicDisplayNames[mechanicId] || mechanicId,
+                    isSelected: isMechanicOn(mechanicId),
+                  };
+                }),
+              ...lockedMechanicItems,
+            ],
+          },
+        ]
+      : []),
+    // Show bots section if there are available bots
+    ...(availableBots.length > 0 || lockedBotItems.length > 0
+      ? [
+          {
+            id: 'bots',
+            title: 'bots',
+            ...(showUnlockCounts
+              ? {
+                  count: {
+                    unlocked: availableBots.length,
+                    total: getVisibleBots().length,
+                  },
+                }
+              : {}),
+            children: [
+              ...availableBots.map((botId: string) => ({
+                id: botId,
+                title: getBotDisplayNamesMapping()[botId] || botId,
+              })),
+              ...lockedBotItems,
+            ],
+          },
+        ]
+      : []),
+    {
+      id: 'about',
+      title: 'about',
+      children: [
+        { id: 'the-basics', title: 'the basics' },
+        { id: 'the-game', title: 'the game' },
+        { id: 'dictionaries', title: 'dictionaries' },
+        { id: 'thoughts', title: 'thoughts' },
+        { id: 'reset-unlocks', title: 'reset unlocks (debug)' },
+      ],
+    },
+    // Home item - moved to bottom
+    {
+      id: 'home',
+      title: 'home',
+      // No children - this is a standalone tier 1 action item
+    },
   ];
 };
 
@@ -302,23 +391,26 @@ export interface MenuProps {
   onClose: () => void;
   onDebugOpen?: () => void;
   onResign?: () => void;
-  onStartGame?: (gameType: 'bot' | 'challenge' | 'tutorial', botId?: string) => void;
+  onStartGame?: (
+    gameType: 'bot' | 'challenge' | 'tutorial',
+    botId?: string
+  ) => void;
   onNavigateHome?: () => void;
   className?: string;
   isInGame?: boolean;
   currentGameMode?: string;
 }
 
-export const Menu: React.FC<MenuProps> = ({ 
-  isOpen, 
-  onClose, 
-  onDebugOpen, 
-  onResign, 
+export const Menu: React.FC<MenuProps> = ({
+  isOpen,
+  onClose,
+  onDebugOpen,
+  onResign,
   onStartGame,
   onNavigateHome,
   className = '',
   isInGame = false,
-  currentGameMode
+  currentGameMode,
 }) => {
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
@@ -329,13 +421,15 @@ export const Menu: React.FC<MenuProps> = ({
   const [isWordPathsOpen, setIsWordPathsOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const { currentTheme, setTheme, isInverted, toggleInverted } = useTheme();
-  
+
   // Get unlock state
-  const { getUnlockedItems, resetUnlocksToFresh, isLoading, isUnlocked } = useUnlockSystem();
-  
+  const { getUnlockedItems, resetUnlocksToFresh, isLoading, isUnlocked } =
+    useUnlockSystem();
+
   // Get vanity filter state
-  const { isVanityFilterUnlocked, isVanityFilterOn, toggleVanityFilter } = useVanityFilter();
-  
+  const { isVanityFilterUnlocked, isVanityFilterOn, toggleVanityFilter } =
+    useVanityFilter();
+
   // Get mechanics on/off state
   const { isMechanicOn, toggleMechanic } = useMechanicsSettings();
 
@@ -345,14 +439,33 @@ export const Menu: React.FC<MenuProps> = ({
   const unlockedMechanics = getUnlockedItems('mechanic');
   const unlockedBots = getUnlockedItems('bot');
   const revealedCategories = getUnlockedItems('reveal');
-  
+
   // Ensure basicBot is always available (fallback for loading state or missing data)
-  const availableBots = isLoading ? ['basicBot'] : (unlockedBots.length > 0 ? unlockedBots : ['basicBot']);
+  const availableBots = isLoading
+    ? ['basicBot']
+    : unlockedBots.length > 0
+      ? unlockedBots
+      : ['basicBot'];
 
   // Filter themes based on unlock state
-  const unlockedThemes = useUnlockedThemes({ unlockedThemes: unlockedThemeIds });
+  const unlockedThemes = useUnlockedThemes({
+    unlockedThemes: unlockedThemeIds,
+  });
 
-  const menuItems = getMenuItems(unlockedThemes, currentTheme, isInverted, isInGame, unlockedMechanics, availableBots, currentGameMode, isVanityFilterUnlocked(), isVanityFilterOn(), isMechanicOn, revealedCategories, roundLength);
+  const menuItems = getMenuItems(
+    unlockedThemes,
+    currentTheme,
+    isInverted,
+    isInGame,
+    unlockedMechanics,
+    availableBots,
+    currentGameMode,
+    isVanityFilterUnlocked(),
+    isVanityFilterOn(),
+    isMechanicOn,
+    revealedCategories,
+    roundLength
+  );
 
   // "world" mechanic - shows a "x/x found worldwide" progress indicator under home
   const isCommunityStatsOn = isUnlocked('mechanic', 'community-stats');
@@ -368,70 +481,86 @@ export const Menu: React.FC<MenuProps> = ({
     }, 300); // Match the longest animation duration
   }, [onClose]);
 
-  const handleOverlayClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      handleClose();
-    }
-  }, [handleClose]);
+  const handleOverlayClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target === e.currentTarget) {
+        handleClose();
+      }
+    },
+    [handleClose]
+  );
 
-  const handleTier1Click = useCallback((itemId: string) => {
-    triggerSoundFeedback('click');
-    // Handle standalone tier 1 items that perform actions directly
-    if (itemId === 'home') {
-      onNavigateHome?.();
-      handleClose(); // Close menu after home navigation
-      return;
-    }
-    
-    if (itemId === 'resign') {
-      onResign?.();
-      handleClose(); // Close menu after resign
-      return;
-    }
+  const handleTier1Click = useCallback(
+    (itemId: string) => {
+      triggerSoundFeedback('click');
+      // Handle standalone tier 1 items that perform actions directly
+      if (itemId === 'home') {
+        onNavigateHome?.();
+        handleClose(); // Close menu after home navigation
+        return;
+      }
 
-    // For items with children, toggle expansion
-    setExpandedItem(prevExpanded => 
-      prevExpanded === itemId ? null : itemId
-    );
-  }, [onNavigateHome, onResign, handleClose]);
+      if (itemId === 'resign') {
+        onResign?.();
+        handleClose(); // Close menu after resign
+        return;
+      }
+
+      // For items with children, toggle expansion
+      setExpandedItem((prevExpanded) =>
+        prevExpanded === itemId ? null : itemId
+      );
+    },
+    [onNavigateHome, onResign, handleClose]
+  );
 
   // Helper function to render theme name with color preview
-  const renderThemeName = useCallback((item: MenuTier2Item) => {
-    if (!item.theme) {
-      return item.title;
-    }
+  const renderThemeName = useCallback(
+    (item: MenuTier2Item) => {
+      if (!item.theme) {
+        return item.title;
+      }
 
-    const theme = item.theme;
-    const title = item.title;
-    
-    // Pick a deterministic letter to highlight based on theme name hash
-    const hash = title.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-    const accentIndex = hash % title.length;
-    
-    // Apply dark mode inversion if toggled
-    const displayColors = isInverted ? {
-      text: theme.colors.background,
-      accent: theme.colors.accent
-    } : {
-      text: theme.colors.text,
-      accent: theme.colors.accent
-    };
-    
-    return (
-      <span style={{ color: displayColors.text }}>
-        {title.split('').map((char: string, index: number) => (
-          <span
-            key={index}
-            style={{
-              color: index === accentIndex ? displayColors.accent : displayColors.text
-            }}
-          >
-            {char}
-          </span>
-        ))}
-      </span>
-    );
-  }, [isInverted]);
+      const theme = item.theme;
+      const title = item.title;
+
+      // Pick a deterministic letter to highlight based on theme name hash
+      const hash = title
+        .split('')
+        .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+      const accentIndex = hash % title.length;
+
+      // Apply dark mode inversion if toggled
+      const displayColors = isInverted
+        ? {
+            text: theme.colors.background,
+            accent: theme.colors.accent,
+          }
+        : {
+            text: theme.colors.text,
+            accent: theme.colors.accent,
+          };
+
+      return (
+        <span style={{ color: displayColors.text }}>
+          {title.split('').map((char: string, index: number) => (
+            <span
+              key={index}
+              style={{
+                color:
+                  index === accentIndex
+                    ? displayColors.accent
+                    : displayColors.text,
+              }}
+            >
+              {char}
+            </span>
+          ))}
+        </span>
+      );
+    },
+    [isInverted]
+  );
 
   // Helper function to render "vs world" with accent color for "vs"
   const renderVsWorldTitle = useCallback((title: string) => {
@@ -445,285 +574,371 @@ export const Menu: React.FC<MenuProps> = ({
     return title;
   }, []);
 
-  const handleTier2Click = useCallback((tier1Id: string, tier2Id: string) => {
-    triggerSoundFeedback('click');
-    // Handle specific actions that should close the menu
-    if (tier1Id === 'themes') {
-      if (tier2Id === 'inverted') {
-        // Toggle inverted theme
-        toggleInverted();
-        // Don't close menu after toggle
-      } else {
-        // Find and set the selected theme
-        const selectedTheme = unlockedThemes.find(theme => 
-          theme.name.toLowerCase().replace(/\s+/g, '-') === tier2Id
-        );
-        if (selectedTheme) {
-          setTheme(selectedTheme);
-          // Don't close menu after theme change
+  const handleTier2Click = useCallback(
+    (tier1Id: string, tier2Id: string) => {
+      triggerSoundFeedback('click');
+      // Handle specific actions that should close the menu
+      if (tier1Id === 'themes') {
+        if (tier2Id === 'inverted') {
+          // Toggle inverted theme
+          toggleInverted();
+          // Don't close menu after toggle
+        } else {
+          // Find and set the selected theme
+          const selectedTheme = unlockedThemes.find(
+            (theme) => theme.name.toLowerCase().replace(/\s+/g, '-') === tier2Id
+          );
+          if (selectedTheme) {
+            setTheme(selectedTheme);
+            // Don't close menu after theme change
+          }
         }
+      } else if (tier1Id === 'about' && tier2Id === 'the-basics') {
+        // Force-replay the tutorial layer on a fresh bot game (handled in App.tsx)
+        onStartGame?.('tutorial');
+        handleClose(); // Close menu after starting tutorial
+      } else if (tier1Id === 'about' && tier2Id === 'the-game') {
+        // Show the "the game" overlay on top of the menu (it fully covers the
+        // menu visually), so closing it returns to the menu instead of home.
+        setIsTheGameOpen(true);
+      } else if (tier1Id === 'about' && tier2Id === 'dictionaries') {
+        // Show the dictionaries overlay on top of the menu (it fully covers the
+        // menu visually), so closing it returns to the menu instead of home.
+        setIsDictionariesOpen(true);
+      } else if (tier1Id === 'about' && tier2Id === 'thoughts') {
+        // Show the thoughts overlay on top of the menu (it fully covers the
+        // menu visually), so closing it returns to the menu instead of home.
+        setIsThoughtsOpen(true);
+      } else if (
+        tier1Id === 'about' &&
+        (tier2Id === 'debug' || tier2Id === 'debug-mode')
+      ) {
+        // Open debug dialog
+        onDebugOpen?.();
+        handleClose(); // Close menu after opening debug
+      } else if (tier1Id === 'about' && tier2Id === 'reset-unlocks') {
+        // Reset unlocks to fresh user state
+        resetUnlocksToFresh();
+        handleClose(); // Close menu after reset
+      } else if (tier1Id === 'vsworld' && tier2Id === 'challenge-mode') {
+        // Start daily challenge
+        onStartGame?.('challenge');
+        handleClose(); // Close menu after starting challenge
+      } else if (tier1Id === 'vsworld' && tier2Id === 'leaderboard') {
+        // Show the leaderboard overlay on top of the menu (it fully covers the
+        // menu visually), so closing it returns to the menu instead of home.
+        setIsLeaderboardOpen(true);
+      } else if (tier1Id === 'mechanics') {
+        if (tier2Id === 'vanity-filter') {
+          // Toggle vanity filter
+          toggleVanityFilter();
+          // Don't close menu after toggle
+        } else if (ROUND_LENGTH_MECHANIC_IDS.has(tier2Id)) {
+          // Select this round length (mutually exclusive with other round lengths).
+          // Clicking the already-selected round length untoggles it, reverting to the default.
+          const value = getRoundLengthValue(tier2Id);
+          setRoundLength(roundLength === value ? DEFAULT_ROUND_LENGTH : value);
+          // Don't close menu after selection
+        } else if (tier2Id === 'player-stats') {
+          // Show the player stats overlay on top of the menu (it fully covers
+          // the menu visually), so closing it returns to the menu instead of home.
+          setIsStatsOpen(true);
+        } else if (tier2Id === 'word-paths') {
+          // Show the word path explorer overlay on top of the menu (it fully
+          // covers the menu visually), so closing it returns to the menu instead of home.
+          setIsWordPathsOpen(true);
+        } else if (PERMANENT_MECHANIC_IDS.includes(tier2Id)) {
+          // Permanent unlocks (e.g. zen mode) have no on/off state - clicking does nothing
+        } else {
+          // Toggle the mechanic on/off
+          toggleMechanic(tier2Id);
+          // Don't close menu after toggle
+        }
+      } else if (tier1Id === 'bots') {
+        // Bot selection - this will trigger confirmation in App.tsx
+        onStartGame?.('bot', tier2Id);
+        handleClose(); // Close menu after bot selection (confirmation handled at app level)
       }
-    } else if (tier1Id === 'about' && tier2Id === 'the-basics') {
-      // Force-replay the tutorial layer on a fresh bot game (handled in App.tsx)
-      onStartGame?.('tutorial');
-      handleClose(); // Close menu after starting tutorial
-    } else if (tier1Id === 'about' && tier2Id === 'the-game') {
-      // Show the "the game" overlay on top of the menu (it fully covers the
-      // menu visually), so closing it returns to the menu instead of home.
-      setIsTheGameOpen(true);
-    } else if (tier1Id === 'about' && tier2Id === 'dictionaries') {
-      // Show the dictionaries overlay on top of the menu (it fully covers the
-      // menu visually), so closing it returns to the menu instead of home.
-      setIsDictionariesOpen(true);
-    } else if (tier1Id === 'about' && tier2Id === 'thoughts') {
-      // Show the thoughts overlay on top of the menu (it fully covers the
-      // menu visually), so closing it returns to the menu instead of home.
-      setIsThoughtsOpen(true);
-    } else if (tier1Id === 'about' && (tier2Id === 'debug' || tier2Id === 'debug-mode')) {
-      // Open debug dialog
-      onDebugOpen?.();
-      handleClose(); // Close menu after opening debug
-    } else if (tier1Id === 'about' && tier2Id === 'reset-unlocks') {
-      // Reset unlocks to fresh user state
-      resetUnlocksToFresh();
-      handleClose(); // Close menu after reset
-    } else if (tier1Id === 'vsworld' && tier2Id === 'challenge-mode') {
-      // Start daily challenge
-      onStartGame?.('challenge');
-      handleClose(); // Close menu after starting challenge
-    } else if (tier1Id === 'vsworld' && tier2Id === 'leaderboard') {
-      // Show the leaderboard overlay on top of the menu (it fully covers the
-      // menu visually), so closing it returns to the menu instead of home.
-      setIsLeaderboardOpen(true);
-    } else if (tier1Id === 'mechanics') {
-      if (tier2Id === 'vanity-filter') {
-        // Toggle vanity filter
-        toggleVanityFilter();
-        // Don't close menu after toggle
-      } else if (ROUND_LENGTH_MECHANIC_IDS.has(tier2Id)) {
-        // Select this round length (mutually exclusive with other round lengths).
-        // Clicking the already-selected round length untoggles it, reverting to the default.
-        const value = getRoundLengthValue(tier2Id);
-        setRoundLength(roundLength === value ? DEFAULT_ROUND_LENGTH : value);
-        // Don't close menu after selection
-      } else if (tier2Id === 'player-stats') {
-        // Show the player stats overlay on top of the menu (it fully covers
-        // the menu visually), so closing it returns to the menu instead of home.
-        setIsStatsOpen(true);
-      } else if (tier2Id === 'word-paths') {
-        // Show the word path explorer overlay on top of the menu (it fully
-        // covers the menu visually), so closing it returns to the menu instead of home.
-        setIsWordPathsOpen(true);
-      } else if (PERMANENT_MECHANIC_IDS.includes(tier2Id)) {
-        // Permanent unlocks (e.g. zen mode) have no on/off state - clicking does nothing
-      } else {
-        // Toggle the mechanic on/off
-        toggleMechanic(tier2Id);
-        // Don't close menu after toggle
-      }
-    } else if (tier1Id === 'bots') {
-      // Bot selection - this will trigger confirmation in App.tsx
-      onStartGame?.('bot', tier2Id);
-      handleClose(); // Close menu after bot selection (confirmation handled at app level)
-    }
-    
-    // For other items (challenge, mechanics, other about items), keep menu open
-    // These are placeholder items that don't have functionality yet
-  }, [handleClose, onDebugOpen, onResign, onStartGame, unlockedThemes, setTheme, toggleInverted, toggleVanityFilter, toggleMechanic, roundLength, setRoundLength, resetUnlocksToFresh]);
+
+      // For other items (challenge, mechanics, other about items), keep menu open
+      // These are placeholder items that don't have functionality yet
+    },
+    [
+      handleClose,
+      onDebugOpen,
+      onResign,
+      onStartGame,
+      unlockedThemes,
+      setTheme,
+      toggleInverted,
+      toggleVanityFilter,
+      toggleMechanic,
+      roundLength,
+      setRoundLength,
+      resetUnlocksToFresh,
+    ]
+  );
 
   return (
     <>
-    {isOpen && (
-    <div 
-      className={`menu-overlay ${isClosing ? 'menu-overlay--closing' : ''} ${className}`.trim()}
-      onClick={handleOverlayClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="menu-title"
-    >
-      <div className="menu-container">
-        <div className="menu-content">
-          <div className="menu-main">
-            <div className="menu-spacer"></div>
-            <div className="menu-list">
-                         {menuItems.map((tier1Item: MenuTier1Item, tier1Index: number) => (
-              <div key={tier1Item.id} className="menu-tier1-section">
-                <button
-                  className={`menu-tier1-item ${isClosing ? 'menu-tier1-item--closing' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleTier1Click(tier1Item.id);
-                  }}
-                  aria-expanded={expandedItem === tier1Item.id}
-                  aria-controls={`menu-${tier1Item.id}-submenu`}
-                  style={{ 
-                    position: 'relative', 
-                    zIndex: 200,
-                    animationDelay: isClosing ? `${(menuItems.length - tier1Index - 1) * 0.05}s` : `${tier1Index * 0.1}s`,
-                    color: tier1Item.id === 'resign' ? 'var(--theme-accent)' : undefined
-                  }}
-                >
-                  {tier1Item.count && (
-                    <span className="menu-tier1-item__count">
-                      {tier1Item.count.unlocked}/{tier1Item.count.total}
-                    </span>
-                  )}
-                  {renderVsWorldTitle(tier1Item.title)}
-                </button>
+      {isOpen && (
+        <div
+          className={`menu-overlay ${isClosing ? 'menu-overlay--closing' : ''} ${className}`.trim()}
+          onClick={handleOverlayClick}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="menu-title"
+        >
+          <div className="menu-container">
+            <div className="menu-content">
+              <div className="menu-main">
+                <div className="menu-spacer"></div>
+                <div className="menu-list">
+                  {menuItems.map(
+                    (tier1Item: MenuTier1Item, tier1Index: number) => (
+                      <div key={tier1Item.id} className="menu-tier1-section">
+                        <button
+                          className={`menu-tier1-item ${isClosing ? 'menu-tier1-item--closing' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTier1Click(tier1Item.id);
+                          }}
+                          aria-expanded={expandedItem === tier1Item.id}
+                          aria-controls={`menu-${tier1Item.id}-submenu`}
+                          style={{
+                            position: 'relative',
+                            zIndex: 200,
+                            animationDelay: isClosing
+                              ? `${(menuItems.length - tier1Index - 1) * 0.05}s`
+                              : `${tier1Index * 0.1}s`,
+                            color:
+                              tier1Item.id === 'resign'
+                                ? 'var(--theme-accent)'
+                                : undefined,
+                          }}
+                        >
+                          {tier1Item.count && (
+                            <span className="menu-tier1-item__count">
+                              {tier1Item.count.unlocked}/{tier1Item.count.total}
+                            </span>
+                          )}
+                          {renderVsWorldTitle(tier1Item.title)}
+                        </button>
 
-                {tier1Item.id === 'home' && isCommunityStatsOn && !communityProgress.isLoading && (
-                  <div
-                    className={`menu-unlock-progress ${isClosing ? 'menu-unlock-progress--closing' : ''}`}
-                    style={{
-                      animationDelay: isClosing
-                        ? `${(menuItems.length - tier1Index - 1) * 0.05}s`
-                        : `${tier1Index * 0.1 + 0.05}s`
-                    }}
-                  >
-                    {communityProgress.unlocked}/{communityProgress.total} found worldwide
-                  </div>
-                )}
+                        {tier1Item.id === 'home' &&
+                          isCommunityStatsOn &&
+                          !communityProgress.isLoading && (
+                            <div
+                              className={`menu-unlock-progress ${isClosing ? 'menu-unlock-progress--closing' : ''}`}
+                              style={{
+                                animationDelay: isClosing
+                                  ? `${(menuItems.length - tier1Index - 1) * 0.05}s`
+                                  : `${tier1Index * 0.1 + 0.05}s`,
+                              }}
+                            >
+                              {communityProgress.unlocked}/
+                              {communityProgress.total} found worldwide
+                            </div>
+                          )}
 
-                {tier1Item.children && (
-                  <div 
-                    className={`menu-tier2-list ${expandedItem === tier1Item.id ? 'menu-tier2-list--expanded' : ''}`}
-                    id={`menu-${tier1Item.id}-submenu`}
-                    role="region"
-                    aria-labelledby={`menu-${tier1Item.id}-button`}
-                  >
-                    {tier1Item.id === 'themes' ? (
-                      // Special handling for themes menu
-                      <>
-                        {/* Dark mode toggle on its own row */}
-                        <div className="menu-tier2-darkmode-row">
-                          {tier1Item.children
-                                                         .filter((item: MenuTier2Item) => item.id === 'inverted')
-                             .map((tier2Item: MenuTier2Item, tier2Index: number) => {
-                              return (
-                                <button
-                                  key={tier2Item.id}
-                                  className={`menu-tier2-item menu-tier2-item--toggle ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleTier2Click(tier1Item.id, tier2Item.id);
-                                  }}
-                                  style={{
-                                    animationDelay: isClosing 
-                                      ? `${(menuItems.length - tier1Index - 1) * 0.05 + (tier1Item.children!.length - tier2Index - 1) * 0.02}s`
-                                      : `${(tier1Index * 0.1) + 0.05 + (tier2Index * 0.02)}s`
-                                  }}
-                                >
-                                  {tier2Item.title}
-                                  <div className={`dark-mode-toggle ${tier2Item.isSelected ? 'dark-mode-toggle--active' : ''}`}>
-                                    <div className="dark-mode-toggle__slider"></div>
-                                  </div>
-                                </button>
-                              );
-                            })}
-                        </div>
-                        
-                        {/* Theme items in wrapped rows */}
-                        <div className="menu-tier2-themes-grid">
-                          {tier1Item.children
-                                                         .filter((item: MenuTier2Item) => item.id !== 'inverted')
-                             .map((tier2Item: MenuTier2Item, tier2Index: number) => {
-                              // Locked previews have no theme colors to show - render as a flat gray box
-                              const themeStyles = tier2Item.isLocked ? {} : {
-                                borderColor: isInverted ? tier2Item.theme!.colors.background : tier2Item.theme!.colors.text,
-                                backgroundColor: isInverted ? tier2Item.theme!.colors.text : tier2Item.theme!.colors.background,
-                                color: isInverted ? tier2Item.theme!.colors.background : tier2Item.theme!.colors.text
-                              };
-
-                              return (
-                                <button
-                                  key={tier2Item.id}
-                                  className={`menu-tier2-item menu-tier2-item--theme ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''} ${tier2Item.isLocked ? 'menu-tier2-item--locked' : ''}`}
-                                  aria-disabled={tier2Item.isLocked}
-                                  tabIndex={tier2Item.isLocked ? -1 : 0}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (tier2Item.isLocked) return;
-                                    handleTier2Click(tier1Item.id, tier2Item.id);
-                                  }}
-                                  style={{
-                                    animationDelay: isClosing 
-                                      ? `${(menuItems.length - tier1Index - 1) * 0.05 + (tier1Item.children!.length - tier2Index - 1) * 0.02}s`
-                                      : `${(tier1Index * 0.1) + 0.05 + (tier2Index * 0.02)}s`,
-                                    ...themeStyles
-                                  }}
-                                >
-                                  {tier2Item.isLocked ? tier2Item.title : renderThemeName(tier2Item)}
-                                  
-                                  {/* Checkmark for selected theme items */}
-                                  {tier2Item.isSelected && !tier2Item.isLocked && (
-                                    <span 
-                                      className="menu-tier2-item__checkmark"
-                                      style={{ color: tier2Item.theme!.colors.accent }}
-                                    >
-                                      ✓
-                                    </span>
-                                  )}
-                                </button>
-                              );
-                            })}
-                        </div>
-                      </>
-                    ) : (
-                      // Regular handling for non-themes menus
-                      tier1Item.children.map((tier2Item: MenuTier2Item, tier2Index: number) => {
-                        // Check if this is a toggle item (has isSelected property)
-                        const isToggle = tier2Item.isSelected !== undefined;
-                        
-                        return (
-                          <button
-                            key={tier2Item.id}
-                            className={`menu-tier2-item ${isToggle ? 'menu-tier2-item--toggle' : ''} ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''} ${tier2Item.isLocked ? 'menu-tier2-item--locked' : ''}`}
-                            aria-disabled={tier2Item.isLocked}
-                            tabIndex={tier2Item.isLocked ? -1 : 0}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (tier2Item.isLocked) return;
-                              handleTier2Click(tier1Item.id, tier2Item.id);
-                            }}
-                            style={{
-                              animationDelay: isClosing 
-                                ? `${(menuItems.length - tier1Index - 1) * 0.05 + (tier1Item.children!.length - tier2Index - 1) * 0.02}s`
-                                : `${(tier1Index * 0.1) + 0.05 + (tier2Index * 0.02)}s`
-                            }}
+                        {tier1Item.children && (
+                          <div
+                            className={`menu-tier2-list ${expandedItem === tier1Item.id ? 'menu-tier2-list--expanded' : ''}`}
+                            id={`menu-${tier1Item.id}-submenu`}
+                            role="region"
+                            aria-labelledby={`menu-${tier1Item.id}-button`}
                           >
-                            {tier2Item.title}
-                            {isToggle && (
-                              <div className={`dark-mode-toggle ${tier2Item.isSelected ? 'dark-mode-toggle--active' : ''}`}>
-                                <div className="dark-mode-toggle__slider"></div>
-                              </div>
+                            {tier1Item.id === 'themes' ? (
+                              // Special handling for themes menu
+                              <>
+                                {/* Dark mode toggle on its own row */}
+                                <div className="menu-tier2-darkmode-row">
+                                  {tier1Item.children
+                                    .filter(
+                                      (item: MenuTier2Item) =>
+                                        item.id === 'inverted'
+                                    )
+                                    .map(
+                                      (
+                                        tier2Item: MenuTier2Item,
+                                        tier2Index: number
+                                      ) => {
+                                        return (
+                                          <button
+                                            key={tier2Item.id}
+                                            className={`menu-tier2-item menu-tier2-item--toggle ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''}`}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleTier2Click(
+                                                tier1Item.id,
+                                                tier2Item.id
+                                              );
+                                            }}
+                                            style={{
+                                              animationDelay: isClosing
+                                                ? `${(menuItems.length - tier1Index - 1) * 0.05 + (tier1Item.children!.length - tier2Index - 1) * 0.02}s`
+                                                : `${tier1Index * 0.1 + 0.05 + tier2Index * 0.02}s`,
+                                            }}
+                                          >
+                                            {tier2Item.title}
+                                            <div
+                                              className={`dark-mode-toggle ${tier2Item.isSelected ? 'dark-mode-toggle--active' : ''}`}
+                                            >
+                                              <div className="dark-mode-toggle__slider"></div>
+                                            </div>
+                                          </button>
+                                        );
+                                      }
+                                    )}
+                                </div>
+
+                                {/* Theme items in wrapped rows */}
+                                <div className="menu-tier2-themes-grid">
+                                  {tier1Item.children
+                                    .filter(
+                                      (item: MenuTier2Item) =>
+                                        item.id !== 'inverted'
+                                    )
+                                    .map(
+                                      (
+                                        tier2Item: MenuTier2Item,
+                                        tier2Index: number
+                                      ) => {
+                                        // Locked previews have no theme colors to show - render as a flat gray box
+                                        const themeStyles = tier2Item.isLocked
+                                          ? {}
+                                          : {
+                                              borderColor: isInverted
+                                                ? tier2Item.theme!.colors
+                                                    .background
+                                                : tier2Item.theme!.colors.text,
+                                              backgroundColor: isInverted
+                                                ? tier2Item.theme!.colors.text
+                                                : tier2Item.theme!.colors
+                                                    .background,
+                                              color: isInverted
+                                                ? tier2Item.theme!.colors
+                                                    .background
+                                                : tier2Item.theme!.colors.text,
+                                            };
+
+                                        return (
+                                          <button
+                                            key={tier2Item.id}
+                                            className={`menu-tier2-item menu-tier2-item--theme ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''} ${tier2Item.isLocked ? 'menu-tier2-item--locked' : ''}`}
+                                            aria-disabled={tier2Item.isLocked}
+                                            tabIndex={
+                                              tier2Item.isLocked ? -1 : 0
+                                            }
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              if (tier2Item.isLocked) return;
+                                              handleTier2Click(
+                                                tier1Item.id,
+                                                tier2Item.id
+                                              );
+                                            }}
+                                            style={{
+                                              animationDelay: isClosing
+                                                ? `${(menuItems.length - tier1Index - 1) * 0.05 + (tier1Item.children!.length - tier2Index - 1) * 0.02}s`
+                                                : `${tier1Index * 0.1 + 0.05 + tier2Index * 0.02}s`,
+                                              ...themeStyles,
+                                            }}
+                                          >
+                                            {tier2Item.isLocked
+                                              ? tier2Item.title
+                                              : renderThemeName(tier2Item)}
+
+                                            {/* Checkmark for selected theme items */}
+                                            {tier2Item.isSelected &&
+                                              !tier2Item.isLocked && (
+                                                <span
+                                                  className="menu-tier2-item__checkmark"
+                                                  style={{
+                                                    color:
+                                                      tier2Item.theme!.colors
+                                                        .accent,
+                                                  }}
+                                                >
+                                                  ✓
+                                                </span>
+                                              )}
+                                          </button>
+                                        );
+                                      }
+                                    )}
+                                </div>
+                              </>
+                            ) : (
+                              // Regular handling for non-themes menus
+                              tier1Item.children.map(
+                                (
+                                  tier2Item: MenuTier2Item,
+                                  tier2Index: number
+                                ) => {
+                                  // Check if this is a toggle item (has isSelected property)
+                                  const isToggle =
+                                    tier2Item.isSelected !== undefined;
+
+                                  return (
+                                    <button
+                                      key={tier2Item.id}
+                                      className={`menu-tier2-item ${isToggle ? 'menu-tier2-item--toggle' : ''} ${tier2Item.isSelected ? 'menu-tier2-item--selected' : ''} ${isClosing ? 'menu-tier2-item--closing' : ''} ${tier2Item.isLocked ? 'menu-tier2-item--locked' : ''}`}
+                                      aria-disabled={tier2Item.isLocked}
+                                      tabIndex={tier2Item.isLocked ? -1 : 0}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (tier2Item.isLocked) return;
+                                        handleTier2Click(
+                                          tier1Item.id,
+                                          tier2Item.id
+                                        );
+                                      }}
+                                      style={{
+                                        animationDelay: isClosing
+                                          ? `${(menuItems.length - tier1Index - 1) * 0.05 + (tier1Item.children!.length - tier2Index - 1) * 0.02}s`
+                                          : `${tier1Index * 0.1 + 0.05 + tier2Index * 0.02}s`,
+                                      }}
+                                    >
+                                      {tier2Item.title}
+                                      {isToggle && (
+                                        <div
+                                          className={`dark-mode-toggle ${tier2Item.isSelected ? 'dark-mode-toggle--active' : ''}`}
+                                        >
+                                          <div className="dark-mode-toggle__slider"></div>
+                                        </div>
+                                      )}
+                                      {/* Checkmark for permanent unlocks - no toggle, always on */}
+                                      {tier2Item.isPermanentUnlock && (
+                                        <span className="menu-tier2-item__checkmark">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </button>
+                                  );
+                                }
+                              )
                             )}
-                            {/* Checkmark for permanent unlocks - no toggle, always on */}
-                            {tier2Item.isPermanentUnlock && (
-                              <span className="menu-tier2-item__checkmark">✓</span>
-                            )}
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
-          </div>
-          <div className="menu-footer">
-            <button
-              className={`menu-close-button ${isClosing ? 'menu-close-button--closing' : ''}`}
-              onClick={handleClose}
-              aria-label="Close menu"
-            >
-              ×
-            </button>
+              <div className="menu-footer">
+                <button
+                  className={`menu-close-button ${isClosing ? 'menu-close-button--closing' : ''}`}
+                  onClick={handleClose}
+                  aria-label="Close menu"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    )}
+      )}
       <DictionariesOverlay
         isVisible={isDictionariesOpen}
         onClose={() => setIsDictionariesOpen(false)}
@@ -750,4 +965,4 @@ export const Menu: React.FC<MenuProps> = ({
       />
     </>
   );
-}; 
+};

@@ -3,11 +3,7 @@ import './GridCell.css';
 import { LockIcon } from './LockIcon';
 
 export type GridCellState =
-  | 'normal'
-  | 'key'
-  | 'locked'
-  | 'lockedKey'
-  | 'disabled';
+  'normal' | 'key' | 'locked' | 'lockedKey' | 'disabled';
 export type GridCellType = 'letter' | 'action';
 
 export interface GridCellProps {
