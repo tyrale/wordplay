@@ -388,16 +388,22 @@ function AppNavigator() {
         initialRouteName={initialGameId ? 'MultiplayerGame' : 'Main'}
       >
         <Stack.Screen name="Main" component={MainScreenRoute} />
-        <Stack.Screen name="Game" component={GameScreenRoute} />
-        <Stack.Screen name="Zen" component={ZenGameRoute} />
-        <Stack.Screen name="Challenge" component={ChallengeGameRoute} />
-        <Stack.Screen name="Boss" component={BossBattleScreenRoute} />
         <Stack.Screen name="MultiplayerLobby" component={MultiplayerLobbyRoute} />
-        <Stack.Screen
-          name="MultiplayerGame"
-          component={MultiplayerGameRoute}
-          initialParams={initialGameId ? { gameId: initialGameId } : undefined}
-        />
+        {/* Gameplay screens: no iOS swipe-back. Dragging a letter of the
+            word in play left/right started the edge swipe and popped the
+            screen mid-drag; letter dragging wins. Each screen has its own
+            in-game exit (onNavigateHome / onExit). */}
+        <Stack.Group screenOptions={{ gestureEnabled: false }}>
+          <Stack.Screen name="Game" component={GameScreenRoute} />
+          <Stack.Screen name="Zen" component={ZenGameRoute} />
+          <Stack.Screen name="Challenge" component={ChallengeGameRoute} />
+          <Stack.Screen name="Boss" component={BossBattleScreenRoute} />
+          <Stack.Screen
+            name="MultiplayerGame"
+            component={MultiplayerGameRoute}
+            initialParams={initialGameId ? { gameId: initialGameId } : undefined}
+          />
+        </Stack.Group>
       </Stack.Navigator>
     </NavigationContainer>
   );
