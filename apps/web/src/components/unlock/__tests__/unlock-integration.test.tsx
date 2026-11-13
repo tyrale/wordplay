@@ -5,13 +5,13 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { ThemeProvider } from '../../theme/ThemeProvider';
 import { UnlockProvider } from '../UnlockProvider';
 import { AlertProvider } from '../../ui/AlertProvider';
-import { useUnlockSystem } from '../UnlockProvider';
-import type { UnlockContextType } from '../UnlockProvider';
+import { useUnlockSystem } from '../unlockContext';
+import type { UnlockContextType } from '../unlockContext';
 
 // Test component that uses the unlock system
 function TestUnlockComponent() {
@@ -127,16 +127,24 @@ function UnlockApiProbe({
   onReady: (api: UnlockContextType) => void;
 }) {
   const api = useUnlockSystem();
+  // The context value is a new object every render, so it can't be an effect
+  // dependency (the reset would re-run on every render). Track the latest one
+  // in a ref and key the effect on the loading flag only.
+  const apiRef = useRef(api);
   useEffect(() => {
-    if (api.isLoading) return;
+    apiRef.current = api;
+  });
+  const { isLoading } = api;
+  useEffect(() => {
+    if (isLoading) return;
     let cancelled = false;
-    api.resetUnlocksToFresh().then(() => {
-      if (!cancelled) onReady(api);
+    apiRef.current.resetUnlocksToFresh().then(() => {
+      if (!cancelled) onReady(apiRef.current);
     });
     return () => {
       cancelled = true;
     };
-  }, [api.isLoading, onReady]);
+  }, [isLoading, onReady]);
   return null;
 }
 

@@ -6,8 +6,8 @@ import {
   getGameJoinInfo,
   startWaitingGame,
 } from '../../adapters/supabaseMultiplayerAdapter';
-import { useAlert } from '../ui/AlertProvider';
-import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { useAlert } from '../ui/alertContext';
+import { useUnlockSystem } from '../unlock/unlockContext';
 import './MultiplayerGame.css';
 
 export interface MultiplayerGameResult {

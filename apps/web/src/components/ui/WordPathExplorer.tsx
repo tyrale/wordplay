@@ -15,7 +15,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { WordBuilder } from '../game/WordBuilder';
-import { useWordPathGraph } from '../../contexts/WordPathGraphContext';
+import { useWordPathGraph } from '../../contexts/wordPathGraph';
 import { triggerHapticFeedback } from '../../utils/haptics';
 import { triggerSoundFeedback } from '../../utils/sound';
 import { calculateScore } from '@wordplay/engine/scoring';

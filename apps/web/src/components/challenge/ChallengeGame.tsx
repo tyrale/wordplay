@@ -26,16 +26,16 @@ import { AlertOverlay } from '../ui/AlertOverlay';
 import { alertCopy } from '../../content/alertCopy';
 import { useChallenge } from '../../hooks/useChallenge';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
-import { useWordPathGraph } from '../../contexts/WordPathGraphContext';
+import { useWordPathGraph } from '../../contexts/wordPathGraph';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
 import { recordChallengeCompletion } from '../../adapters/supabaseChallengeLeaderboardAdapter';
 import {
   shareChallengeResult,
   getShareResultMessage,
 } from '../../utils/shareUtils';
-import { useAlert } from '../ui/AlertProvider';
-import { useUnlockSystem } from '../unlock/UnlockProvider';
-import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
+import { useAlert } from '../ui/alertContext';
+import { useUnlockSystem } from '../unlock/unlockContext';
+import { useMechanicsSettings } from '../../contexts/mechanicsSettings';
 import {
   getWordLegalityReason,
   getVariantDefinitionNote,

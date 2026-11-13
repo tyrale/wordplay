@@ -8,7 +8,7 @@
 
 import React from 'react';
 import { triggerSoundFeedback } from '../../utils/sound';
-import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { useUnlockSystem } from '../unlock/unlockContext';
 import './DictionariesOverlay.css';
 
 export interface DictionariesOverlayProps {

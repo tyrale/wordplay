@@ -3,13 +3,9 @@
  * Centralizes vanity filter state management for live updates across all components
  */
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { VanityFilterContext } from './vanityFilter';
+import type { VanityFilterContextValue } from './vanityFilter';
 import type { ReactNode } from 'react';
 import {
   getVanityDisplayWordWithDependencies,
@@ -18,29 +14,6 @@ import {
 } from '@wordplay/engine/dictionary';
 import type { WordDataDependencies } from '@wordplay/engine/interfaces';
 import { createBrowserAdapter } from '../adapters/browserAdapter';
-
-export interface VanityFilterContextValue {
-  // State
-  vanityState: VanityState;
-  isLoading: boolean;
-  wordData: WordDataDependencies | null;
-
-  // Display functions
-  getDisplayWord: (word: string, options?: { isEditing?: boolean }) => string;
-
-  // Toggle functions
-  toggleVanityFilter: () => void;
-  unlockVanityToggle: () => void;
-
-  // Query functions
-  isVanityFilterUnlocked: () => boolean;
-  isVanityFilterOn: () => boolean;
-  shouldWordUnlockVanity: (word: string) => boolean;
-}
-
-const VanityFilterContext = createContext<VanityFilterContextValue | null>(
-  null
-);
 
 const STORAGE_KEY_UNLOCKED = 'wordplay-vanity-unlocked';
 const STORAGE_KEY_FILTER = 'wordplay-vanity-filter';
@@ -195,14 +168,4 @@ export const VanityFilterProvider: React.FC<VanityFilterProviderProps> = ({
       {children}
     </VanityFilterContext.Provider>
   );
-};
-
-export const useVanityFilter = (): VanityFilterContextValue => {
-  const context = useContext(VanityFilterContext);
-  if (!context) {
-    throw new Error(
-      'useVanityFilter must be used within a VanityFilterProvider'
-    );
-  }
-  return context;
 };

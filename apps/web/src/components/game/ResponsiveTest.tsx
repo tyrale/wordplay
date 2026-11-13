@@ -19,6 +19,14 @@ interface ScreenInfo {
   touchSupport: boolean;
 }
 
+const getBreakpoint = (width: number): string => {
+  if (width < 480) return 'small-mobile';
+  if (width < 768) return 'medium-mobile';
+  if (width < 1024) return 'tablet';
+  if (width < 1440) return 'desktop';
+  return 'large-desktop';
+};
+
 export const ResponsiveTest: React.FC<ResponsiveTestProps> = ({ children }) => {
   const [showDebug] = useState(false);
   const [screenInfo, setScreenInfo] = useState<ScreenInfo>({
@@ -31,30 +39,22 @@ export const ResponsiveTest: React.FC<ResponsiveTestProps> = ({ children }) => {
     touchSupport: false,
   });
 
-  const getBreakpoint = (width: number): string => {
-    if (width < 480) return 'small-mobile';
-    if (width < 768) return 'medium-mobile';
-    if (width < 1024) return 'tablet';
-    if (width < 1440) return 'desktop';
-    return 'large-desktop';
-  };
-
-  const updateScreenInfo = () => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-
-    setScreenInfo({
-      width,
-      height,
-      devicePixelRatio: window.devicePixelRatio || 1,
-      orientation: width > height ? 'landscape' : 'portrait',
-      breakpoint: getBreakpoint(width),
-      userAgent: navigator.userAgent,
-      touchSupport: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
-    });
-  };
-
   useEffect(() => {
+    const updateScreenInfo = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      setScreenInfo({
+        width,
+        height,
+        devicePixelRatio: window.devicePixelRatio || 1,
+        orientation: width > height ? 'landscape' : 'portrait',
+        breakpoint: getBreakpoint(width),
+        userAgent: navigator.userAgent,
+        touchSupport: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+      });
+    };
+
     updateScreenInfo();
 
     const handleResize = () => {

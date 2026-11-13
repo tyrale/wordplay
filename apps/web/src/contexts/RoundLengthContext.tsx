@@ -9,23 +9,10 @@
  * selected at a time, unlike other mechanics which are independent toggles.
  */
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { DEFAULT_ROUND_LENGTH, RoundLengthContext } from './roundLength';
+import type { RoundLengthContextValue } from './roundLength';
 import type { ReactNode } from 'react';
-
-export const DEFAULT_ROUND_LENGTH = 20;
-
-export interface RoundLengthContextValue {
-  roundLength: number;
-  setRoundLength: (length: number) => void;
-}
-
-const RoundLengthContext = createContext<RoundLengthContextValue | null>(null);
 
 const STORAGE_KEY = 'wordplay-round-length';
 
@@ -71,12 +58,4 @@ export const RoundLengthProvider: React.FC<RoundLengthProviderProps> = ({
       {children}
     </RoundLengthContext.Provider>
   );
-};
-
-export const useRoundLength = (): RoundLengthContextValue => {
-  const context = useContext(RoundLengthContext);
-  if (!context) {
-    throw new Error('useRoundLength must be used within a RoundLengthProvider');
-  }
-  return context;
 };

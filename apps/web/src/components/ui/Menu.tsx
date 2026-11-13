@@ -1,12 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { useTheme } from '../theme/ThemeProvider';
-import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { useTheme } from '../theme/themeContext';
+import { useUnlockSystem } from '../unlock/unlockContext';
 import { useVanityFilter } from '../../hooks/useVanityFilter';
-import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
+import { useMechanicsSettings } from '../../contexts/mechanicsSettings';
 import {
   useRoundLength,
   DEFAULT_ROUND_LENGTH,
-} from '../../contexts/RoundLengthContext';
+} from '../../contexts/roundLength';
 import { useUnlockedThemes } from '../../hooks/useUnlockedThemes';
 import { useCommunityUnlockStats } from '../../hooks/useCommunityUnlockStats';
 import {
@@ -666,7 +666,6 @@ export const Menu: React.FC<MenuProps> = ({
     [
       handleClose,
       onDebugOpen,
-      onResign,
       onStartGame,
       unlockedThemes,
       setTheme,

@@ -13,17 +13,13 @@ import { ZenGame } from './components/zen/ZenGame';
 import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
 import { TUTORIAL_INITIAL_CONFIG } from './components/tutorial/tutorialSteps';
 import { AnimationProvider } from './animations';
-import {
-  UnlockProvider,
-  useUnlockSystem,
-} from './components/unlock/UnlockProvider';
+import { UnlockProvider } from './components/unlock/UnlockProvider';
+import { useUnlockSystem } from './components/unlock/unlockContext';
 import { WordPathGraphProvider } from './contexts/WordPathGraphContext';
 import { VanityFilterProvider } from './contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from './contexts/MechanicsSettingsContext';
-import {
-  RoundLengthProvider,
-  useRoundLength,
-} from './contexts/RoundLengthContext';
+import { RoundLengthProvider } from './contexts/RoundLengthContext';
+import { useRoundLength } from './contexts/roundLength';
 import ResponsiveTest from './components/game/ResponsiveTest';
 import { AlertOverlay } from './components/ui/AlertOverlay';
 import { alertCopy, pickAlertVariant } from './content/alertCopy';
@@ -594,14 +590,14 @@ function AppContent() {
   const isQuitterResult = appState === 'quitter';
   const isWinnerResult = appState === 'winner';
   const isLoserResult = appState === 'loser';
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const quitCopy = useMemo(
     () => pickAlertVariant(alertCopy.quit),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isQuitterResult]
   );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const winCopy = useMemo(
     () => pickAlertVariant(alertCopy.win),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isWinnerResult]
   );
   const loseCopy = useMemo(

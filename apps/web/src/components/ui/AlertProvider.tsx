@@ -11,7 +11,9 @@
  * `ChallengeGame.tsx`).
  */
 
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { AlertContext } from './alertContext';
+import type { ShowAlertOptions, ShowCustomAlertOptions } from './alertContext';
 import {
   AlertOverlay,
   type AlertOverlayAction,
@@ -33,43 +35,6 @@ interface AlertRequest {
   actions?: AlertOverlayAction[];
   onCloseExtra?: () => void;
 }
-
-export interface ShowAlertOptions {
-  params?: Record<string, string>;
-  /** Raw item id (e.g. bot id, mechanic id) used to look up a per-item `metaByItem` phrase. */
-  itemId?: string;
-  variant?: AlertOverlayVariant;
-  meta?: React.ReactNode;
-  actions?: AlertOverlayAction[];
-  onClose?: () => void;
-}
-
-export interface ShowCustomAlertOptions {
-  variant?: AlertOverlayVariant;
-  meta?: React.ReactNode;
-  actions?: AlertOverlayAction[];
-  onClose?: () => void;
-}
-
-interface AlertContextType {
-  showAlert: <C extends AlertCategory>(
-    category: C,
-    key: keyof (typeof alertCopy)[C],
-    options?: ShowAlertOptions
-  ) => void;
-  showCustomAlert: (lines: string[], options?: ShowCustomAlertOptions) => void;
-  dismissAlert: () => void;
-}
-
-const AlertContext = createContext<AlertContextType | undefined>(undefined);
-
-export const useAlert = () => {
-  const context = useContext(AlertContext);
-  if (!context) {
-    throw new Error('useAlert must be used within an AlertProvider');
-  }
-  return context;
-};
 
 interface AlertProviderProps {
   children: React.ReactNode;

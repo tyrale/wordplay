@@ -4,11 +4,11 @@ import {
   useGameStats,
   useWordState,
 } from '../../hooks/useGameState';
-import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { useUnlockSystem } from '../unlock/unlockContext';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
-import { useWordPathGraph } from '../../contexts/WordPathGraphContext';
-import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
-import { useAlert } from '../ui/AlertProvider';
+import { useWordPathGraph } from '../../contexts/wordPathGraph';
+import { useMechanicsSettings } from '../../contexts/mechanicsSettings';
+import { useAlert } from '../ui/alertContext';
 import { AlphabetGrid } from './AlphabetGrid';
 import { WordTrail } from './WordTrail';
 
@@ -39,7 +39,7 @@ import {
   hasSeenClearHint,
   markClearHintSeen,
 } from '../../utils/tutorialStorage';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme } from '../theme/themeContext';
 import type { BossStage } from '../../data/bossBattle';
 import type {
   WordDataDependencies,

@@ -7,7 +7,7 @@
  */
 
 import { useCallback } from 'react';
-import { useAnimationContext } from './AnimationProvider';
+import { useAnimationContext } from './animationContext';
 import type { AnimationHookReturn, AnimationComponent } from './types';
 
 export const useAnimations = (

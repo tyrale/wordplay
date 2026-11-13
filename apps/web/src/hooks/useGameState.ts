@@ -134,21 +134,24 @@ export function useGameState(
   const gameManagerRef = useRef<IGameStateManager | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Track config changes to force recreation when botId changes
-  const configRef = useRef(config);
+  // Track botId changes to force recreation when botId changes. Only the
+  // botId is tracked (not the whole config): callers build `config` inline,
+  // so its identity changes on every render.
+  const botId = config?.botId;
+  const prevBotIdRef = useRef(botId);
   const [gameManagerKey, setGameManagerKey] = useState(0);
 
   // Detect botId changes and force game manager recreation (bot-game mode only)
   useEffect(() => {
     if (externalManager) return;
     // Force recreation if botId changed
-    if (config?.botId !== configRef.current?.botId) {
+    if (botId !== prevBotIdRef.current) {
       gameManagerRef.current = null;
       setIsInitialized(false);
       setGameManagerKey((prev) => prev + 1); // Force effect re-run
     }
-    configRef.current = config;
-  }, [config?.botId, externalManager]);
+    prevBotIdRef.current = botId;
+  }, [botId, externalManager]);
 
   // Initialize browser adapter and create game manager (pure dependency injection).
   // When an externalManager is supplied (e.g. multiplayer's RemoteGameStateManager),
@@ -216,7 +219,10 @@ export function useGameState(
     return () => {
       isMounted = false;
     };
-  }, [config, gameManagerKey, externalManager]); // Add gameManagerKey as dependency to force re-run
+    // gameManagerKey forces a re-run after a botId change. The rest only
+    // matter while no manager exists yet - initializeGameManager() is skipped
+    // once one does, so re-runs from them are no-ops.
+  }, [config, gameManagerKey, externalManager, skipSavedGamePersistence]);
 
   const gameManager = gameManagerRef.current;
 
@@ -300,7 +306,7 @@ export function useGameState(
     return () => {
       unsubscribe();
     };
-  }, [gameManager, isInitialized]);
+  }, [gameManager, isInitialized, externalManager, skipSavedGamePersistence]);
 
   // Clear errors when state changes
   useEffect(() => {

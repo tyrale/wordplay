@@ -21,11 +21,11 @@ import React, {
   useRef,
 } from 'react';
 import { useGameState, useWordState } from '../../hooks/useGameState';
-import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { useUnlockSystem } from '../unlock/unlockContext';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
-import { useWordPathGraph } from '../../contexts/WordPathGraphContext';
-import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
-import { useAlert } from '../ui/AlertProvider';
+import { useWordPathGraph } from '../../contexts/wordPathGraph';
+import { useMechanicsSettings } from '../../contexts/mechanicsSettings';
+import { useAlert } from '../ui/alertContext';
 import { AlphabetGrid, type LetterState } from '../game/AlphabetGrid';
 import { WordTrail, type WordMove } from '../game/WordTrail';
 import { WordBuilder } from '../game/WordBuilder';

@@ -1,5 +1,6 @@
 // Theme
-export { ThemeProvider, useTheme } from './theme/ThemeProvider';
+export { ThemeProvider } from './theme/ThemeProvider';
+export { useTheme } from './theme/themeContext';
 export {
   defaultTheme,
   availableThemes,
@@ -84,7 +85,8 @@ export {
 } from '@wordplay/theme/theme';
 
 // Unlock System
-export { UnlockProvider, useUnlockSystem } from './unlock/UnlockProvider';
+export { UnlockProvider } from './unlock/UnlockProvider';
+export { useUnlockSystem } from './unlock/unlockContext';
 
 // UI Components
 export { GridCell } from './ui/GridCell';
@@ -103,7 +105,8 @@ export type {
   AlertOverlayVariant,
 } from './ui/AlertOverlay';
 
-export { AlertProvider, useAlert } from './ui/AlertProvider';
+export { AlertProvider } from './ui/AlertProvider';
+export { useAlert } from './ui/alertContext';
 
 // Game Components
 export { AlphabetGrid } from './game/AlphabetGrid';
