@@ -51,12 +51,31 @@ function getMultiplayerGameIdFromUrl(): string | null {
   return new URLSearchParams(window.location.search).get('mgame');
 }
 
+/** True when the page was opened via the Daily Challenge link
+ * (`?daily`, see packages/engine/links.ts) - shared results and marketing
+ * CTAs use it to drop players straight into today's challenge. */
+function isDailyChallengeLink(): boolean {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).has('daily');
+}
+
 function AppContent() {
   const { roundLength } = useRoundLength();
   const { currentTheme, setTheme } = useTheme();
   const { isUnlocked, isLoading: unlocksLoading } = useUnlockSystem();
   const initialMultiplayerGameId = getMultiplayerGameIdFromUrl();
-  const [appState, setAppState] = useState<AppState>(initialMultiplayerGameId ? 'multiplayer-game' : 'start');
+  const [appState, setAppState] = useState<AppState>(
+    initialMultiplayerGameId ? 'multiplayer-game' : isDailyChallengeLink() ? 'challenge' : 'start'
+  );
+
+  // Consume the one-shot ?daily param so leaving the challenge and then
+  // refreshing doesn't throw the player back into it.
+  useEffect(() => {
+    if (!isDailyChallengeLink()) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete('daily');
+    window.history.replaceState({}, '', url.toString());
+  }, []);
   const [selectedBotId, setSelectedBotId] = useState<string>('basicBot');
   const [multiplayerGameId, setMultiplayerGameId] = useState<string | null>(initialMultiplayerGameId);
   const [gameResults, setGameResults] = useState<{

@@ -525,7 +525,7 @@ export function createChallengeEngine(dependencies: ChallengeDependencies): Chal
     
     // Add checkmark for completed or red X for failed after the challenge #,
     // then put the start/target words on their own line
-    let result = `Challenge #${dayNumber}`;
+    let result = `Reword #${dayNumber}`;
     if (state.completed) {
       result += ` ✓\n${state.startWord} → ${state.targetWord}`;
     } else if (state.failed) {

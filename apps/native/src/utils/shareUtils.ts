@@ -8,6 +8,7 @@
  * way web's three-tier approach is.
  */
 import { Share } from 'react-native';
+import { withDailyChallengeLink } from '@wordplay/engine/links';
 
 export interface ShareResult {
   success: boolean;
@@ -17,7 +18,7 @@ export interface ShareResult {
 
 export async function shareChallengeResult(shareText: string): Promise<ShareResult> {
   try {
-    const result = await Share.share({ message: shareText });
+    const result = await Share.share({ message: withDailyChallengeLink(shareText) });
     if (result.action === Share.dismissedAction) {
       return { success: false, method: 'dismissed' };
     }

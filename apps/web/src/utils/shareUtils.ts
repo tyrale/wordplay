@@ -5,6 +5,8 @@
  * and clipboard fallback for challenge completion results.
  */
 
+import { withDailyChallengeLink } from '@wordplay/engine/links';
+
 export interface ShareData {
   title?: string;
   text: string;
@@ -117,8 +119,8 @@ export async function shareChallengeResult(
   shareText: string
 ): Promise<ShareResult> {
   const result = await shareContent({
-    title: 'Reword Challenge Result',
-    text: shareText,
+    title: 'Reword Daily Challenge',
+    text: withDailyChallengeLink(shareText),
   });
 
   return result;
