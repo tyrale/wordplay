@@ -8,7 +8,7 @@ import './ThemeShowcase.css';
 const ThemeShowcase: React.FC = () => {
   return (
     <div className="theme-showcase">
-      <h1 className="theme-showcase__title">WordPlay Theme Gallery</h1>
+      <h1 className="theme-showcase__title">Reword Theme Gallery</h1>
       <p className="theme-showcase__subtitle">
         All {availableThemes.length} available themes with sample game elements
       </p>
@@ -104,7 +104,7 @@ const meta: Meta<typeof ThemeShowcase> = {
     docs: {
       description: {
         component:
-          'A comprehensive showcase of all available WordPlay themes with sample game elements and color swatches.',
+          'A comprehensive showcase of all available Reword themes with sample game elements and color swatches.',
       },
     },
   },

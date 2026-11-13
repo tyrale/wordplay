@@ -43,7 +43,7 @@ export function isClipboardSupported(): boolean {
  * Share content using the best available method
  */
 export async function shareContent(data: ShareData): Promise<ShareResult> {
-  const { title = 'WordPlay Challenge', text, url } = data;
+  const { title = 'Reword Challenge', text, url } = data;
 
   // Try Web Share API first (mobile browsers, some desktop)
   if (isWebShareSupported()) {
@@ -117,7 +117,7 @@ export async function shareChallengeResult(
   shareText: string
 ): Promise<ShareResult> {
   const result = await shareContent({
-    title: 'WordPlay Challenge Result',
+    title: 'Reword Challenge Result',
     text: shareText,
   });
 

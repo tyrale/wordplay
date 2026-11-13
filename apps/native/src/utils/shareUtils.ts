@@ -32,8 +32,8 @@ export async function shareChallengeResult(shareText: string): Promise<ShareResu
 export async function shareInviteCode(inviteCode: string): Promise<ShareResult> {
   try {
     const result = await Share.share({
-      message: `Join my Wordplay game with code ${inviteCode}`,
-      title: 'Join my Wordplay game'
+      message: `Join my Reword game with code ${inviteCode}`,
+      title: 'Join my Reword game'
     });
     if (result.action === Share.dismissedAction) {
       return { success: false, method: 'dismissed' };
