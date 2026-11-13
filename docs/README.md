@@ -34,6 +34,14 @@ This folder is organized by category so it's clear where to find (or add) inform
 | ----------------------------------------- | ----------------------------------------------- |
 | [DEPLOYMENT.md](deployment/DEPLOYMENT.md) | Production deployment on Vercel, the only host. |
 
+## 📣 launch/ — Marketing, community, and launch
+
+| File                                        | Purpose                                                                       |
+| ------------------------------------------- | ----------------------------------------------------------------------------- |
+| [LAUNCH_PLAN.md](launch/LAUNCH_PLAN.md)     | Canonical marketing, launch, website and community plan (+ execution status). |
+| [DISCORD_SETUP.md](launch/DISCORD_SETUP.md) | Step-by-step Discord server build with copy-paste rules/welcome text.         |
+| [LAUNCH_POSTS.md](launch/LAUNCH_POSTS.md)   | Draft copy for invites, Reddit, Product Hunt, press and short video.          |
+
 ## 📋 project/ — Status, history, and planning
 
 | File                                                           | Purpose                                                                                         |

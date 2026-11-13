@@ -393,7 +393,7 @@ describe('Challenge Engine', () => {
       
       const sharingText = challengeEngine.generateSharingText(completedChallenge);
       
-      expect(sharingText).toContain('Challenge #');
+      expect(sharingText).toContain('Reword #');
       expect(sharingText).toContain(challenge.startWord);
       expect(sharingText).toContain(challenge.targetWord);
       
@@ -412,7 +412,7 @@ describe('Challenge Engine', () => {
       const failedChallenge = await challengeEngine.forfeitChallenge(challenge);
       const sharingText = challengeEngine.generateSharingText(failedChallenge);
       
-      expect(sharingText).toContain('Challenge #');
+      expect(sharingText).toContain('Reword #');
       expect(sharingText).toContain(' ❌\n'); // Should have red X on the challenge # line, words on their own line
       expect(sharingText).toContain(challenge.startWord);
       expect(sharingText).toContain(challenge.targetWord);
