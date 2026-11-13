@@ -8,8 +8,18 @@ import { WordPathGraphProvider } from '../../providers/WordPathGraphProvider';
 import { VanityFilterProvider } from '../../contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from '../../contexts/MechanicsSettingsContext';
 import { RoundLengthProvider } from '../../contexts/RoundLengthContext';
+import { Linking } from 'react-native';
 import { Menu } from '../Menu';
 import type { MenuProps } from '../Menu';
+import { deleteMyData, restartApp } from '../../lib/deleteMyData';
+import { PRIVACY_POLICY_URL } from '../../lib/links';
+
+jest.mock('../../lib/deleteMyData', () => ({
+  deleteMyData: jest.fn(),
+  restartApp: jest.fn()
+}));
+const mockDeleteMyData = deleteMyData as jest.MockedFunction<typeof deleteMyData>;
+const mockRestartApp = restartApp as jest.MockedFunction<typeof restartApp>;
 
 function Unlocker({
   words,
@@ -257,6 +267,59 @@ describe('native Menu', () => {
     // Back at the menu (not closed to the caller) - "about" is still reachable.
     expect(screen.getByText('reset unlocks (debug)')).toBeTruthy();
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('"privacy" (about section) opens the public privacy policy', async () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    renderMenu();
+    await waitFor(() => expect(screen.getByText('about')).toBeTruthy());
+    fireEvent.press(screen.getByText('about'));
+    fireEvent.press(await screen.findByText('privacy'));
+    expect(openURL).toHaveBeenCalledWith(PRIVACY_POLICY_URL);
+    openURL.mockRestore();
+  });
+
+  describe('"delete my data" (about section)', () => {
+    beforeEach(() => {
+      mockDeleteMyData.mockReset();
+      mockRestartApp.mockReset();
+    });
+
+    async function openDeleteConfirmation(onClose: jest.Mock) {
+      renderMenu({ onClose });
+      await waitFor(() => expect(screen.getByText('about')).toBeTruthy());
+      fireEvent.press(screen.getByText('about'));
+      fireEvent.press(await screen.findByText('delete my data'));
+      // The menu closes so the confirmation isn't hidden behind its Modal.
+      expect(onClose).toHaveBeenCalled();
+      await screen.findByText('delete forever');
+    }
+
+    it('asks for confirmation, and cancel deletes nothing', async () => {
+      await openDeleteConfirmation(jest.fn());
+      fireEvent.press(screen.getByText('cancel'));
+      await waitFor(() => expect(screen.queryByText('delete forever')).toBeNull());
+      expect(mockDeleteMyData).not.toHaveBeenCalled();
+    });
+
+    it('confirming deletes the data and restarts the app', async () => {
+      mockDeleteMyData.mockResolvedValue({ deletedServerAccount: true });
+      mockRestartApp.mockResolvedValue(true);
+      await openDeleteConfirmation(jest.fn());
+
+      fireEvent.press(screen.getByText('delete forever'));
+      await waitFor(() => expect(mockRestartApp).toHaveBeenCalled());
+      expect(mockDeleteMyData).toHaveBeenCalledTimes(1);
+    });
+
+    it('tells the player when deletion fails, and does not restart', async () => {
+      mockDeleteMyData.mockRejectedValue(new Error('Could not delete your online account: offline'));
+      await openDeleteConfirmation(jest.fn());
+
+      fireEvent.press(screen.getByText('delete forever'));
+      await screen.findByText(/Nothing was removed/);
+      expect(mockRestartApp).not.toHaveBeenCalled();
+    });
   });
 
   // Placed last in the file (not interleaved with the other tests above)
