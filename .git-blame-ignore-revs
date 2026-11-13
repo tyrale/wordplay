@@ -3,3 +3,6 @@
 
 # Apply Prettier across the codebase
 4ae587669e3b4c15812dcb86224c89fafbd6f294
+
+# Apply Prettier across apps/web (cleared the long-standing format:check failure)
+65411ada61f85afaa77597a873d53067c4273960
