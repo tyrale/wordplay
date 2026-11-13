@@ -122,6 +122,40 @@ describe('App navigation', () => {
     expect(screen.getByText('nobody')).toBeTruthy();
   });
 
+  /**
+   * Regression test for a real bug report: on iOS, dragging a letter of
+   * the word in play left/right triggered the native stack's swipe-back
+   * gesture and popped the game screen mid-drag. Gameplay screens turn
+   * that gesture off (App.tsx); Main keeps the platform default.
+   */
+  it('disables the iOS swipe-back gesture on gameplay screens so letter drags win', async () => {
+    await AsyncStorage.setItem(
+      'wordplay-unlock-state',
+      JSON.stringify({
+        themes: ['classic blue'],
+        mechanics: ['zen-mode'],
+        bots: ['basicBot'],
+        achievements: [],
+        reveals: [],
+        hasUsedReset: false
+      })
+    );
+
+    render(<App />);
+
+    await waitForSettled(() => expect(screen.getByText('nobody')).toBeTruthy());
+    fireEvent.press(screen.getByText('nobody'));
+    await waitForSettled(() => expect(screen.getByLabelText('Reset word')).toBeTruthy());
+
+    // One native screen per stack entry, in push order: Main, then Zen.
+    const nativeScreens = screen.UNSAFE_root.findAll(
+      (node: Parameters<Parameters<typeof screen.UNSAFE_root.findAll>[0]>[0]) => node.type === 'RNSScreen' && 'gestureEnabled' in node.props
+    );
+    expect(nativeScreens).toHaveLength(2);
+    expect(nativeScreens[0].props.gestureEnabled).not.toBe(false);
+    expect(nativeScreens[1].props.gestureEnabled).toBe(false);
+  });
+
   it('auto-triggers the tutorial the first time a bot game is ever started, and not on a second game', async () => {
     render(<App />);
 
