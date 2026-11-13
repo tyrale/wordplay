@@ -21,9 +21,9 @@ import {
   markDisplayNameConfirmed,
 } from '../../adapters/supabaseAuthAdapter';
 import { NamePromptOverlay } from './NamePromptOverlay';
-import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
-import { useRoundLength } from '../../contexts/RoundLengthContext';
-import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { useMechanicsSettings } from '../../contexts/mechanicsSettings';
+import { useRoundLength } from '../../contexts/roundLength';
+import { useUnlockSystem } from '../unlock/unlockContext';
 import './MultiplayerLobby.css';
 
 // Starting-word-length mechanics a host might have unlocked/toggled on -
@@ -68,10 +68,6 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
   const [joinedPlayers, setJoinedPlayers] = useState<GameJoinInfo['players']>(
     []
   );
-  // Cleans up the realtime channel + polling fallback from the most recent
-  // handleCreateInvite call, so a stale one doesn't linger if the host backs
-  // out or creates another game before the first settles.
-  const createCleanupRef = useRef<(() => void) | null>(null);
 
   // The settings that apply to *every* player in a multiplayer game, not
   // just the host - sourced from the host's own personal settings at
@@ -103,7 +99,6 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
 
   useEffect(() => {
     return () => {
-      createCleanupRef.current?.();
       // If a search is still in flight when this component unmounts (e.g.
       // the player navigated away without hitting "Cancel Search"), make
       // sure it's actually torn down - otherwise its realtime channel and

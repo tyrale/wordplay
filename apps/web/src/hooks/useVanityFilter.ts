@@ -3,7 +3,7 @@
  * Now uses centralized context for shared state across all components
  */
 
-import { useVanityFilter as useVanityFilterContext } from '../contexts/VanityFilterContext';
+import { useVanityFilter as useVanityFilterContext } from '../contexts/vanityFilter';
 import type { VanityState } from '@wordplay/engine/dictionary';
 import type { WordDataDependencies } from '@wordplay/engine/interfaces';
 

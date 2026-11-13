@@ -7,7 +7,10 @@
  * fallback for browsers without IndexedDB support.
  */
 
-import type { PlayerStats, PlayerStatsDependencies } from '@wordplay/engine/interfaces';
+import type {
+  PlayerStats,
+  PlayerStatsDependencies,
+} from '@wordplay/engine/interfaces';
 import { getInitialPlayerStats } from '@wordplay/engine/player-stats-definitions';
 
 const DB_NAME = 'wordplay-player-stats';
@@ -87,7 +90,10 @@ async function loadStateFromIndexedDB(): Promise<PlayerStats> {
       };
     });
   } catch (error) {
-    console.warn('Failed to load player stats from IndexedDB, using initial state:', error);
+    console.warn(
+      'Failed to load player stats from IndexedDB, using initial state:',
+      error
+    );
     return getInitialPlayerStats();
   }
 }
@@ -99,7 +105,10 @@ async function saveStateToIndexedDB(state: PlayerStats): Promise<void> {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
-      const request = store.put({ data: state, timestamp: Date.now() }, STATE_KEY);
+      const request = store.put(
+        { data: state, timestamp: Date.now() },
+        STATE_KEY
+      );
 
       request.onerror = () => {
         reject(new Error(`Failed to save player stats: ${request.error}`));
@@ -126,7 +135,7 @@ export function createBrowserPlayerStatsDependencies(): PlayerStatsDependencies 
   return {
     loadState: loadStateFromIndexedDB,
     saveState: saveStateToIndexedDB,
-    getTimestamp: () => Date.now()
+    getTimestamp: () => Date.now(),
   };
 }
 
@@ -161,7 +170,7 @@ export function createLocalStoragePlayerStatsDependencies(): PlayerStatsDependen
       }
     },
 
-    getTimestamp: () => Date.now()
+    getTimestamp: () => Date.now(),
   };
 }
 
@@ -172,5 +181,7 @@ const hasIndexedDB = typeof indexedDB !== 'undefined';
  * (IndexedDB preferred, localStorage fallback)
  */
 export function createPlayerStatsDependencies(): PlayerStatsDependencies {
-  return hasIndexedDB ? createBrowserPlayerStatsDependencies() : createLocalStoragePlayerStatsDependencies();
+  return hasIndexedDB
+    ? createBrowserPlayerStatsDependencies()
+    : createLocalStoragePlayerStatsDependencies();
 }

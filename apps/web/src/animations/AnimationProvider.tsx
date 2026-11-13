@@ -5,17 +5,10 @@
  * cross-platform animation capabilities to components.
  */
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { AnimationContext } from './animationContext';
 import type { AnimationContextValue, AnimationTheme, Animation } from './types';
 import { getDefaultTheme, getThemeByName, allThemes } from './themes';
-
-const AnimationContext = createContext<AnimationContextValue | null>(null);
 
 export interface AnimationProviderProps {
   children: React.ReactNode;
@@ -227,15 +220,4 @@ export const AnimationProvider: React.FC<AnimationProviderProps> = ({
       {children}
     </AnimationContext.Provider>
   );
-};
-
-// Hook to use animation context
-export const useAnimationContext = (): AnimationContextValue => {
-  const context = useContext(AnimationContext);
-  if (!context) {
-    throw new Error(
-      'useAnimationContext must be used within AnimationProvider'
-    );
-  }
-  return context;
 };

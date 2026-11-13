@@ -27,16 +27,8 @@ jobs:
       - name: Run ESLint (apps/web)
         run: npm run lint
 
-      # Known pre-existing failure as of the Phase 5 CI update (native
-      # port, see docs/project/REACT_NATIVE_PORT_PLAN.md) - apps/web has
-      # accumulated Prettier drift across ~130 files unrelated to the
-      # native port. Left enabled (not removed) so it's visible and
-      # doesn't silently regress further, but don't be surprised if this
-      # step is red on `main` until someone runs `prettier --write` across
-      # apps/web as its own dedicated cleanup.
       - name: Check Prettier formatting (apps/web)
         run: npm run format:check
-        continue-on-error: true
 
       # apps/web's own `build` script (further down) already runs `tsc -b`
       # as its first step, so a separate web typecheck step here would

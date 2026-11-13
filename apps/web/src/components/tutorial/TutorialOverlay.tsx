@@ -17,14 +17,14 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
   gameState,
   onSkip,
   onComplete,
-  onStepChange
+  onStepChange,
 }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [tutorialState, setTutorialState] = useState<TutorialState>({
     lastPendingWord: '',
     submittedWords: [],
     lastTurnHistoryLength: 0,
-    finalStepWordBaseline: undefined
+    finalStepWordBaseline: undefined,
   });
   const isAdvancingRef = useRef(false);
   const advanceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -52,10 +52,13 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
       setTutorialState((prev) => ({
         ...prev,
         submittedWords: [...prev.submittedWords, ...newWords],
-        lastTurnHistoryLength: historyLength
+        lastTurnHistoryLength: historyLength,
       }));
     } else {
-      setTutorialState((prev) => ({ ...prev, lastTurnHistoryLength: historyLength }));
+      setTutorialState((prev) => ({
+        ...prev,
+        lastTurnHistoryLength: historyLength,
+      }));
     }
   }, [gameState, tutorialState.lastTurnHistoryLength]);
 
@@ -63,12 +66,18 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
   // Polling (rather than mutation observers) keeps this resilient to re-renders in InteractiveGame.
   useEffect(() => {
     const poll = () => {
-      const wordBuilderLetters = document.querySelectorAll('.word-builder__letter');
+      const wordBuilderLetters = document.querySelectorAll(
+        '.word-builder__letter'
+      );
       if (wordBuilderLetters.length > 0) {
         const word = Array.from(wordBuilderLetters)
           .map((el) => el.textContent || '')
           .join('');
-        setTutorialState((prev) => (word && word !== prev.lastPendingWord ? { ...prev, lastPendingWord: word } : prev));
+        setTutorialState((prev) =>
+          word && word !== prev.lastPendingWord
+            ? { ...prev, lastPendingWord: word }
+            : prev
+        );
       }
     };
 
@@ -97,20 +106,26 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
     isAdvancingRef.current = true;
     const isLastStep = currentStepIndex === TUTORIAL_STEPS.length - 1;
 
-    advanceTimeoutRef.current = setTimeout(() => {
-      advanceTimeoutRef.current = null;
-      if (isLastStep) {
-        onComplete();
-      } else {
-        const nextIndex = currentStepIndex + 1;
-        const enteringFinalStep = nextIndex === TUTORIAL_STEPS.length - 1;
-        setCurrentStepIndex(nextIndex);
-        if (enteringFinalStep) {
-          setTutorialState((prev) => ({ ...prev, finalStepWordBaseline: prev.submittedWords.length }));
+    advanceTimeoutRef.current = setTimeout(
+      () => {
+        advanceTimeoutRef.current = null;
+        if (isLastStep) {
+          onComplete();
+        } else {
+          const nextIndex = currentStepIndex + 1;
+          const enteringFinalStep = nextIndex === TUTORIAL_STEPS.length - 1;
+          setCurrentStepIndex(nextIndex);
+          if (enteringFinalStep) {
+            setTutorialState((prev) => ({
+              ...prev,
+              finalStepWordBaseline: prev.submittedWords.length,
+            }));
+          }
+          isAdvancingRef.current = false;
         }
-        isAdvancingRef.current = false;
-      }
-    }, isLastStep ? 1200 : 500);
+      },
+      isLastStep ? 1200 : 500
+    );
   }, [gameState, tutorialState, currentStep, currentStepIndex, onComplete]);
 
   // Clear any pending advance timeout on unmount only.
@@ -140,7 +155,11 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({
           ))}
         </div>
 
-        <button className="tutorial-overlay__skip" onClick={onSkip} type="button">
+        <button
+          className="tutorial-overlay__skip"
+          onClick={onSkip}
+          type="button"
+        >
           Skip tutorial
         </button>
       </div>

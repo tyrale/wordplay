@@ -10,7 +10,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPlayerStatsEngine } from '@wordplay/engine/player-stats';
 import { getInitialPlayerStats } from '@wordplay/engine/player-stats-definitions';
 import { createPlayerStatsDependencies } from '../adapters/browserPlayerStatsAdapter';
-import type { PlayerStatsEngine, PlayerStats, GameResultSummary, ChallengeResultSummary, TurnHistory } from '@wordplay/engine/interfaces';
+import type {
+  PlayerStatsEngine,
+  PlayerStats,
+  GameResultSummary,
+  ChallengeResultSummary,
+  TurnHistory,
+} from '@wordplay/engine/interfaces';
 
 export interface UsePlayerStatsReturn {
   stats: PlayerStats;
@@ -18,7 +24,9 @@ export interface UsePlayerStatsReturn {
 
   recordMove: (move: TurnHistory) => Promise<PlayerStats>;
   recordGameResult: (result: GameResultSummary) => Promise<PlayerStats>;
-  recordChallengeResult: (result: ChallengeResultSummary) => Promise<PlayerStats>;
+  recordChallengeResult: (
+    result: ChallengeResultSummary
+  ) => Promise<PlayerStats>;
   recordUnlockEarned: () => Promise<PlayerStats>;
   resetStats: () => Promise<void>;
 }
@@ -60,44 +68,53 @@ export function usePlayerStats(): UsePlayerStatsReturn {
     };
   }, []);
 
-  const recordMove = useCallback(async (move: TurnHistory): Promise<PlayerStats> => {
-    if (!engineRef.current) return stats;
+  const recordMove = useCallback(
+    async (move: TurnHistory): Promise<PlayerStats> => {
+      if (!engineRef.current) return stats;
 
-    try {
-      const newStats = await engineRef.current.recordMove(move);
-      setStats(newStats);
-      return newStats;
-    } catch (error) {
-      console.error('Error recording move:', error);
-      return stats;
-    }
-  }, [stats]);
+      try {
+        const newStats = await engineRef.current.recordMove(move);
+        setStats(newStats);
+        return newStats;
+      } catch (error) {
+        console.error('Error recording move:', error);
+        return stats;
+      }
+    },
+    [stats]
+  );
 
-  const recordGameResult = useCallback(async (result: GameResultSummary): Promise<PlayerStats> => {
-    if (!engineRef.current) return stats;
+  const recordGameResult = useCallback(
+    async (result: GameResultSummary): Promise<PlayerStats> => {
+      if (!engineRef.current) return stats;
 
-    try {
-      const newStats = await engineRef.current.recordGameResult(result);
-      setStats(newStats);
-      return newStats;
-    } catch (error) {
-      console.error('Error recording game result:', error);
-      return stats;
-    }
-  }, [stats]);
+      try {
+        const newStats = await engineRef.current.recordGameResult(result);
+        setStats(newStats);
+        return newStats;
+      } catch (error) {
+        console.error('Error recording game result:', error);
+        return stats;
+      }
+    },
+    [stats]
+  );
 
-  const recordChallengeResult = useCallback(async (result: ChallengeResultSummary): Promise<PlayerStats> => {
-    if (!engineRef.current) return stats;
+  const recordChallengeResult = useCallback(
+    async (result: ChallengeResultSummary): Promise<PlayerStats> => {
+      if (!engineRef.current) return stats;
 
-    try {
-      const newStats = await engineRef.current.recordChallengeResult(result);
-      setStats(newStats);
-      return newStats;
-    } catch (error) {
-      console.error('Error recording challenge result:', error);
-      return stats;
-    }
-  }, [stats]);
+      try {
+        const newStats = await engineRef.current.recordChallengeResult(result);
+        setStats(newStats);
+        return newStats;
+      } catch (error) {
+        console.error('Error recording challenge result:', error);
+        return stats;
+      }
+    },
+    [stats]
+  );
 
   const recordUnlockEarned = useCallback(async (): Promise<PlayerStats> => {
     if (!engineRef.current) return stats;
@@ -130,6 +147,6 @@ export function usePlayerStats(): UsePlayerStatsReturn {
     recordGameResult,
     recordChallengeResult,
     recordUnlockEarned,
-    resetStats
+    resetStats,
   };
 }

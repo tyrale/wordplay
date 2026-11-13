@@ -1,16 +1,25 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ThemeProvider, useTheme, InteractiveGame, MainScreen, MultiplayerLobby, MultiplayerGame } from './components';
+import {
+  ThemeProvider,
+  useTheme,
+  InteractiveGame,
+  MainScreen,
+  MultiplayerLobby,
+  MultiplayerGame,
+} from './components';
 import type { MultiplayerGameResult } from './components/multiplayer/MultiplayerGame';
 import { ChallengeGame } from './components/challenge/ChallengeGame';
 import { ZenGame } from './components/zen/ZenGame';
 import { TutorialOverlay } from './components/tutorial/TutorialOverlay';
 import { TUTORIAL_INITIAL_CONFIG } from './components/tutorial/tutorialSteps';
 import { AnimationProvider } from './animations';
-import { UnlockProvider, useUnlockSystem } from './components/unlock/UnlockProvider';
+import { UnlockProvider } from './components/unlock/UnlockProvider';
+import { useUnlockSystem } from './components/unlock/unlockContext';
 import { WordPathGraphProvider } from './contexts/WordPathGraphContext';
 import { VanityFilterProvider } from './contexts/VanityFilterContext';
 import { MechanicsSettingsProvider } from './contexts/MechanicsSettingsContext';
-import { RoundLengthProvider, useRoundLength } from './contexts/RoundLengthContext';
+import { RoundLengthProvider } from './contexts/RoundLengthContext';
+import { useRoundLength } from './contexts/roundLength';
 import ResponsiveTest from './components/game/ResponsiveTest';
 import { AlertOverlay } from './components/ui/AlertOverlay';
 import { alertCopy, pickAlertVariant } from './content/alertCopy';
@@ -22,19 +31,38 @@ import { clearActiveGame } from './adapters/browserGameSaveAdapter';
 import { ensureAnonymousSession } from './adapters/supabaseAuthAdapter';
 import type { GameState } from '@wordplay/engine/interfaces';
 import { defaultTheme } from '@wordplay/theme/theme';
-import { BOSS_BATTLE_MAX_TURNS, BOSS_STAGES, BOSS_THEME_NAMES, getBossTheme, getThemeByName } from './data/bossBattle';
+import {
+  BOSS_BATTLE_MAX_TURNS,
+  BOSS_STAGES,
+  BOSS_THEME_NAMES,
+  getBossTheme,
+  getThemeByName,
+} from './data/bossBattle';
 import type { BossStage } from './data/bossBattle';
 import { useBossMusic } from './hooks/useBossMusic';
 import './App.css';
 
-type AppState = 'start' | 'main' | 'game' | 'challenge' | 'zen' | 'quitter' | 'winner' | 'loser' | 'multiplayer-lobby' | 'multiplayer-game' | 'multiplayer-resigned' | 'boss';
+type AppState =
+  | 'start'
+  | 'main'
+  | 'game'
+  | 'challenge'
+  | 'zen'
+  | 'quitter'
+  | 'winner'
+  | 'loser'
+  | 'multiplayer-lobby'
+  | 'multiplayer-game'
+  | 'multiplayer-resigned'
+  | 'boss';
 
 /**
  * Sub-state of the "GUS" boss battle encounter (only meaningful while
  * appState === 'boss'). 'battle' renders the boss InteractiveGame; the rest
  * render a full-screen AlertOverlay and tear down the board.
  */
-type BossPhase = 'idle' | 'intro' | 'battle' | 'advance' | 'victory' | 'defeat' | 'timeout';
+type BossPhase =
+  'idle' | 'intro' | 'battle' | 'advance' | 'victory' | 'defeat' | 'timeout';
 
 interface ConfirmationState {
   isVisible: boolean;
@@ -65,7 +93,11 @@ function AppContent() {
   const { isUnlocked, isLoading: unlocksLoading } = useUnlockSystem();
   const initialMultiplayerGameId = getMultiplayerGameIdFromUrl();
   const [appState, setAppState] = useState<AppState>(
-    initialMultiplayerGameId ? 'multiplayer-game' : isDailyChallengeLink() ? 'challenge' : 'start'
+    initialMultiplayerGameId
+      ? 'multiplayer-game'
+      : isDailyChallengeLink()
+        ? 'challenge'
+        : 'start'
   );
 
   // Consume the one-shot ?daily param so leaving the challenge and then
@@ -77,7 +109,9 @@ function AppContent() {
     window.history.replaceState({}, '', url.toString());
   }, []);
   const [selectedBotId, setSelectedBotId] = useState<string>('basicBot');
-  const [multiplayerGameId, setMultiplayerGameId] = useState<string | null>(initialMultiplayerGameId);
+  const [multiplayerGameId, setMultiplayerGameId] = useState<string | null>(
+    initialMultiplayerGameId
+  );
   const [gameResults, setGameResults] = useState<{
     winner: string | null;
     finalScores: { human: number; bot: number };
@@ -85,7 +119,12 @@ function AppContent() {
     /** Full scoreboard for multiplayer games with 3+ players, so the
      * end-of-game overlay can list everyone rather than just you + one
      * opponent. */
-    allPlayers?: { id: string; name: string; score: number; isLocal: boolean }[];
+    allPlayers?: {
+      id: string;
+      name: string;
+      score: number;
+      isLocal: boolean;
+    }[];
   } | null>(null);
   // Tracks whether the winner/loser overlay currently showing is for a
   // vs-human multiplayer game, so closing it returns to the multiplayer
@@ -102,36 +141,46 @@ function AppContent() {
   // Theme name to restore if the player loses/resigns/times out (the theme
   // they had immediately before GUS triggered the encounter). Null only
   // outside an active encounter.
-  const [bossPrevThemeName, setBossPrevThemeName] = useState<string | null>(null);
+  const [bossPrevThemeName, setBossPrevThemeName] = useState<string | null>(
+    null
+  );
   // Bumped per boss battle so each stage mounts a fresh InteractiveGame.
   const [bossBattleKey, setBossBattleKey] = useState(0);
 
   // Tutorial: layered on top of a real bot game (not a separate game instance)
   const [tutorialActive, setTutorialActive] = useState(false);
   const [tutorialStepId, setTutorialStepId] = useState(1);
-  const [tutorialGameState, setTutorialGameState] = useState<GameState | null>(null);
+  const [tutorialGameState, setTutorialGameState] = useState<GameState | null>(
+    null
+  );
   // Bumped every time a bot/tutorial game should start completely fresh (even if
   // InteractiveGame is already mounted with the same botId) - forces React to
   // remount it, which discards the old game manager instead of silently
   // continuing an in-progress game underneath the tutorial's forced start word.
   const [gameInstanceKey, setGameInstanceKey] = useState(0);
-  const [confirmationState, setConfirmationState] = useState<ConfirmationState>({
-    isVisible: false,
-    lines: [],
-    onConfirm: () => {}
-  });
+  const [confirmationState, setConfirmationState] = useState<ConfirmationState>(
+    {
+      isVisible: false,
+      lines: [],
+      onConfirm: () => {},
+    }
+  );
 
-  const showConfirmation = (lines: string[], meta: string | undefined, onConfirm: () => void) => {
+  const showConfirmation = (
+    lines: string[],
+    meta: string | undefined,
+    onConfirm: () => void
+  ) => {
     setConfirmationState({
       isVisible: true,
       lines,
       meta,
-      onConfirm
+      onConfirm,
     });
   };
 
   const hideConfirmation = () => {
-    setConfirmationState(prev => ({ ...prev, isVisible: false }));
+    setConfirmationState((prev) => ({ ...prev, isVisible: false }));
   };
 
   // Begins a fresh bot game with the tutorial layer active on top of it (used for
@@ -142,10 +191,13 @@ function AppContent() {
     setTutorialGameState(null);
     setTutorialActive(true);
     setAppState('game');
-    setGameInstanceKey(prev => prev + 1);
+    setGameInstanceKey((prev) => prev + 1);
   };
 
-  const handleStartGame = (gameType: 'bot' | 'challenge' | 'tutorial' | 'zen', botId?: string) => {
+  const handleStartGame = (
+    gameType: 'bot' | 'challenge' | 'tutorial' | 'zen',
+    botId?: string
+  ) => {
     if (gameType === 'bot' && botId) {
       // Check if we need confirmation for game transition
       if (appState === 'challenge' || appState === 'zen') {
@@ -158,7 +210,7 @@ function AppContent() {
             setTutorialStepId(1);
             setTutorialGameState(null);
             setAppState('game');
-            setGameInstanceKey(prev => prev + 1);
+            setGameInstanceKey((prev) => prev + 1);
             hideConfirmation();
           }
         );
@@ -170,13 +222,13 @@ function AppContent() {
         setTutorialStepId(1);
         setTutorialGameState(null);
         setAppState('game');
-        setGameInstanceKey(prev => prev + 1);
+        setGameInstanceKey((prev) => prev + 1);
       }
     } else if (gameType === 'challenge') {
       if (appState === 'game') {
         showConfirmation(
           ['START', 'CHALLENGE?'],
-          'Exit the current game and start today\'s challenge?',
+          "Exit the current game and start today's challenge?",
           () => {
             setAppState('challenge');
             hideConfirmation();
@@ -206,14 +258,17 @@ function AppContent() {
     }
   };
 
-  const handleGameEnd = (winner: string | null, finalScores: { human: number; bot: number }) => {
+  const handleGameEnd = (
+    winner: string | null,
+    finalScores: { human: number; bot: number }
+  ) => {
     // Store game results for overlay display
     setGameResults({
       winner,
       finalScores,
-      botName: getBotDisplayName(selectedBotId)
+      botName: getBotDisplayName(selectedBotId),
     });
-    
+
     // Show appropriate overlay based on winner
     if (winner === 'human') {
       setAppState('winner');
@@ -238,7 +293,9 @@ function AppContent() {
   };
 
   const handleChallengeComplete = (completed: boolean, stepCount: number) => {
-    console.log(`Challenge ${completed ? 'completed' : 'ended'} in ${stepCount} steps`);
+    console.log(
+      `Challenge ${completed ? 'completed' : 'ended'} in ${stepCount} steps`
+    );
     // Challenge completion is handled within the ChallengeGame component
     // Return to main when user clicks back
   };
@@ -260,7 +317,9 @@ function AppContent() {
     // starting a new bot game afterwards would restore the resigned game
     // instead of beginning fresh. Show the quitter overlay animation (for
     // bot games only).
-    clearActiveGame().catch(err => console.warn('Failed to clear saved game on resign:', err));
+    clearActiveGame().catch((err) =>
+      console.warn('Failed to clear saved game on resign:', err)
+    );
     setAppState('quitter');
   };
 
@@ -314,18 +373,20 @@ function AppContent() {
     // The game GUS was played in is being abandoned - clear its single-player
     // auto-save so starting a new bot game later begins fresh instead of
     // restoring the abandoned (unfinished) game. (No-op for multiplayer.)
-    clearActiveGame().catch(err => console.warn('Failed to clear saved game on boss trigger:', err));
+    clearActiveGame().catch((err) =>
+      console.warn('Failed to clear saved game on boss trigger:', err)
+    );
   };
 
   // Intro alert closed (X) -> start the first boss battle.
   const startBossBattle = () => {
-    setBossBattleKey(k => k + 1);
+    setBossBattleKey((k) => k + 1);
     setBossPhase('battle');
   };
 
   // Advance alert closed (X) -> start the next stage's boss battle.
   const advanceBossBattle = () => {
-    setBossBattleKey(k => k + 1);
+    setBossBattleKey((k) => k + 1);
     setBossPhase('battle');
   };
 
@@ -334,7 +395,10 @@ function AppContent() {
   // `winner` is ambiguous on ties, so we decide strictly from the scores).
   // Win advances the chain (or ends it victoriously at giga); lose/tie ends
   // the encounter in defeat.
-  const handleBossGameEnd = (_winner: string | null, finalScores: { human: number; bot: number }) => {
+  const handleBossGameEnd = (
+    _winner: string | null,
+    finalScores: { human: number; bot: number }
+  ) => {
     if (finalScores.human > finalScores.bot) {
       const next = BOSS_STAGES[bossStage].next;
       if (next) {
@@ -357,14 +421,18 @@ function AppContent() {
 
   // The whole-game boss countdown hit zero -> player loses by timeout.
   const handleBossTimeout = () => {
-    clearActiveGame().catch(err => console.warn('Failed to clear saved game on boss timeout:', err));
+    clearActiveGame().catch((err) =>
+      console.warn('Failed to clear saved game on boss timeout:', err)
+    );
     revertBossTheme();
     setBossPhase('timeout');
   };
 
   // Resigned mid-boss-battle -> same as a loss (encounter ends, theme reverts).
   const handleBossResign = () => {
-    clearActiveGame().catch(err => console.warn('Failed to clear saved game on boss resign:', err));
+    clearActiveGame().catch((err) =>
+      console.warn('Failed to clear saved game on boss resign:', err)
+    );
     revertBossTheme();
     setBossPhase('defeat');
   };
@@ -385,9 +453,15 @@ function AppContent() {
   // stops when the encounter resolves (victory/defeat/timeout). bossStage is already
   // advanced to the upcoming stage before the advance alert shows, so each alert
   // plays the music for the battle it's introducing.
-  const bossMusicActive = appState === 'boss' &&
-    (bossPhase === 'intro' || bossPhase === 'battle' || bossPhase === 'advance');
-  useBossMusic({ enabled: bossMusicActive, stage: bossMusicActive ? bossStage : null });
+  const bossMusicActive =
+    appState === 'boss' &&
+    (bossPhase === 'intro' ||
+      bossPhase === 'battle' ||
+      bossPhase === 'advance');
+  useBossMusic({
+    enabled: bossMusicActive,
+    stage: bossMusicActive ? bossStage : null,
+  });
 
   const handleStartMultiplayer = () => {
     setAppState('multiplayer-lobby');
@@ -414,7 +488,15 @@ function AppContent() {
   // view") instead of the main menu once it's dismissed. A resignation
   // (by either player) shows a distinct "match ended" overlay instead,
   // since it isn't a fairly-earned win/lose result.
-  const handleMultiplayerGameEnd = ({ winnerId, localPlayerId, localScore, opponentScore, opponentName, resigned, allPlayers }: MultiplayerGameResult) => {
+  const handleMultiplayerGameEnd = ({
+    winnerId,
+    localPlayerId,
+    localScore,
+    opponentScore,
+    opponentName,
+    resigned,
+    allPlayers,
+  }: MultiplayerGameResult) => {
     setIsMultiplayerResult(true);
 
     if (resigned) {
@@ -423,10 +505,11 @@ function AppContent() {
     }
 
     setGameResults({
-      winner: winnerId === null ? null : winnerId === localPlayerId ? 'human' : 'bot',
+      winner:
+        winnerId === null ? null : winnerId === localPlayerId ? 'human' : 'bot',
       finalScores: { human: localScore, bot: opponentScore },
       botName: opponentName,
-      allPlayers
+      allPlayers,
     });
     setAppState(winnerId === localPlayerId ? 'winner' : 'loser');
   };
@@ -478,10 +561,12 @@ function AppContent() {
   const renderGameResultsMeta = () => {
     if (!gameResults?.finalScores) return null;
     if (gameResults.allPlayers && gameResults.allPlayers.length > 2) {
-      const sorted = [...gameResults.allPlayers].sort((a, b) => b.score - a.score);
+      const sorted = [...gameResults.allPlayers].sort(
+        (a, b) => b.score - a.score
+      );
       return (
         <>
-          {sorted.map(player => (
+          {sorted.map((player) => (
             <div key={player.id}>
               {player.isLocal ? 'You' : player.name}: {player.score}
             </div>
@@ -492,7 +577,9 @@ function AppContent() {
     return (
       <>
         <div>You: {gameResults.finalScores.human}</div>
-        <div>{gameResults.botName || 'Bot'}: {gameResults.finalScores.bot}</div>
+        <div>
+          {gameResults.botName || 'Bot'}: {gameResults.finalScores.bot}
+        </div>
       </>
     );
   };
@@ -503,12 +590,21 @@ function AppContent() {
   const isQuitterResult = appState === 'quitter';
   const isWinnerResult = appState === 'winner';
   const isLoserResult = appState === 'loser';
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const quitCopy = useMemo(() => pickAlertVariant(alertCopy.quit), [isQuitterResult]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const winCopy = useMemo(() => pickAlertVariant(alertCopy.win), [isWinnerResult]);
+  const quitCopy = useMemo(
+    () => pickAlertVariant(alertCopy.quit),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isQuitterResult]
+  );
+  const winCopy = useMemo(
+    () => pickAlertVariant(alertCopy.win),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isWinnerResult]
+  );
   const loseCopy = useMemo(
-    () => pickAlertVariant(isMultiplayerResult ? alertCopy.losePvp : alertCopy.lose),
+    () =>
+      pickAlertVariant(
+        isMultiplayerResult ? alertCopy.losePvp : alertCopy.lose
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isLoserResult, isMultiplayerResult]
   );
@@ -522,7 +618,9 @@ function AppContent() {
   // just multiplayer), so single-player unlocks also count toward the
   // community-wide unlock stats. No-ops if Supabase isn't configured.
   React.useEffect(() => {
-    ensureAnonymousSession().catch(err => console.warn('Failed to establish anonymous session:', err));
+    ensureAnonymousSession().catch((err) =>
+      console.warn('Failed to establish anonymous session:', err)
+    );
   }, []);
 
   // Reload guard: if the app was reloaded while a boss battle was mid-flight,
@@ -537,7 +635,10 @@ function AppContent() {
     if (unlocksLoading || bossGuardRanRef.current) return;
     bossGuardRanRef.current = true;
     if (bossPhase !== 'idle') return;
-    if (BOSS_THEME_NAMES.includes(currentTheme.name) && !isUnlocked('theme', currentTheme.name)) {
+    if (
+      BOSS_THEME_NAMES.includes(currentTheme.name) &&
+      !isUnlocked('theme', currentTheme.name)
+    ) {
       setTheme(defaultTheme);
     }
   }, [unlocksLoading, bossPhase, currentTheme, isUnlocked, setTheme]);
@@ -545,180 +646,194 @@ function AppContent() {
   return (
     <VanityFilterProvider>
       <MechanicsSettingsProvider>
-      <AnimationProvider initialTheme="default">
-        <ResponsiveTest>
-        {appState === 'main' && (
-          <MainScreen onStartGame={handleStartGame} onStartMultiplayer={handleStartMultiplayer} />
-        )}
-              {appState === 'multiplayer-lobby' && (
-                <MultiplayerLobby onGameReady={handleMultiplayerGameReady} onBack={handleMultiplayerExit} />
-              )}
-              {appState === 'multiplayer-game' && multiplayerGameId && (
-                <MultiplayerGame
-                  gameId={multiplayerGameId}
-                  onExit={handleMultiplayerExit}
-                  onGameEnd={handleMultiplayerGameEnd}
-                  onBossTrigger={handleBossTrigger}
-                />
-              )}
-              {appState === 'game' && (
-                <div
-                  key={gameInstanceKey}
-                  className={`game-screen${tutorialActive ? ' tutorial-active' : ''}`}
-                  data-tutorial-step={tutorialActive ? tutorialStepId : undefined}
-                >
-                  <InteractiveGame
-                    config={
-                      tutorialActive
-                        ? { ...TUTORIAL_INITIAL_CONFIG, botId: selectedBotId }
-                        : {
-                            maxTurns: roundLength,
-                            allowBotPlayer: true,
-                            enableKeyLetters: true,
-                            enableLockedLetters: true,
-                            botId: selectedBotId
-                          }
-                    }
-                    onGameEnd={handleGameEnd}
-                    onResign={handleResign}
-                    onNavigateHome={handleNavigateHome}
-                    currentGameMode={tutorialActive ? 'tutorial' : 'bot'}
-                    onStartGame={handleStartGame}
-                    onGameStateChange={tutorialActive ? setTutorialGameState : undefined}
-                    disableLetterRemoval={tutorialActive && tutorialStepId === 3}
-                    // GUS triggers the boss battle encounter from any game mode.
-                    onBossTrigger={handleBossTrigger}
-                  />
-                  {tutorialActive && (
-                    <TutorialOverlay
-                      gameState={tutorialGameState}
-                      onSkip={handleTutorialSkip}
-                      onComplete={handleTutorialComplete}
-                      onStepChange={setTutorialStepId}
-                    />
-                  )}
-                </div>
-              )}
-              {appState === 'boss' && bossPhase === 'battle' && (
-                <div
-                  key={bossBattleKey}
-                  className={`game-screen boss-battle boss-battle--${bossStage}`}
-                  data-boss-stage={bossStage}
-                  data-boss-theme={BOSS_STAGES[bossStage].themeName}
-                >
-                  <InteractiveGame
-                    config={{
-                      maxTurns: BOSS_BATTLE_MAX_TURNS,
-                      allowBotPlayer: true,
-                      enableKeyLetters: true,
-                      enableLockedLetters: true,
-                      botId: BOSS_STAGES[bossStage].botId,
-                      // Whole-game countdown for this boss stage (160/190/220s).
-                      gameTimeLimitSeconds: BOSS_STAGES[bossStage].timeLimitSeconds
-                    }}
-                    onGameEnd={handleBossGameEnd}
-                    onResign={handleBossResign}
-                    onGameTimeout={handleBossTimeout}
-                    onNavigateHome={handleNavigateHome}
-                    currentGameMode="boss"
-                    bossStage={bossStage}
-                  />
-                </div>
-              )}
-              {appState === 'challenge' && (
-                <ChallengeGame
-                  onComplete={handleChallengeComplete}
-                  onBack={handleChallengeBack}
+        <AnimationProvider initialTheme="default">
+          <ResponsiveTest>
+            {appState === 'main' && (
+              <MainScreen
+                onStartGame={handleStartGame}
+                onStartMultiplayer={handleStartMultiplayer}
+              />
+            )}
+            {appState === 'multiplayer-lobby' && (
+              <MultiplayerLobby
+                onGameReady={handleMultiplayerGameReady}
+                onBack={handleMultiplayerExit}
+              />
+            )}
+            {appState === 'multiplayer-game' && multiplayerGameId && (
+              <MultiplayerGame
+                gameId={multiplayerGameId}
+                onExit={handleMultiplayerExit}
+                onGameEnd={handleMultiplayerGameEnd}
+                onBossTrigger={handleBossTrigger}
+              />
+            )}
+            {appState === 'game' && (
+              <div
+                key={gameInstanceKey}
+                className={`game-screen${tutorialActive ? ' tutorial-active' : ''}`}
+                data-tutorial-step={tutorialActive ? tutorialStepId : undefined}
+              >
+                <InteractiveGame
+                  config={
+                    tutorialActive
+                      ? { ...TUTORIAL_INITIAL_CONFIG, botId: selectedBotId }
+                      : {
+                          maxTurns: roundLength,
+                          allowBotPlayer: true,
+                          enableKeyLetters: true,
+                          enableLockedLetters: true,
+                          botId: selectedBotId,
+                        }
+                  }
+                  onGameEnd={handleGameEnd}
+                  onResign={handleResign}
                   onNavigateHome={handleNavigateHome}
+                  currentGameMode={tutorialActive ? 'tutorial' : 'bot'}
                   onStartGame={handleStartGame}
+                  onGameStateChange={
+                    tutorialActive ? setTutorialGameState : undefined
+                  }
+                  disableLetterRemoval={tutorialActive && tutorialStepId === 3}
+                  // GUS triggers the boss battle encounter from any game mode.
                   onBossTrigger={handleBossTrigger}
                 />
-              )}
-              {appState === 'zen' && (
-                <ZenGame
+                {tutorialActive && (
+                  <TutorialOverlay
+                    gameState={tutorialGameState}
+                    onSkip={handleTutorialSkip}
+                    onComplete={handleTutorialComplete}
+                    onStepChange={setTutorialStepId}
+                  />
+                )}
+              </div>
+            )}
+            {appState === 'boss' && bossPhase === 'battle' && (
+              <div
+                key={bossBattleKey}
+                className={`game-screen boss-battle boss-battle--${bossStage}`}
+                data-boss-stage={bossStage}
+                data-boss-theme={BOSS_STAGES[bossStage].themeName}
+              >
+                <InteractiveGame
+                  config={{
+                    maxTurns: BOSS_BATTLE_MAX_TURNS,
+                    allowBotPlayer: true,
+                    enableKeyLetters: true,
+                    enableLockedLetters: true,
+                    botId: BOSS_STAGES[bossStage].botId,
+                    // Whole-game countdown for this boss stage (160/190/220s).
+                    gameTimeLimitSeconds:
+                      BOSS_STAGES[bossStage].timeLimitSeconds,
+                  }}
+                  onGameEnd={handleBossGameEnd}
+                  onResign={handleBossResign}
+                  onGameTimeout={handleBossTimeout}
                   onNavigateHome={handleNavigateHome}
-                  onStartGame={handleStartGame}
-                  onBossTrigger={handleBossTrigger}
+                  currentGameMode="boss"
+                  bossStage={bossStage}
                 />
-              )}
-              
-              {/* Start (title) Overlay - shown before the player first enters the main menu */}
-              <AlertOverlay
-                isVisible={appState === 'start'}
-                lines={[...alertCopy.start.lines]}
-                variant="start"
-                meta={alertCopy.start.meta}
-                onClose={() => setAppState('main')}
-                renderLine={(line) =>
-                  line === 'reword' ? (
-                    <>
-                      <span style={{ color: 'var(--theme-accent)' }}>re</span>
-                      <span style={{ color: 'var(--theme-text)' }}>word</span>
-                    </>
-                  ) : (
-                    line
-                  )
-                }
+              </div>
+            )}
+            {appState === 'challenge' && (
+              <ChallengeGame
+                onComplete={handleChallengeComplete}
+                onBack={handleChallengeBack}
+                onNavigateHome={handleNavigateHome}
+                onStartGame={handleStartGame}
+                onBossTrigger={handleBossTrigger}
               />
+            )}
+            {appState === 'zen' && (
+              <ZenGame
+                onNavigateHome={handleNavigateHome}
+                onStartGame={handleStartGame}
+                onBossTrigger={handleBossTrigger}
+              />
+            )}
 
-              {/* Confirmation Alert */}
-              <AlertOverlay
-                isVisible={confirmationState.isVisible}
-                lines={confirmationState.lines}
-                meta={confirmationState.meta}
-                actions={[{ label: 'yes', onClick: confirmationState.onConfirm }]}
-                onClose={hideConfirmation}
-              />
-              
-              {/* Quitter Overlay */}
-              <AlertOverlay
-                isVisible={appState === 'quitter'}
-                lines={[...quitCopy.lines]}
-                onClose={handleQuitterComplete}
-              />
-              
-              {/* Winner Overlay */}
-              <AlertOverlay
-                isVisible={appState === 'winner'}
-                lines={[...winCopy.lines]}
-                variant="win"
-                onClose={handleWinnerComplete}
-                meta={renderGameResultsMeta()}
-              />
-              
-              {/* Loser Overlay */}
-              <AlertOverlay
-                isVisible={appState === 'loser'}
-                lines={[...loseCopy.lines]}
-                variant="lose"
-                onClose={handleLoserComplete}
-                meta={renderGameResultsMeta()}
-              />
+            {/* Start (title) Overlay - shown before the player first enters the main menu */}
+            <AlertOverlay
+              isVisible={appState === 'start'}
+              lines={[...alertCopy.start.lines]}
+              variant="start"
+              meta={alertCopy.start.meta}
+              onClose={() => setAppState('main')}
+              renderLine={(line) =>
+                line === 'reword' ? (
+                  <>
+                    <span style={{ color: 'var(--theme-accent)' }}>re</span>
+                    <span style={{ color: 'var(--theme-text)' }}>word</span>
+                  </>
+                ) : (
+                  line
+                )
+              }
+            />
 
-              {/* Multiplayer Resigned Overlay - shown to both players when either resigns mid-game */}
-              <AlertOverlay
-                isVisible={appState === 'multiplayer-resigned'}
-                lines={[...alertCopy.multiplayerResigned.lines]}
-                onClose={handleMultiplayerResignedComplete}
-                meta={alertCopy.multiplayerResigned.meta}
-              />
+            {/* Confirmation Alert */}
+            <AlertOverlay
+              isVisible={confirmationState.isVisible}
+              lines={confirmationState.lines}
+              meta={confirmationState.meta}
+              actions={[{ label: 'yes', onClick: confirmationState.onConfirm }]}
+              onClose={hideConfirmation}
+            />
 
-              {/* "GUS" boss battle overlays. Each shows while appState === 'boss'
+            {/* Quitter Overlay */}
+            <AlertOverlay
+              isVisible={appState === 'quitter'}
+              lines={[...quitCopy.lines]}
+              onClose={handleQuitterComplete}
+            />
+
+            {/* Winner Overlay */}
+            <AlertOverlay
+              isVisible={appState === 'winner'}
+              lines={[...winCopy.lines]}
+              variant="win"
+              onClose={handleWinnerComplete}
+              meta={renderGameResultsMeta()}
+            />
+
+            {/* Loser Overlay */}
+            <AlertOverlay
+              isVisible={appState === 'loser'}
+              lines={[...loseCopy.lines]}
+              variant="lose"
+              onClose={handleLoserComplete}
+              meta={renderGameResultsMeta()}
+            />
+
+            {/* Multiplayer Resigned Overlay - shown to both players when either resigns mid-game */}
+            <AlertOverlay
+              isVisible={appState === 'multiplayer-resigned'}
+              lines={[...alertCopy.multiplayerResigned.lines]}
+              onClose={handleMultiplayerResignedComplete}
+              meta={alertCopy.multiplayerResigned.meta}
+            />
+
+            {/* "GUS" boss battle overlays. Each shows while appState === 'boss'
                   and the boss board is torn down (intro/advance) or just finished
                   (victory/defeat/timeout). Closing intro/advance starts the next
                   battle; closing victory/defeat/timeout returns to the main screen. */}
-              <AlertOverlay
-                isVisible={appState === 'boss' && bossPhase === 'intro'}
-                lines={[...alertCopy.boss.intro.lines]}
-                meta={alertCopy.boss.intro.meta}
-                onClose={startBossBattle}
-              />
-              {/* Gigaboss lightning-reveal shadow on the advance overlay (the
+            <AlertOverlay
+              isVisible={appState === 'boss' && bossPhase === 'intro'}
+              lines={[...alertCopy.boss.intro.lines]}
+              meta={alertCopy.boss.intro.meta}
+              onClose={startBossBattle}
+            />
+            {/* Gigaboss lightning-reveal shadow on the advance overlay (the
                   buildup to the final boss). bossStage is already 'giga' here
                   (advanced before the alert shows). The actual battle renders
                   its own copy inside InteractiveGame; this one covers the alert. */}
-              {appState === 'boss' && bossPhase === 'advance' && bossStage === 'giga' && (
-                <div className="boss-monster-bg boss-monster-bg--app" aria-hidden="true">
+            {appState === 'boss' &&
+              bossPhase === 'advance' &&
+              bossStage === 'giga' && (
+                <div
+                  className="boss-monster-bg boss-monster-bg--app"
+                  aria-hidden="true"
+                >
                   <div className="boss-monster-bg__lightning" />
                   <svg
                     className="boss-monster-bg__silhouette"
@@ -736,7 +851,7 @@ function AppContent() {
                   </svg>
                 </div>
               )}
-              {/* `bossStage` is already the *upcoming* stage by the time
+            {/* `bossStage` is already the *upcoming* stage by the time
                   `bossPhase` is 'advance' (handleBossGameEnd sets it before
                   setBossPhase('advance')), so this always names the boss
                   the player is about to face next, not the one they just
@@ -746,35 +861,45 @@ function AppContent() {
                   `isVisible` is false, so `alertCopy.boss.advance` (which
                   has no 'boss' entry - you can never "advance" into the
                   first stage) must never be indexed by it directly. */}
-              <AlertOverlay
-                isVisible={appState === 'boss' && bossPhase === 'advance'}
-                lines={[...(alertCopy.boss.advance[bossStage as 'mega' | 'giga'] ?? alertCopy.boss.advance.mega).lines]}
-                meta={(alertCopy.boss.advance[bossStage as 'mega' | 'giga'] ?? alertCopy.boss.advance.mega).meta}
-                onClose={advanceBossBattle}
-              />
-              <AlertOverlay
-                isVisible={appState === 'boss' && bossPhase === 'victory'}
-                lines={[...alertCopy.boss.victory.lines]}
-                meta={alertCopy.boss.victory.meta}
-                variant="win"
-                onClose={endBoss}
-              />
-              <AlertOverlay
-                isVisible={appState === 'boss' && bossPhase === 'defeat'}
-                lines={[...alertCopy.boss.defeat.lines]}
-                meta={alertCopy.boss.defeat.meta}
-                variant="lose"
-                onClose={endBoss}
-              />
-              <AlertOverlay
-                isVisible={appState === 'boss' && bossPhase === 'timeout'}
-                lines={[...alertCopy.boss.timeout.lines]}
-                meta={alertCopy.boss.defeat.meta}
-                variant="lose"
-                onClose={endBoss}
-              />
-                          </ResponsiveTest>
-      </AnimationProvider>
+            <AlertOverlay
+              isVisible={appState === 'boss' && bossPhase === 'advance'}
+              lines={[
+                ...(
+                  alertCopy.boss.advance[bossStage as 'mega' | 'giga'] ??
+                  alertCopy.boss.advance.mega
+                ).lines,
+              ]}
+              meta={
+                (
+                  alertCopy.boss.advance[bossStage as 'mega' | 'giga'] ??
+                  alertCopy.boss.advance.mega
+                ).meta
+              }
+              onClose={advanceBossBattle}
+            />
+            <AlertOverlay
+              isVisible={appState === 'boss' && bossPhase === 'victory'}
+              lines={[...alertCopy.boss.victory.lines]}
+              meta={alertCopy.boss.victory.meta}
+              variant="win"
+              onClose={endBoss}
+            />
+            <AlertOverlay
+              isVisible={appState === 'boss' && bossPhase === 'defeat'}
+              lines={[...alertCopy.boss.defeat.lines]}
+              meta={alertCopy.boss.defeat.meta}
+              variant="lose"
+              onClose={endBoss}
+            />
+            <AlertOverlay
+              isVisible={appState === 'boss' && bossPhase === 'timeout'}
+              lines={[...alertCopy.boss.timeout.lines]}
+              meta={alertCopy.boss.defeat.meta}
+              variant="lose"
+              onClose={endBoss}
+            />
+          </ResponsiveTest>
+        </AnimationProvider>
       </MechanicsSettingsProvider>
     </VanityFilterProvider>
   );

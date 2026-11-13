@@ -15,7 +15,10 @@ export interface TutorialStep {
   banner: string[];
   /** Forwarded to InteractiveGame to block click-to-remove during drag-only steps */
   disableLetterRemoval?: boolean;
-  completionCondition: (gameState: GameState | null, tutorialState: TutorialState) => boolean;
+  completionCondition: (
+    gameState: GameState | null,
+    tutorialState: TutorialState
+  ) => boolean;
 }
 
 /**
@@ -28,7 +31,7 @@ export const TUTORIAL_INITIAL_CONFIG: GameConfig = {
   maxTurns: 20,
   allowBotPlayer: true,
   enableKeyLetters: true,
-  enableLockedLetters: true
+  enableLockedLetters: true,
 };
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
@@ -37,27 +40,28 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     banner: ['Tap the S', 'to spell words'],
     completionCondition: (gameState, tutorialState) =>
       tutorialState.lastPendingWord === 'WORDS' ||
-      Boolean(gameState && gameState.currentWord === 'WORDS')
+      Boolean(gameState && gameState.currentWord === 'WORDS'),
   },
   {
     id: 2,
     banner: ['Tap the D', 'to remove it'],
     completionCondition: (gameState, tutorialState) =>
       tutorialState.lastPendingWord === 'WORS' ||
-      Boolean(gameState && gameState.currentWord === 'WORS')
+      Boolean(gameState && gameState.currentWord === 'WORS'),
   },
   {
     id: 3,
     banner: ['Rearrange the letters', 'to spell ROWS,', 'then submit the word'],
     disableLetterRemoval: true,
     completionCondition: (_gameState, tutorialState) =>
-      tutorialState.submittedWords.includes('ROWS')
+      tutorialState.submittedWords.includes('ROWS'),
   },
   {
     id: 4,
     banner: ['Key letters +1 point', 'and locked for next player'],
     completionCondition: (_gameState, tutorialState) =>
-      tutorialState.submittedWords.includes('ROWS') && tutorialState.submittedWords.length >= 2
+      tutorialState.submittedWords.includes('ROWS') &&
+      tutorialState.submittedWords.length >= 2,
   },
   {
     id: 5,
@@ -67,6 +71,6 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     banner: ['20 turns - high score wins', "You got this. It's easy work."],
     completionCondition: (_gameState, tutorialState) =>
       tutorialState.finalStepWordBaseline !== undefined &&
-      tutorialState.submittedWords.length > tutorialState.finalStepWordBaseline
-  }
+      tutorialState.submittedWords.length > tutorialState.finalStepWordBaseline,
+  },
 ];

@@ -5,62 +5,20 @@
  * Handles unlock notifications and immediate effects like theme application.
  */
 
-import React, {
-  createContext,
-  useContext,
-  useCallback,
-  useEffect,
-} from 'react';
+import React, { useCallback, useEffect } from 'react';
+import { UnlockContext } from './unlockContext';
+import type {
+  HandleWordSubmissionOptions,
+  UnlockContextType,
+} from './unlockContext';
 import { useUnlocks } from '../../hooks/useUnlocks';
-import { useTheme } from '../theme/ThemeProvider';
-import { useAlert } from '../ui/AlertProvider';
+import { useTheme } from '../theme/themeContext';
+import { useAlert } from '../ui/alertContext';
 import { alertCopy, resolveAlertMeta } from '../../content/alertCopy';
 import type { AlertCopyEntry } from '../../content/alertCopy';
 import { computeUnlockPercentage } from '../../adapters/supabaseCommunityUnlocksAdapter';
 import { availableThemes } from '@wordplay/theme/theme';
-import type { UseUnlocksReturn } from '../../hooks/useUnlocks';
 import type { UnlockResult } from '@wordplay/engine/interfaces';
-
-export interface HandleWordSubmissionOptions {
-  /**
-   * Whether this submission came from the local player's own input (vs a
-   * bot move or a remote opponent's move observed via game state). Defaults
-   * to `true`. Only the local player's own "RESET" submission wipes their
-   * unlocks (and only the first time - see `hasUsedReset`) - a bot/opponent
-   * playing "RESET" is treated as a normal word so it can't clobber another
-   * player's progress.
-   */
-  isLocalMove?: boolean;
-}
-
-export interface UnlockContextType extends UseUnlocksReturn {
-  // Enhanced functionality
-  handleWordSubmission: (
-    word: string,
-    isProfane?: boolean,
-    options?: HandleWordSubmissionOptions
-  ) => Promise<UnlockResult[]>;
-  handleGameCompletion: (
-    winner: string | null,
-    botId?: string
-  ) => Promise<UnlockResult[]>;
-  /** Check the game's word path for sequence-triggered unlocks (e.g. STINK→STANK→STUNK). */
-  handleWordPathChange: (wordPath: string[]) => Promise<UnlockResult[]>;
-  showUnlockNotification: (results: UnlockResult[]) => void;
-
-  // Testing/Debug functions
-  resetUnlocksToFresh: () => Promise<void>;
-}
-
-const UnlockContext = createContext<UnlockContextType | undefined>(undefined);
-
-export const useUnlockSystem = () => {
-  const context = useContext(UnlockContext);
-  if (!context) {
-    throw new Error('useUnlockSystem must be used within an UnlockProvider');
-  }
-  return context;
-};
 
 interface UnlockProviderProps {
   children: React.ReactNode;
@@ -68,6 +26,17 @@ interface UnlockProviderProps {
 
 export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
   const unlocks = useUnlocks();
+  // Pull the individual (memoized) functions out so hook dependency lists
+  // can name them directly instead of `unlocks.x` member expressions.
+  const {
+    isLoading,
+    isUnlocked,
+    hasUsedReset,
+    checkWordTriggers,
+    checkAchievementTriggers,
+    checkWordSequenceTriggers,
+    resetUnlocks,
+  } = unlocks;
   const { setTheme, isInverted, setInverted } = useTheme();
   const { showAlert } = useAlert();
 
@@ -75,11 +44,11 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
   // against stale/stray `wordplay-inverted` localStorage values (e.g. from
   // before this unlock gate existed) leaving the app stuck in dark mode.
   useEffect(() => {
-    if (unlocks.isLoading) return;
-    if (isInverted && !unlocks.isUnlocked('mechanic', 'dark-mode')) {
+    if (isLoading) return;
+    if (isInverted && !isUnlocked('mechanic', 'dark-mode')) {
       setInverted(false);
     }
-  }, [unlocks.isLoading, isInverted, unlocks.isUnlocked, setInverted]);
+  }, [isLoading, isInverted, isUnlocked, setInverted]);
 
   // Show unlock notification using the universal alert overlay
   const showUnlockNotification = useCallback(
@@ -192,7 +161,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
         }
       }
     },
-    [setTheme, availableThemes]
+    [setTheme]
   );
 
   // Enhanced word submission handler.
@@ -217,21 +186,21 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
       // instead of granting one - but only the first time it's ever played.
       // Once used, "RESET" falls through and is treated as a normal word.
       // Skipped for non-local moves (see above).
-      if (isLocalMove && word === 'RESET' && !unlocks.hasUsedReset()) {
+      if (isLocalMove && word === 'RESET' && !hasUsedReset()) {
         console.log(
           '[Unlock] "RESET" played - resetting all unlocks (one-time use)'
         );
-        await unlocks.resetUnlocks({ markResetUsed: true });
+        await resetUnlocks({ markResetUsed: true });
         showAlert('generic', 'resetTrigger');
         return [];
       }
 
-      const results = await unlocks.checkWordTriggers(word);
+      const results = await checkWordTriggers(word);
 
       // Any profanity word unlocks the vanity filter toggle, not just one hardcoded word
       if (isProfane) {
         const profanityResults =
-          await unlocks.checkAchievementTriggers('played_profanity');
+          await checkAchievementTriggers('played_profanity');
         results.push(...profanityResults);
       }
 
@@ -247,10 +216,10 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
       return results;
     },
     [
-      unlocks.checkWordTriggers,
-      unlocks.checkAchievementTriggers,
-      unlocks.resetUnlocks,
-      unlocks.hasUsedReset,
+      checkWordTriggers,
+      checkAchievementTriggers,
+      resetUnlocks,
+      hasUsedReset,
       handleImmediateEffects,
       showUnlockNotification,
       showAlert,
@@ -278,8 +247,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
         console.log(
           `[Unlock] Player beat ${botId}, checking achievement: ${achievement}`
         );
-        const achievementResults =
-          await unlocks.checkAchievementTriggers(achievement);
+        const achievementResults = await checkAchievementTriggers(achievement);
         results.push(...achievementResults);
       }
 
@@ -294,11 +262,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
 
       return results;
     },
-    [
-      unlocks.checkAchievementTriggers,
-      handleImmediateEffects,
-      showUnlockNotification,
-    ]
+    [checkAchievementTriggers, handleImmediateEffects, showUnlockNotification]
   );
 
   // Handle word-path (sequence) triggered unlocks.
@@ -308,7 +272,7 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
     async (wordPath: string[]): Promise<UnlockResult[]> => {
       if (wordPath.length === 0) return [];
 
-      const results = await unlocks.checkWordSequenceTriggers(wordPath);
+      const results = await checkWordSequenceTriggers(wordPath);
 
       if (results.length > 0) {
         console.log(
@@ -321,19 +285,15 @@ export const UnlockProvider: React.FC<UnlockProviderProps> = ({ children }) => {
 
       return results;
     },
-    [
-      unlocks.checkWordSequenceTriggers,
-      handleImmediateEffects,
-      showUnlockNotification,
-    ]
+    [checkWordSequenceTriggers, handleImmediateEffects, showUnlockNotification]
   );
 
   // Reset unlocks to fresh user state (for testing)
   const resetUnlocksToFresh = useCallback(async (): Promise<void> => {
     console.log('[Unlock] Resetting to fresh user state...');
-    await unlocks.resetUnlocks();
+    await resetUnlocks();
     console.log('[Unlock] Reset complete - back to fresh user experience');
-  }, [unlocks.resetUnlocks]);
+  }, [resetUnlocks]);
 
   const contextValue: UnlockContextType = {
     ...unlocks,

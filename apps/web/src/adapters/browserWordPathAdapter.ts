@@ -8,8 +8,14 @@
  * IndexedDB support. Mirrors `browserPlayerStatsAdapter.ts`.
  */
 
-import type { WordPathGraph, WordPathGraphDependencies } from '@wordplay/engine/word-path-graph';
-import { getInitialWordPathGraph, coerceWordPathGraph } from '@wordplay/engine/word-path-graph';
+import type {
+  WordPathGraph,
+  WordPathGraphDependencies,
+} from '@wordplay/engine/word-path-graph';
+import {
+  getInitialWordPathGraph,
+  coerceWordPathGraph,
+} from '@wordplay/engine/word-path-graph';
 
 const DB_NAME = 'wordplay-word-path-graph';
 const DB_VERSION = 1;
@@ -61,7 +67,10 @@ async function loadStateFromIndexedDB(): Promise<WordPathGraph> {
       };
     });
   } catch (error) {
-    console.warn('Failed to load word path graph from IndexedDB, using initial state:', error);
+    console.warn(
+      'Failed to load word path graph from IndexedDB, using initial state:',
+      error
+    );
     return getInitialWordPathGraph();
   }
 }
@@ -73,7 +82,10 @@ async function saveStateToIndexedDB(state: WordPathGraph): Promise<void> {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
-      const request = store.put({ data: state, timestamp: Date.now() }, STATE_KEY);
+      const request = store.put(
+        { data: state, timestamp: Date.now() },
+        STATE_KEY
+      );
 
       request.onerror = () => {
         reject(new Error(`Failed to save word path graph: ${request.error}`));
@@ -100,7 +112,7 @@ export function createBrowserWordPathGraphDependencies(): WordPathGraphDependenc
   return {
     loadState: loadStateFromIndexedDB,
     saveState: saveStateToIndexedDB,
-    getTimestamp: () => Date.now()
+    getTimestamp: () => Date.now(),
   };
 }
 
@@ -118,7 +130,10 @@ export function createLocalStorageWordPathGraphDependencies(): WordPathGraphDepe
           return coerceWordPathGraph(JSON.parse(stored));
         }
       } catch (error) {
-        console.warn('Failed to load word path graph from localStorage:', error);
+        console.warn(
+          'Failed to load word path graph from localStorage:',
+          error
+        );
       }
       return getInitialWordPathGraph();
     },
@@ -132,7 +147,7 @@ export function createLocalStorageWordPathGraphDependencies(): WordPathGraphDepe
       }
     },
 
-    getTimestamp: () => Date.now()
+    getTimestamp: () => Date.now(),
   };
 }
 
@@ -143,5 +158,7 @@ const hasIndexedDB = typeof indexedDB !== 'undefined';
  * browser (IndexedDB preferred, localStorage fallback)
  */
 export function createWordPathGraphDependencies(): WordPathGraphDependencies {
-  return hasIndexedDB ? createBrowserWordPathGraphDependencies() : createLocalStorageWordPathGraphDependencies();
+  return hasIndexedDB
+    ? createBrowserWordPathGraphDependencies()
+    : createLocalStorageWordPathGraphDependencies();
 }

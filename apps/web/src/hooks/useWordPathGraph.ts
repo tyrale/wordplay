@@ -11,7 +11,10 @@ import { createWordPathGraphEngine } from '@wordplay/engine/word-path-graph';
 import { getInitialWordPathGraph } from '@wordplay/engine/word-path-graph';
 import { createWordPathGraphDependencies } from '../adapters/browserWordPathAdapter';
 import { syncWordPathEdges } from '../adapters/supabaseWordPathAdapter';
-import type { WordPathGraphEngine, WordPathGraph } from '@wordplay/engine/word-path-graph';
+import type {
+  WordPathGraphEngine,
+  WordPathGraph,
+} from '@wordplay/engine/word-path-graph';
 
 export interface UseWordPathGraphReturn {
   graph: WordPathGraph;
@@ -61,16 +64,22 @@ export function useWordPathGraph(): UseWordPathGraphReturn {
     };
   }, []);
 
-  const recordTransition = useCallback(async (previousWord: string, newWord: string): Promise<void> => {
-    if (!engineRef.current) return;
+  const recordTransition = useCallback(
+    async (previousWord: string, newWord: string): Promise<void> => {
+      if (!engineRef.current) return;
 
-    try {
-      const newGraph = await engineRef.current.recordTransition(previousWord, newWord);
-      setGraph({ ...newGraph });
-    } catch (error) {
-      console.error('Error recording word path transition:', error);
-    }
-  }, []);
+      try {
+        const newGraph = await engineRef.current.recordTransition(
+          previousWord,
+          newWord
+        );
+        setGraph({ ...newGraph });
+      } catch (error) {
+        console.error('Error recording word path transition:', error);
+      }
+    },
+    []
+  );
 
   const getConnectedWords = useCallback((word: string): string[] => {
     if (!engineRef.current) return [];
@@ -87,11 +96,14 @@ export function useWordPathGraph(): UseWordPathGraphReturn {
     return engineRef.current.getUnsyncedEdges();
   }, []);
 
-  const markEdgesSynced = useCallback(async (edges: Array<[string, string]>): Promise<void> => {
-    if (!engineRef.current) return;
-    await engineRef.current.markEdgesSynced(edges);
-    setGraph({ ...engineRef.current.getGraph() });
-  }, []);
+  const markEdgesSynced = useCallback(
+    async (edges: Array<[string, string]>): Promise<void> => {
+      if (!engineRef.current) return;
+      await engineRef.current.markEdgesSynced(edges);
+      setGraph({ ...engineRef.current.getGraph() });
+    },
+    []
+  );
 
   const syncToServer = useCallback(async (): Promise<void> => {
     if (!engineRef.current) return;
@@ -130,6 +142,6 @@ export function useWordPathGraph(): UseWordPathGraphReturn {
     getUnsyncedEdges,
     markEdgesSynced,
     syncToServer,
-    resetGraph
+    resetGraph,
   };
 }

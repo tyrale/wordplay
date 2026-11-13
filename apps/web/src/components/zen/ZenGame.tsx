@@ -13,18 +13,28 @@
  * pending letters back to the current word).
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import { useGameState, useWordState } from '../../hooks/useGameState';
-import { useUnlockSystem } from '../unlock/UnlockProvider';
+import { useUnlockSystem } from '../unlock/unlockContext';
 import { usePlayerStats } from '../../hooks/usePlayerStats';
-import { useWordPathGraph } from '../../contexts/WordPathGraphContext';
-import { useMechanicsSettings } from '../../contexts/MechanicsSettingsContext';
-import { useAlert } from '../ui/AlertProvider';
+import { useWordPathGraph } from '../../contexts/wordPathGraph';
+import { useMechanicsSettings } from '../../contexts/mechanicsSettings';
+import { useAlert } from '../ui/alertContext';
 import { AlphabetGrid, type LetterState } from '../game/AlphabetGrid';
 import { WordTrail, type WordMove } from '../game/WordTrail';
 import { WordBuilder } from '../game/WordBuilder';
 import { type LetterHighlight } from '../game/CurrentWord';
-import { ScoreDisplay, type ScoreBreakdown, type ActionState } from '../game/ScoreDisplay';
+import {
+  ScoreDisplay,
+  type ScoreBreakdown,
+  type ActionState,
+} from '../game/ScoreDisplay';
 import { Menu } from '../ui/Menu';
 import { AlertOverlay } from '../ui/AlertOverlay';
 import { createBrowserAdapter } from '../../adapters/browserAdapter';
@@ -33,13 +43,22 @@ import {
   getVariantDefinitionNote,
   isPlayableWord,
   isSeussWord,
-  fetchWordDefinition
+  fetchWordDefinition,
 } from '../../utils/wordHelp';
 import { triggerHapticFeedback } from '../../utils/haptics';
 import { triggerSoundFeedback } from '../../utils/sound';
-import { hasSeenClearHint, markClearHintSeen, hasSeenZenIntro, markZenIntroSeen } from '../../utils/tutorialStorage';
+import {
+  hasSeenClearHint,
+  markClearHintSeen,
+  hasSeenZenIntro,
+  markZenIntroSeen,
+} from '../../utils/tutorialStorage';
 import { ZenIntroOverlay } from './ZenIntroOverlay';
-import type { WordDataDependencies, ScoringAction, MoveAttempt } from '@wordplay/engine/interfaces';
+import type {
+  WordDataDependencies,
+  ScoringAction,
+  MoveAttempt,
+} from '@wordplay/engine/interfaces';
 import '../game/InteractiveGame.css';
 
 // Number of seconds a player has to take their turn when the time-pressure mechanic is on
@@ -57,10 +76,18 @@ export interface ZenGameProps {
   onBossTrigger?: (word: string) => void;
 }
 
-export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, onBossTrigger }) => {
-  const { handleWordSubmission, handleWordPathChange, getUnlockedItems } = useUnlockSystem();
+export const ZenGame: React.FC<ZenGameProps> = ({
+  onNavigateHome,
+  onStartGame,
+  onBossTrigger,
+}) => {
+  const { handleWordSubmission, handleWordPathChange, getUnlockedItems } =
+    useUnlockSystem();
   const { recordMove } = usePlayerStats();
-  const { recordTransition: recordWordPathTransition, syncToServer: syncWordPathGraph } = useWordPathGraph();
+  const {
+    recordTransition: recordWordPathTransition,
+    syncToServer: syncWordPathGraph,
+  } = useWordPathGraph();
   const { isMechanicOn } = useMechanicsSettings();
   const { showCustomAlert, showAlert } = useAlert();
 
@@ -68,16 +95,27 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
   // honors every mechanic the player has unlocked/toggled - it's just a
   // scoreless, opponent-free, round-free way to play.
   const unlockedMechanics = getUnlockedItems('mechanic');
-  const availableStartLengths = [3, 5, 6, 7, 8, 9, 10].filter(len =>
-    unlockedMechanics.includes(`${len}-letter-start`) && isMechanicOn(`${len}-letter-start`)
+  const availableStartLengths = [3, 5, 6, 7, 8, 9, 10].filter(
+    (len) =>
+      unlockedMechanics.includes(`${len}-letter-start`) &&
+      isMechanicOn(`${len}-letter-start`)
   );
-  const startingWordLength = availableStartLengths.length > 0
-    ? availableStartLengths[Math.floor(Math.random() * availableStartLengths.length)]
-    : undefined;
-  const isTimePressureOn = unlockedMechanics.includes('time-pressure') && isMechanicOn('time-pressure');
-  const isGravityOn = unlockedMechanics.includes('gravity') && isMechanicOn('gravity');
-  const isDrunkOn = unlockedMechanics.includes('drunk') && isMechanicOn('drunk');
-  const allowSeussCanonical = unlockedMechanics.includes('seuss-canonical-words');
+  const startingWordLength =
+    availableStartLengths.length > 0
+      ? availableStartLengths[
+          Math.floor(Math.random() * availableStartLengths.length)
+        ]
+      : undefined;
+  const isTimePressureOn =
+    unlockedMechanics.includes('time-pressure') &&
+    isMechanicOn('time-pressure');
+  const isGravityOn =
+    unlockedMechanics.includes('gravity') && isMechanicOn('gravity');
+  const isDrunkOn =
+    unlockedMechanics.includes('drunk') && isMechanicOn('drunk');
+  const allowSeussCanonical = unlockedMechanics.includes(
+    'seuss-canonical-words'
+  );
   // Type-to-clear mechanic: available by default (no unlock required, see
   // Menu.tsx's ALWAYS_AVAILABLE_MECHANIC_IDS), off by default. When on,
   // the first letter click of a fresh turn clears the word in play
@@ -107,7 +145,9 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
         console.error('Failed to initialize zen mode word data:', err);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Game state: a single local player, no bot, no turn limit (zen mode never
@@ -121,7 +161,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
     isGameActive,
     isProcessingMove,
     lastError,
-    clearError
+    clearError,
   } = useGameState({
     config: {
       allowBotPlayer: false,
@@ -129,20 +169,23 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
       enableKeyLetters: true,
       enableLockedLetters: true,
       startingWordLength,
-      allowSeussCanonical
+      allowSeussCanonical,
     },
-    skipSavedGamePersistence: true
+    skipSavedGamePersistence: true,
   });
 
   const wordState = useWordState(gameState);
 
   // Local UI state
   const [pendingWord, setPendingWord] = useState('');
-  const [pendingMoveAttempt, setPendingMoveAttempt] = useState<MoveAttempt | null>(null);
+  const [pendingMoveAttempt, setPendingMoveAttempt] =
+    useState<MoveAttempt | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [draggedLetter, setDraggedLetter] = useState<string | null>(null);
   const [showValidationError, setShowValidationError] = useState(false);
-  const [turnTimeRemaining, setTurnTimeRemaining] = useState<number | null>(null);
+  const [turnTimeRemaining, setTurnTimeRemaining] = useState<number | null>(
+    null
+  );
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   // Armed at the start of each turn (see the pendingWord-reset effect
   // below) and disarmed the first time the player edits the word in
@@ -201,7 +244,9 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
     setTurnTimeRemaining(TURN_TIME_LIMIT_SECONDS);
 
     const intervalId = setInterval(() => {
-      setTurnTimeRemaining(prev => (prev !== null ? Math.max(prev - 1, 0) : null));
+      setTurnTimeRemaining((prev) =>
+        prev !== null ? Math.max(prev - 1, 0) : null
+      );
     }, 1000);
 
     return () => {
@@ -210,7 +255,12 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
   }, [isTimePressureOn, isPlayerTurn, isGameActive]);
 
   useEffect(() => {
-    if (turnTimeRemaining === 0 && isTimePressureOn && isPlayerTurn && isGameActive) {
+    if (
+      turnTimeRemaining === 0 &&
+      isTimePressureOn &&
+      isPlayerTurn &&
+      isGameActive
+    ) {
       actions.passTurn();
       setPendingWord(wordState.currentWord);
       setPendingMoveAttempt(null);
@@ -218,52 +268,78 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
       setShowValidationError(false);
       setTurnTimeRemaining(null);
     }
-  }, [turnTimeRemaining, isTimePressureOn, isPlayerTurn, isGameActive, actions, wordState.currentWord]);
+  }, [
+    turnTimeRemaining,
+    isTimePressureOn,
+    isPlayerTurn,
+    isGameActive,
+    actions,
+    wordState.currentWord,
+  ]);
 
   // Letter grid state (key letters / locked letters, same as vs-bot)
   const letterStates: LetterState[] = useMemo(() => {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    return alphabet.map(letter => {
+    return alphabet.map((letter) => {
       if (wordState.keyLetters.includes(letter)) {
         return { letter, state: 'key' as const };
       }
-      if (wordState.lockedLetters.includes(letter) || wordState.lockedKeyLetters.includes(letter)) {
+      if (
+        wordState.lockedLetters.includes(letter) ||
+        wordState.lockedKeyLetters.includes(letter)
+      ) {
         return { letter, state: 'locked' as const };
       }
       return { letter, state: 'normal' as const };
     });
-  }, [wordState.keyLetters, wordState.lockedLetters, wordState.lockedKeyLetters]);
+  }, [
+    wordState.keyLetters,
+    wordState.lockedLetters,
+    wordState.lockedKeyLetters,
+  ]);
 
   const pendingWordHighlights: LetterHighlight[] = useMemo(() => {
-    return pendingWord.split('').map((letter, index) => {
-      if (wordState.lockedKeyLetters.includes(letter)) {
-        return { index, type: 'lockedKey' as const };
-      }
-      if (wordState.keyLetters.includes(letter)) {
-        return { index, type: 'key' as const };
-      }
-      if (wordState.lockedLetters.includes(letter)) {
-        return { index, type: 'locked' as const };
-      }
-      return null;
-    }).filter((highlight): highlight is LetterHighlight => highlight !== null);
-  }, [pendingWord, wordState.keyLetters, wordState.lockedLetters, wordState.lockedKeyLetters]);
+    return pendingWord
+      .split('')
+      .map((letter, index) => {
+        if (wordState.lockedKeyLetters.includes(letter)) {
+          return { index, type: 'lockedKey' as const };
+        }
+        if (wordState.keyLetters.includes(letter)) {
+          return { index, type: 'key' as const };
+        }
+        if (wordState.lockedLetters.includes(letter)) {
+          return { index, type: 'locked' as const };
+        }
+        return null;
+      })
+      .filter((highlight): highlight is LetterHighlight => highlight !== null);
+  }, [
+    pendingWord,
+    wordState.keyLetters,
+    wordState.lockedLetters,
+    wordState.lockedKeyLetters,
+  ]);
 
   const actionState: ActionState = useMemo(() => {
     if (!pendingMoveAttempt?.scoringResult) {
       return { add: false, remove: false, move: false };
     }
-    const actionsList: ScoringAction[] = pendingMoveAttempt.scoringResult.actions;
+    const actionsList: ScoringAction[] =
+      pendingMoveAttempt.scoringResult.actions;
     return {
-      add: actionsList.some(action => action.type === 'add'),
-      remove: actionsList.some(action => action.type === 'remove'),
-      move: actionsList.some(action => action.type === 'rearrange')
+      add: actionsList.some((action) => action.type === 'add'),
+      remove: actionsList.some((action) => action.type === 'remove'),
+      move: actionsList.some((action) => action.type === 'rearrange'),
     };
   }, [pendingMoveAttempt]);
 
   // No points in zen mode - always zeroed. ScoreDisplay is still used (it's
   // also the submit button), just with isChallengeMode to hide the numbers.
-  const scoreBreakdown: ScoreBreakdown = useMemo(() => ({ base: 0, keyBonus: 0, total: 0 }), []);
+  const scoreBreakdown: ScoreBreakdown = useMemo(
+    () => ({ base: 0, keyBonus: 0, total: 0 }),
+    []
+  );
 
   // Word trail - no scores shown, just the sequence of words played since
   // the last reset. Depends on the whole `gameState` object rather than
@@ -276,12 +352,12 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
   // analogous wordTrailMoves memo (see its "Use full gameState instead of
   // just turnHistory" comment).
   const wordTrailMoves: WordMove[] = useMemo(() => {
-    return gameState.turnHistory.map(turn => ({
+    return gameState.turnHistory.map((turn) => ({
       word: turn.newWord,
       score: 0,
       turnNumber: turn.turnNumber,
       keyLetters: turn.scoringBreakdown.keyLettersUsed || [],
-      maskWord: ninjaWordTrailUnlocked
+      maskWord: ninjaWordTrailUnlocked,
     }));
   }, [gameState, ninjaWordTrailUnlocked]);
 
@@ -297,7 +373,7 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
           <div className="alert-overlay__meta-definition">
             This is a Dr. Seuss word and it's fantastic.
           </div>
-        )
+        ),
       });
       return;
     }
@@ -310,17 +386,21 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
     showCustomAlert([word], {
       meta: (
         <>
-          <div className={isInvalid ? 'alert-overlay__meta-reason--invalid' : ''}>
+          <div
+            className={isInvalid ? 'alert-overlay__meta-reason--invalid' : ''}
+          >
             {reason}
           </div>
           {variantNote && (
-            <div className="alert-overlay__meta-variant-note">{variantNote}</div>
+            <div className="alert-overlay__meta-variant-note">
+              {variantNote}
+            </div>
           )}
           <div className="alert-overlay__meta-definition">
             {definition || 'No definition available'}
           </div>
         </>
-      )
+      ),
     });
   }, [pendingWord, wordData, showCustomAlert, getUnlockedItems]);
 
@@ -340,124 +420,163 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
     setPendingMoveAttempt(null);
     setShowValidationError(false);
     setIsResetConfirmOpen(false);
-    setResetGeneration(g => g + 1);
+    setResetGeneration((g) => g + 1);
   }, [actions]);
 
-  const handleActionClick = useCallback((action: string) => {
-    if (action === '≡') {
-      handleSettings();
-      return;
-    }
-
-    if (action === '←') {
-      onNavigateHome?.();
-      return;
-    }
-
-    if (action === '?') { // Help / dictionary lookup - always reachable, even off-turn
-      handleHelp();
-      return;
-    }
-
-    if (!isPlayerTurn || isProcessingMove) return;
-
-    switch (action) {
-      case '↻': {
-        // Double-tap detection: two taps within the window ask for a full
-        // reset (new word + cleared trail). A single tap keeps its normal
-        // meaning - clear the pending edit back to the current word.
-        const now = Date.now();
-        if (now - lastResetTapRef.current < DOUBLE_TAP_RESET_MS) {
-          lastResetTapRef.current = 0;
-          setIsResetConfirmOpen(true);
-        } else {
-          lastResetTapRef.current = now;
-          setPendingWord(wordState.currentWord);
-          setPendingMoveAttempt(null);
-          hasEditedThisTurnRef.current = false;
-        }
-        break;
+  const handleActionClick = useCallback(
+    (action: string) => {
+      if (action === '≡') {
+        handleSettings();
+        return;
       }
-    }
-  }, [isPlayerTurn, isProcessingMove, wordState.currentWord, handleHelp, handleSettings, onNavigateHome]);
 
-  const handleWordChange = useCallback((newWord: string) => {
-    if (!isPlayerTurn || isProcessingMove) {
-      return;
-    }
+      if (action === '←') {
+        onNavigateHome?.();
+        return;
+      }
 
-    hasEditedThisTurnRef.current = true;
-    setPendingWord(newWord);
-    setShowValidationError(false);
+      if (action === '?') {
+        // Help / dictionary lookup - always reachable, even off-turn
+        handleHelp();
+        return;
+      }
 
-    if (newWord !== wordState.currentWord) {
-      const attempt = actions.attemptMove(newWord);
-      setPendingMoveAttempt(attempt);
-    } else {
-      setPendingMoveAttempt(null);
-    }
-  }, [isPlayerTurn, isProcessingMove, wordState.currentWord, actions]);
+      if (!isPlayerTurn || isProcessingMove) return;
 
-  const handleLetterClick = useCallback((letter: string) => {
-    if (!isPlayerTurn || isProcessingMove) return;
+      switch (action) {
+        case '↻': {
+          // Double-tap detection: two taps within the window ask for a full
+          // reset (new word + cleared trail). A single tap keeps its normal
+          // meaning - clear the pending edit back to the current word.
+          const now = Date.now();
+          if (now - lastResetTapRef.current < DOUBLE_TAP_RESET_MS) {
+            lastResetTapRef.current = 0;
+            setIsResetConfirmOpen(true);
+          } else {
+            lastResetTapRef.current = now;
+            setPendingWord(wordState.currentWord);
+            setPendingMoveAttempt(null);
+            hasEditedThisTurnRef.current = false;
+          }
+          break;
+        }
+      }
+    },
+    [
+      isPlayerTurn,
+      isProcessingMove,
+      wordState.currentWord,
+      handleHelp,
+      handleSettings,
+      onNavigateHome,
+    ]
+  );
 
-    // Type-to-clear: the first letter click of a fresh turn clears the
-    // word in play and starts fresh with just that letter, instead of
-    // appending - matches InteractiveGame.tsx exactly.
-    if (isTypeToClearOn && !hasEditedThisTurnRef.current && pendingWord.length > 0) {
-      triggerHapticFeedback('add');
-      triggerSoundFeedback('add');
-      handleWordChange(letter);
-      return;
-    }
+  const handleWordChange = useCallback(
+    (newWord: string) => {
+      if (!isPlayerTurn || isProcessingMove) {
+        return;
+      }
 
-    if (pendingWord.length < 10) {
-      triggerHapticFeedback('add');
-      triggerSoundFeedback('add');
-      handleWordChange(pendingWord + letter);
-    }
-  }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange, isTypeToClearOn]);
+      hasEditedThisTurnRef.current = true;
+      setPendingWord(newWord);
+      setShowValidationError(false);
 
-  const handleLetterDragStart = useCallback((letter: string) => {
-    if (!isPlayerTurn || isProcessingMove) return;
-    setDraggedLetter(letter);
-  }, [isPlayerTurn, isProcessingMove]);
+      if (newWord !== wordState.currentWord) {
+        const attempt = actions.attemptMove(newWord);
+        setPendingMoveAttempt(attempt);
+      } else {
+        setPendingMoveAttempt(null);
+      }
+    },
+    [isPlayerTurn, isProcessingMove, wordState.currentWord, actions]
+  );
+
+  const handleLetterClick = useCallback(
+    (letter: string) => {
+      if (!isPlayerTurn || isProcessingMove) return;
+
+      // Type-to-clear: the first letter click of a fresh turn clears the
+      // word in play and starts fresh with just that letter, instead of
+      // appending - matches InteractiveGame.tsx exactly.
+      if (
+        isTypeToClearOn &&
+        !hasEditedThisTurnRef.current &&
+        pendingWord.length > 0
+      ) {
+        triggerHapticFeedback('add');
+        triggerSoundFeedback('add');
+        handleWordChange(letter);
+        return;
+      }
+
+      if (pendingWord.length < 10) {
+        triggerHapticFeedback('add');
+        triggerSoundFeedback('add');
+        handleWordChange(pendingWord + letter);
+      }
+    },
+    [
+      isPlayerTurn,
+      isProcessingMove,
+      pendingWord,
+      handleWordChange,
+      isTypeToClearOn,
+    ]
+  );
+
+  const handleLetterDragStart = useCallback(
+    (letter: string) => {
+      if (!isPlayerTurn || isProcessingMove) return;
+      setDraggedLetter(letter);
+    },
+    [isPlayerTurn, isProcessingMove]
+  );
 
   const handleLetterDragEnd = useCallback(() => {
     setDraggedLetter(null);
   }, []);
 
-  const handleWordBuilderMouseUp = useCallback((_e: React.MouseEvent) => {
-    if (draggedLetter && pendingWord.length < 10) {
-      triggerHapticFeedback('add');
-      triggerSoundFeedback('add');
-      handleWordChange(pendingWord + draggedLetter);
-    }
-    setDraggedLetter(null);
-  }, [draggedLetter, pendingWord, handleWordChange]);
+  const handleWordBuilderMouseUp = useCallback(
+    (_e: React.MouseEvent) => {
+      if (draggedLetter && pendingWord.length < 10) {
+        triggerHapticFeedback('add');
+        triggerSoundFeedback('add');
+        handleWordChange(pendingWord + draggedLetter);
+      }
+      setDraggedLetter(null);
+    },
+    [draggedLetter, pendingWord, handleWordChange]
+  );
 
-  const handleWordBuilderTouchEnd = useCallback((_e: React.TouchEvent) => {
-    if (draggedLetter && pendingWord.length < 10) {
-      triggerHapticFeedback('add');
-      triggerSoundFeedback('add');
-      handleWordChange(pendingWord + draggedLetter);
-    }
-    setDraggedLetter(null);
-  }, [draggedLetter, pendingWord, handleWordChange]);
+  const handleWordBuilderTouchEnd = useCallback(
+    (_e: React.TouchEvent) => {
+      if (draggedLetter && pendingWord.length < 10) {
+        triggerHapticFeedback('add');
+        triggerSoundFeedback('add');
+        handleWordChange(pendingWord + draggedLetter);
+      }
+      setDraggedLetter(null);
+    },
+    [draggedLetter, pendingWord, handleWordChange]
+  );
 
-  const handleLetterRemove = useCallback((info: { letter: string; index: number }) => {
-    if (!isPlayerTurn || isProcessingMove) {
-      return;
-    }
+  const handleLetterRemove = useCallback(
+    (info: { letter: string; index: number }) => {
+      if (!isPlayerTurn || isProcessingMove) {
+        return;
+      }
 
-    if (info.index < 0 || info.index >= pendingWord.length) {
-      return;
-    }
+      if (info.index < 0 || info.index >= pendingWord.length) {
+        return;
+      }
 
-    const letters = pendingWord.split('');
-    letters.splice(info.index, 1);
-    handleWordChange(letters.join(''));
-  }, [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]);
+      const letters = pendingWord.split('');
+      letters.splice(info.index, 1);
+      handleWordChange(letters.join(''));
+    },
+    [isPlayerTurn, isProcessingMove, pendingWord, handleWordChange]
+  );
 
   const isValidSubmit = pendingMoveAttempt?.canApply || false;
   const showInvalidX = !isValidSubmit;
@@ -509,7 +628,9 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
 
         recordWordPathTransition(previousWord, newWord)
           .then(() => syncWordPathGraph())
-          .catch(err => console.warn('Failed to record/sync zen word path transition:', err));
+          .catch((err) =>
+            console.warn('Failed to record/sync zen word path transition:', err)
+          );
 
         if (pendingMoveAttempt.scoringResult) {
           recordMove({
@@ -520,15 +641,24 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
             score: 0,
             keyLettersUsed: pendingMoveAttempt.scoringResult.keyLettersUsed,
             scoringBreakdown: pendingMoveAttempt.scoringResult,
-            timestamp: Date.now()
-          }).catch(err => console.warn('Failed to record zen move stats:', err));
+            timestamp: Date.now(),
+          }).catch((err) =>
+            console.warn('Failed to record zen move stats:', err)
+          );
         }
 
         // Word-sequence unlocks (e.g. STINK → STANK → STUNK), same as vs-bot.
-        const wordPath = [wordState.currentWord, ...gameState.turnHistory.map(t => t.newWord), newWord];
+        const wordPath = [
+          wordState.currentWord,
+          ...gameState.turnHistory.map((t) => t.newWord),
+          newWord,
+        ];
         if (wordPath.length >= 3) {
-          handleWordPathChange(wordPath).catch(err =>
-            console.warn('Failed to check zen word sequence unlock triggers:', err)
+          handleWordPathChange(wordPath).catch((err) =>
+            console.warn(
+              'Failed to check zen word sequence unlock triggers:',
+              err
+            )
           );
         }
 
@@ -537,7 +667,26 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
         setShowValidationError(false);
       }
     }
-  }, [isPlayerTurn, isProcessingMove, pendingWord, pendingMoveAttempt, actions, wordState.currentWord, showValidationError, handleWordSubmission, wordData, handleWordChange, showAlert, recordWordPathTransition, syncWordPathGraph, recordMove, handleWordPathChange, gameState.turnHistory, isValidSubmit, onBossTrigger]);
+  }, [
+    isPlayerTurn,
+    isProcessingMove,
+    pendingWord,
+    pendingMoveAttempt,
+    actions,
+    wordState.currentWord,
+    showValidationError,
+    handleWordSubmission,
+    wordData,
+    handleWordChange,
+    showAlert,
+    recordWordPathTransition,
+    syncWordPathGraph,
+    recordMove,
+    handleWordPathChange,
+    gameState.turnHistory,
+    isValidSubmit,
+    onBossTrigger,
+  ]);
 
   const handleMenuClose = useCallback(() => {
     setIsMenuOpen(false);
@@ -545,13 +694,17 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
 
   return (
     <div
-      className={'interactive-game' + (isDrunkOn ? ' interactive-game--drunk' : '')}
+      className={
+        'interactive-game' + (isDrunkOn ? ' interactive-game--drunk' : '')
+      }
     >
       {/* Error display */}
       {lastError && (
         <div className="interactive-game__error" role="alert">
           <span>{lastError}</span>
-          <button onClick={clearError} aria-label="Dismiss error">×</button>
+          <button onClick={clearError} aria-label="Dismiss error">
+            ×
+          </button>
         </div>
       )}
 
@@ -567,13 +720,19 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
                 isValid={!showInvalidX}
                 isPassConfirming={false}
                 passReason={null}
-                onClick={!isProcessingMove && isPlayerTurn ? handleSubmit : undefined}
+                onClick={
+                  !isProcessingMove && isPlayerTurn ? handleSubmit : undefined
+                }
                 className="interactive-game__score"
                 isPassMode={false}
-                validationError={pendingMoveAttempt?.validationResult?.userMessage || null}
+                validationError={
+                  pendingMoveAttempt?.validationResult?.userMessage || null
+                }
                 showValidationError={showValidationError}
                 isChallengeMode={true}
-                timerSeconds={isTimePressureOn && isPlayerTurn ? turnTimeRemaining : null}
+                timerSeconds={
+                  isTimePressureOn && isPlayerTurn ? turnTimeRemaining : null
+                }
               />
             </div>
 
@@ -646,7 +805,11 @@ export const ZenGame: React.FC<ZenGameProps> = ({ onNavigateHome, onStartGame, o
       <AlertOverlay
         isVisible={isResetConfirmOpen}
         lines={['NEW', 'WORD?']}
-        meta={<div className="alert-overlay__meta-definition">This clears your word trail.</div>}
+        meta={
+          <div className="alert-overlay__meta-definition">
+            This clears your word trail.
+          </div>
+        }
         actions={[{ label: 'yes', onClick: handleConfirmReset }]}
         onClose={() => setIsResetConfirmOpen(false)}
       />

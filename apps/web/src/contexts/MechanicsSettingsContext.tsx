@@ -13,22 +13,10 @@
  * instead, for mechanics disruptive enough that the player should opt in.
  */
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { MechanicsSettingsContext } from './mechanicsSettings';
+import type { MechanicsSettingsContextValue } from './mechanicsSettings';
 import type { ReactNode } from 'react';
-
-export interface MechanicsSettingsContextValue {
-  isMechanicOn: (mechanicId: string) => boolean;
-  toggleMechanic: (mechanicId: string) => void;
-}
-
-const MechanicsSettingsContext =
-  createContext<MechanicsSettingsContextValue | null>(null);
 
 const STORAGE_KEY = 'wordplay-mechanics-settings';
 
@@ -98,14 +86,4 @@ export const MechanicsSettingsProvider: React.FC<
       {children}
     </MechanicsSettingsContext.Provider>
   );
-};
-
-export const useMechanicsSettings = (): MechanicsSettingsContextValue => {
-  const context = useContext(MechanicsSettingsContext);
-  if (!context) {
-    throw new Error(
-      'useMechanicsSettings must be used within a MechanicsSettingsProvider'
-    );
-  }
-  return context;
 };

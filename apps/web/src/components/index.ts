@@ -1,12 +1,13 @@
 // Theme
-export { ThemeProvider, useTheme } from './theme/ThemeProvider';
+export { ThemeProvider } from './theme/ThemeProvider';
+export { useTheme } from './theme/themeContext';
 export {
   defaultTheme,
   availableThemes,
   type GameTheme,
-  type ThemeContextType
+  type ThemeContextType,
 } from '@wordplay/theme/theme';
-export { 
+export {
   redTheme,
   pinkTheme,
   purpleTheme,
@@ -80,11 +81,12 @@ export {
   tileTheme,
   vintageTheme,
   tweedTheme,
-  midnightTheme
+  midnightTheme,
 } from '@wordplay/theme/theme';
 
 // Unlock System
-export { UnlockProvider, useUnlockSystem } from './unlock/UnlockProvider';
+export { UnlockProvider } from './unlock/UnlockProvider';
+export { useUnlockSystem } from './unlock/unlockContext';
 
 // UI Components
 export { GridCell } from './ui/GridCell';
@@ -97,9 +99,14 @@ export { MultiplayerLobby } from './multiplayer/MultiplayerLobby';
 export { MultiplayerGame } from './multiplayer/MultiplayerGame';
 
 export { AlertOverlay } from './ui/AlertOverlay';
-export type { AlertOverlayProps, AlertOverlayAction, AlertOverlayVariant } from './ui/AlertOverlay';
+export type {
+  AlertOverlayProps,
+  AlertOverlayAction,
+  AlertOverlayVariant,
+} from './ui/AlertOverlay';
 
-export { AlertProvider, useAlert } from './ui/AlertProvider';
+export { AlertProvider } from './ui/AlertProvider';
+export { useAlert } from './ui/alertContext';
 
 // Game Components
 export { AlphabetGrid } from './game/AlphabetGrid';
@@ -112,7 +119,10 @@ export { CurrentWord } from './game/CurrentWord';
 export type { CurrentWordProps, LetterHighlight } from './game/CurrentWord';
 
 export { ActionIndicators } from './game/ActionIndicators';
-export type { ActionIndicatorsProps, ActionState } from './game/ActionIndicators';
+export type {
+  ActionIndicatorsProps,
+  ActionState,
+} from './game/ActionIndicators';
 
 export { SubmitButton } from './game/SubmitButton';
 export type { SubmitButtonProps } from './game/SubmitButton';
@@ -134,5 +144,13 @@ export { TutorialOverlay } from './tutorial/TutorialOverlay';
 export type { TutorialOverlayProps } from './tutorial/TutorialOverlay';
 
 // Hooks
-export { useGameState, useGameStats, useWordState } from '../hooks/useGameState';
-export type { UseGameStateOptions, GameStateActions, UseGameStateReturn } from '../hooks/useGameState'; 
+export {
+  useGameState,
+  useGameStats,
+  useWordState,
+} from '../hooks/useGameState';
+export type {
+  UseGameStateOptions,
+  GameStateActions,
+  UseGameStateReturn,
+} from '../hooks/useGameState';

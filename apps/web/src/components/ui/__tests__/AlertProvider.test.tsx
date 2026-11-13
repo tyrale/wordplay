@@ -6,7 +6,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { AlertProvider, useAlert } from '../AlertProvider';
+import { AlertProvider } from '../AlertProvider';
+import { useAlert } from '../alertContext';
 
 // Test component that uses the alert system
 function TestAlertComponent() {

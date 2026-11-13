@@ -1,17 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { ThemeContext } from './themeContext';
 import type { ReactNode } from 'react';
 import { defaultTheme, availableThemes } from '@wordplay/theme/theme';
 import type { GameTheme, ThemeContextType } from '@wordplay/theme/theme';
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
-};
 
 interface ThemeProviderProps {
   children: ReactNode;

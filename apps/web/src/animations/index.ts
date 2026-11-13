@@ -21,9 +21,9 @@ export type {
 // Animation Provider and Context
 export {
   AnimationProvider,
-  useAnimationContext,
   type AnimationProviderProps,
 } from './AnimationProvider';
+export { useAnimationContext } from './animationContext';
 
 // Animation Hooks
 export {
