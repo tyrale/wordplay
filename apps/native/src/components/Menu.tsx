@@ -31,7 +31,10 @@
  * own MainScreen-level entry point, not a Menu one).
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Animated } from 'react-native';
+import { Modal, View, Text, Pressable, ScrollView, StyleSheet, Animated, Linking } from 'react-native';
+import { useAlert } from '../providers/AlertProvider';
+import { deleteMyData, restartApp } from '../lib/deleteMyData';
+import { PRIVACY_POLICY_URL } from '../lib/links';
 import { useTheme, getEffectiveColors, darkenColor } from '../theme/ThemeProvider';
 import { useUnlockSystem } from '../providers/UnlockProvider';
 import { useMechanicsSettings } from '../contexts/MechanicsSettingsContext';
@@ -127,6 +130,7 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
   const { isMechanicOn, toggleMechanic } = useMechanicsSettings();
   const { isVanityFilterOn, toggleVanityFilter } = useVanityFilter();
   const { roundLength, setRoundLength } = useRoundLength();
+  const { showCustomAlert, dismissAlert } = useAlert();
 
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [isDictionariesOpen, setIsDictionariesOpen] = useState(false);
@@ -195,6 +199,37 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
           .map(bot => ({ id: `locked-bot-${bot.id}`, title: maskName(botDisplayNames[bot.id] || bot.id) }))
       )
     : [];
+
+  // Alerts render outside this Modal (in AlertProvider), so the menu has
+  // to close first or the confirmation would sit hidden behind it.
+  const handleDeleteMyData = useCallback(() => {
+    onClose();
+    showCustomAlert(['DELETE', 'EVERYTHING?'], {
+      variant: 'error',
+      meta: 'Permanently deletes your progress, unlocks, stats, settings and your online account, including leaderboard entries and multiplayer games. This cannot be undone.',
+      actions: [
+        {
+          label: 'delete forever',
+          onPress: () => {
+            dismissAlert();
+            deleteMyData()
+              .then(async () => {
+                if (!(await restartApp())) {
+                  showCustomAlert(['DATA', 'DELETED'], { meta: 'Close and reopen the app to start fresh.' });
+                }
+              })
+              .catch((error: unknown) => {
+                showCustomAlert(['NOT', 'DELETED'], {
+                  variant: 'error',
+                  meta: `${error instanceof Error ? error.message : String(error)}. Nothing was removed. Check your connection and try again.`
+                });
+              });
+          }
+        },
+        { label: 'cancel', onPress: dismissAlert }
+      ]
+    });
+  }, [onClose, showCustomAlert, dismissAlert]);
 
   const toggleSection = useCallback((section: string) => {
     setExpandedSection(prev => (prev === section ? null : section));
@@ -409,6 +444,16 @@ export const Menu: React.FC<MenuProps> = ({ isOpen, onClose, onStartGame, onNavi
                 </Pressable>
                 <Pressable onPress={() => { triggerSoundFeedback('click'); setIsThoughtsOpen(true); }} style={styles.row} accessibilityRole="button">
                   <Text style={{ color: colors.text, fontWeight: '900' }}>thoughts</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => { triggerSoundFeedback('click'); Linking.openURL(PRIVACY_POLICY_URL).catch(() => undefined); }}
+                  style={styles.row}
+                  accessibilityRole="link"
+                >
+                  <Text style={{ color: colors.text, fontWeight: '900' }}>privacy</Text>
+                </Pressable>
+                <Pressable onPress={() => { triggerSoundFeedback('click'); handleDeleteMyData(); }} style={styles.row} accessibilityRole="button">
+                  <Text style={{ color: '#DC2626', fontWeight: '900' }}>delete my data</Text>
                 </Pressable>
                 <Pressable onPress={() => { triggerSoundFeedback('click'); resetUnlocksToFresh(); }} style={styles.row} accessibilityRole="button">
                   <Text style={{ color: colors.textSecondary, fontWeight: '900' }}>reset unlocks (debug)</Text>
