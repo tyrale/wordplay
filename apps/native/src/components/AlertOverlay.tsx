@@ -35,7 +35,7 @@
  */
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
-import type { NativeSyntheticEvent, TextLayoutEventData } from 'react-native';
+import type { TextLayoutEvent } from 'react-native';
 import { triggerHapticFeedback } from '../utils/haptics';
 import type { HapticPattern } from '../utils/haptics';
 import { triggerSoundFeedback } from '../utils/sound';
@@ -181,7 +181,7 @@ const FitLine: React.FC<FitLineProps> = ({ text, displayText, targetWidth, maxFo
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onFontSizeChange is a stable per-index closure; re-running on it would be a no-op anyway
   }, [fontSize]);
 
-  const handleTextLayout = (e: NativeSyntheticEvent<TextLayoutEventData>) => {
+  const handleTextLayout = (e: TextLayoutEvent) => {
     if (correctedRef.current) return;
     correctedRef.current = true;
 

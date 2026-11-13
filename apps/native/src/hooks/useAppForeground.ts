@@ -23,11 +23,11 @@ import type { AppStateStatus } from 'react-native';
 export function useAppForeground(onForeground: () => void): void {
   const callbackRef = useRef(onForeground);
   callbackRef.current = onForeground;
-  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const appStateRef = useRef<AppStateStatus | null | undefined>(AppState.currentState as AppStateStatus | null | undefined);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextState: AppStateStatus) => {
-      const cameToForeground = appStateRef.current.match(/inactive|background/) && nextState === 'active';
+      const cameToForeground = appStateRef.current?.match(/inactive|background/) && nextState === 'active';
       appStateRef.current = nextState;
       if (cameToForeground) {
         callbackRef.current();

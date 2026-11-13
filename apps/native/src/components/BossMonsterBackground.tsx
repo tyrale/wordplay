@@ -109,13 +109,13 @@ export const BossMonsterBackground: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden'
   },
   lightning: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#6b6b78'
   },
   silhouetteWrap: {

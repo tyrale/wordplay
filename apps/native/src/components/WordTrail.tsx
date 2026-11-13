@@ -27,7 +27,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
-import type { LayoutChangeEvent } from 'react-native';
+import type { LayoutChangeEvent, ScrollViewInstance } from 'react-native';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useVanityFilter } from '../contexts/VanityFilterContext';
 
@@ -234,7 +234,7 @@ export const WordTrail: React.FC<WordTrailProps> = ({
   const { getDisplayWord } = useVanityFilter();
   const { height: windowHeight } = useWindowDimensions();
   const effectiveMaxHeight = maxHeight ?? Math.round(windowHeight * DEFAULT_MAX_HEIGHT_RATIO);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   // The bottom of the trail (the most recently played word, right above
   // the current word in play) is a fixed floor that must never scroll
   // away - scrolling only ever reveals *older* words further up, the

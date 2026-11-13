@@ -30,13 +30,8 @@ export const ThemedStatusBar: React.FC = () => {
   // semantics ('dark' = dark content, for light backgrounds).
   const style = isLightBackground(colors.background) ? 'dark' : 'light';
 
-  return (
-    <StatusBar
-      style={style}
-      // Android only (iOS status bar is always transparent over the
-      // app) - tints the status bar's own background to match the
-      // theme instead of leaving it as whatever the OS default is.
-      backgroundColor={colors.background}
-    />
-  );
+  // No backgroundColor: since SDK 55 Android is always edge-to-edge, so
+  // the status bar is transparent on both platforms and the app's own
+  // themed background already shows through behind it.
+  return <StatusBar style={style} />;
 };

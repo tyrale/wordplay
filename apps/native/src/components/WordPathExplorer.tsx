@@ -20,6 +20,7 @@
  */
 import React, { useCallback, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, StyleSheet } from 'react-native';
+import type { TextInputInstance } from 'react-native';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useWordPathGraph } from '../providers/WordPathGraphProvider';
 import { triggerHapticFeedback } from '../utils/haptics';
@@ -51,7 +52,7 @@ export const WordPathExplorer: React.FC<WordPathExplorerProps> = ({ isVisible, o
   const { hasSeenWord, getConnectedWords } = useWordPathGraph();
   const [word, setWord] = useState('');
   const [mode, setMode] = useState<'typing' | 'browsing'>('typing');
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
 
   const handleChangeText = useCallback((text: string) => {
     const sanitized = text.toUpperCase().replace(/[^A-Z]/g, '').slice(0, MAX_WORD_LENGTH);

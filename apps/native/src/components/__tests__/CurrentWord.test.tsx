@@ -225,8 +225,9 @@ describe('native CurrentWord', () => {
     );
 
     // The container's own accessible label reflects the censored word,
-    // not the real one - the dictionary load is async, so wait for it.
-    await waitFor(() => expect(screen.queryByLabelText(/^Current word: SHIT$/)).toBeNull());
+    // not the real one - the dictionary load is async (and can take over
+    // a second under Jest 30), so wait for it.
+    await waitFor(() => expect(screen.queryByLabelText(/^Current word: SHIT$/)).toBeNull(), { timeout: 10000 });
     const container = await screen.findByLabelText(/^Current word: /);
     expect(container.props.accessibilityLabel).not.toContain('SHIT');
 
@@ -242,5 +243,5 @@ describe('native CurrentWord', () => {
     // real letter), not the censored one.
     fireEvent.press(screen.getByLabelText('Remove letter S'));
     expect(onLetterPress).toHaveBeenCalledWith(0);
-  });
+  }, 15000);
 });

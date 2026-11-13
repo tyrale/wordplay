@@ -142,11 +142,11 @@ describe('native WordTrail (regular mode)', () => {
     // Dictionary load is async - wait for the censored render to appear
     // (any of the real letters disappearing confirms it, since the
     // initial pre-load render shows the real word as-is).
-    await waitFor(() => expect(screen.queryByText('S')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('S')).toBeNull(), { timeout: 10000 });
     expect(screen.queryByText('H')).toBeNull();
     expect(screen.queryByText('I')).toBeNull();
     expect(screen.queryByText('T')).toBeNull();
-  });
+  }, 15000);
 
   it('fires onWordPress with the word and index when a row is tapped', async () => {
     const onWordPress = jest.fn();
