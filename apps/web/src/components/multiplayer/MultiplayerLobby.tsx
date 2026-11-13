@@ -220,8 +220,8 @@ export const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({
   const handleShareInvite = useCallback(async () => {
     if (!inviteCode) return;
     const shareData = {
-      title: 'Join my Wordplay game',
-      text: `Join my Wordplay game with code ${inviteCode}`,
+      title: 'Join my Reword game',
+      text: `Join my Reword game with code ${inviteCode}`,
     };
     try {
       if (navigator.share) {
