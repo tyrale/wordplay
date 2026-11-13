@@ -81,6 +81,7 @@
  */
 import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Animated, PanResponder, Text, View, StyleSheet } from 'react-native';
+import type { ViewInstance } from 'react-native';
 import { LockIcon } from './LockIcon';
 import { useTheme, getEffectiveColors } from '../theme/ThemeProvider';
 import { useVanityFilter } from '../contexts/VanityFilterContext';
@@ -282,7 +283,7 @@ export const CurrentWord = React.forwardRef<CurrentWordHandle, CurrentWordProps>
     // index-based lookup below (highlights, drag layout) still lines up.
     const displayLetters = getDisplayWord(word, { isEditing: true }).toUpperCase().split('');
 
-    const containerRef = useRef<View>(null);
+    const containerRef = useRef<ViewInstance>(null);
     // Keyed by letter index - stable for the duration of a drag, since
     // nothing about how the letters themselves are laid out changes
     // while dragging (see this file's doc comment). Coordinates are

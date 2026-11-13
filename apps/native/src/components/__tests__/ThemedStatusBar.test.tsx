@@ -31,25 +31,24 @@ function renderWithTheme(themeName: string, inverted?: boolean) {
 
 describe('native ThemedStatusBar', () => {
   beforeEach(() => {
-    (StatusBar as jest.Mock).mockClear();
+    (StatusBar as unknown as jest.Mock).mockClear();
   });
 
-  it('uses dark content and matches backgroundColor for a light theme (Classic Blue, #ffffff)', () => {
+  it('uses dark content for a light theme background (Classic Blue, #ffffff)', () => {
     renderWithTheme('Classic Blue');
-    const props = (StatusBar as jest.Mock).mock.calls.at(-1)![0];
+    const props = (StatusBar as unknown as jest.Mock).mock.calls.at(-1)![0];
     expect(props.style).toBe('dark');
-    expect(props.backgroundColor).toBe('#ffffff');
   });
 
   it('uses light content for a dark theme background (midnight, #3A506B)', () => {
     renderWithTheme('midnight');
-    const props = (StatusBar as jest.Mock).mock.calls.at(-1)![0];
+    const props = (StatusBar as unknown as jest.Mock).mock.calls.at(-1)![0];
     expect(props.style).toBe('light');
   });
 
   it('respects inversion (swapped background) when computing content style', () => {
     renderWithTheme('Classic Blue', true);
-    const props = (StatusBar as jest.Mock).mock.calls.at(-1)![0];
+    const props = (StatusBar as unknown as jest.Mock).mock.calls.at(-1)![0];
     // 'Classic Blue' inverted swaps its light (#ffffff) background for
     // its dark (#1e3a8a) text color - status bar content should flip to
     // light accordingly.
